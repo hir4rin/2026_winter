@@ -5,6 +5,7 @@
 #include "RigidBody.h"
 #include <string>
 #include <memory>
+
 class Collider : public std::enable_shared_from_this<Collider>
 {
 public:
@@ -69,7 +70,28 @@ public:
 	Collider();
 	virtual ~Collider();
 
+	void ColUpdate();//当たり判定の更新//
+
 protected:
 	RigidBody m_rb;
+	
+	bool m_isActive;//当たり判定が有効かどうか
+	bool m_isFloor;//床についているかどうか
+	bool m_isWall;//壁にあたったかどうか
+	int m_id = -1;//当たり判定などに使うID
+
+	float m_lifeTime = 0.0f;//寿命
+	bool m_isLifeTimeLimited = false;//trueになったらCollisionManagerから削除される
+	float m_ownTimeScale = 1.0f;//自分のTimeScale
+	float m_timeCounter = 0.0f;//TimeScaleのカウンター
+
+
+
+
+
+
+
+
+
 };
 
