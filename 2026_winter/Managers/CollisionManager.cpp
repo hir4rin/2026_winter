@@ -1,0 +1,240 @@
+﻿#include "CollisionManager.h"
+#include "../Collider/Collider.h"
+#include"../System.h"
+//#include "../Stage/Stage.h"
+#include <algorithm>
+#include <cassert>
+
+void CollisionManager::RegisterCollider(std::shared_ptr<Collider> collider)
+{
+
+	//すでに登録されているかどうかを確認する
+	auto it = std::find(m_colliders.begin(), m_colliders.end(), collider);
+
+	if (it == m_colliders.end())
+	{
+		m_colliders.push_back(collider);
+	}
+	else
+	{
+		assert(false && "RegisterColliderが既に登録されています");
+	}
+
+}
+
+void CollisionManager::ReleaseCollider(std::shared_ptr<Collider> collider)
+{
+	//登録されているものを探して、削除する
+	auto it = std::find(m_colliders.begin(), m_colliders.end(), collider);
+
+	if (it != m_colliders.end())
+	{
+		m_colliders.erase(it);
+	}
+	else
+	{
+		//assert(false && "RemoveCOLLIDERが見つかりませんでした");
+	}
+}
+
+void CollisionManager::Init()
+{
+	m_collisionChecker = std::make_unique<CollisionChecker>();
+	m_fixNextPositioner = std::make_unique<FixNextPosition>();
+}
+void CollisionManager::SetStage(std::weak_ptr<Stage> stage)
+{
+	m_stage = stage;
+}	
+
+void CollisionManager::Terminate()
+{
+	m_colliders.clear();
+}
+
+void CollisionManager::Update()
+{
+	//IsTriggerを作って、押し戻し判定を無視するという条件式を追加する//今は押し戻し判定を無視する条件式はない
+	//PushBackの中でその処理をするのでいい
+
+	//Stageのポインタをセットする//絶対この辺もっといい方法ある
+	for(auto& collider : m_colliders)
+	{
+		if (!collider)continue;
+		//collider->SetStagePtr(m_stage);
+	}
+
+	//CollisionのUpdate(今は寿命カウント用)
+	for(auto& collider  : m_colliders)
+	{
+		if (!collider)continue;
+		collider->ColUpdate();
+	}
+
+
+
+	//寿命が尽きたコライダーを削除する
+	std::erase_if(m_colliders, [](const std::shared_ptr<Collider>& collider) 
+		{
+			return collider->GetIsLifeTimeLimited();
+		});
+
+
+	//現在触れているコライダーのリストをクリアする
+	for (auto& collider : m_colliders)
+	{
+		if (!collider) continue;
+		collider->m_currentPressColliders.clear();
+	}
+
+	//速度を足す
+	AddVelocity();
+
+	for (int t = 0; t < 3; t++)
+	{
+		//すべてのコライダーの組み合わせをチェックする//当たっているかの確認かつ、速度をいじる
+		for (size_t i = 0; i < m_colliders.size(); i++)
+		{
+			std::shared_ptr<Collider> colliderA = m_colliders[i];
+			if (!colliderA->IsActive())continue;
+			//if (colliderA->GetTag() == Tags::StaticObject)continue;//静的オブジェクトがAの時無視
+
+			for (size_t j = i + 1; j < m_colliders.size(); j++)
+			{
+
+				std::shared_ptr<Collider> colliderB = m_colliders[j];
+				//アクティブなコライダーだけをチェックする//ここ関数化
+				if (!colliderB)continue;
+				if (!colliderB->IsActive())continue;
+				//静的オブジェクト同士の時無視
+				if (colliderA->GetTag().faction == Collider::Faction::StaticObject &&
+					colliderB->GetTag().faction == Collider::Faction::StaticObject)continue;
+			
+				//衝突判定//球と球、BoxとBox、CapsuleとCapsuleとかで分ける
+				if (m_collisionChecker->IsCollide(*colliderA, *colliderB))
+				{
+					//今触れているコライダーのリストに追加する
+					colliderA->m_currentPressColliders.push_back(colliderB);
+					colliderB->m_currentPressColliders.push_back(colliderA);
+
+					//Trigger処理
+					if (!ContainsCollider(colliderA->m_prevPressColliders, colliderB))
+					{
+						colliderA->OnTriggerEnter(*colliderB);
+						colliderB->OnTriggerEnter(*colliderA);
+					}
+
+
+					//衝突したときの処理を呼び出す
+					colliderA->OnCollision(*colliderB);
+					colliderB->OnCollision(*colliderA);
+
+					//ここで押し戻し
+					//isTriggerは押し戻しを無視
+					if (colliderA->GetIsTrigger() || colliderB->GetIsTrigger()) continue;
+					//押し戻しの処理
+					//ここで速度を変更する//ここでタイムスケールを変更<-？？多分違う
+					//PushBackのvelを加える
+					m_fixNextPositioner->FixNextPos(*colliderA, *colliderB);
+				}
+			}
+		}
+	}
+	//ループが終わった後、ExitTriggerの処理を検出
+	for (auto& collider : m_colliders)
+	{
+		if (!collider)continue;
+		for (auto& weakPrev : collider->m_prevPressColliders)
+		{
+			auto prevCol = weakPrev.lock();
+			if (!prevCol)continue;
+			//当たっているコライダーに前フレームのコライダーが含まれていなければ、ExitTriggerの処理を呼ぶ
+			if(!ContainsCollider(collider->m_currentPressColliders, prevCol))
+			{
+				//ExitTriggerの処理
+				collider->OnTriggerExit(*prevCol);
+				prevCol->OnTriggerExit(*collider);
+			}
+		}
+			//更新
+			collider->m_prevPressColliders = collider->m_currentPressColliders;
+	}
+
+
+	//ここで位置確定用の関数を読んで位置をおいておく
+	//ここですべてのコライダーの位置を更新させる関数
+	//速度をSetVelだと、どこからでもいじれちゃうけど、CollisionManagerがColのfriendクラスになって速度をいじれるようにして、更新させる
+	//速度を足す
+	ApplyAdjustments();
+}
+
+
+void CollisionManager::DebugDraw() const
+{
+	//登録されているすべてのコライダーのデバッグ描画を呼び出す
+	for (const auto& collider : m_colliders)
+	{
+		//アクティブなコライダーだけを描画する
+		if (collider && collider->IsActive())
+		collider->DebugDraw();
+	}
+}
+
+std::shared_ptr<Collider> CollisionManager::GetColliderById(int id) const
+{
+	auto ansColIterator = std::find_if(m_colliders.begin(), m_colliders.end(), [id](const std::shared_ptr<Collider>& collider)
+		{
+			return collider->GetId() == id;
+		});
+	std::shared_ptr<Collider> ansCol = (ansColIterator != m_colliders.end()) ? *ansColIterator : nullptr;
+
+	//見つからなかったらassert
+	if(!ansCol)
+	{
+		assert(false && "GetColliderByIdで指定したidのコライダーが見つかりませんでした");
+	}
+
+	return ansCol;
+}
+
+bool CollisionManager::ContainsCollider(const std::vector<std::weak_ptr<Collider>>& list, const std::shared_ptr<Collider>& target)
+{
+	for (auto& weak : list)
+	{
+		std::shared_ptr<Collider> locked = weak.lock();
+
+		//実体がtargetと同じかどうかを確認
+		if (locked == target)
+		{
+			return true;
+		}
+	}
+
+	//見つからなかった場合はfalseを返す
+	return false;
+}
+
+void CollisionManager::ApplyAdjustments()
+{
+	//Colliderの座標を確定//Col自身に座標の更新をさせる
+	for (auto& collider : m_colliders)
+	{
+		if (!collider)continue;
+		if (!collider->IsActive())continue;
+		collider->ApplyPos();
+	}
+}
+
+void CollisionManager::AddVelocity()
+{
+	for (size_t i = 0; i < m_colliders.size(); i++)
+	{
+		std::shared_ptr<Collider> colliderA = m_colliders[i];
+		if (!colliderA)continue;
+		if (!colliderA->IsActive())continue;
+		float timescale = System::GetInstance().GetTimeScale();
+		//ここですべてのコライダーに速度、timescaleをかける
+		colliderA->GetRigidBody().m_vel *= timescale * colliderA->GetTimeScale();
+	}
+}
+

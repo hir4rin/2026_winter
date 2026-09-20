@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);_DEBUG</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../EffekseerForDXLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../EffekseerForDXLib;$(ProjectDir)Character/Player/Attack;$(ProjectDir)Character/Player/Base;$(ProjectDir)Character/Player/Defence;$(ProjectDir)Character/Player/Locomotion;$(ProjectDir)Character</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -95,7 +95,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../EffekseerForDXLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../EffekseerForDXLib;$(ProjectDir)Character/Player/Attack;$(ProjectDir)Character/Player/Base;$(ProjectDir)Character/Player/Defence;$(ProjectDir)Character/Player/Locomotion;$(ProjectDir)Character</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -112,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);_DEBUG</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../EffekseerForDXLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../EffekseerForDXLib;$(ProjectDir)Character/Player/Attack;$(ProjectDir)Character/Player/Base;$(ProjectDir)Character/Player/Defence;$(ProjectDir)Character/Player/Locomotion;$(ProjectDir)Character</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -131,7 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../EffekseerForDXLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../EffekseerForDXLib;$(ProjectDir)Character/Player/Attack;$(ProjectDir)Character/Player/Base;$(ProjectDir)Character/Player/Defence;$(ProjectDir)Character/Player/Locomotion;$(ProjectDir)Character</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -143,22 +143,114 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Collider.cpp" />
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Camera\Camera.cpp" />
+    <ClCompile Include="Camera\CameraManager.cpp" />
+    <ClCompile Include="Camera\CameraState\BossAppearCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\CameraStateBase.cpp" />
+    <ClCompile Include="Camera\CameraState\FinishingFirstCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\FinishingSecondCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\LockOnCameraState.cpp" />
+    <ClCompile Include="Camera\CameraState\PlayerFollowCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\ResultCameraState.cpp" />
+    <ClCompile Include="Camera\CameraState\Stage1FazeCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\Stage2FazeCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\TitleCameraState.cpp" />
+    <ClCompile Include="Camera\CameraState\UltCameraState.cpp" />
+    <ClCompile Include="Camera\LockOnManager.cpp" />
+    <ClCompile Include="Character\AttackCol.cpp" />
+    <ClCompile Include="Character\CharacterBase.cpp" />
+    <ClCompile Include="Character\Enemy\EnemyBase.cpp" />
+    <ClCompile Include="Character\HitCol.cpp" />
+    <ClCompile Include="Character\Player\Attack\PlayerStateAttack.cpp" />
+    <ClCompile Include="Character\Player\Attack\PlayerStateDashAttack.cpp" />
+    <ClCompile Include="Character\Player\Attack\PlayerStateSkillAttack.cpp" />
+    <ClCompile Include="Character\Player\Attack\PlayerStateUlt.cpp" />
+    <ClCompile Include="Character\Player\Base\Player.cpp" />
+    <ClCompile Include="Character\Player\Base\PlayerState.cpp" />
+    <ClCompile Include="Character\Player\Defence\PlayerStateDie.cpp" />
+    <ClCompile Include="Character\Player\Defence\PlayerStateHit.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateFall.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateIdle.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateJump.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateMove.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateResultMove.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateRun.cpp" />
+    <ClCompile Include="Character\Player\Weapon.cpp" />
+    <ClCompile Include="Collider\CapsuleShape.cpp" />
+    <ClCompile Include="Collider\BoxShape.cpp" />
+    <ClCompile Include="Collider\Collider.cpp" />
+    <ClCompile Include="Collider\ColliderShape.cpp" />
+    <ClCompile Include="DataLoader\DataManager.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Managers\CollisionChecker.cpp" />
+    <ClCompile Include="Managers\CollisionManager.cpp" />
+    <ClCompile Include="Managers\FixNextPosition.cpp" />
     <ClCompile Include="Math\Matrix4x4.cpp" />
     <ClCompile Include="Math\Quaternion.cpp" />
     <ClCompile Include="Math\Vector3.cpp" />
-    <ClCompile Include="RigidBody.cpp" />
+    <ClCompile Include="Collider\RigidBody.cpp" />
     <ClCompile Include="SceneMain.cpp" />
+    <ClCompile Include="Collider\SphereShape.cpp" />
+    <ClCompile Include="System.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Collider.h" />
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="Camera\Camera.h" />
+    <ClInclude Include="Camera\CameraManager.h" />
+    <ClInclude Include="Camera\CameraState\BossAppearCamera.h" />
+    <ClInclude Include="Camera\CameraState\CameraStateBase.h" />
+    <ClInclude Include="Camera\CameraState\FinishingFirstCamera.h" />
+    <ClInclude Include="Camera\CameraState\FinishingSecondCamera.h" />
+    <ClInclude Include="Camera\CameraState\LockOnCameraState.h" />
+    <ClInclude Include="Camera\CameraState\PlayerFollowCamera.h" />
+    <ClInclude Include="Camera\CameraState\ResultCameraState.h" />
+    <ClInclude Include="Camera\CameraState\Stage1FazeCamera.h" />
+    <ClInclude Include="Camera\CameraState\Stage2FazeCamera.h" />
+    <ClInclude Include="Camera\CameraState\TitleCameraState.h" />
+    <ClInclude Include="Camera\CameraState\UltCameraState.h" />
+    <ClInclude Include="Camera\LockOnManager.h" />
+    <ClInclude Include="Character\AttackCol.h" />
+    <ClInclude Include="Character\CharacterBase.h" />
+    <ClInclude Include="Character\Enemy\EnemyBase.h" />
+    <ClInclude Include="Character\HitCol.h" />
+    <ClInclude Include="Character\Player\Attack\PlayerStateAttack.h" />
+    <ClInclude Include="Character\Player\Attack\PlayerStateDashAttack.h" />
+    <ClInclude Include="Character\Player\Attack\PlayerStateSkillAttack.h" />
+    <ClInclude Include="Character\Player\Attack\PlayerStateUlt.h" />
+    <ClInclude Include="Character\Player\Base\Player.h" />
+    <ClInclude Include="Character\Player\Base\PlayerEnums.h" />
+    <ClInclude Include="Character\Player\Base\PlayerState.h" />
+    <ClInclude Include="Character\Player\Defence\PlayerStateDie.h" />
+    <ClInclude Include="Character\Player\Defence\PlayerStateHit.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateFall.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateIdle.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateJump.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateMove.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateResultMove.h" />
+    <ClInclude Include="Character\Player\Weapon.h" />
+    <ClInclude Include="Collider\CapsuleShape.h" />
+    <ClInclude Include="Collider\BoxShape.h" />
+    <ClInclude Include="Collider\Collider.h" />
+    <ClInclude Include="Collider\ColliderShape.h" />
+    <ClInclude Include="Collider\ColliderSummery.h" />
+    <ClInclude Include="DataLoader\BossAnimData.h" />
+    <ClInclude Include="DataLoader\DataManager.h" />
+    <ClInclude Include="DataLoader\PlayerAnimData.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Input.h" />
+    <ClInclude Include="Managers\CollisionChecker.h" />
+    <ClInclude Include="Managers\CollisionManager.h" />
+    <ClInclude Include="Managers\FixNextPosition.h" />
     <ClInclude Include="Math\Matrix4x4.h" />
     <ClInclude Include="Math\Quaternion.h" />
     <ClInclude Include="Math\Vector3.h" />
-    <ClInclude Include="RigidBody.h" />
+    <ClInclude Include="Collider\RigidBody.h" />
     <ClInclude Include="SceneMain.h" />
+    <ClInclude Include="Collider\SphereShape.h" />
+    <ClInclude Include="System.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
