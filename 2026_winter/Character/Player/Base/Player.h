@@ -134,6 +134,7 @@ public:
 	void SetCameraManager(std::weak_ptr<CameraManager> cameraManager) { m_cameraManager = cameraManager; }//カメラマネージャーのセット
 	void SetEnemyManager(std::weak_ptr<EnemyManager> enemyManager) { m_enemyManager = enemyManager; }//EnemyManagerのセット
 
+	void Update() override {}//CharacterBase::Updateの実装(実際の更新はUpdate(Camera&)で行う)
 	void Update(Camera& camera);
 	void Draw();
 	void EffectDraw();

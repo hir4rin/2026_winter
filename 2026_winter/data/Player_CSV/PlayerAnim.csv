@@ -1,6 +1,6 @@
 #key,animName
 Idle,root|Ninja_Idle_Standing
-Walk,root|Walk_Loop_F_0_RM
+Walk,root|Ninja_Shuffle_Sprint_Forward
 Walking,root|Walk_Loop_F_0_RM
 Run,root|Ninja_Shuffle_Sprint_Forward
 ChangeDirection,root|Jump_Combat_Start_B_180

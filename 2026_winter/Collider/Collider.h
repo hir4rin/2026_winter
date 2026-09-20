@@ -137,7 +137,7 @@ protected:
 	
 	bool m_isActive = false;;//当たり判定が有効かどうか
 	bool m_isTrigger = false;;//押しもどしを行わない当たり判定かどうか
-	bool m_isFloor = false;;//床についているかどうか
+	bool m_isFloor = true;;//床についているかどうか
 	bool m_isWall = false;//壁にあたったかどうか
 	int m_id = -1;//当たり判定などに使うID
 

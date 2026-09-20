@@ -18,7 +18,7 @@ CharacterBase::~CharacterBase()
 
 void CharacterBase::InitHitCol(std::weak_ptr<CharacterBase> owner)
 {
-	//m_hitCol = std::make_shared<HitCol>(owner);
+	m_hitCol = std::make_shared<HitCol>(owner);
 }
 
 void CharacterBase::OnTriggerEnter(Collider& other)

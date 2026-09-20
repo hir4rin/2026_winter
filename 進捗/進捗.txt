@@ -4,3 +4,19 @@
 CharacterBaseまで作成終了、次はPlayerクラス
 
 そのあとはPlayerをSceneMainで表示させて新しいアニメーションの確認をする
+
+player.hとcppとかを持ってきたが、エラーを大量に掃くため、一旦他の物を持ってくることにした。今はcameramanagerをもってきたところ
+
+
+BattleManagerを作るそこにSystem.hの色々を持たせる
+そのあとにカメラのLockOnManagerをBattleManagerに持たせる
+
+
+DataManagerを持ってくる(BattleManagerにおくかは不明)
+そのあとEnemyBaseをもってきてエラー解決
+
+
+
+
+モーションの問題
+弱4段目の最終フレームが0Fの位置に戻っているため、その少し前で止める必要がある
