@@ -71,7 +71,7 @@ void PlayerStateAttack::Enter()
 	const ComboNode& node = player->m_comboChain[currentComboIndex];
 	//モデルハンドルの取得//攻撃モデルか通常モデルかで切り替える
 	int modelHandle = (node.modelType == 0) ? player->m_modelHandle : player->m_attackModelHandle;
-	player->m_anim.ChangeAnimWithModelHandle(modelHandle, node.animName, false, 1.0f);
+	player->m_anim.ChangeAnimWithModelHandle(modelHandle, node.animName, false, 0.8f, node.endFrame);
 
 	//切り上げ攻撃の時は、足元にエフェクトを出す(座標更新は不要、出すだけでいい)
 	if (node.index == ComboIndex::upAttack)

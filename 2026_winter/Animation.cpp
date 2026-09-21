@@ -1,10 +1,14 @@
 ﻿#include "Animation.h"
 #include "DxLib.h"
+#include <algorithm>
 //#include "../System.h"
 
 namespace
 {
 	constexpr int kAnimChangeFrame = 20;//アニメーションを切り替えるフレーム数//ブレンドのフレームもアニメーションごとに変えたい
+
+	
+	
 }
 
 Animation::Animation() :
@@ -26,8 +30,10 @@ Animation::~Animation()
 	MV1DeleteModel(m_modelHandle);
 }
 
-void Animation::Init(int modelHandle, std::string name, bool isRoop, float timescale)
+void Animation::Init(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame)
 {
+	m_endFrame = endFrame;//最終フレームを保存する
+	m_prevEndFrame = -1.0f;
 	SetAnim(isRoop);
 	//モデルのハンドルを保存する
 	m_modelHandle = modelHandle;
@@ -57,7 +63,7 @@ void Animation::Update(float ownTimeScale)
 	AnimBlend(ownTimeScale);
 	//アニメーションのループ再生
 	//アタッチしているアニメーションの総フレーム数を取得する
-	float totalAnimCount = MV1GetAttachAnimTotalTime(m_modelHandle, m_currentAnimHandle);
+	float totalAnimCount = ResolveEndFrame(m_modelHandle, m_currentAnimHandle, m_endFrame);
 	if (m_currentAnimCount >= totalAnimCount)
 	{
 		m_isEndAnim = true;//アニメーションが終わったフラグを立てる
@@ -75,7 +81,7 @@ void Animation::Update(float ownTimeScale)
 	//前のアニメーションのループ再生
 	if (m_prevAnimHandle != -1)
 	{
-		float totalPrevAnimCount = MV1GetAttachAnimTotalTime(m_modelHandle, m_prevAnimHandle);
+		float totalPrevAnimCount = ResolveEndFrame(m_modelHandle, m_prevAnimHandle, m_prevEndFrame);
 		if (m_prevAnimCount >= totalPrevAnimCount)
 		{
 			if (m_prevRoop)
@@ -139,8 +145,10 @@ void Animation::SetAnim(bool isRoop)
 
 
 
-void Animation::ChangeAnim(std::string name, bool isRoop, float timescale)
+void Animation::ChangeAnim(std::string name, bool isRoop, float timescale, float endFrame)
 {
+	m_prevEndFrame = m_endFrame;//現在の最終フレームを前のアニメーション用に保存する
+	m_endFrame = endFrame;
 	m_prevAnimTimeScale = m_animtimeScale;//前のアニメーションの再生速度を保存する
 	m_animtimeScale = timescale;//アニメーションの再生速度を設定する
 	//m_animtimeScale = 1.0f;
@@ -173,12 +181,12 @@ void Animation::ChangeAnim(std::string name, bool isRoop, float timescale)
 
 }
 
-void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, bool isRoop, float timescale)
+void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame)
 {
 	if (m_modelHandle == modelHandle)
 	{
 		//同じモデルなら、ブレンド遷移
-		ChangeAnim(name, isRoop, timescale);
+		ChangeAnim(name, isRoop, timescale, endFrame);
 	}
 	else
 	{
@@ -197,7 +205,7 @@ void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, boo
 		m_animChangeFrame = 0.0f;
 
 		//違うモデルなら、Initで初期化//ブレンドなし	
-		Init(modelHandle, name, isRoop, timescale);
+		Init(modelHandle, name, isRoop, timescale, endFrame);
 	}
 }
 
@@ -207,7 +215,7 @@ void Animation::StopAnim()
 
 float Animation::GetAnimRate()
 {
-	float totalAnimCount = MV1GetAttachAnimTotalTime(m_modelHandle, m_currentAnimHandle);//アタッチしているアニメーションの総フレーム数を取得する
+	float totalAnimCount = ResolveEndFrame(m_modelHandle, m_currentAnimHandle, m_endFrame);//最終フレーム(指定がなければ総フレーム数)を取得する
 	if (totalAnimCount <= 0.0f)	return 0.0f;//総フレーム数が0以下のときは、アニメーションの進行率を0にする//0で割るのを防ぐ
 
 	//アニメーションの進行割合
@@ -270,4 +278,11 @@ MATRIX Animation::GetRootRotationDelta()
 	MATRIX delta = MMult(MInverse(m_prevRootMatrix), currentRotationMatrix);
 
 	return delta;
+}
+
+float Animation::ResolveEndFrame(int modelHandle, int attachHandle, float endFrame)
+{
+	float total = MV1GetAttachAnimTotalTime(modelHandle, attachHandle);
+	if (endFrame < 0.0f) return total;
+	return (std::min)(endFrame, total);	
 }

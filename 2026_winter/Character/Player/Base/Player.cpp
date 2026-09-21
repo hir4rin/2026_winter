@@ -464,6 +464,8 @@ void Player::InitializeComboChain()
 		node.seName = tokens[ComboNodeType::SeName];
 		node.attackColStartRate = std::stof(tokens[ComboNodeType::AttackColStartRate]);
 		node.attackColEndRate = std::stof(tokens[ComboNodeType::AttackColEndRate]);
+		//空欄なら-1(総フレーム数を使う)
+		node.endFrame = tokens[ComboNodeType::EndFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::EndFrame]);
 		m_comboChain.push_back(node);
 	}
 

@@ -10,6 +10,7 @@ player.hとcppとかを持ってきたが、エラーを大量に掃くため、
 
 BattleManagerを作るそこにSystem.hの色々を持たせる
 そのあとにカメラのLockOnManagerをBattleManagerに持たせる
+BattleManagerはGameSceneに置き、そのweak_ptrをSystem.hがもつ
 
 
 DataManagerを持ってくる(BattleManagerにおくかは不明)
@@ -19,4 +20,7 @@ DataManagerを持ってくる(BattleManagerにおくかは不明)
 
 
 モーションの問題
-弱4段目の最終フレームが0Fの位置に戻っているため、その少し前で止める必要がある
+弱4段目の最終フレームが0Fの位置に戻っているため、その少し前で止める必要がある→完了
+
+続いては、Y軸のプレイヤーの移動について
+→移動値を持たせた移動にする必要がある

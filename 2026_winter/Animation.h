@@ -14,18 +14,19 @@ public:
 	/// </summary>
 	/// <param name="modelHandle"></param>
 	/// <param name="name"></param>
-	void Init(int modelHandle,std::string name,bool isRoop,float timescale = 1.0f);
+	/// <param name="endFrame">アニメーションの最終フレーム(負の値なら総フレーム数を使う)</param>
+	void Init(int modelHandle,std::string name,bool isRoop,float timescale = 1.0f,float endFrame = -1.0f);
 	
 	void Update(float ownTimeScale = 1.0f);//ここにtimeScaleを引数にして渡して、することで、プレイヤーでもエネミーでも使うと一緒に使える
 	void AnimBlend(float ownTimeScale = 1.0f);//アニメーションのブレンドを行う
 
 	void SetAnim(bool isRoop);//アニメーションのループ再生を設定する//m_isEndを初期化
-	void ChangeAnim(std::string name,bool isRoop = true,float timescale = 1.0f);//アニメーションを切り替える//nameはアニメーションの名前
+	void ChangeAnim(std::string name,bool isRoop = true,float timescale = 1.0f,float endFrame = -1.0f);//アニメーションを切り替える//nameはアニメーションの名前//endFrameは最終フレーム(負の値なら総フレーム数)
 
 	/// <summary>
 	/// モデルを考慮したアニメーション切換え
 	/// </summary>
-	void ChangeAnimWithModelHandle(int modelHandle,std::string name,bool isRoop,float timescale = 1.0f);
+	void ChangeAnimWithModelHandle(int modelHandle,std::string name,bool isRoop,float timescale = 1.0f,float endFrame = -1.0f);
 	//モデルハンドルの取得//確認用
 	int GetModelHandleForCheck() { return m_modelHandle; }
 	//アニメーションを再生するのを止める
@@ -43,6 +44,9 @@ public:
 	Vector3 GetRootMotionDelta();//ルートモーションの移動量を返す//前フレームと現在のフレームのルート位置の差分を返す
 	MATRIX GetRootRotationDelta();//ルートモーションの回転量を返す//前フレームと現在のフレームのルート回転の差分を返す
 
+	//実際に使う最終フレームを返す//endFrameが負なら総フレーム数、総フレーム数を超える場合は総フレーム数に収める
+	float ResolveEndFrame(int modelHandle, int attachHandle, float endFrame);
+
 private:
 	int m_modelHandle;//モデルのハンドル
 	int m_currentAnimHandle;//現在のアニメーションのハンドル
@@ -50,6 +54,9 @@ private:
 
 	float m_currentAnimCount;//現在のアニメーションのフレーム数
 	float m_prevAnimCount;//前のアニメーションのフレーム数
+
+	float m_endFrame = -1.0f;//現在のアニメーションの最終フレーム(負の値なら総フレーム数)
+	float m_prevEndFrame = -1.0f;//前のアニメーションの最終フレーム
 
 	float m_animChangeFrame;//アニメーションを切り替えるフレーム数
 

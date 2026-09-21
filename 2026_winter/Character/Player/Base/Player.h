@@ -43,6 +43,7 @@ struct ComboNode
 	std::string seName;//攻撃のSEの名前
 	float attackColStartRate = 0.0f;//攻撃の当たり判定を有効にするアニメーション進行率
 	float attackColEndRate = 0.0f;//攻撃の当たり判定を無効にするアニメーション進行率
+	float endFrame = -1.0f;//アニメーションの最終フレーム//負の値なら総フレーム数
 
 };
 struct ComboInfo
@@ -79,7 +80,8 @@ enum ComboNodeType : int
 	SeName = 15,
 	AttackColStartRate = 16,
 	AttackColEndRate = 17,
-	Size = 18,
+	EndFrame = 18,
+	Size = 19,
 
 };
 namespace ComboIndex
