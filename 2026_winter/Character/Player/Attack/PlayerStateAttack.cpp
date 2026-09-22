@@ -819,8 +819,8 @@ void PlayerStateAttack::InpuctAttackSetUp()
 			.isKirimomi = true
 		};
 		//AttackColを生成
-		auto m_attackColForDrop = std::make_shared<AttackCol>(m_owner, dropAttackData);
-		m_attackColForDrop->ColInit({
+		player->m_burstAttackCol = std::make_shared<AttackCol>(m_owner, dropAttackData);
+		player->m_burstAttackCol->ColInit({
 			.pos = player->m_rb.m_pos,
 			.offset = kDropAttackColOffset,
 			.shape = std::make_unique<SphereShape>(kAttackColRadius),
@@ -829,8 +829,8 @@ void PlayerStateAttack::InpuctAttackSetUp()
 			.isTrigger = true,
 			.lifeTime = kDropAttackColLifeTime
 			});//攻撃の当たり判定を初期化する//最初は無効にしておく
-		m_attackColForDrop->ResetID(player->GetId());
-		m_attackColForDrop->SetIsActive(true);//攻撃の当たり判定を有効にする
+		player->m_burstAttackCol->ResetID(player->GetId());
+		player->m_burstAttackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
 	}
 }
 

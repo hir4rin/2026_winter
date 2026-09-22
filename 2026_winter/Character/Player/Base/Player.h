@@ -18,6 +18,7 @@
 class PlayerState;
 class Camera;
 class Weapon;
+class AttackCol;
 class CameraManager;
 class EnemyBase;
 class EnemyManager;
@@ -217,6 +218,8 @@ private:
 	std::vector<ComboNode> m_comboChain = {};//コンボのデータ
 	ComboInfo m_comboInfo = {};//コンボの情報//現在のコンボの段数などを管理するためのもの
 	DamageInfo m_damageInfo = {};//被ダメ後無敵時間の情報
+	std::shared_ptr<AttackCol> m_burstAttackCol;//吹き飛ばしようのCollider
+
 
 	//リザルト集計用
 	float m_totalDamageDealt = 0.0f;//与えた合計ダメージ

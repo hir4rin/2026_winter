@@ -5,11 +5,30 @@
 #include <algorithm>
 #include <cassert>
 
-void CollisionManager::RegisterCollider(std::shared_ptr<Collider> collider)
+namespace
 {
+	//weak_ptr同士が同じ実体を指しているかどうかを判定する(lockせずに比較できる)
+	bool IsSameOwner(const std::weak_ptr<Collider>& a, const std::weak_ptr<Collider>& b)
+	{
+		return !a.owner_before(b) && !b.owner_before(a);
+	}
+}
+
+void CollisionManager::RegisterCollider(std::weak_ptr<Collider> collider)
+{
+	//期限切れ(すでに実体が破棄されている)のweak_ptrは登録できない
+	if (collider.expired())
+	{
+		assert(false && "RegisterColliderに無効なColliderが渡されました");
+		return;
+	}
 
 	//すでに登録されているかどうかを確認する
-	auto it = std::find(m_colliders.begin(), m_colliders.end(), collider);
+	auto it = std::find_if(m_colliders.begin(), m_colliders.end(),
+		[&collider](const std::weak_ptr<Collider>& registered)
+		{
+			return IsSameOwner(registered, collider);
+		});
 
 	if (it == m_colliders.end())
 	{
@@ -22,10 +41,14 @@ void CollisionManager::RegisterCollider(std::shared_ptr<Collider> collider)
 
 }
 
-void CollisionManager::ReleaseCollider(std::shared_ptr<Collider> collider)
+void CollisionManager::ReleaseCollider(std::weak_ptr<Collider> collider)
 {
 	//登録されているものを探して、削除する
-	auto it = std::find(m_colliders.begin(), m_colliders.end(), collider);
+	auto it = std::find_if(m_colliders.begin(), m_colliders.end(),
+		[&collider](const std::weak_ptr<Collider>& registered)
+		{
+			return IsSameOwner(registered, collider);
+		});
 
 	if (it != m_colliders.end())
 	{
@@ -58,31 +81,35 @@ void CollisionManager::Update()
 	//PushBackの中でその処理をするのでいい
 
 	//Stageのポインタをセットする//絶対この辺もっといい方法ある
-	for(auto& collider : m_colliders)
+	for(auto& weakCollider : m_colliders)
 	{
+		auto collider = weakCollider.lock();
 		if (!collider)continue;
 		//collider->SetStagePtr(m_stage);
 	}
 
 	//CollisionのUpdate(今は寿命カウント用)
-	for(auto& collider  : m_colliders)
+	for(auto& weakCollider  : m_colliders)
 	{
+		auto collider = weakCollider.lock();
 		if (!collider)continue;
 		collider->ColUpdate();
 	}
 
 
 
-	//寿命が尽きたコライダーを削除する
-	std::erase_if(m_colliders, [](const std::shared_ptr<Collider>& collider) 
+	//実体が破棄された、または寿命が尽きたコライダーを削除する
+	std::erase_if(m_colliders, [](const std::weak_ptr<Collider>& weakCollider)
 		{
-			return collider->GetIsLifeTimeLimited();
+			auto collider = weakCollider.lock();
+			return !collider || collider->GetIsLifeTimeLimited();
 		});
 
 
 	//現在触れているコライダーのリストをクリアする
-	for (auto& collider : m_colliders)
+	for (auto& weakCollider : m_colliders)
 	{
+		auto collider = weakCollider.lock();
 		if (!collider) continue;
 		collider->m_currentPressColliders.clear();
 	}
@@ -95,13 +122,14 @@ void CollisionManager::Update()
 		//すべてのコライダーの組み合わせをチェックする//当たっているかの確認かつ、速度をいじる
 		for (size_t i = 0; i < m_colliders.size(); i++)
 		{
-			std::shared_ptr<Collider> colliderA = m_colliders[i];
+			std::shared_ptr<Collider> colliderA = m_colliders[i].lock();
+			if (!colliderA)continue;
 			if (!colliderA->IsActive())continue;
 
 			for (size_t j = i + 1; j < m_colliders.size(); j++)
 			{
 
-				std::shared_ptr<Collider> colliderB = m_colliders[j];
+				std::shared_ptr<Collider> colliderB = m_colliders[j].lock();
 				//アクティブなコライダーだけをチェックする//ここ関数化
 				if (!colliderB)continue;
 				if (!colliderB->IsActive())continue;
@@ -140,8 +168,9 @@ void CollisionManager::Update()
 		}
 	}
 	//ループが終わった後、ExitTriggerの処理を検出
-	for (auto& collider : m_colliders)
+	for (auto& weakCollider : m_colliders)
 	{
+		auto collider = weakCollider.lock();
 		if (!collider)continue;
 		for (auto& weakPrev : collider->m_prevPressColliders)
 		{
@@ -171,8 +200,9 @@ void CollisionManager::Update()
 void CollisionManager::DebugDraw() const
 {
 	//登録されているすべてのコライダーのデバッグ描画を呼び出す
-	for (const auto& collider : m_colliders)
+	for (const auto& weakCollider : m_colliders)
 	{
+		auto collider = weakCollider.lock();
 		//アクティブなコライダーだけを描画する
 		if (collider && collider->IsActive())
 		collider->DebugDraw();
@@ -181,11 +211,17 @@ void CollisionManager::DebugDraw() const
 
 std::shared_ptr<Collider> CollisionManager::GetColliderById(int id) const
 {
-	auto ansColIterator = std::find_if(m_colliders.begin(), m_colliders.end(), [id](const std::shared_ptr<Collider>& collider)
+	std::shared_ptr<Collider> ansCol;
+	for (const auto& weakCollider : m_colliders)
+	{
+		auto collider = weakCollider.lock();
+		if (!collider)continue;
+		if (collider->GetId() == id)
 		{
-			return collider->GetId() == id;
-		});
-	std::shared_ptr<Collider> ansCol = (ansColIterator != m_colliders.end()) ? *ansColIterator : nullptr;
+			ansCol = collider;
+			break;
+		}
+	}
 
 	//見つからなかったらassert
 	if(!ansCol)
@@ -216,8 +252,9 @@ bool CollisionManager::ContainsCollider(const std::vector<std::weak_ptr<Collider
 void CollisionManager::ApplyAdjustments()
 {
 	//Colliderの座標を確定//Col自身に座標の更新をさせる
-	for (auto& collider : m_colliders)
+	for (auto& weakCollider : m_colliders)
 	{
+		auto collider = weakCollider.lock();
 		if (!collider)continue;
 		if (!collider->IsActive())continue;
 		collider->ApplyPos();
@@ -228,7 +265,7 @@ void CollisionManager::AddVelocity()
 {
 	for (size_t i = 0; i < m_colliders.size(); i++)
 	{
-		std::shared_ptr<Collider> colliderA = m_colliders[i];
+		std::shared_ptr<Collider> colliderA = m_colliders[i].lock();
 		if (!colliderA)continue;
 		if (!colliderA->IsActive())continue;
 		float timescale = System::GetInstance().GetTimeScale();

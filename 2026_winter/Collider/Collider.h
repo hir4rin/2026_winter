@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "../Math/Vector3.h"
-//#include "../Managers/CollisionManager.h"
+#include "../Managers/CollisionManager.h"
 //#include "../IDManager.h"
 #include "RigidBody.h"
 #include "ColliderSummery.h"
@@ -92,7 +92,9 @@ public:
 	RigidBody& GetRigidBody() { return m_rb; }
 
 	//タイプ・タグ
+	ColliderShape& GetShape()const  { return *m_shape; }
 	ColliderType GetType() const { return m_shape->GetType(); }
+
 	float GetRadius() const { return m_shape->GetRadius(); }
 	Vector3 GetHalfExtents() const { return m_shape->GetHalfExtents(); }
 

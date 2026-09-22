@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="BattleManager.cpp" />
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\CameraManager.cpp" />
     <ClCompile Include="Camera\CameraState\BossAppearCamera.cpp" />
@@ -183,6 +184,7 @@
     <ClCompile Include="Collider\ColliderShape.cpp" />
     <ClCompile Include="DataLoader\DataManager.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="IDManager.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Managers\CollisionChecker.cpp" />
@@ -202,6 +204,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
+    <ClInclude Include="BattleManager.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Camera\CameraManager.h" />
     <ClInclude Include="Camera\CameraState\BossAppearCamera.h" />
@@ -244,6 +247,7 @@
     <ClInclude Include="DataLoader\DataManager.h" />
     <ClInclude Include="DataLoader\PlayerAnimData.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="IDManager.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Managers\CollisionChecker.h" />
     <ClInclude Include="Managers\CollisionManager.h" />

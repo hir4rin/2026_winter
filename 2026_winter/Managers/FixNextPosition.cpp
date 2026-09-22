@@ -1,6 +1,8 @@
 ﻿#include "FixNextPosition.h"
 #include "FixNextPosition.h"
 #include "../Collider/Collider.h"
+#include "../Collider/PolygonShape.h"
+#include "../Collider/CapsuleShape.h"
 #include "../Stage/Stage.h"
 #include <algorithm>
 
@@ -138,7 +140,7 @@ void FixNextPosition::FixNextPosSS(Collider& colA, Collider& colB)
 
 void FixNextPosition::FixNextPosSP(Collider& colA, Collider& colB)
 {
-	auto polygonCol = dynamic_cast<Stage*>(&colB);
+	auto polygonCol = dynamic_cast<PolygonShape*>(&colB.GetShape());
 
 	//当たったポリゴンの情報
 	auto& hitDim = polygonCol->GetHitDim();
@@ -219,14 +221,161 @@ void FixNextPosition::FixNextPosSB(Collider& colA, Collider& colB)
 
 void FixNextPosition::FixNextPosCS(Collider& colA, Collider& colB)
 {
+	auto capsuleA = dynamic_cast<CapsuleShape*>(&colA.GetShape());
+
+	//AからBへのベクトル
+	Vector3 AToB = colB.GetNextPos() - capsuleA->GetNearPos();
+
+	//最短距離
+	float shortDis = capsuleA->GetRadius() + colB.GetRadius();
+
+	//どのくらい重なっているか
+	float overlap = shortDis - AToB.Magnitude();
+	overlap = std::clamp(overlap, 0.0f, shortDis);
+	overlap += kOverlapGap;//余分に足しておく
+
+	colA.m_rb.m_vel += AToB.Normalize() * -overlap * 0.5f;
+	colB.m_rb.m_vel += AToB.Normalize() * overlap * 0.5f;
+
 }
 
 void FixNextPosition::FixNextPosCC(Collider& colA, Collider& colB)
 {
+
+	auto capsuleA = dynamic_cast<CapsuleShape*>(&colA.GetShape());
+	auto capsuleB = dynamic_cast<CapsuleShape*>(&colB.GetShape());
+
+	//AからBへのベクトル
+	Vector3 AToB = capsuleB->GetNearPos() - capsuleA->GetNearPos();
+	//最短距離
+	float shortDis = capsuleA->GetRadius() + capsuleB->GetRadius();
+	//どのくらい重ねっているか
+	float overlap = shortDis - AToB.Magnitude();
+	overlap = std::clamp(overlap, 0.0f, shortDis);
+	overlap += kOverlapGap;
+
+	//横方向にだけ動かしたいので
+	AToB.y = 0.0f;
+
+	colA.m_rb.m_vel += AToB.Normalize() * -overlap * 0.5f;
+	colB.m_rb.m_vel += AToB.Normalize() * overlap * 0.5f;
+
 }
 
 void FixNextPosition::FixNextPosCP(Collider& colA, Collider& colB)
 {
+	auto capsule = dynamic_cast<CapsuleShape*>(&colA.GetShape());
+	auto polygon = dynamic_cast<PolygonShape*>(&colB.GetShape());
+
+	//CCDで判定しているなら
+	if (polygon->IsCCD())
+	{
+		//当たったポリゴンの情報
+		auto lineHit = polygon->GetLineHit();
+
+		//壁なのか床なのかを見る
+		//法線のY成分が大きければ床、小さければ壁
+		//壁のとき
+		if (abs(lineHit.Normal.y) < kWallThreshold)
+		{
+			//高さを保存
+			float nextY = colA.GetNextPos().y;
+
+			//次の位置
+			Vector3 nextPos = lineHit.HitPosition;
+			nextPos += Vector3(lineHit.Normal) * (capsule->GetRadius() + kOverlapGap);
+
+			//始点から終点へのベクトル
+			Vector3 StaartToEnd = (colA.GetNextPos() + capsule->GetEndPos()) - colA.GetNextPos();
+
+
+			//座標確定
+			colA.m_rb.m_pos = nextPos;
+			colA.m_rb.m_pos.y = nextY;
+			
+			//移動量をリセット
+			colA.m_rb.m_vel = Vector3();
+		}
+		//床の時
+		else
+		{
+			if (lineHit.Normal.y > 0.0f)
+			{
+				//次の位置
+				Vector3 nextPos = lineHit.HitPosition;
+				nextPos.x = 0.0f;
+				nextPos.z = 0.0f;
+				nextPos.y += capsule->GetRadius() + kOverlapGap;
+
+				//始点から終点へのベクトル
+				Vector3 StartToEnd = (colA.GetNextPos() + capsule->GetEndPos()) - colA.GetNextPos();
+
+				//座標確定
+				colA.m_rb.m_pos.y = nextPos.y;
+				//移動量をリセット
+				colA.m_rb.m_vel.y = 0.0f;
+			}
+		}
+		//CCDリセット
+		polygon->SetIsCCD(false);
+	}
+	//CCDではない、ふつうに当たったとき
+	else
+	{
+		//当たったポリゴンの情報
+		auto& hitDim = polygon->GetHitDim();
+
+		//カプセルの始点と終点の座標//startPosがY座標が上になるカプセル
+		Vector3 endPos = colA.GetNextPos();//終点が座標
+		Vector3 startPos = endPos + capsule->GetEndPos();//始点がオフセット
+
+		//始点のほうが、終点より低い位置にあるなら入れ替える
+		if (startPos.y < endPos.y)
+		{
+			Vector3 savePos = endPos;
+			endPos = startPos;
+			startPos = savePos;
+		}
+		float radius = capsule->GetRadius();
+
+		//床ポリゴンと壁ポリゴンに分ける
+		AnalyzeWallAndFloor(hitDim, endPos);
+
+		//床か天井に当たったか
+		bool isFloorAndRoof = !m_floorAndRoof.empty();
+		//壁に当たったか
+		bool isWall = !m_wall.empty();
+
+		//床と当たったら
+		if (isFloorAndRoof)
+		{
+			//ジャンプしているなら
+			if (colA.m_rb.m_vel.y > 0.0f)
+			{
+				HitRoofCP(colA, startPos, radius);
+			}
+			else
+			{
+				//床の高さに合わせる
+				HitFloorCP(colA, endPos, startPos, radius);
+			}
+		}
+		//壁と当たっているなら
+		if (isWall)
+		{
+			//壁に当たっているので、trueにする
+			colA.SetIsWall(true);
+			//補正ベクトルを返す
+			Vector3 overlapVec = HitWallCP(startPos, endPos, radius);
+
+			//ベクトルを補正
+			colA.m_rb.m_vel += overlapVec;
+		}
+		// 検出したプレイヤーの周囲のポリゴン情報を開放する
+		DxLib::MV1CollResultPolyDimTerminate(hitDim);
+	}
+
+
 }
 
 void FixNextPosition::AnalyzeWallAndFloor(MV1_COLL_RESULT_POLY_DIM hitDim, const Vector3& nextPos)
@@ -320,14 +469,177 @@ Vector3 FixNextPosition::OverlapVecSP(const Vector3& nextPos, std::vector<MV1_CO
 
 Vector3 FixNextPosition::HitWallCP(const Vector3& headPos, const Vector3& legPos, float shortDistance)
 {
-	return Vector3();
+	//垂線を下ろして近い点を探して最短距離を求める
+	float hitShortDis = shortDistance;
+
+	Vector3 top = headPos;
+	top.y += shortDistance;
+	Vector3 bot = legPos;
+	bot.y -= shortDistance;
+
+	//法線
+	Vector3 norm = Vector3();
+	for (auto& wall : m_wall)
+	{
+		//壁かチェック
+		if (abs(wall.Normal.y) >= kWallThreshold)continue;
+		VECTOR pos1 = wall.Position[0];
+		VECTOR pos2 = wall.Position[1];
+		VECTOR pos3 = wall.Position[2];
+
+		//最短距離の2乗を返す
+		float dis = Segment_Triangle_MinLength_Square(top.ToDxLibVector(), bot.ToDxLibVector(), pos1, pos2, pos3);
+		//平方根を返す
+		dis = sqrtf(dis);
+
+		//初回または前回より距離が短いなら
+		if (hitShortDis > dis)
+		{
+			//現状の最短
+			hitShortDis = dis;
+			//法線
+			norm = wall.Normal;
+		}
+	}
+	//押し戻し
+	//どれくらい押し戻すか
+	float overlap = shortDistance - hitShortDis;
+	overlap = std::clamp(overlap, 0.0f, shortDistance);
+	overlap += kOverlapGap;
+	
+
+	return norm.Normalize() * overlap;
 }
 
-Vector3 FixNextPosition::HitFloorCP(Collider& other, const Vector3& legPos, const Vector3& headPos, float shortDistance)
+bool FixNextPosition::HitFloorCP(Collider& other, const Vector3& legPos, const Vector3& headPos, float shortDistance)
 {
-	return Vector3();
+	//足の真下にある床の中で最も高いY
+	float finalFloorY = -FLT_MAX;
+	bool hitFloor = false;
+
+	//足の真下レイ(下方向)
+	Vector3 rayStart = legPos;
+	Vector3 rayEnd = rayStart + Vector3(0.0f, kCheckUnder, 0.0f);
+
+	for (auto& floor : m_floorAndRoof)
+	{
+		//下向き法線なら床ではない
+		if (floor.Normal.y < 0.0f)continue;
+
+		VECTOR pos1 = floor.Position[0];
+		VECTOR pos2 = floor.Position[1];
+		VECTOR pos3 = floor.Position[2];
+
+		//足の真下にあるポリゴンと交差チェック
+		HITRESULT_LINE res = HitCheck_Line_Triangle(rayStart.ToDxLibVector(), rayEnd.ToDxLibVector(), pos1, pos2, pos3);
+
+		if (res.HitFlag)
+		{
+			float hitPosY = res.Position.y;
+
+			//より高い床を優先する//坂道で安定させるため
+			if (hitPosY > finalFloorY)
+			{
+				finalFloorY = hitPosY;
+				hitFloor = true;
+			}
+		}
+	}
+
+	if (hitFloor)
+	{
+		float newY = finalFloorY + shortDistance + kOverlapGap;
+
+		other.m_rb.m_pos.y = newY;
+		other.m_rb.m_vel.y = 0.0f;
+		other.SetIsFloor(true);
+
+		return true;
+	}
+
+	//足の真下に床が無かった場合キャラが坂の腹に刺さっている可能性あり
+	//headからleg のラインが床を貫通していないかチェック
+	float betweenY = -FLT_MAX;
+	bool hitBetween = false;
+
+	VECTOR head = headPos.ToDxLibVector();
+
+	for (auto& floor : m_floorAndRoof)
+	{
+		if (floor.Normal.y < 0.0f) continue;
+
+		VECTOR pos1 = floor.Position[0];
+		VECTOR pos2 = floor.Position[1];
+		VECTOR pos3 = floor.Position[2];
+
+		HITRESULT_LINE res = HitCheck_Line_Triangle(head, rayStart.ToDxLibVector(), pos1, pos2, pos3);
+
+		if (res.HitFlag)
+		{
+			if (res.Position.y > betweenY)
+			{
+				//間の床のY座標を保存
+				betweenY = res.Position.y;
+				hitBetween = true;
+			}
+		}
+	}
+
+	//headとlegの間でゆかが見つかった
+	if (hitBetween)
+	{
+		float newY = betweenY + shortDistance + kOverlapGap;
+
+		other.m_rb.m_pos.y = newY;
+		other.m_rb.m_vel.y = 0.0f;
+		other.SetIsFloor(true);
+		return true;
+	}
+
+	return false;
 }
 
 void FixNextPosition::HitRoofCP(Collider& other, const Vector3& headPos, float shortDistance)
 {
+
+	//垂線を下して近い点を探して最短距離を求める
+	float hitShortDis = shortDistance;
+	
+	//天井と当たったか
+	bool isHitRoof = false;
+	for (auto& roof : m_floorAndRoof)
+	{
+		//上向きの法線ベクトルなら飛ばす
+		if (roof.Normal.y > 0.0f)continue;
+		//頭の上にポリゴンがあるかチェック//線分とポリゴンの当たり判定
+		HITRESULT_LINE lineResult = HitCheck_Line_Triangle(headPos.ToDxLibVector(), VAdd(headPos.ToDxLibVector(), VGet(0.0f, kCheckTop, 0.0f)),
+			roof.Position[0], roof.Position[1], roof.Position[2]);
+
+		//上のポリゴンがあったら
+		if (lineResult.HitFlag)
+		{
+			//距離
+			float dis = VSize(VSub(lineResult.Position, headPos.ToDxLibVector()));
+			//初回または前回より距離が短いなら
+			if (dis <  hitShortDis)
+			{
+				isHitRoof = true;
+				//最短を更新
+				hitShortDis = dis;
+			}
+		}
+	}
+	//当たっているなら
+	if (isHitRoof)
+	{
+		//押し戻し
+		//どれくらい押し戻すか
+		float overlap = std::abs(shortDistance - hitShortDis);
+		overlap = std::clamp(overlap, 0.0f, shortDistance);
+		overlap += kOverlapGap;
+		//法線
+		Vector3 norm = Vector3(0.0f, -1.0f, 0.0f);
+		other.m_rb.m_vel += norm * overlap;
+	}
+
 }

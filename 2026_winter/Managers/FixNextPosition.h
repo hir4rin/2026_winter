@@ -63,7 +63,7 @@ private:
 	/// <summary>
 	/// 床の高さに合わせる処理 カプセル
 	/// </summary>
-	Vector3 HitFloorCP(Collider& other,const Vector3& legPos,const Vector3& headPos, float shortDistance);
+	bool HitFloorCP(Collider& other,const Vector3& legPos,const Vector3& headPos, float shortDistance);
 	/// <summary>
 	/// 天井に当たった時の処理 カプセル
 	/// </summary>

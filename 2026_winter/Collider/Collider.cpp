@@ -51,7 +51,7 @@ void Collider::ColInit(ColInitParam param)
 	SetID();
 
 	//コライダーをコリジョンマネージャーに登録する
-	//CollisionManager::GetInstance().RegisterCollider(shared_from_this());
+	CollisionManager::GetInstance().RegisterCollider(shared_from_this());
 }
 
 void Collider::SetID()

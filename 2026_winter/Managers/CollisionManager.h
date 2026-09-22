@@ -27,9 +27,9 @@ public:
 		static CollisionManager instance;
 		return instance;
 	}
-	//コライダーの登録・解除
-	void RegisterCollider(std::shared_ptr<Collider> collider);//shared_ptrを参照で渡すと、参照カウントが増えない
-	void ReleaseCollider(std::shared_ptr<Collider> collider);
+	//コライダーの登録・解除//所有権は呼び出し側が持ち続けること(CollisionManagerは弱参照のみ保持する)
+	void RegisterCollider(std::weak_ptr<Collider> collider);
+	void ReleaseCollider(std::weak_ptr<Collider> collider);
 	//初期化
 	void Init();
 	void SetStage(std::weak_ptr<Stage> stage);
@@ -54,8 +54,8 @@ private:
 	CollisionManager(const CollisionManager&) = delete;
 	CollisionManager& operator=(const CollisionManager&) = delete;
 
-	//すべてのコライダー
-	std::vector<std::shared_ptr<Collider>> m_colliders;
+	//すべてのコライダー//所有権は持たず、監視のみ行う
+	std::vector<std::weak_ptr<Collider>> m_colliders;
 	//std::vector<std::pair<Collider::Tags, CollisionCallback>> m_callbacks;//衝突時のコールバック関数のリスト//????//わからないから使わない
 
 	//後々、コライダーを停止、再開する機能を追加するかも

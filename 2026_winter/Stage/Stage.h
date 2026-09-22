@@ -18,9 +18,6 @@ public:
 	void OnCollision(Collider& other)override;
 	int GetStageModelHandle()const { return m_stageModelHandle;}
 
-	void SetHitDim(MV1_COLL_RESULT_POLY_DIM& dim) { m_hitDim = dim; }
-	MV1_COLL_RESULT_POLY_DIM& GetHitDim() { return m_hitDim; }
-
 	/// <summary>
 	/// ステージ制作モード(StageEditScene)で作ったCSVから、ステージ番号を指定してBOX配置を読み込む
 	/// ステージを増やす場合は、この関数を呼ぶstageNumberを変えるだけでよい
@@ -36,8 +33,7 @@ private:
 
 	int m_stageModelHandle;
 	int m_stageViewHandle;
-	//当たったポリゴンの情報
-	MV1_COLL_RESULT_POLY_DIM m_hitDim;
+
 
 	//CSVから読み込んだ、当たり判定のみのBOX配置(ステージ制作モードで作成したもの)
 	std::vector<std::shared_ptr<StageObject>> m_stageObjects;
