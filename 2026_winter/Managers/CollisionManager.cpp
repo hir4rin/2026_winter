@@ -1,7 +1,7 @@
 ﻿#include "CollisionManager.h"
 #include "../Collider/Collider.h"
 #include"../System.h"
-//#include "../Stage/Stage.h"
+#include "../Stage/Stage.h"
 #include <algorithm>
 #include <cassert>
 
@@ -97,7 +97,6 @@ void CollisionManager::Update()
 		{
 			std::shared_ptr<Collider> colliderA = m_colliders[i];
 			if (!colliderA->IsActive())continue;
-			//if (colliderA->GetTag() == Tags::StaticObject)continue;//静的オブジェクトがAの時無視
 
 			for (size_t j = i + 1; j < m_colliders.size(); j++)
 			{

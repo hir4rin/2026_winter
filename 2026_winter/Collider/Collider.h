@@ -9,6 +9,9 @@
 #include <memory>
 #include <vector>
 
+class Stage;
+
+
 class Collider : public std::enable_shared_from_this<Collider>
 {
 public:
@@ -78,7 +81,7 @@ public:
 	//IDのセット//子Colliderは別でidを持っているが親を持っているため、親のidも仕えるようにする設計にする
 	void SetID();
 	void ResetID(int ownerID);//コライダーを持っている場合は、その親のidをセットする//今回は使わない
-	//void SetStagePtr(std::weak_ptr<Stage> stage) { m_stage = stage; }//ステージへの弱参照をセット
+	void SetStagePtr(std::weak_ptr<Stage> stage) { m_stage = stage; }//ステージへの弱参照をセット
 	//--------------------------------------------------------------------------
 
 	//ID・自身への参照
@@ -91,6 +94,7 @@ public:
 	//タイプ・タグ
 	ColliderType GetType() const { return m_shape->GetType(); }
 	float GetRadius() const { return m_shape->GetRadius(); }
+	Vector3 GetHalfExtents() const { return m_shape->GetHalfExtents(); }
 
 	void SetTag(ColTag tag) { m_tag = tag; }
 	ColTag GetTag()const { return m_tag; }
@@ -146,7 +150,7 @@ protected:
 	float m_ownTimeScale = 1.0f;//自分のTimeScale
 	float m_timeCounter = 0.0f;//TimeScaleのカウンター
 
-	//std::weak_ptr<Stage> m_stage;//ステージへの弱参照//ステージとのレイキャスト用
+	std::weak_ptr<Stage> m_stage;//ステージへの弱参照//ステージとのレイキャスト用
 
 	std::vector<std::weak_ptr<Collider>> m_currentPressColliders;///現在触れているコライダーのリスト
 	std::vector<std::weak_ptr<Collider>> m_prevPressColliders;///前のフレームで触れていたコライダーのリスト

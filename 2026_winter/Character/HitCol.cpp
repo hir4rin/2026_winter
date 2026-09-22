@@ -1,5 +1,5 @@
 ﻿#include "HitCol.h"
-#include "CharacterBase.h"
+
 
 HitCol::HitCol(std::weak_ptr<CharacterBase> owner)
 	: m_owner(owner)
@@ -17,14 +17,16 @@ void HitCol::OnCollision(Collider& other)
 	//何もしない
 }
 
-//void HitCol::OnDamageInterFace(Collider& other, CharacterBase::AttackData& data)
-//{
-//	//所有者にデータを渡す
-//	auto owner = m_owner.lock();
-//	if (!owner)return;
-//
-//	owner->OnDamage(other, data);
-//}
+
+
+void HitCol::OnDamageInterFace(Collider& other, CharacterBase::AttackData& data)
+{
+	//所有者にデータを渡す
+	auto owner = m_owner.lock();
+	if (!owner)return;
+
+	owner->OnDamage(other, data);
+}
 
 void HitCol::SetTimeScaleInterFace(float timeScale, float time)
 {
@@ -41,5 +43,4 @@ void HitCol::ApplyPos()
 	//座標の更新
 	m_rb.m_pos = owner->GetRigidBody().GetPos();
 
-	////m_pos = owner->GetPos();
 }

@@ -1,7 +1,7 @@
 ﻿#include "FixNextPosition.h"
 #include "FixNextPosition.h"
 #include "../Collider/Collider.h"
-//#include "../Stage/Stage.h"
+#include "../Stage/Stage.h"
 #include <algorithm>
 
 namespace
@@ -138,83 +138,83 @@ void FixNextPosition::FixNextPosSS(Collider& colA, Collider& colB)
 
 void FixNextPosition::FixNextPosSP(Collider& colA, Collider& colB)
 {
-	//auto polygonCol = dynamic_cast<Stage*>(&colB);
+	auto polygonCol = dynamic_cast<Stage*>(&colB);
 
-	////当たったポリゴンの情報
-	//auto& hitDim = polygonCol->GetHitDim();
+	//当たったポリゴンの情報
+	auto& hitDim = polygonCol->GetHitDim();
 
-	////球の座標
-	//Vector3 posA = colA.GetNextPos();
+	//球の座標
+	Vector3 posA = colA.GetNextPos();
 
-	////床ポリゴンと壁ポリゴンに分ける
-	//AnalyzeWallAndFloor(hitDim, posA);
-	//
-	////床か天井に当たったか
-	//bool isFloorAndRoofHit = !m_floorAndRoof.empty();
-	////壁に当たったか
-	//bool isWall = !m_wall.empty();
+	//床ポリゴンと壁ポリゴンに分ける
+	AnalyzeWallAndFloor(hitDim, posA);
+	
+	//床か天井に当たったか
+	bool isFloorAndRoofHit = !m_floorAndRoof.empty();
+	//壁に当たったか
+	bool isWall = !m_wall.empty();
 
-	////床と当たったなら
-	//if (isFloorAndRoofHit)
-	//{
-	//	//補正するベクトルを返す
-	//	Vector3 overlapVec = OverlapVecSP(posA, m_floorAndRoof, colA.GetRadius());
-	//	//押し戻し
-	//	colA.m_vel += overlapVec;
-	//	//修正方向が上向きなら床
-	//	if (overlapVec.y > 0)
-	//	{
-	//		//床に当たっているというセット処理
-	//		colA.SetIsFloor(true);
-	//	}
-	//}
-	////壁と当たったなら
-	//if (isWall)
-	//{
-	//	//壁に当たっている
+	//床と当たったなら
+	if (isFloorAndRoofHit)
+	{
+		//補正するベクトルを返す
+		Vector3 overlapVec = OverlapVecSP(posA, m_floorAndRoof, colA.GetRadius());
+		//押し戻し
+		colA.m_rb.m_vel += overlapVec;
+		//修正方向が上向きなら床
+		if (overlapVec.y > 0)
+		{
+			//床に当たっているというセット処理
+			colA.SetIsFloor(true);
+		}
+	}
+	//壁と当たったなら
+	if (isWall)
+	{
+		//壁に当たっている
 
-	//	//補正するベクトルを返す
-	//	Vector3 overlapVec = OverlapVecSP(posA, m_wall, colA.GetRadius());
+		//補正するベクトルを返す
+		Vector3 overlapVec = OverlapVecSP(posA, m_wall, colA.GetRadius());
 
-	//	colA.m_vel += overlapVec;
-	//}
+		colA.m_rb.m_vel += overlapVec;
+	}
 
-	////検出したプレイヤーの周囲のポリゴン情報を解放
-	//MV1CollResultPolyDimTerminate(hitDim);
+	//検出したプレイヤーの周囲のポリゴン情報を解放
+	MV1CollResultPolyDimTerminate(hitDim);
 }
 
 void FixNextPosition::FixNextPosSB(Collider& colA, Collider& colB)
 {
-	////球の次の座標
-	//Vector3 spherePos = colA.GetNextPos();
-	////Boxの次の座標
-	//Vector3 boxPos = colB.GetNextPos();
-	////Boxの半分のサイズ
-	//Vector3 boxHalfExtents = colB.GetBoxHalfExtents();
+	//球の次の座標
+	Vector3 spherePos = colA.GetNextPos();
+	//Boxの次の座標
+	Vector3 boxPos = colB.GetNextPos();
+	//Boxの半分のサイズ
+	Vector3 boxHalfExtents = colB.GetHalfExtents();
 
-	////球の座標をBoxのローカル座標に変換
-	//Vector3 localSpherePos = spherePos - boxPos;
+	//球の座標をBoxのローカル座標に変換
+	Vector3 localSpherePos = spherePos - boxPos;
 
-	////Boxの範囲内に収まるように制限し、Box内で球の中心に一番近い点を求める
-	//Vector3 closestPoint;
-	//closestPoint.x = (std::max)(-boxHalfExtents.x, (std::min)(localSpherePos.x, boxHalfExtents.x));
-	//closestPoint.y = (std::max)(-boxHalfExtents.y, (std::min)(localSpherePos.y, boxHalfExtents.y));
-	//closestPoint.z = (std::max)(-boxHalfExtents.z, (std::min)(localSpherePos.z, boxHalfExtents.z));
+	//Boxの範囲内に収まるように制限し、Box内で球の中心に一番近い点を求める
+	Vector3 closestPoint;
+	closestPoint.x = (std::max)(-boxHalfExtents.x, (std::min)(localSpherePos.x, boxHalfExtents.x));
+	closestPoint.y = (std::max)(-boxHalfExtents.y, (std::min)(localSpherePos.y, boxHalfExtents.y));
+	closestPoint.z = (std::max)(-boxHalfExtents.z, (std::min)(localSpherePos.z, boxHalfExtents.z));
 
-	////最近接点から球の中心へ向かうベクトル
-	//Vector3 diff = localSpherePos - closestPoint;
-	//float distance = diff.Magnitude();
+	//最近接点から球の中心へ向かうベクトル
+	Vector3 diff = localSpherePos - closestPoint;
+	float distance = diff.Magnitude();
 
-	////距離が0の場合(球の中心がBoxの内部にある場合)は押し戻す方向が求まらないため何もしない
-	//if (distance == 0)return;
+	//距離が0の場合(球の中心がBoxの内部にある場合)は押し戻す方向が求まらないため何もしない
+	if (distance == 0)return;
 
-	////重なりの深さ　＝　球の半径　－　距離
-	//float overlap = colA.GetRadius() - distance;
-	//if (overlap > 0)
-	//{
-	//	//重なった分だけ押し戻す(密着を防ぐ隙間を追加)//Box側は動かさない
-	//	colA.m_vel += diff.Normalize() * (overlap + kOverlapGap);
-	//}
+	//重なりの深さ　＝　球の半径　－　距離
+	float overlap = colA.GetRadius() - distance;
+	if (overlap > 0)
+	{
+		//重なった分だけ押し戻す(密着を防ぐ隙間を追加)//Box側は動かさない
+		colA.m_rb.m_vel += diff.Normalize() * (overlap + kOverlapGap);
+	}
 }
 
 void FixNextPosition::FixNextPosCS(Collider& colA, Collider& colB)

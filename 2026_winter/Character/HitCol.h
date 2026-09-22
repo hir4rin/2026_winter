@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "../Collider/Collider.h"
+#include "CharacterBase.h"
 #include <memory>
 class CharacterBase;
 struct AttackData;
@@ -12,7 +13,7 @@ public:
 	virtual ~HitCol();
 
 	void OnCollision(Collider& other) override;
-	//void OnDamageInterFace(Collider& other, AttackData& data);//ダメージを受けた時の処理//HitColは何もしない
+	void OnDamageInterFace(Collider& other, CharacterBase::AttackData& data);//ダメージを受けた時の処理//HitColは何もしない
 	void SetTimeScaleInterFace(float timeScale, float time);//タイムスケールのセット//HitColは何もしない
 
 	void ApplyPos() override;

@@ -7,6 +7,7 @@
 #include "Camera/CameraManager.h"
 #include "DataLoader/DataManager.h"
 #include "Managers/CollisionManager.h"
+#include "Stage/Stage.h"
 #include "Input.h"
 #include "System.h"
 
@@ -42,9 +43,10 @@ SceneMain::SceneMain() :
 
 SceneMain::~SceneMain()
 {
-	//プレイヤーのコライダーをマネージャーから外してからモデルを解放する
+	//プレイヤー・ステージのコライダーをマネージャーから外してからモデルを解放する
 	CollisionManager::GetInstance().Terminate();
 	m_player.reset();
+	m_stage.reset();
 	if (m_lightHandle != -1)
 	{
 		DeleteLightHandle(m_lightHandle);
@@ -69,9 +71,18 @@ void SceneMain::Init()
 		handles[static_cast<AsyncData>(i)] = -1;
 	}
 	handles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath);
+	handles[AsyncData::TitleStageModel] = MV1LoadModel("data/Stage/TestStage/TestStage.mv1");
 	System::GetInstance().SetHandleData(handles);
 
 	CollisionManager::GetInstance().Init();
+	
+
+	//ステージの生成//当たり判定の初期化のみ行う(モデル・CSVの読み込みなどのデータ部分は別途対応する)
+	m_stage = std::make_shared<Stage>();
+	m_stage->Init();
+	m_stage->GameInit();
+	CollisionManager::GetInstance().RegisterCollider(m_stage);
+	CollisionManager::GetInstance().SetStage(m_stage);
 
 	//プレイヤーの生成
 	m_player = std::make_shared<Player>();
@@ -82,7 +93,7 @@ void SceneMain::Init()
 	CollisionManager::GetInstance().RegisterCollider(m_player);
 
 	//プレイヤー追従カメラ
-	m_cameraManager->Init(m_player);
+	m_cameraManager->Init(m_player, m_stage);
 }
 
 void SceneMain::Update()
@@ -91,6 +102,7 @@ void SceneMain::Update()
 
 	Input::GetInstance().Update();
 	m_player->Update(*m_camera);
+	m_stage->Update();
 	CollisionManager::GetInstance().Update();
 	m_cameraManager->Update(m_player->GetRigidBody().GetPos());
 }
@@ -100,6 +112,7 @@ void SceneMain::Draw()
 	DrawGrid();
 
 	m_player->Draw();
+	m_stage->Draw();
 
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
 }

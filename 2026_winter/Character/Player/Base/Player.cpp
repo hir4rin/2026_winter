@@ -3,6 +3,7 @@
 #include "PlayerStateIdle.h"
 #include "PlayerStateMove.h"
 #include "../Weapon.h"
+#include "HitCol.h"
 #include "../../../Camera/CameraManager.h"
 #include "../../../Camera/LockOnManager.h"
 #include "../../../DataLoader/DataManager.h"

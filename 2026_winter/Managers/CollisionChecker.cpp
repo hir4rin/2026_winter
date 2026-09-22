@@ -1,6 +1,6 @@
 ﻿#include "CollisionChecker.h"
 #include "../Collider/Collider.h"
-//#include "../Stage/Stage.h"
+#include "../Stage/Stage.h"
 #include <algorithm>
 
 CollisionChecker::CollisionChecker()
@@ -106,24 +106,23 @@ bool CollisionChecker::CheckColSB(Collider& colA, Collider& colB)
 {
 	//球とBOXの当たり判定
 	//球の中心座標
-	//Vector3 sphereCenter = colA.GetNextPos();
-	////BOXの中心座標
-	//Vector3 boxCenter = colB.GetNextPos();
-	////BOXの半分のサイズ
-	//Vector3 boxHalfExtents = colB.GetBoxHalfExtents();
-	////球の中心座標をBOXのローカル座標に変換
-	//Vector3 localSphereCenter = sphereCenter - boxCenter;
-	////球の中心座標をBOXの境界内に制限
-	//Vector3 closestPoint;
-	//closestPoint.x = (std::max)(-boxHalfExtents.x, (std::min)(localSphereCenter.x, boxHalfExtents.x));
-	//closestPoint.y = (std::max)(-boxHalfExtents.y, (std::min)(localSphereCenter.y, boxHalfExtents.y));
-	//closestPoint.z = (std::max)(-boxHalfExtents.z, (std::min)(localSphereCenter.z, boxHalfExtents.z));
-	////最も近い点と球の中心との距離を計算
-	//Vector3 distanceVector = localSphereCenter - closestPoint;
-	//float distanceSquared = distanceVector.sqMagnitude();
-	////距離が半径の2乗より小さい場合は当たっている
-	//return distanceSquared < (colA.GetRadius() * colA.GetRadius());
-	return false;
+	Vector3 sphereCenter = colA.GetNextPos();
+	//BOXの中心座標
+	Vector3 boxCenter = colB.GetNextPos();
+	//BOXの半分のサイズ
+	Vector3 boxHalfExtents = colB.GetHalfExtents();
+	//球の中心座標をBOXのローカル座標に変換
+	Vector3 localSphereCenter = sphereCenter - boxCenter;
+	//球の中心座標をBOXの境界内に制限
+	Vector3 closestPoint;
+	closestPoint.x = (std::max)(-boxHalfExtents.x, (std::min)(localSphereCenter.x, boxHalfExtents.x));
+	closestPoint.y = (std::max)(-boxHalfExtents.y, (std::min)(localSphereCenter.y, boxHalfExtents.y));
+	closestPoint.z = (std::max)(-boxHalfExtents.z, (std::min)(localSphereCenter.z, boxHalfExtents.z));
+	//最も近い点と球の中心との距離を計算
+	Vector3 distanceVector = localSphereCenter - closestPoint;
+	float distanceSquared = distanceVector.sqMagnitude();
+	//距離が半径の2乗より小さい場合は当たっている
+	return distanceSquared < (colA.GetRadius() * colA.GetRadius());
 }
 
 bool CollisionChecker::CheckCollCS(Collider& colA, Collider& colB)
@@ -144,37 +143,36 @@ bool CollisionChecker::CheckCollCCVerDxLib(Collider& colA, Collider& colB)
 
 bool CollisionChecker::CheckCollSP(Collider& colA, Collider& colB)
 {
-	//auto polygonCol = dynamic_cast<Stage*>(&colB);
+	auto polygonCol = dynamic_cast<Stage*>(&colB);
 
-	////当たっているポリゴンの数//第2引数の-1は、すべてのポリゴンをチェックするため
-	//auto hitDim = MV1CollCheck_Sphere(
-	//	polygonCol->GetStageModelHandle(),
-	//	-1,
-	//	colA.GetNextPos().ToDxLibVector(),
-	//	colA.GetRadius(),
-	//	-1
-	//);
-	//if (hitDim.HitNum <= 0)
-	//{
-	//	//検出したプレイヤーの周囲のポリゴン情報を解放する
-	//	//MV1CollCheck_Sphereで確保したメモリを動的に確保しているため、使用後は必ず解放する必要がある
-	//	MV1CollResultPolyDimTerminate(hitDim);
-	//	return false;
-	//}
+	//当たっているポリゴンの数//第2引数の-1は、すべてのポリゴンをチェックするため
+	auto hitDim = MV1CollCheck_Sphere(
+		polygonCol->GetStageModelHandle(),
+		-1,
+		colA.GetNextPos().ToDxLibVector(),
+		colA.GetRadius(),
+		-1
+	);
+	if (hitDim.HitNum <= 0)
+	{
+		//検出したプレイヤーの周囲のポリゴン情報を解放する
+		//MV1CollCheck_Sphereで確保したメモリを動的に確保しているため、使用後は必ず解放する必要がある
+		MV1CollResultPolyDimTerminate(hitDim);
+		return false;
+	}
 
-	//if (colA.m_isTrigger)
-	//{
-	//	//トリガーの場合は押し戻しを行わないので、ポリゴン情報を解放する
-	//	MV1CollResultPolyDimTerminate(hitDim);
-	//}
-	//else
-	//{
-	//	//当たり判定の押し戻し処理に使うので、保存&& ポリゴン情報をまだ開放しない
-	//	polygonCol->SetHitDim(hitDim);
-	//}
+	if (colA.m_isTrigger)
+	{
+		//トリガーの場合は押し戻しを行わないので、ポリゴン情報を解放する
+		MV1CollResultPolyDimTerminate(hitDim);
+	}
+	else
+	{
+		//当たり判定の押し戻し処理に使うので、保存&& ポリゴン情報をまだ開放しない
+		polygonCol->SetHitDim(hitDim);
+	}
 
-	//return true;
-	return false;
+	return true;
 }
 
 bool CollisionChecker::CheckCollCP(Collider& colA, Collider& colB)

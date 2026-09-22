@@ -194,6 +194,10 @@
     <ClCompile Include="Collider\RigidBody.cpp" />
     <ClCompile Include="SceneMain.cpp" />
     <ClCompile Include="Collider\SphereShape.cpp" />
+    <ClCompile Include="Stage\SkyBox.cpp" />
+    <ClCompile Include="Stage\Stage.cpp" />
+    <ClCompile Include="Stage\StageCsvIO.cpp" />
+    <ClCompile Include="Stage\StageObject.cpp" />
     <ClCompile Include="System.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -250,6 +254,12 @@
     <ClInclude Include="Collider\RigidBody.h" />
     <ClInclude Include="SceneMain.h" />
     <ClInclude Include="Collider\SphereShape.h" />
+    <ClInclude Include="Collider\PolygonShape.h" />
+    <ClInclude Include="Stage\SkyBox.h" />
+    <ClInclude Include="Stage\Stage.h" />
+    <ClInclude Include="Stage\StageCsvIO.h" />
+    <ClInclude Include="Stage\StageObject.h" />
+    <ClInclude Include="Stage\StageObjectData.h" />
     <ClInclude Include="System.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

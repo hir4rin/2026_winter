@@ -1,6 +1,8 @@
 ﻿#include "CharacterBase.h"
 #include "../Math/Matrix4x4.h"
+#include "hitCol.h"
 #include <cassert>
+
 
 namespace
 {

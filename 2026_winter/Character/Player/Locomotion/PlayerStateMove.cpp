@@ -32,7 +32,7 @@ void PlayerStateMove::Enter()
 	}
 	else
 	{
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Walk"), true, 1.0f);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Walk"), true, 0.7f);
 	}
 	//System::GetInstance().GetSoundManager().PlaySELoop("WalkSE");
 }

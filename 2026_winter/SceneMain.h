@@ -5,6 +5,7 @@
 class Player;
 class CameraManager;
 class Camera;
+class Stage;
 
 class SceneMain
 {
@@ -26,4 +27,5 @@ private:
 	std::shared_ptr<Player> m_player;
 	std::shared_ptr<CameraManager> m_cameraManager;
 	std::unique_ptr<Camera> m_camera;//Player::Updateに渡すだけ(実際のカメラはCameraManagerが制御する)
+	std::shared_ptr<Stage> m_stage;
 };
