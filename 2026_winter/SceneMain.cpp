@@ -1,4 +1,5 @@
 ﻿#include "SceneMain.h"
+#include "Scene/SceneController.h"
 #include "DxLib.h"
 #include <cmath>
 #include <unordered_map>
@@ -10,6 +11,7 @@
 #include "Stage/Stage.h"
 #include "Input.h"
 #include "System.h"
+#include "Game.h"
 
 namespace
 {
@@ -34,11 +36,19 @@ namespace
 	constexpr float kCameraNear = 100.0f;
 	constexpr float kCameraFar = 5000.0f;
 	const VECTOR kLightDir = { -1.0f, -1.0f, 1.0f };
+
+	//フェードにかけるフレーム数
+	constexpr int kFadeFrame = 30;
 }
 
-SceneMain::SceneMain() :
-	m_frameCount(0)
+SceneMain::SceneMain(SceneController& controller) :
+	Scene(controller),
+	m_frameCount(0),
+	m_fadeFrame(0)
 {
+	m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::NormalUpdate);
+	m_drawFunc = static_cast<DrawFunc_t>(&SceneMain::NormalDraw);
+	Init();
 }
 
 SceneMain::~SceneMain()
@@ -96,6 +106,28 @@ void SceneMain::Init()
 
 void SceneMain::Update()
 {
+	(this->*m_updateFunc)();
+}
+
+void SceneMain::Draw()
+{
+	(this->*m_drawFunc)();
+}
+
+void SceneMain::FadeInUpdate()
+{
+	NormalUpdate();
+	m_fadeFrame++;
+	if (m_fadeFrame >= kFadeFrame)
+	{
+		m_fadeFrame = 0;
+		m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::NormalUpdate);
+		m_drawFunc = static_cast<DrawFunc_t>(&SceneMain::NormalDraw);
+	}
+}
+
+void SceneMain::NormalUpdate()
+{
 	m_frameCount++;
 
 	Input::GetInstance().Update();
@@ -105,7 +137,24 @@ void SceneMain::Update()
 	m_cameraManager->Update(m_player->GetRigidBody().GetPos());
 }
 
-void SceneMain::Draw()
+void SceneMain::FadeOutUpdate()
+{
+	m_fadeFrame++;
+	if (m_fadeFrame >= kFadeFrame)
+	{
+		//TODO:次のシーンができたらここで切り替える
+		//m_controller.ResetScene<次のシーン>();
+		m_fadeFrame = kFadeFrame;
+	}
+}
+
+void SceneMain::FadeInDraw()
+{
+	NormalDraw();
+	DrawFade();
+}
+
+void SceneMain::NormalDraw()
 {
 	DrawGrid();
 
@@ -113,6 +162,25 @@ void SceneMain::Draw()
 	m_stage->Draw();
 	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
+}
+
+void SceneMain::FadeOutDraw()
+{
+	NormalDraw();
+	DrawFade();
+}
+
+void SceneMain::DrawFade()
+{
+	//フェードイン中は黒→透明、フェードアウト中は透明→黒
+	float rate = static_cast<float>(m_fadeFrame) / static_cast<float>(kFadeFrame);
+	if (m_updateFunc == static_cast<UpdateFunc_t>(&SceneMain::FadeInUpdate))
+	{
+		rate = 1.0f - rate;
+	}
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * rate));
+	DrawBox(0, 0, Game::kScreenWidth, Game::kScreenHeight, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 
 void SceneMain::DrawGrid()

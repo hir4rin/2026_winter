@@ -1,5 +1,6 @@
 ﻿#include "CollisionManager.h"
 #include "../Collider/Collider.h"
+#include "../Collider/CapsuleShape.h"
 #include"../System.h"
 #include "../Stage/Stage.h"
 #include <algorithm>
@@ -7,6 +8,11 @@
 
 namespace
 {
+	constexpr float kMinFloorNormalY = 0.5f;//これ以上なら床
+	constexpr float kGroundSnapDistance = 15.0f;//下り坂で離れる量の許容//playerの移動量に依存している
+	constexpr float kSnapOverlapGap = 1.0f;//少し離す
+
+
 	//weak_ptr同士が同じ実体を指しているかどうかを判定する(lockせずに比較できる)
 	bool IsSameOwner(const std::weak_ptr<Collider>& a, const std::weak_ptr<Collider>& b)
 	{
@@ -68,7 +74,7 @@ void CollisionManager::Init()
 void CollisionManager::SetStage(std::weak_ptr<Stage> stage)
 {
 	m_stage = stage;
-}	
+}
 
 void CollisionManager::Terminate()
 {
@@ -81,7 +87,7 @@ void CollisionManager::Update()
 	//PushBackの中でその処理をするのでいい
 
 	//Stageのポインタをセットする//絶対この辺もっといい方法ある
-	for(auto& weakCollider : m_colliders)
+	for (auto& weakCollider : m_colliders)
 	{
 		auto collider = weakCollider.lock();
 		if (!collider)continue;
@@ -89,7 +95,7 @@ void CollisionManager::Update()
 	}
 
 	//CollisionのUpdate(今は寿命カウント用)
-	for(auto& weakCollider  : m_colliders)
+	for (auto& weakCollider : m_colliders)
 	{
 		auto collider = weakCollider.lock();
 		if (!collider)continue;
@@ -117,6 +123,18 @@ void CollisionManager::Update()
 	//速度を足す
 	AddVelocity();
 
+	//前フレームの接地状態を保存して、いったん空中扱いにする
+	//押し戻しで床に当たればHitFloorCPがtrueに戻す
+	for (auto& weakCollider : m_colliders)
+	{
+		auto collider = weakCollider.lock();
+		if (!collider)continue;
+		//吸着スナップを行わないなら飛ばす
+		if (!collider->m_useGroundSnap)continue;
+		collider->m_wasFloor = collider->m_isFloor;
+		collider->m_isFloor = false;
+	}
+
 	for (int t = 0; t < 3; t++)
 	{
 		//すべてのコライダーの組み合わせをチェックする//当たっているかの確認かつ、速度をいじる
@@ -136,7 +154,7 @@ void CollisionManager::Update()
 				//静的オブジェクト同士の時無視
 				if (colliderA->GetTag().faction == Collider::Faction::StaticObject &&
 					colliderB->GetTag().faction == Collider::Faction::StaticObject)continue;
-			
+
 				//衝突判定//球と球、BoxとBox、CapsuleとCapsuleとかで分ける
 				if (m_collisionChecker->IsCollide(*colliderA, *colliderB))
 				{
@@ -177,16 +195,20 @@ void CollisionManager::Update()
 			auto prevCol = weakPrev.lock();
 			if (!prevCol)continue;
 			//当たっているコライダーに前フレームのコライダーが含まれていなければ、ExitTriggerの処理を呼ぶ
-			if(!ContainsCollider(collider->m_currentPressColliders, prevCol))
+			if (!ContainsCollider(collider->m_currentPressColliders, prevCol))
 			{
 				//ExitTriggerの処理
 				collider->OnTriggerExit(*prevCol);
 				prevCol->OnTriggerExit(*collider);
 			}
 		}
-			//更新
-			collider->m_prevPressColliders = collider->m_currentPressColliders;
+		//更新
+		collider->m_prevPressColliders = collider->m_currentPressColliders;
 	}
+
+
+	//床に当たらなかったものを真下の床に吸着させる
+	SnapToGround();
 
 
 	//ここで位置確定用の関数を読んで位置をおいておく
@@ -205,7 +227,7 @@ void CollisionManager::DebugDraw() const
 		auto collider = weakCollider.lock();
 		//アクティブなコライダーだけを描画する
 		if (collider && collider->IsActive())
-		collider->DebugDraw();
+			collider->DebugDraw();
 	}
 }
 
@@ -224,7 +246,7 @@ std::shared_ptr<Collider> CollisionManager::GetColliderById(int id) const
 	}
 
 	//見つからなかったらassert
-	if(!ansCol)
+	if (!ansCol)
 	{
 		assert(false && "GetColliderByIdで指定したidのコライダーが見つかりませんでした");
 	}
@@ -271,6 +293,53 @@ void CollisionManager::AddVelocity()
 		float timescale = System::GetInstance().GetTimeScale();
 		//ここですべてのコライダーに速度、timescaleをかける
 		colliderA->GetRigidBody().m_vel *= timescale * colliderA->GetTimeScale();
+	}
+}
+
+void CollisionManager::SnapToGround()
+{
+	auto stage = m_stage.lock();
+	if (!stage)return;
+
+	for (auto& weakCollider : m_colliders)
+	{
+		auto collider = weakCollider.lock();
+		if (!collider)continue;
+		if (!collider->IsActive())continue;
+		if (!collider->m_useGroundSnap)continue;
+		//前フレーム地面にいて、押し戻しで床に当たらなかったものだけ
+		if (!collider->m_wasFloor || collider->m_isFloor)continue;
+		//上昇中(ジャンプ)は吸着しない
+		if (collider->m_rb.m_vel.y > 0.0f)continue;
+
+		auto capsule = dynamic_cast<CapsuleShape*>(&collider->GetShape());
+		if (!capsule)continue;
+
+		//カプセルの足がわが球の中心(押し戻し後の次の座標)
+		Vector3 endPos = collider->GetNextPos();
+		Vector3 startPos = endPos + capsule->GetEndPos();
+		Vector3 legPos = (startPos.y < endPos.y) ? startPos : endPos;
+		float radius = capsule->GetRadius();
+
+		//坂の上でも届く長さ
+		float rayLength = radius / kMinFloorNormalY + kGroundSnapDistance;
+		Vector3 rayEnd = legPos + Vector3(0.0f, -rayLength, 0.0f);
+
+		auto hit = MV1CollCheck_Line(stage->GetStageModelHandle(), -1,
+		legPos.ToDxLibVector(), rayEnd.ToDxLibVector());
+			
+		//床がない→空中(m_isFloorはfalseのまま)
+		if (!hit.HitFlag)continue;
+		//壁ポリゴンは床扱いしない
+		if (hit.Normal.y < kMinFloorNormalY)continue;
+
+		//坂でもめり込まない高さ//normal.y = cosθ
+		float targetY = hit.HitPosition.y + radius / hit.Normal.y + kSnapOverlapGap;
+
+		//次の座標がtargetYになるように速度で補正する(ApplyPosで m_pos += m_vel される)
+		collider->m_rb.m_vel.y += targetY - legPos.y;
+		collider->m_isFloor = true;
+
 	}
 }
 

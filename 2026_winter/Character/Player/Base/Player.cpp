@@ -119,7 +119,8 @@ void Player::Init()
 		.isActive = true
 		});
 
-	
+	//地面への吸着を行う
+	SetUseGroundSnap(true);
 
 	//やられ判定の初期化
 	InitHitCol(GetWeakPtr());
@@ -691,6 +692,12 @@ void Player::ApplyPos()
 	//	}
 	//	MV1CollResultPolyDimTerminate(hitDim);
 	//}
+
+		//歩いて地面から離れたら落下ステートにする
+	if (IsLeftFloor())
+	{
+		ChangeState(std::make_shared<PlayerStateFall>(GetWeakPtr()));
+	}
 
 
 

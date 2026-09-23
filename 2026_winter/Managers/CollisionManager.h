@@ -65,6 +65,12 @@ private:
 	/// コライダーにtimeScaleを考慮した速度を加算する
 	/// </summary>
 	void AddVelocity();
+	/// <summary>
+	/// 押し戻しで床に当たらなかったコライダーを真下の床に吸着させる
+	/// 床がなければ空中扱いにする
+	/// </summary>
+	void SnapToGround();
+
 private:
 	//当たり判定のチェックを行うクラス
 	std::unique_ptr<CollisionChecker> m_collisionChecker;

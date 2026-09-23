@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Application.cpp" />
     <ClCompile Include="BattleManager.cpp" />
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\CameraManager.cpp" />
@@ -195,6 +196,8 @@
     <ClCompile Include="Math\Vector3.cpp" />
     <ClCompile Include="Collider\RigidBody.cpp" />
     <ClCompile Include="SceneMain.cpp" />
+    <ClCompile Include="Scene\Scene.cpp" />
+    <ClCompile Include="Scene\SceneController.cpp" />
     <ClCompile Include="Collider\SphereShape.cpp" />
     <ClCompile Include="Stage\SkyBox.cpp" />
     <ClCompile Include="Stage\Stage.cpp" />
@@ -204,6 +207,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
+    <ClInclude Include="Application.h" />
     <ClInclude Include="BattleManager.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Camera\CameraManager.h" />
@@ -257,6 +261,8 @@
     <ClInclude Include="Math\Vector3.h" />
     <ClInclude Include="Collider\RigidBody.h" />
     <ClInclude Include="SceneMain.h" />
+    <ClInclude Include="Scene\Scene.h" />
+    <ClInclude Include="Scene\SceneController.h" />
     <ClInclude Include="Collider\SphereShape.h" />
     <ClInclude Include="Collider\PolygonShape.h" />
     <ClInclude Include="Stage\SkyBox.h" />
