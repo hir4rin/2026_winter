@@ -12,6 +12,7 @@
 #include "../../../Math/Matrix4x4.h"
 #include "../../../Camera/Camera.h"
 #include "../../../Collider/SphereShape.h"
+#include "../../../Collider/CapsuleShape.h"
 //#include "../../../Stage/Stage.h"
 #include "../../../Input.h"
 #include "EffekseerForDXLib.h"
@@ -24,14 +25,15 @@
 
 namespace
 {
-	constexpr float kPlayerCenter = 100.0f;//プレイヤーの当たり判定の中心点までのy軸の距離
+	constexpr float kPlayerOffset = 40.0f;//かプセルの足のオフセット
+	constexpr float kPlayerHead = 120.0f;//カプセルの頭の高さ
 
 	constexpr float kArea1MaxZ = 1197;//エリア1のz座標の範囲//上側
 	constexpr float kArea2MaxZ = 5275;//エリア2のz座標の範囲//右側
 
 	const Vector3 kArea1EfPos = Vector3(105.0f, 0.0f, 1197.0f);
 
-	constexpr float kRadius = 80.0f;
+	constexpr float kRadius = 40.0f;
 	constexpr float kRadiusHit = 50.0f;
 
 	constexpr float kCameraShakePower = 2.5f;//カメラの揺れの強さ
@@ -111,16 +113,19 @@ void Player::Init()
 	//中心点、オフセット、半径、当たり判定のタイプ、タグ、当たり判定が有効かどうか
 	ColInit({
 		.pos = m_rb.m_pos,
-		.offset = Vector3(0, kPlayerCenter, 0),
-		.shape = std::make_unique<SphereShape>(kRadius),
+		.offset = Vector3(0, kPlayerOffset, 0),
+		.shape = std::make_unique<CapsuleShape>(Vector3(0,kPlayerHead,0),kRadius),
 		.tag = {Collider::Faction::Player, Collider::ColRole::None},
 		.isActive = true
 		});
+
+	
+
 	//やられ判定の初期化
 	InitHitCol(GetWeakPtr());
 	m_hitCol->ColInit({
 		.pos = m_rb.m_pos,
-		.offset = Vector3(0, kPlayerCenter, 0),
+		.offset = Vector3(0, 100.0f, 0),
 		.shape = std::make_unique<SphereShape>(kRadiusHit),
 		.tag = {Collider::Faction::Player, Collider::ColRole::Hit},
 		.isActive = true,

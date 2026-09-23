@@ -53,6 +53,12 @@ void Stage::GameInit()
 
 	// モデルのポリゴンの当たり判定を構築する(第二引数を-1にすると全てのポリゴンを対象にする)
 	MV1SetupCollInfo(m_stageModelHandle, -1);
+	auto polygonShape = dynamic_cast<PolygonShape*>(&GetShape());
+	if (polygonShape)
+	{
+		polygonShape->SetModelHandle(m_stageModelHandle);
+	}
+
 
 	MATRIX transmat = MGetTranslate(m_rb.m_pos.ToDxLibVector());
 	Matrix4x4 trans = Matrix4x4::FromDxLibMatrix(transmat);

@@ -1,6 +1,18 @@
 ﻿#pragma once
 #include <string>
 #include "Math/Vector3.h"
+
+/// <summary>
+/// ルートモーションをどう見た目から消すか
+/// どちらも「基準の高さより上に行った分を消す」のは同じで、基準をどのフレームから取るかが違う
+/// </summary>
+enum class RootMotionCancel
+{
+	None,//消さない
+	Up,//上昇を消す//基準は最初のフレーム(地上から飛び上がるアニメーション)
+	Down,//下降を消す//基準は最後のフレーム(空中から着地するアニメーション)
+};
+
 /// <summary>
 /// Animationクラス(アニメーションさせるものに持たせる)
 /// </summary>
@@ -40,14 +52,24 @@ public:
 	float GetNowAnimFrame();//現在のアニメーションのフレーム数を返す
 	float GetNowAnimFrame(const std::string& name);//指定したアニメーションの現在のフレーム数を返す
 
-	void SetRootMotionEnable(bool enable, int rootFrameIndex = 0);//ルートモーションの有効化を設定する//rootFrameIndexはルートモーションを適用するフレームのインデックス
-	Vector3 GetRootMotionDelta();//ルートモーションの移動量を返す//前フレームと現在のフレームのルート位置の差分を返す
+	/// <summary>
+	/// 現在のアニメーションのルートモーション(上下方向の移動)を見た目から消す
+	/// 現在のアニメーションがデタッチされる(ブレンドが終わる)と自動で無効になる
+	/// ChangeAnimの後に呼ぶこと
+	/// </summary>
+	/// <param name="mode">Up:上昇を消す Down:下降を消す None:解除</param>
+	/// <param name="frameName">ルートモーションが入っているフレーム名(このモデルはpelvis)</param>
+	void SetRootMotionEnable(RootMotionCancel mode, const char* frameName = "pelvis");
+	Vector3 GetRootMotionDelta();//見た目から消した上方向の移動量の、前フレームからの差分を返す(モデル空間)
 	MATRIX GetRootRotationDelta();//ルートモーションの回転量を返す//前フレームと現在のフレームのルート回転の差分を返す
 
 	//実際に使う最終フレームを返す//endFrameが負なら総フレーム数、総フレーム数を超える場合は総フレーム数に収める
 	float ResolveEndFrame(int modelHandle, int attachHandle, float endFrame);
 
 private:
+	void ApplyRootMotionCancel();//ルートフレームが基準の高さより上に行かないように上書きする
+	MATRIX GetParentChainMatrix(int frameIndex);//親フレームをたどって、フレームのローカル座標をモデル空間に変換する行列を返す
+
 	int m_modelHandle;//モデルのハンドル
 	int m_currentAnimHandle;//現在のアニメーションのハンドル
 	int m_prevAnimHandle;//前のアニメーションのハンドル
@@ -69,8 +91,12 @@ private:
 	float m_prevAnimTimeScale = 1.0f;//前のアニメーションの再生速度を管理するための変数
 
 	MATRIX m_prevRootMatrix;//前フレームのルート行列
-	int m_rootFrameIndex;//ルートフレームのインデックス
-	bool m_enableRootMotion;//ルートモーション有効フラグ
+	int m_rootFrameIndex = -1;//ルートフレームのインデックス
+	bool m_enableRootMotion = false;//ルートモーション有効フラグ
+	int m_rootMotionAnimHandle = -1;//ルートモーションを消す対象のアニメーションのアタッチハンドル
+	float m_rootBaseY = 0.0f;//基準にするルートフレームの高さ(モデル空間)//Upは最初のフレーム、Downは最後のフレーム
+	float m_prevRemovedY = 0.0f;//前フレームに見た目から消した上方向の移動量
+	Vector3 m_rootMotionDelta;//前フレームから消した量の差分
 
 };
 

@@ -374,7 +374,7 @@ bool CollisionChecker::CheckCollCP(Collider& colA, Collider& colB)
 		auto startLineHitDim = MV1CollCheck_Line(
 			polygon->GetModelHandle(),
 			-1,
-			colA.m_rb.GetPos().ToDxLibVector(),
+			colA.GetWorldPos().ToDxLibVector(),
 			posStart.ToDxLibVector()
 		);
 		//当たっていたら
@@ -389,7 +389,7 @@ bool CollisionChecker::CheckCollCP(Collider& colA, Collider& colB)
 		}
 		else
 		{
-			Vector3 endPos = colA.m_rb.GetPos() + capsule->GetEndPos();
+			Vector3 endPos = colA.GetWorldPos() + capsule->GetEndPos();
 			Vector3 nextEndPos = colA.GetNextPos() + capsule->GetEndPos();
 
 			auto endLineHitDim = MV1CollCheck_Line(

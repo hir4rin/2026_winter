@@ -115,8 +115,8 @@ public:
 	bool IsWall()const { return m_isWall; }
 
 	//座標・速度
-	Vector3 GetWorldCenter() const { return m_rb.m_pos + m_offset; }//ワールド座標での中心位置を返す//当たり判定の中心位置
-	Vector3 GetNextPos() const { return GetWorldCenter() + m_rb.m_vel; }//次のフレームでの座標を返す
+	Vector3 GetWorldPos() const { return m_rb.m_pos + m_offset; }//ワールド座標での中心位置を返す//当たり判定の中心位置
+	Vector3 GetNextPos() const { return GetWorldPos() + m_rb.m_vel; }//次のフレームでの座標を返す
 	//寿命
 	void SetLifeTimeLimited() { m_isLifeTimeLimited = true; }
 	bool GetIsLifeTimeLimited() const { return m_isLifeTimeLimited; }

@@ -27,7 +27,7 @@ void Collider::DebugDraw() const
 		break;
 	}
 
-	m_shape->DebugDraw(GetWorldCenter(), color); // switch(m_type)が丸ごと消える
+	m_shape->DebugDraw(GetWorldPos(), color); // switch(m_type)が丸ごと消える
 }
 
 void Collider::OnTriggerEnter(Collider& other)

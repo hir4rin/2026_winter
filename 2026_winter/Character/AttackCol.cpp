@@ -98,7 +98,8 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 	auto player = std::dynamic_pointer_cast<Player>(it);
 	if (!player)return;
 
-	if (other.GetTag().role == Collider::ColRole::Hit)
+	if (other.GetTag().role == Collider::ColRole::Hit &&
+		(other.GetTag().faction == Collider::Faction::Enemy || other.GetTag().faction == Collider::Faction::Boss))
 	{
 
 		int otherId = other.GetId();
@@ -236,6 +237,7 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 			m_hitIds.push_back(otherId);//当たったidのリストにotherのidを追加する
 		}
 	}
+	//敵やボス以外と当たったとき
 	else
 	{
 		// 当たっていた場合の処理//なにもしない

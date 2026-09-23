@@ -96,6 +96,8 @@ void Animation::Update(float ownTimeScale)
 
 		MV1SetAttachAnimTime(m_modelHandle, m_prevAnimHandle, m_prevAnimCount);//前のアニメーションのフレーム数を更新する
 	}
+	//アニメーションの時間を進めた後に、ルートモーションを見た目から消す
+	ApplyRootMotionCancel();
 }
 
 void Animation::AnimBlend(float ownTimeScale)
@@ -190,6 +192,8 @@ void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, boo
 	}
 	else
 	{
+		//古いモデルに残っているルートモーションの上書きを解除する
+		SetRootMotionEnable(RootMotionCancel::None);
 		// 違うモデルに切り替える前に、古いモデルのアニメーションを全てデタッチする
 		if (m_currentAnimHandle != -1)
 		{
@@ -243,28 +247,91 @@ float Animation::GetNowAnimFrame(const std::string& name)
 	return animFrame;
 }
 
-void Animation::SetRootMotionEnable(bool enable, int rootFrameIndex)
+void Animation::SetRootMotionEnable(RootMotionCancel mode, const char* frameName)
 {
-	m_enableRootMotion = enable;
-	m_rootFrameIndex = rootFrameIndex;
-	m_prevRootMatrix = MV1GetFrameLocalMatrix(m_modelHandle, m_rootFrameIndex);//ルートフレームの行列を保存する
+	//前の上書きが残っていたら解除する
+	if (m_enableRootMotion && m_rootFrameIndex >= 0)
+	{
+		MV1ResetFrameUserLocalMatrix(m_modelHandle, m_rootFrameIndex);
+	}
+	m_enableRootMotion = false;
+	m_rootMotionDelta = Vector3();
+	m_prevRemovedY = 0.0f;
+	if (mode == RootMotionCancel::None)return;
+
+	m_rootFrameIndex = MV1SearchFrame(m_modelHandle, frameName);
+	if (m_rootFrameIndex < 0)return;//フレームが見つからなければ何もしない
+
+	m_enableRootMotion = true;
+	m_rootMotionAnimHandle = m_currentAnimHandle;//今アタッチしているアニメーションが対象
+
+	//基準にするフレーム//Up:最初のフレーム(立っている高さ) Down:最後のフレーム(着地して立った高さ)
+	//どちらも基準より下の動き(しゃがみ込み、着地の沈み込みなど)は残す
+	float baseFrame = 0.0f;
+	if (mode == RootMotionCancel::Down)
+	{
+		baseFrame = ResolveEndFrame(m_modelHandle, m_currentAnimHandle, m_endFrame);
+		//endFrameの指定がないときは総フレーム数になるが、最後のキーはループ用に先頭の姿勢に戻っていることがあるので1フレーム手前を使う
+		if (m_endFrame < 0.0f)baseFrame = (std::max)(0.0f, baseFrame - 1.0f);
+	}
+
+	//アニメーションの時間を一瞬だけ基準フレームにして高さを取り、元に戻す
+	float nowFrame = MV1GetAttachAnimTime(m_modelHandle, m_currentAnimHandle);
+	MV1SetAttachAnimTime(m_modelHandle, m_currentAnimHandle, baseFrame);
+	VECTOR baseLocalPos = MV1GetAttachAnimFrameLocalPosition(m_modelHandle, m_currentAnimHandle, m_rootFrameIndex);
+	MV1SetAttachAnimTime(m_modelHandle, m_currentAnimHandle, nowFrame);
+
+	m_rootBaseY = VTransform(baseLocalPos, GetParentChainMatrix(m_rootFrameIndex)).y;
 }
 
 Vector3 Animation::GetRootMotionDelta()
 {
-	if (!m_enableRootMotion)return Vector3();//ルートモーションが無効なときは、移動量を0にする
+	return m_rootMotionDelta;
+}
 
-	MATRIX currentRootMatrix = MV1GetFrameLocalMatrix(m_modelHandle, m_rootFrameIndex);//現在のルートフレームの行列を取得する
+void Animation::ApplyRootMotionCancel()
+{
+	if (!m_enableRootMotion)return;
 
-	//移動量の計算
-	float deltaX = currentRootMatrix.m[3][0] - m_prevRootMatrix.m[3][0];//現在のルート位置と前のルート位置の差分を計算する
-	float deltaY = currentRootMatrix.m[3][1] - m_prevRootMatrix.m[3][1];
-	float deltaZ = currentRootMatrix.m[3][2] - m_prevRootMatrix.m[3][2];
+	//対象のアニメーションがデタッチされた(ブレンドも終わった)ら無効にする
+	if (m_rootMotionAnimHandle != m_currentAnimHandle && m_rootMotionAnimHandle != m_prevAnimHandle)
+	{
+		SetRootMotionEnable(RootMotionCancel::None);
+		return;
+	}
 
-	Vector3 delta = Vector3(deltaX, deltaY, deltaZ);
-	m_prevRootMatrix = currentRootMatrix;//現在のルート行列を保存する
+	//上書きを一旦外して、ブレンド込みのアニメーションの行列を取得する
+	MV1ResetFrameUserLocalMatrix(m_modelHandle, m_rootFrameIndex);
+	MATRIX localMat = MV1GetFrameLocalMatrix(m_modelHandle, m_rootFrameIndex);
 
-	return delta;
+	//ローカル座標をモデル空間に変換して、上方向(Y)を見る//FBX(Z上)からの軸の違いをここで吸収する
+	MATRIX parentMat = GetParentChainMatrix(m_rootFrameIndex);
+	VECTOR modelPos = VTransform(VGet(localMat.m[3][0], localMat.m[3][1], localMat.m[3][2]), parentMat);
+
+	//基準より上に行った分だけ消す
+	float removedY = (std::max)(0.0f, modelPos.y - m_rootBaseY);
+	modelPos.y -= removedY;
+
+	//モデル空間からローカル座標に戻して、行列の移動成分を差し替え
+	VECTOR localPos = VTransform(modelPos, MInverse(parentMat));
+	localMat.m[3][0] = localPos.x;
+	localMat.m[3][1] = localPos.y;
+	localMat.m[3][2] = localPos.z;
+	MV1SetFrameUserLocalMatrix(m_modelHandle, m_rootFrameIndex, localMat);
+
+	m_rootMotionDelta = Vector3(0.0f, removedY - m_prevRemovedY, 0.0f);
+	m_prevRemovedY = removedY;
+}
+
+MATRIX Animation::GetParentChainMatrix(int frameIndex)
+{
+	MATRIX mat = MGetIdent();
+	//DxLibは行ベクトルなので、子→親の順に掛ける
+	for (int parent = MV1GetFrameParent(m_modelHandle, frameIndex); parent >= 0; parent = MV1GetFrameParent(m_modelHandle, parent))
+	{
+		mat = MMult(mat, MV1GetFrameLocalMatrix(m_modelHandle, parent));
+	}
+	return mat;
 }
 
 MATRIX Animation::GetRootRotationDelta()

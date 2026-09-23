@@ -37,6 +37,11 @@ namespace
 	constexpr float kNearbyEnemyRangeMultiplier = 2.0f;//近くの敵を集める範囲(ロックオン範囲の倍率)
 
 	constexpr int kSkillAttackGaugeCost = 20;//スキル攻撃に移行/コンボする際に消費するスキルゲージ量
+
+	//アニメーションの上昇(ルートモーション)を見た目から消す攻撃//ComboChain.csvのindex(切り上げ攻撃)
+	//ComboIndex::upAttackはCSVとずれているので、CSVの値を直接使う
+	constexpr int kRootMotionCancelComboIndex = 8;
+	//アニメーションの下降を見た目から消すときは、SetRootMotionEnable(RootMotionCancel::Down)を使う
 }
 
 
@@ -72,6 +77,12 @@ void PlayerStateAttack::Enter()
 	//モデルハンドルの取得//攻撃モデルか通常モデルかで切り替える
 	int modelHandle = (node.modelType == 0) ? player->m_modelHandle : player->m_attackModelHandle;
 	player->m_anim.ChangeAnimWithModelHandle(modelHandle, node.animName, false, 0.8f, node.endFrame);
+	//切り上げ攻撃は、上昇をプログラム(moveSpeedY)で行うので、アニメーションの上昇を見た目から消す
+	//アニメーションが切り替わってブレンドが終わると、Animation側で自動的に解除される
+	if (node.index == kRootMotionCancelComboIndex)
+	{
+		player->m_anim.SetRootMotionEnable(RootMotionCancel::Up);
+	}
 
 	//切り上げ攻撃の時は、足元にエフェクトを出す(座標更新は不要、出すだけでいい)
 	if (node.index == ComboIndex::upAttack)

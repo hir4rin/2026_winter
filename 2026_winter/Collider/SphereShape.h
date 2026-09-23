@@ -12,7 +12,7 @@ public:
 
 	void DebugDraw(const Vector3& center, unsigned int color) const override
 	{
-		DrawSphere3D(center.ToDxLibVector(), m_radius, 16, color, color, true);
+		DrawSphere3D(center.ToDxLibVector(), m_radius, 16, color, color, false);
 	}
 
 private:

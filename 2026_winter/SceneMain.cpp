@@ -81,7 +81,6 @@ void SceneMain::Init()
 	m_stage = std::make_shared<Stage>();
 	m_stage->Init();
 	m_stage->GameInit();
-	CollisionManager::GetInstance().RegisterCollider(m_stage);
 	CollisionManager::GetInstance().SetStage(m_stage);
 
 	//プレイヤーの生成
@@ -90,7 +89,6 @@ void SceneMain::Init()
 	m_camera = std::make_unique<Camera>();
 	m_player->SetCameraManager(m_cameraManager);
 	m_player->Init();
-	CollisionManager::GetInstance().RegisterCollider(m_player);
 
 	//プレイヤー追従カメラ
 	m_cameraManager->Init(m_player, m_stage);
@@ -113,7 +111,7 @@ void SceneMain::Draw()
 
 	m_player->Draw();
 	m_stage->Draw();
-
+	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
 }
 

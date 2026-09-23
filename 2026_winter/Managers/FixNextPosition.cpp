@@ -98,8 +98,8 @@ void FixNextPosition::FixNextPos(Collider& colA, Collider& colB)
 void FixNextPosition::FixNextPosSS(Collider& colA, Collider& colB)
 {
 	//otherから自分へのベクトル//velを足した値
-	Vector3 centerA = colA.GetWorldCenter() + colA.m_rb.GetVel();//自分の当たり判定の中心の座標
-	Vector3 centerB = colB.GetWorldCenter() + colB.m_rb.GetVel();//相手の当たり判定の中心の座標
+	Vector3 centerA = colA.GetWorldPos() + colA.m_rb.GetVel();//自分の当たり判定の中心の座標
+	Vector3 centerB = colB.GetWorldPos() + colB.m_rb.GetVel();//相手の当たり判定の中心の座標
 
 	auto AToBVec = (centerB - centerA);
 	AToBVec.y = 0.0f;//Y軸の成分を0にする//水平面でのベクトルにする
@@ -291,7 +291,7 @@ void FixNextPosition::FixNextPosCP(Collider& colA, Collider& colB)
 
 			//座標確定
 			colA.m_rb.m_pos = nextPos;
-			colA.m_rb.m_pos.y = nextY;
+			colA.m_rb.m_pos.y = nextY - colA.m_offset.y;
 			
 			//移動量をリセット
 			colA.m_rb.m_vel = Vector3();
@@ -311,7 +311,7 @@ void FixNextPosition::FixNextPosCP(Collider& colA, Collider& colB)
 				Vector3 StartToEnd = (colA.GetNextPos() + capsule->GetEndPos()) - colA.GetNextPos();
 
 				//座標確定
-				colA.m_rb.m_pos.y = nextPos.y;
+				colA.m_rb.m_pos.y = nextPos.y - colA.m_offset.y;
 				//移動量をリセット
 				colA.m_rb.m_vel.y = 0.0f;
 			}
@@ -550,7 +550,7 @@ bool FixNextPosition::HitFloorCP(Collider& other, const Vector3& legPos, const V
 	{
 		float newY = finalFloorY + shortDistance + kOverlapGap;
 
-		other.m_rb.m_pos.y = newY;
+		other.m_rb.m_pos.y = newY - other.m_offset.y;
 		other.m_rb.m_vel.y = 0.0f;
 		other.SetIsFloor(true);
 
@@ -590,7 +590,7 @@ bool FixNextPosition::HitFloorCP(Collider& other, const Vector3& legPos, const V
 	{
 		float newY = betweenY + shortDistance + kOverlapGap;
 
-		other.m_rb.m_pos.y = newY;
+		other.m_rb.m_pos.y = newY - other.m_offset.y;
 		other.m_rb.m_vel.y = 0.0f;
 		other.SetIsFloor(true);
 		return true;
