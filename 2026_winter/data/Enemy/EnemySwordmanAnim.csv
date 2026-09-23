@@ -1,0 +1,11 @@
+#key,animName
+Idle,Player|Player|Idle
+Run,Player|Run
+StrafeRight,Player|strafe_right
+StrafeLeft,Player|strafe_left
+Back,Player|dodge_bac
+Attack,Player|Attack
+Hit,Player|hit
+Kirimomi,Player|kirimomi
+Kirimomi2,Player|kirimomi2
+Death,Player|Die

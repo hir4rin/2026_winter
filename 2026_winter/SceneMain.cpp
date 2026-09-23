@@ -4,6 +4,7 @@
 #include <cmath>
 #include <unordered_map>
 #include "Character/Player/Base/Player.h"
+#include "Character/Enemy/EnemySwordman.h"
 #include "Camera/Camera.h"
 #include "Camera/CameraManager.h"
 #include "DataLoader/DataManager.h"
@@ -37,6 +38,9 @@ namespace
 
 	//フェードにかけるフレーム数
 	constexpr int kFadeFrame = 30;
+
+	//敵の出現位置
+	const Vector3 kEnemyStartPos = Vector3(0.0f, 0.0f, 500.0f);
 }
 
 SceneMain::SceneMain(SceneController& controller) :
@@ -54,6 +58,7 @@ SceneMain::~SceneMain()
 	//プレイヤー・ステージのコライダーをマネージャーから外してからモデルを解放する
 	CollisionManager::GetInstance().Terminate();
 	m_player.reset();
+	m_enemy.reset();
 	m_stage.reset();
 	if (m_lightHandle != -1)
 	{
@@ -87,6 +92,10 @@ void SceneMain::Init()
 	m_camera = std::make_unique<Camera>();
 	m_player->SetCameraManager(m_cameraManager);
 	m_player->Init();
+
+	//敵の生成
+	m_enemy = std::make_shared<EnemySwordman>(m_player, kEnemyStartPos);
+	m_enemy->Init();
 
 	m_battleManager = std::make_shared<BattleManager>();
 	System::GetInstance().SetBattleMgr(m_battleManager);
@@ -124,6 +133,7 @@ void SceneMain::NormalUpdate()
 	Input::GetInstance().SetInputBlocked(m_battleManager->GetIsEventPlaying());
 	Input::GetInstance().Update();
 	m_player->Update(*m_camera);
+	m_enemy->Update();
 	m_stage->Update();
 	CollisionManager::GetInstance().Update();
 	m_cameraManager->Update(m_player->GetRigidBody().GetPos());
@@ -151,6 +161,7 @@ void SceneMain::NormalDraw()
 	DrawGrid();
 
 	m_player->Draw();
+	m_enemy->Draw();
 	m_stage->Draw();
 	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);

@@ -14,6 +14,12 @@ LockOnManager::~LockOnManager()
 
 void LockOnManager::SetTargetEnemy(int id)
 {
+	//一旦早期return---------------------------------
+	return;
+
+
+
+
 	//idで指定したEnemyをターゲットにする
 	auto enemy = CollisionManager::GetInstance().GetColliderById(id);
 	if (!enemy)

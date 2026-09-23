@@ -7,9 +7,12 @@
 namespace
 {
 	//プレイヤーのモデル
-	const char* const kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
+	const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
+
+	const std::string kEnemyModelpath = "data/Enemy/sasakiPlayer.mv1";
+
 	//ステージのモデル
-	const char* const kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
+	const std::string kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
 }
 
 void System::LoadAll()
@@ -22,8 +25,9 @@ void System::LoadAll()
 
 	SetUseASyncLoadFlag(TRUE);//ここから下の読み込みは非同期になる
 
-	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath);
-	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath);
+	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath.c_str());
+	m_asyncHandles[AsyncData::EnemyModel] = MV1LoadModel(kEnemyModelpath.c_str());
+	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
 
 	SetUseASyncLoadFlag(FALSE);//ほかの場所の読み込みは同期に戻す
 }
@@ -32,7 +36,6 @@ void System::Terminate()
 {
 
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerModel]);
-	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerAttackModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerWeaponModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerWingModel]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::PlayerEffectSkill]);

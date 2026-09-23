@@ -12,7 +12,7 @@
 #include "PlayerStateDie.h"//以下同文
 #include "PlayerStateDashAttack.h"//以下同文
 #include "PlayerStateResultMove.h"//以下同文
-#include "../../../DataLoader/PlayerAnimData.h"
+#include "../../../DataLoader/AnimData.h"
 #include <memory>
 
 class PlayerState;

@@ -2,19 +2,35 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <string>
+
+namespace
+{
+    const  std::string kPlayerAnimPath = "data/Player_CSV/PlayerAnim.csv";
+    const std::string kEnemySwordmanAnimPath = "data/Enemy/EnemySwordmanAnim.csv";
+
+    const std::string kBossAnimPath = "data/Enemy/Boss/BossAnim.csv";
+
+}
+
 void DataManager::LoadAll()
 {
-	LoadPlayerAnimData();
+	//LoadPlayerAnimData();
 	LoadBossAnimData();
+
+    LoadAnimData(kPlayerAnimPath, m_playerAnimData);
+    LoadAnimData(kEnemySwordmanAnimPath, m_enemySwordmanAnimData);
+
+
     LoadComboRawData();
     LoadSpawnData();
 	//今後追加する場合はここにLoad関数を呼び出すコード
 }
 
-void DataManager::LoadPlayerAnimData()
+void DataManager::LoadAnimData(const std::string& filePath, AnimData& animData)
 {
-    std::ifstream file("data/Player_CSV/PlayerAnim.csv");
-    assert(file.is_open() && "PlayerAnim.csvが開けませんでした");
+    std::ifstream file(filePath);
+    assert(file.is_open() && "Animationが開けませんでした");
 
     std::string line;
     while (std::getline(file, line))
@@ -26,8 +42,12 @@ void DataManager::LoadPlayerAnimData()
 
         std::string key = line.substr(0, comma);
         std::string value = line.substr(comma + 1);
-        m_playerAnimData.animNames[key] = value;
+        animData.animNames[key] = value;
     }
+}
+
+void DataManager::LoadEnemySwordmanAnimData()
+{
 }
 
 void DataManager::LoadBossAnimData()

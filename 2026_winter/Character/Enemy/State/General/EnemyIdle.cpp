@@ -14,9 +14,10 @@ void EnemyIdle::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	//owner->m_anim.Init();
-
-	
+	//animationの初期化
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Idle"), true);
+	//移動速度を0にする
+	owner->m_rb.m_vel = Vector3(0, 0, 0);
 }
 
 void EnemyIdle::Update()
@@ -24,8 +25,13 @@ void EnemyIdle::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
+	//押し戻しの処理が続かないように消す//落下中の速度は残す
+	owner->m_rb.m_vel = Vector3(0, owner->m_rb.m_vel.y, 0);
+
 	//Playerを見る
 	owner->ToPlayerLook();
+
+	owner->m_anim.Update(owner->m_ownTimeScale);
 	//m_idleTime += 1.0f * timeScale * m_ownTimeScale;
 	//一定時間Idle状態でいる
 
@@ -54,4 +60,9 @@ void EnemyIdle::Update()
 
 void EnemyIdle::Exit()
 {
+}
+
+void EnemyIdle::DebugDraw()
+{
+	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:Idle");
 }

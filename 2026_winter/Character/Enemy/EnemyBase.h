@@ -23,6 +23,9 @@ public:
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
 	bool GetIsLifeZero()const { return m_isLifeZero; }//体力が0になったかどうかを返す
+
+	std::shared_ptr<EnemyBase> GetSharedPtr() { return std::dynamic_pointer_cast<EnemyBase>(shared_from_this()); }
+	std::weak_ptr<EnemyBase> GetWeakPtr() { return GetSharedPtr(); }
 protected:
 	//ここでやりたいこと
 	//・プレイヤーを追いかける
