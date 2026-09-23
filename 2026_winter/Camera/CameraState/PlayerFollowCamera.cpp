@@ -9,6 +9,7 @@
 #include "../Character/Enemy/EnemyBase.h"
 //#include "../Stage/Stage.h"
 #include "../System.h"
+#include "../BattleManager.h"
 #include <algorithm>
 
 
@@ -152,7 +153,10 @@ void PlayerFollowCamera::Update()
 	else
 	{
 		//イベント発火中なら元に戻す
-		if(System::GetInstance().GetIsEventPlaying())System::GetInstance().SetIsEventPlaying(false);
+		if (System::GetInstance().GetBattleMgr()->GetIsEventPlaying())
+		{
+			System::GetInstance().GetBattleMgr()->SetIsEventPlaying(false);
+		}
 
 		//通常時:今まで通りの追従Lerp(ジャンプなどの滑らかな追従はここで維持)
 		m_pos = Vector3::Lerp(m_pos, m_goalPos, kCameraLerpFactor);

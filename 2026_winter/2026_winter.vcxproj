@@ -184,6 +184,8 @@
     <ClCompile Include="Collider\Collider.cpp" />
     <ClCompile Include="Collider\ColliderShape.cpp" />
     <ClCompile Include="DataLoader\DataManager.cpp" />
+    <ClCompile Include="Character\Enemy\State\General\EnemyStateBase.cpp" />
+    <ClCompile Include="Character\Enemy\State\General\EnemyIdle.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="IDManager.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -250,6 +252,8 @@
     <ClInclude Include="DataLoader\BossAnimData.h" />
     <ClInclude Include="DataLoader\DataManager.h" />
     <ClInclude Include="DataLoader\PlayerAnimData.h" />
+    <ClInclude Include="Character\Enemy\State\General\EnemyStateBase.h" />
+    <ClInclude Include="Character\Enemy\State\General\EnemyIdle.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="IDManager.h" />
     <ClInclude Include="Input.h" />

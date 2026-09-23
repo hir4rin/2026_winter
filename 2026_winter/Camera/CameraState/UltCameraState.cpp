@@ -5,6 +5,7 @@
 #include "../Camera/LockOnManager.h"
 #include "Player.h"
 #include "../System.h"
+#include "../../BattleManager.h"
 #include "../Character/Enemy/EnemyBase.h"
 #include "../../Math/Matrix4x4.h"
 #include <algorithm>
@@ -93,7 +94,7 @@ void UltCameraState::Update()
 	}
 
 	//このカメラが一番優先度が高いときにウルトがfalseになったら、PlayerCameraに切り替える
-	bool isUlt = System::GetInstance().GetIsUltimating();
+	bool isUlt = System::GetInstance().GetBattleMgr()->GetIsUltimating();
 	if (!isUlt)
 	{
 		bool isLockOn = cameraManager->GetIsLockOn();

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "../Math/Vector3.h"
 #include "../Managers/CollisionManager.h"
-//#include "../IDManager.h"
+#include "../IDManager.h"
 #include "RigidBody.h"
 #include "ColliderSummery.h"
 #include "ColliderShape.h"

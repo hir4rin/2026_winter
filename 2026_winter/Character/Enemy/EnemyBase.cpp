@@ -1,6 +1,8 @@
 ﻿#include "EnemyBase.h"
+#include "Enemy/State/General/EnemyStateBase.h"
 #include "Player.h"
 #include "../../Game.h"
+#include "../System.h"
 
 namespace
 {
@@ -15,42 +17,6 @@ EnemyBase::EnemyBase(std::weak_ptr<Player> player)
 
 EnemyBase::~EnemyBase()
 {
-}
-
-std::string EnemyBase::GetEnemyStateString(EnemyState state)
-{
-	std::string ans = "";
-	switch (state)
-	{
-		case EnemyState::Idle:
-		ans = "Idle";
-		break;
-		case EnemyState::Caution:
-			ans = "Caution";
-			break;
-		case EnemyState::Chase:
-			ans = "Chase";
-			break;
-		case EnemyState::Attack:
-			ans = "Attack";
-			break;
-		case EnemyState::Back:
-			ans = "Back";
-			break;
-		case EnemyState::Hit:
-			ans = "Hit";
-			break;
-		case EnemyState::AirStay:
-			ans = "AirStay";
-			break;
-		case EnemyState::Fall:
-			ans = "Fall";
-			break;
-		default : 
-			ans = "Unknown";
-			break;
-	}
-	return ans;
 }
 
 Vector3 EnemyBase::TargetPlayerPos()
@@ -136,6 +102,19 @@ bool EnemyBase::CanMeleeAttack(float distance)
 	return false;
 }
 
+bool EnemyBase::CountInterval(float& timer, float interval)
+{
+	float timeScale = System::GetInstance().GetTimeScale();
+
+	timer += timeScale * m_ownTimeScale;
+	if (timer >= interval)
+	{
+		timer = 0.0f;
+		return true;
+	}
+	return false;
+}
+
 void EnemyBase::ToPlayerLook()
 {
 	auto player = m_player.lock();
@@ -151,4 +130,21 @@ void EnemyBase::FinishHitProcess()
 	//m_knockBackVel = Vector3(0, 0, 0);
 	m_knockBackFrame = 0;
 	m_hitType = HitType::None;
+}
+
+void EnemyBase::ChangeState(std::shared_ptr<EnemyStateBase> newState)
+{
+	//現在の状態から抜ける
+	if (m_currentState)
+	{
+		m_currentState->Exit();
+	}
+	//newStateに更新
+	m_prevState = m_currentState;
+	m_currentState = newState;
+	//newStateの初期化
+	if (m_currentState)
+	{
+		m_currentState->Enter();
+	}
 }

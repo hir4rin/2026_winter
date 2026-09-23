@@ -6,6 +6,7 @@
 #include "../../../Collider/SphereShape.h"
 #include "../../../Managers/CollisionManager.h"
 #include "../System.h"
+#include "../../../BattleManager.h"
 #include "../../../Camera/CameraManager.h"
 #include "../../../Camera/LockOnManager.h"
 #include "../../Enemy/EnemyBase.h"
@@ -263,7 +264,7 @@ void PlayerStateAttack::AttackMoveMent()
 	if (!player) return;
 
 	//ラストヒットの演出用//当たり判定を消す//動きもしない
-	if (System::GetInstance().GetIsLastHitEventPlaying())
+	if (System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
 	{
 		m_attackCol->SetIsActive(false);
 		return;
@@ -288,7 +289,7 @@ void PlayerStateAttack::AttackMoveMent()
 		}
 
 		//ラストヒットの演出用//当たり判定を消す(下のisHitのreturnより前で必ず通しておく)
-		if (System::GetInstance().GetIsLastHitEventPlaying())
+		if (System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
 		{
 			m_attackCol->SetIsActive(false);
 		}

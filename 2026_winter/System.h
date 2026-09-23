@@ -1,9 +1,12 @@
 ﻿#pragma once
 #include <unordered_map>
 //#include "Sound/SoundManager.h"
+#include <memory>
+
+class BattleManager;
 
 
-//非同期ロードリストの種類
+//非同期ロードリストの種類//ここ治す
 enum class AsyncData : int
 {
 	//プレイヤー
@@ -56,7 +59,10 @@ public:
 		return instance;
 	}
 
-	void SetTerminate();
+	/// <summary>
+	/// 読み込んだモデル・エフェクトを解放する(DxLib_Endより前に呼ぶ)
+	/// </summary>
+	void Terminate();
 
 	void SetTimeScale(float scale) { timeScale = scale; }
 	float GetTimeScale() const { return timeScale; }
@@ -71,32 +77,19 @@ public:
 		m_frameCount = frames;//フレームカウントを設定する
 	}
 
-	//非同期ロードのハンドルを保存する
-	void SetHandleData(std::unordered_map<AsyncData, int> data) { m_asyncHandles = data; }
+	/// <summary>
+	/// モデル・エフェクトを非同期で読み込み、ハンドルを保存する
+	/// </summary>
+	/// <note>戻った時点では読み込みが終わっていないので、GetASyncLoadNum()が0になるまで待ってから使う</note>
+	void LoadAll();
 	int GetHandle(AsyncData key) { return m_asyncHandles[key]; }
 
 	void Update();
-
-	void SetUltStart(int frames = -1) { m_ultCount = frames; m_isUltimating = true; };
-	bool GetIsUltimating() { return m_isUltimating; };
-	void SetUltEnd() { m_ultCount = -1; m_isUltimating = false; };
-
-	void SetPhotoMode(bool ans) { m_isPhotoMode = ans; }
-	bool GetPhotoMode() { return m_isPhotoMode; }
-
-	//イベント演出中(カメラ演出+その戻りのBlend中)はプレイヤー/敵の入力・行動を止めるためのフラグ
-	void SetIsEventPlaying(bool ans) { m_isEventPlaying = ans; }
-	bool GetIsEventPlaying() { return m_isEventPlaying; }
-
-	//ラストヒットのイベント中かどうか
-	void SetIsLastHitEventPlaying(bool ans) { m_isLastHitEventPlaying = ans;}
-	bool GetIsLastHitEventPlaying(){return m_isLastHitEventPlaying;}
-	//falseから初めてtrueになった瞬間だけ、内部でtrueにする(多重呼び出し防止)
-	void SetIsLastHitEventPlayingTrigger(bool ans);
+	//バトルマネージャー
+	void SetBattleMgr(std::weak_ptr<BattleManager> mgr) { m_battleMgr = mgr; }
+	std::shared_ptr<BattleManager> GetBattleMgr();
 
 	//SoundManager& GetSoundManager() { return m_soundManager; }
-
-
 
 private:
 	//時間の管理
@@ -105,21 +98,10 @@ private:
 	//いじった時間をもとに戻すためのフレーム
 	int m_frameCount = -1;//フレームカウント//ゲームが開始してからのフレーム数//0から始まる
 
-	bool m_isUltimating = false;//必殺技の演出中かどうか
-	int m_ultCount = -1;//必殺技の演出時間カウント
-
-	bool m_isPhotoMode = false;
-
-	bool m_isEventPlaying = false;//イベント演出中かどうか
-
-	bool m_isLastHitEventPlaying = false;//ラストヒットのイベント中かどうか
-
+	std::weak_ptr<BattleManager> m_battleMgr;//バトルマネージャー
 
 	std::unordered_map<AsyncData, int> m_asyncHandles; //非同期ロードのハンドルを保持するマップ
 
-
 	//SoundManager m_soundManager;//サウンドマネージャー//GetSoundManager()経由でPlayBgm等を呼ぶ
-
-
 };
 

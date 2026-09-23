@@ -3,6 +3,7 @@
 #include "Game.h"
 #include "SceneMain.h"
 #include "Scene/SceneController.h"
+#include "System.h"
 
 namespace
 {
@@ -68,6 +69,17 @@ bool Application::Init()
 	// Effekseerを使用する場合、2DゲームでもZバッファを使用する。
 	SetUseZBuffer3D(TRUE);
 
+	//モデル・エフェクトの読み込み
+	System::GetInstance().LoadAll();
+	//TODO:ローディングシーンができたら、そちらで待つようにする
+	while (GetASyncLoadNum() > 0)
+	{
+		if (ProcessMessage() == -1)
+		{
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -107,6 +119,9 @@ void Application::Run()
 
 void Application::Terminate()
 {
+	//読み込んだモデル・エフェクトを解放する(Effekseer・DxLibの終了より前に行う)
+	System::GetInstance().Terminate();
+
 	// Effekseerを終了する。
 	Effkseer_End();
 

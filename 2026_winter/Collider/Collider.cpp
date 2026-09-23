@@ -56,7 +56,7 @@ void Collider::ColInit(ColInitParam param)
 
 void Collider::SetID()
 {
-	//m_id = IDManager::GetNextID();
+	m_id = IDManager::GetNextID();
 }
 
 void Collider::ResetID(int ownerID)

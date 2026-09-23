@@ -1,24 +1,13 @@
 ﻿#pragma once
 #include "CharacterBase.h"
+#include "State/General/EnemyIdle.h"
 
 class Player;
+class EnemyStateBase;
 
 class EnemyBase : public CharacterBase
 {
 public:
-	enum class EnemyState : int
-	{
-		Idle = 0,
-		Caution = 1,
-		Chase = 2,
-		Attack = 3,
-		Back = 4,
-		Hit = 5,
-		AirStay = 6,
-		Fall = 7,
-		Dead = 8,
-		KnockDown = 9,
-	};
 	enum class HitType : int
 	{
 		None = -1,
@@ -33,9 +22,6 @@ public:
 	virtual void Init() = 0;
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
-
-	std::string GetEnemyStateString(EnemyState state);
-
 	bool GetIsLifeZero()const { return m_isLifeZero; }//体力が0になったかどうかを返す
 protected:
 	//ここでやりたいこと
@@ -49,17 +35,6 @@ protected:
 	/// <returns>playerの位置を返す</returns>
 	Vector3 TargetPlayerPos();
 	/// <summary>
-	/// targetの方向にdistanceまで移動する関数
-	/// </summary>
-	/// <param name="distance">オフセット</param>
-	/// <returns>到達したらtrueを返す</returns>
-	bool ChasePlayer(Vector3 target,float distance);
-	/// <summary>
-	/// 半円上を移動、またdistance分の距離は確保する
-	/// </summary>
-	/// <param name="distance">保つ距離</param>
-	void CautionMove(Vector3 target,float distance);
-	/// <summary>
 	///distance分バックステップをする
 	/// </summary>
 	/// <param name="distance">バックステップの距離</param>
@@ -67,14 +42,32 @@ protected:
 	bool BackMove(Vector3 target, float distance);
 	bool CanMeleeAttack(float distance);//MeleeAttackができる距離かどうか
 
+	//intervalごとにtrueを返す関数
+	bool CountInterval(float& timer, float interval);
+
+
+	/// <summary>
+	/// targetの方向にdistanceまで移動する関数
+	/// </summary>
+	/// <param name="distance">オフセット</param>
+	/// <returns>到達したらtrueを返す</returns>
+	bool ChasePlayer(Vector3 target, float distance);
+	/// <summary>
+	/// 半円上を移動、またdistance分の距離は確保する
+	/// </summary>
+	/// <param name="distance">保つ距離</param>
+	void CautionMove(Vector3 target, float distance);
+
 
 
 	void ToPlayerLook();//Playerの方を向く
 	void FinishHitProcess();//Hitの終了処理
 
-	virtual void ChangeState(EnemyState newState) = 0;
+	void ChangeState(std::shared_ptr<EnemyStateBase> newState);//状態遷移用
 
-	EnemyState m_state = EnemyState::Idle;//敵の状態
+	std::shared_ptr<EnemyStateBase> m_currentState;
+	std::shared_ptr<EnemyStateBase> m_prevState;
+
 	Vector3 m_targetPos;//敵の行動の指標のターゲット
 
 	float m_attackCoolTime = 0.0f;//攻撃のクールタイム
@@ -88,6 +81,7 @@ protected:
 	HitType m_hitType = HitType::None;//空中にいるかどうか
 
 
+	friend class EnemyIdle;
 
 };
 

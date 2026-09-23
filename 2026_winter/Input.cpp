@@ -1,6 +1,5 @@
 ﻿#include "Input.h"
 #include "Dxlib.h"
-#include "System.h"
 #include <algorithm>
 
 namespace
@@ -163,7 +162,7 @@ void Input::Update()
 		UpdateRecord();
 	}
 	//イベント時
-	else if (System::GetInstance().GetIsEventPlaying())
+	else if (m_isInputBlocked)
 	{
 		//入力を受け付けない
 		for (auto& [name, value] : m_inputData)

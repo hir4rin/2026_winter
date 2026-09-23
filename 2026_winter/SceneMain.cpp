@@ -11,6 +11,7 @@
 #include "Stage/Stage.h"
 #include "Input.h"
 #include "System.h"
+#include "BattleManager.h"
 #include "Game.h"
 
 namespace
@@ -27,9 +28,6 @@ namespace
 	constexpr unsigned int kAxisColorX = 0xff0000;//赤
 	constexpr unsigned int kAxisColorY = 0x00ff00;//緑
 	constexpr unsigned int kAxisColorZ = 0x0000ff;//青
-
-	//プレイヤーのモデル
-	const char* const kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
 
 	//カメラ設定
 	constexpr float kCameraViewAngle = DX_PI_F / 3.0f;
@@ -74,16 +72,6 @@ void SceneMain::Init()
 	DataManager::GetInstance().LoadAll();
 	Input::GetInstance().Init();
 
-	//Playerが使うモデルのハンドルを用意する(まだ無いもの(攻撃モデル・羽・武器・エフェクト)は-1にしておく)
-	std::unordered_map<AsyncData, int> handles;
-	for (int i = static_cast<int>(AsyncData::PlayerModel); i <= static_cast<int>(AsyncData::Goal); ++i)
-	{
-		handles[static_cast<AsyncData>(i)] = -1;
-	}
-	handles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath);
-	handles[AsyncData::TitleStageModel] = MV1LoadModel("data/Stage/TestStage/TestStage.mv1");
-	System::GetInstance().SetHandleData(handles);
-
 	CollisionManager::GetInstance().Init();
 	
 
@@ -99,6 +87,9 @@ void SceneMain::Init()
 	m_camera = std::make_unique<Camera>();
 	m_player->SetCameraManager(m_cameraManager);
 	m_player->Init();
+
+	m_battleManager = std::make_shared<BattleManager>();
+	System::GetInstance().SetBattleMgr(m_battleManager);
 
 	//プレイヤー追従カメラ
 	m_cameraManager->Init(m_player, m_stage);
@@ -130,6 +121,7 @@ void SceneMain::NormalUpdate()
 {
 	m_frameCount++;
 
+	Input::GetInstance().SetInputBlocked(m_battleManager->GetIsEventPlaying());
 	Input::GetInstance().Update();
 	m_player->Update(*m_camera);
 	m_stage->Update();

@@ -82,7 +82,11 @@ private:
 	int m_recordFrameInEntry = 0;//リプレイ中のフレーム数
 	void UpdateRecord();//リプレイ中の入力を更新する
 
+	bool m_isInputBlocked = false;//ユーザーの入力を受け付けないかどうか
+
 public:
+	//trueの間はユーザーの入力を受け付けない(レコードは影響を受けない)
+	void SetInputBlocked(bool isBlocked) { m_isInputBlocked = isBlocked; }
 	/// <summary>
 	///  これを毎フレーム呼び出すことで
 	/// 入力情報が更新されます

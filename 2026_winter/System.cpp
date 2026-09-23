@@ -1,9 +1,34 @@
 ﻿#include "System.h"
 #include "DxLib.h"
 #include "EffekseerForDXLib.h"
+#include "BattleManager.h"
+#include <cassert>
 
+namespace
+{
+	//プレイヤーのモデル
+	const char* const kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
+	//ステージのモデル
+	const char* const kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
+}
 
-void System::SetTerminate()
+void System::LoadAll()
+{
+	//まだ無いもの(攻撃モデル・羽・武器・エフェクト)は-1にしておく
+	for (int i = static_cast<int>(AsyncData::PlayerModel); i <= static_cast<int>(AsyncData::Goal); ++i)
+	{
+		m_asyncHandles[static_cast<AsyncData>(i)] = -1;
+	}
+
+	SetUseASyncLoadFlag(TRUE);//ここから下の読み込みは非同期になる
+
+	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath);
+	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath);
+
+	SetUseASyncLoadFlag(FALSE);//ほかの場所の読み込みは同期に戻す
+}
+
+void System::Terminate()
 {
 
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerModel]);
@@ -52,15 +77,19 @@ void System::Update()
 			m_frameCount = -1;//フレームカウントを0にする
 		}
 	}
-
 	
-		m_ultCount -= 1.0f * timeScale;
+	auto battleMgr = m_battleMgr.lock();
+	if (battleMgr)
+	{
+		battleMgr->Update();
+	}
 
-		if (m_ultCount <= 0)
-		{
-			m_ultCount = -1;
-			m_isUltimating = false;
-		}
-	
+}
 
+std::shared_ptr<BattleManager> System::GetBattleMgr()
+{
+	auto battleMgr =   m_battleMgr.lock(); 
+
+	if (!battleMgr)assert(false);
+	else return battleMgr;
 }

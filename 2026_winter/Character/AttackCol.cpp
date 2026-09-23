@@ -5,6 +5,7 @@
 #include "../Camera/LockOnManager.h"
 #include "../Camera/CameraState/CameraStateBase.h"
 #include "../System.h"
+#include "../BattleManager.h"
 #include "Enemy/EnemyBase.h"
 #include "CharacterBase.h"
 #include "HitCol.h"
@@ -182,11 +183,11 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				auto cameraManager = player->GetCameraManager().lock();
 
 				//演出が始まっていなかったら
-				bool isUltStart = System::GetInstance().GetIsUltimating();
+				bool isUltStart = System::GetInstance().GetBattleMgr()->GetIsUltimating();
 				if (!isUltStart)
 				{
-					System::GetInstance().SetUltStart(kUltStartFrame);//必殺技の演出をスタートする
-					if (!System::GetInstance().GetIsLastHitEventPlaying())
+					System::GetInstance().GetBattleMgr()->SetUltStart(kUltStartFrame);//必殺技の演出をスタートする
+					if (!System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
 					{
 						System::GetInstance().SetTimeScaleForFrames(kUltTimeScaleRate, kUltStartFrame);//時間を遅くする//60フレームで元に戻す
 						//カメラを移行

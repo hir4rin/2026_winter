@@ -11,6 +11,7 @@
 #include "CameraState/ResultCameraState.h"
 #include "../Managers/CollisionManager.h"
 #include "../System.h"
+#include "../BattleManager.h"
 #include "../Character/Enemy/EnemyBase.h"
 #include "EffekseerForDXLib.h"
 #include "../Input.h"
@@ -102,7 +103,7 @@ void CameraManager::ApplyCameraSettings()
 	//}
 
 	//フォトモード中は、Stateが計算した値ではなく、フリーカメラの座標をそのままDxLibに渡す
-	if (System::GetInstance().GetPhotoMode())
+	if (System::GetInstance().GetBattleMgr()->GetPhotoMode())
 	{
 		SetCameraPositionAndTarget_UpVecY(m_photoCamPos.ToDxLibVector(), m_photoCamTarget.ToDxLibVector());
 		Effekseer_Sync3DSetting();
