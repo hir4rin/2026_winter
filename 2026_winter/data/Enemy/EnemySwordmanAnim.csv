@@ -1,5 +1,5 @@
 #key,animName
-Idle,Player|Player|Idle
+Idle,Player|Idle
 Run,Player|Run
 StrafeRight,Player|strafe_right
 StrafeLeft,Player|strafe_left

@@ -8,6 +8,13 @@ namespace
 {
 	constexpr float kCautionMoveSpeedRate = 0.5f;//警戒移動時の速度倍率
 	constexpr float kCautionBackVecRate = 0.2f;//半径を維持するためのベクトルの倍率
+
+	constexpr float kEnemyMeleeAttackRange = 400.0f;//敵の近接攻撃の距離
+	constexpr float kEnemyBackDistance = 600.0f;//敵が距離を取るときの距離
+
+	constexpr int kStateChangeRandomMax = 100;//Chase/Caution遷移の抽選範囲
+	constexpr int kStateChangeThreshold = 50;//Chase/Caution遷移のしきい値
+
 }
 
 EnemyBase::EnemyBase(std::weak_ptr<Player> player)
@@ -35,6 +42,7 @@ bool EnemyBase::ChasePlayer(Vector3 target,float distance)
 	target.y = 0.0f;
 	//プレイヤーの手前側が目的地になるように移動//内積は今回はしない
 	Vector3 toPlayer = target - m_rb.m_pos;//プレイヤーへのベクトル
+	toPlayer.y = 0.0f;
 
 	//playerとの距離を図り、手前側かつ、指定距離まで来たら移動を止める
 	if (toPlayer.Magnitude() <= distance)
@@ -130,6 +138,26 @@ void EnemyBase::FinishHitProcess()
 	//m_knockBackVel = Vector3(0, 0, 0);
 	m_knockBackFrame = 0;
 	m_hitType = HitType::None;
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
+{
+	//ランダムでChaseかCautionに遷移する
+	if (CanMeleeAttack(kEnemyMeleeAttackRange))
+	{
+		//return ChangeState(EnemyState::Attack);
+	}
+	//ランダム
+	if (rand() % kStateChangeRandomMax < kStateChangeThreshold)
+	{
+		//ChangeState(EnemyState::Chase);
+	}
+	else if (rand() % kStateChangeRandomMax >= kStateChangeThreshold)
+	{
+		//ChangeState(EnemyState::Caution);
+	}
+
+	return std::make_shared<EnemyChase>(GetWeakPtr());
 }
 
 void EnemyBase::ChangeState(std::shared_ptr<EnemyStateBase> newState)

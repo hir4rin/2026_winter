@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include "CharacterBase.h"
 #include "State/General/EnemyIdle.h"
+#include "State/General/EnemyChase.h"
+#include "State/Attack/EnemyAttack.h"
+
 
 class Player;
 class EnemyStateBase;
@@ -62,9 +65,11 @@ protected:
 	void CautionMove(Vector3 target, float distance);
 
 
-
 	void ToPlayerLook();//Playerの方を向く
 	void FinishHitProcess();//Hitの終了処理
+
+	//Idleの後のState遷移
+	virtual std::shared_ptr<EnemyStateBase> NextAfterIdle();
 
 	void ChangeState(std::shared_ptr<EnemyStateBase> newState);//状態遷移用
 
@@ -85,6 +90,8 @@ protected:
 
 
 	friend class EnemyIdle;
+	friend class EnemyChase;
+	friend class EnemyAttack;
 
 };
 

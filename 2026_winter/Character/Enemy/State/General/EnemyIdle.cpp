@@ -1,6 +1,11 @@
 ﻿#include "EnemyIdle.h"
 #include "../../EnemyBase.h"
 
+namespace
+{
+	constexpr float kEnemyIdleMaxTime = 120.0f;//敵がIdle状態でいる時間の最大値
+}
+
 EnemyIdle::EnemyIdle(std::weak_ptr<EnemyBase> owner):
 	EnemyStateBase(owner)
 {
@@ -18,6 +23,9 @@ void EnemyIdle::Enter()
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Idle"), true);
 	//移動速度を0にする
 	owner->m_rb.m_vel = Vector3(0, 0, 0);
+
+	//時間をリセット
+	owner->m_idleTime = 0.0f;
 }
 
 void EnemyIdle::Update()
@@ -27,16 +35,24 @@ void EnemyIdle::Update()
 
 	//押し戻しの処理が続かないように消す//落下中の速度は残す
 	owner->m_rb.m_vel = Vector3(0, owner->m_rb.m_vel.y, 0);
+	//owner->m_rb.m_vel = Vector3(0, 0, 0);//EnemyStateFallを作ったらこっちに移行
 
 	//Playerを見る
 	owner->ToPlayerLook();
 
 	owner->m_anim.Update(owner->m_ownTimeScale);
 	//m_idleTime += 1.0f * timeScale * m_ownTimeScale;
+	owner->m_idleTime += 1.0f;
+	
+
 	//一定時間Idle状態でいる
 
 
-	//if (m_idleTime < kEnemyIdleMaxTime)return;
+	if (owner->m_idleTime < kEnemyIdleMaxTime)return;
+
+	//Idleの時間を超えたら次のStateに遷移する
+	owner->ChangeState(owner->NextAfterIdle());
+
 
 	////ランダムでChaseかCautionに遷移する
 	//if (owner->CanMeleeAttack(kEnemyMeleeAttackRange))

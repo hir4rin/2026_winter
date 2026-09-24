@@ -93,6 +93,9 @@ void EnemySwordman::Update()
 		m_currentState->Update();//状態の更新
 	}
 
+	//アニメーションの更新
+	m_anim.Update();
+
 	//重力の処理//地面にいる間は落下速度をリセットする
 	if (IsFloor())
 	{
