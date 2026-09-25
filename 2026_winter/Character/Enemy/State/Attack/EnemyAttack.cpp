@@ -42,7 +42,7 @@ void EnemyAttack::Update()
 	{
 		owner->m_attackCoolTime = kEnemyAttackCoolTime;//攻撃のクールタイムをリセット
 		//owner->ChangeState(EnemyState::Back);//BackStateに移行
-		owner->ChangeState(std::make_shared<EnemyIdle>(owner));
+		owner->ChangeState(std::make_shared<EnemyBack>(owner));
 	}
 }
 

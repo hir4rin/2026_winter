@@ -279,6 +279,9 @@ void CollisionManager::ApplyAdjustments()
 		auto collider = weakCollider.lock();
 		if (!collider)continue;
 		if (!collider->IsActive())continue;
+		//staticは無視
+		if (collider->GetTag().faction == Collider::Faction::StaticObject)continue;
+
 		collider->ApplyPos();
 	}
 }

@@ -42,6 +42,8 @@ void EnemyChase::Update()
 	if (owner->CanMeleeAttack(kEnemyMeleeAttackRange))
 	{
 		//ChangeState(EnemyState::Attack);
+		owner->ChangeState(std::make_shared<EnemyAttack>(owner));
+		return;
 	}
 
 	//定期的にプレイヤーの位置を更新する

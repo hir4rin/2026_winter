@@ -15,7 +15,6 @@ public:
     void OnDamage(Collider& other, AttackData& data)override;
     
 private:
-    float m_cautionUpdateTimer = 0.0f;
 
     int m_hitEfHandle = -1;//ヒットエフェクトのハンドル
     int m_hitEfPlayingHandle = -1;//再生中のヒットエフェクトのハンドル

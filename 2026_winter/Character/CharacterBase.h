@@ -36,6 +36,15 @@ public:
 		bool isKirimomi;//吹っ飛ぶかどうか
 	};
 
+	//被ダメ情報
+	struct HitInfo
+	{
+		Vector3 knockBackVel;
+		float duration = 0.0f;
+		bool isKirimomi = false;
+		bool willDie = false;
+	};
+
 
 public:
     CharacterBase();

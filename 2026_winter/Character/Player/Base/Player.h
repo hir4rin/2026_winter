@@ -92,24 +92,25 @@ namespace ComboIndex
 	constexpr int LightAttack2 = 1;
 	constexpr int LightAttack3 = 2;
 	constexpr int LightAttack4 = 3;
-	constexpr int LightAttack5 = 4;
 
-	constexpr int HeavyAttack1 = 5;
-	constexpr int HeavyAttack2 = 6;
+	constexpr int HeavyAttack1 = 4;
+	constexpr int HeavyAttack2 = 5;
+	constexpr int HeavyAttack3 = 6;
+	constexpr int HeavyAttack4 = 7;
 
-	constexpr int upAttack = 7;
+	constexpr int upAttack = 8;
 
-	constexpr int AirAttack1 = 8;
-	constexpr int AirAttack2 = 9;
-	constexpr int AirAttack3 = 10;
-	constexpr int AirAttack4 = 11;
+	constexpr int AirAttack1 = 9;
+	constexpr int AirAttack2 = 10;
+	constexpr int AirAttack3 = 11;
+	constexpr int AirAttack4 = 12;
 
-	constexpr int AirHeavyAttack1 = 12;
+	constexpr int AirHeavyAttack1 = 13;
 
-	constexpr int DashAttack = 13;
-	constexpr int SkillAttack1 = 14;
-	constexpr int SkillAttack2 = 15;
-	constexpr int SkillAttack3 = 16;
+	constexpr int DashAttack = 14;
+	constexpr int SkillAttack1 = 15;
+	constexpr int SkillAttack2 = 16;
+	constexpr int SkillAttack3 = 17;
 
 };
 

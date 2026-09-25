@@ -3,6 +3,15 @@
 #include "State/General/EnemyIdle.h"
 #include "State/General/EnemyChase.h"
 #include "State/Attack/EnemyAttack.h"
+#include "State/General/EnemyBack.h"
+#include "State/General/EnemyCaution.h"
+#include "State/Hit/EnemyKnockBack.h"
+#include "State/Hit/EnemyKnockDown.h"
+#include "State/General/EnemyAirStay.h"
+#include "State/General/EnemyAirFall.h"
+#include "State/Hit/EnemyHitDrop.h"
+#include "State/Hit/EnemyDie.h"
+#include "State/Hit/EnemyHitGround.h"
 
 
 class Player;
@@ -19,6 +28,8 @@ public:
 		Drop = 2,
 	};
 
+	//struct HitInfo
+
 public:
 	EnemyBase(std::weak_ptr<Player> player);
 	virtual ~EnemyBase();
@@ -26,6 +37,13 @@ public:
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
 	bool GetIsLifeZero()const { return m_isLifeZero; }//体力が0になったかどうかを返す
+
+	void OnCollision(Collider& other)override;
+	void OnDamage(Collider& other, AttackData& data)override;
+
+	void ApplyDamage();
+
+
 
 	std::shared_ptr<EnemyBase> GetSharedPtr() { return std::dynamic_pointer_cast<EnemyBase>(shared_from_this()); }
 	std::weak_ptr<EnemyBase> GetWeakPtr() { return GetSharedPtr(); }
@@ -70,6 +88,7 @@ protected:
 
 	//Idleの後のState遷移
 	virtual std::shared_ptr<EnemyStateBase> NextAfterIdle();
+	//着地後の遷移先
 
 	void ChangeState(std::shared_ptr<EnemyStateBase> newState);//状態遷移用
 
@@ -80,6 +99,7 @@ protected:
 
 	float m_attackCoolTime = 0.0f;//攻撃のクールタイム
 	float m_chasingTime = 0.0f;//追いかけている時間
+	float m_cautionUpdateTimer = 0.0f;
 	float m_cautionTime = 0.0f;//警戒している時間
 	float m_idleTime = 0.0f;//待機時間
 	float m_knockBackFrame = 0;//吹き飛ばしのフレーム数
@@ -92,6 +112,15 @@ protected:
 	friend class EnemyIdle;
 	friend class EnemyChase;
 	friend class EnemyAttack;
+	friend class EnemyBack;
+	friend class EnemyCaution;
+	friend class EnemyKnockBack;
+	friend class EnemyKnockDown;
+	friend class EnemyAirStay;
+	friend class EnemyAirFall;
+	friend class EnemyHitDrop;
+	friend class EnemyDie;
+	friend class EnemyHitGround;
 
 };
 

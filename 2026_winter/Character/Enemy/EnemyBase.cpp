@@ -15,6 +15,8 @@ namespace
 	constexpr int kStateChangeRandomMax = 100;//Chase/Caution遷移の抽選範囲
 	constexpr int kStateChangeThreshold = 50;//Chase/Caution遷移のしきい値
 
+	constexpr float kEnemyDistance = 50.0f;
+
 }
 
 EnemyBase::EnemyBase(std::weak_ptr<Player> player)
@@ -24,6 +26,77 @@ EnemyBase::EnemyBase(std::weak_ptr<Player> player)
 
 EnemyBase::~EnemyBase()
 {
+}
+
+void EnemyBase::OnCollision(Collider& other)
+{
+}
+
+void EnemyBase::OnDamage(Collider& other, AttackData& data)
+{
+	auto player = m_player.lock();
+	if (!player)return;
+
+	//データの保存
+	m_attackData = data;
+
+	//死亡していたら処理しない
+	if (m_isDead)return;
+	//死亡吹っ飛び中は処理しない
+	if (m_isDieOut)return;
+	//Playerの攻撃データをもとに被ダメ処理をする
+	m_hp -= static_cast<int>(data.attackPower);
+
+	////ダメージがあるなら、ヒットエフェクトを再生する//必殺技の時は、ヒットエフェクトをスローのものにする
+	//if (static_cast<int>(data.attackPower) > 0)
+	//{
+	//	//必殺技
+	//	if (data.attackPower >= kUltDamagePower)
+	//	{
+	//		//m_hitEfPlayingHandle = PlayEffekseer3DEffectSlow(m_hitEfHandle, 0.5f);
+	//	}
+	//	//その他
+	//	else
+	//	{
+	//		m_hitEfPlayingHandle = PlayEffekseer3DEffect(m_hitEfHandle);
+	//		SetPosPlayingEffekseer3DEffect(m_hitEfPlayingHandle, m_pos.x, m_pos.y + kEnemyEfOffset, m_pos.z);
+	//	}
+	//}
+
+	//if (m_hp <= 0)
+	//{
+	//	//空中じゃ死なない
+	//	if (!IsFloor())
+	//	{
+	//		m_hp = 1;
+	//	}
+	//	else
+	//	{
+	//		m_hp = 0;
+	//		m_isLifeZero = true;
+	//		//当たり判定を解除する
+	//		Terminate();
+
+	//		//キリモミ吹っ飛びの時は、途中で死ぬ
+	//		if (m_attackData.isKirimomi)
+	//		{
+	//			m_isDieOut = true;
+	//		}
+	//		//死亡アニメーションに移行
+	//		else
+	//		{
+	//			ChangeState(EnemyState::Dead);
+	//			return;
+	//		}
+	//	}
+	//}
+
+	//Enemy->Playerのベクトルに吹き飛ばす力を加える//プレイヤーの正面に行くようにknockBackする//いずれkirimomi吹っ飛びの時の処理と分ける
+	Vector3 front = player->GetTargetVec();
+	Vector3 pos = player->GetRigidBody().GetPos();
+	Vector3 TargetPos = pos + front * kEnemyDistance;
+
+
 }
 
 Vector3 EnemyBase::TargetPlayerPos()
@@ -146,15 +219,20 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 	if (CanMeleeAttack(kEnemyMeleeAttackRange))
 	{
 		//return ChangeState(EnemyState::Attack);
+	
+		return 	std::make_shared<EnemyAttack>(GetWeakPtr());;
 	}
 	//ランダム
 	if (rand() % kStateChangeRandomMax < kStateChangeThreshold)
 	{
 		//ChangeState(EnemyState::Chase);
+		return std::make_shared<EnemyChase>(GetWeakPtr());
+		
 	}
 	else if (rand() % kStateChangeRandomMax >= kStateChangeThreshold)
 	{
 		//ChangeState(EnemyState::Caution);
+		return std::make_shared<EnemyCaution>(GetWeakPtr());
 	}
 
 	return std::make_shared<EnemyChase>(GetWeakPtr());

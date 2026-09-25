@@ -129,7 +129,7 @@ void PlayerStateAttack::Enter()
 		.isActive = false,
 		.isTrigger = true
 		});//攻撃の当たり判定を初期化する//最初は無効にしておく
-	m_attackCol->ResetID(player->GetId());
+	m_attackCol->ResetID(player->GetId());//いらないからのち程修正
 	m_attackCol->SetIsActive(false);//最初は当たり判定を無効にしておく
 
 	m_isSwingSePlayed = false;//振りのSEをまだ再生していない状態にする
@@ -738,9 +738,9 @@ void PlayerStateAttack::AttackFinishProcess()
 	player->m_isRaven = false;
 
 	//攻撃の当たり判定の開放
-	//m_attackCol->SetIsActive(false);
-	//m_attackCol->SetLifeTimeLimited();
-	//m_attackCol.reset();
+	m_attackCol->SetIsActive(false);
+	m_attackCol->SetLifeTimeLimited();
+	m_attackCol.reset();
 }
 
 int PlayerStateAttack::SelectAnimInit()
