@@ -32,6 +32,8 @@ void EnemyAirStay::Update()
 
 	//浮遊させる//EnemySwordman::Updateの重力が後からかかるので、少し沈む場合は重力を止める仕組みが必要
 	owner->m_rb.m_vel = Vector3(0, 0, 0);
+	//重力が累積しないようにする(累積させると浮遊中に加速して落ちる)
+	owner->m_accumulatedGravity = 0.0f;
 
 	//一定時間浮いたら落下に移行
 	if (m_airTime > kAirStayTime)

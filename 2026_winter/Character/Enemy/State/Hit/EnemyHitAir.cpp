@@ -1,27 +1,28 @@
-﻿#include "EnemyHitDrop.h"
+﻿#include "EnemyHitAir.h"
 #include "../../EnemyBase.h"
 
-EnemyHitDrop::EnemyHitDrop(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
+EnemyHitAir::EnemyHitAir(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
 	EnemyStateBase(owner),
 	m_info(info)
 {
 }
 
-EnemyHitDrop::~EnemyHitDrop()
+EnemyHitAir::~EnemyHitAir()
 {
 }
 
-void EnemyHitDrop::Enter()
+void EnemyHitAir::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
 	//縦の初速を渡す//縦の速度は初速と重力の累積からEnemySwordman::Updateが作る
+	//m_initVelYが正なら、床の上にいても重力の処理は空中扱いになる
 	owner->m_initVelY = m_info.knockBackVel.y;
 	owner->m_accumulatedGravity = 0.0f;
 }
 
-void EnemyHitDrop::Update()
+void EnemyHitAir::Update()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
@@ -31,30 +32,23 @@ void EnemyHitDrop::Update()
 	//水平方向は毎フレームHitInfoの初速を与える(EnemySwordman::Updateで毎フレーム水平速度がリセットされるため)
 	owner->m_rb.m_vel = Vector3(m_info.knockBackVel.x, owner->m_rb.m_vel.y, m_info.knockBackVel.z);
 
-	//着地したら、死亡予定ならDie、そうでなければKnockBack
-	if (owner->IsFloor())
+	//上昇しきったら(縦の速度が0以下になったら)AirStayへ
+	if (owner->m_initVelY + owner->m_accumulatedGravity <= 0.0f)
 	{
-		owner->m_rb.m_vel = Vector3(0, 0, 0);
-		if (m_info.willDie)
-		{
-			owner->ChangeState(std::make_shared<EnemyDie>(owner));
-		}
-		else
-		{
-			owner->ChangeState(std::make_shared<EnemyKnockBack>(owner));
-		}
+		owner->ChangeState(std::make_shared<EnemyAirStay>(owner));
 	}
 }
 
-void EnemyHitDrop::Exit()
+void EnemyHitAir::Exit()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	//初速を戻しておく(残っていると着地後も縦の速度がかかり続ける)
+	//初速と重力の累積を戻しておく(残っていると上昇が続いたり、AirStay後に加速して落ちる)
 	owner->m_initVelY = 0.0f;
+	owner->m_accumulatedGravity = 0.0f;
 }
 
-void EnemyHitDrop::DebugDraw()
+void EnemyHitAir::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:HitDrop");
+	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:HitAir");
 }

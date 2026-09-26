@@ -96,14 +96,18 @@ void EnemySwordman::Update()
 	//アニメーションの更新
 	m_anim.Update();
 
-	//重力の処理//地面にいる間は落下速度をリセットする
-	if (IsFloor())
+	//重力の処理//初速と重力の累積から縦の速度を毎フレーム作り直す
+	//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、+=で積むとスロー時に減衰していく
+	//地面にいて、上向きの初速もない間は落下速度をリセットする
+	if (IsFloor() && m_initVelY <= 0.0f)
 	{
+		m_accumulatedGravity = 0.0f;
 		m_rb.m_vel.y = 0.0f;
 	}
 	else
 	{
-		m_rb.m_vel.y += -Game::kGravity * System::GetInstance().GetTimeScale() * m_ownTimeScale;
+		m_accumulatedGravity += -Game::kGravity * System::GetInstance().GetTimeScale() * m_ownTimeScale;
+		m_rb.m_vel.y = m_initVelY + m_accumulatedGravity;
 	}
 }
 
