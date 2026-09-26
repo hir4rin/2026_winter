@@ -18,8 +18,8 @@ void EnemyHitDrop::Enter()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
-	//重力の累積をリセット//縦の速度は初速(m_info.knockBackVel.y)と重力の累積から作る
-	owner->m_accumulatedGravity = 0.0f;
+	//縦の速度は初速(m_info.knockBackVel.y)と重力の累積(m_gravity)から作る
+	m_gravity = 0.0f;
 }
 
 void EnemyHitDrop::Update()
@@ -31,11 +31,12 @@ void EnemyHitDrop::Update()
 
 	//重力
 	//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、初速と累積から毎フレーム作り直す
-	owner->m_accumulatedGravity += -Game::kGravity * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
-	owner->m_rb.m_vel = m_info.knockBackVel + Vector3(0, owner->m_accumulatedGravity, 0);
+	//CharacterBase::ApplyPosは床にいるとm_accumulatedGravityを0に戻すので、ステートで持っている累積を使う
+	m_gravity += -Game::kGravity * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
+	owner->m_rb.m_vel = m_info.knockBackVel + Vector3(0, m_gravity, 0);
 
 	//落下中に床に着いたら着地//打ち上げ直後はまだ床の上にいるので判定しない
-	bool isFalling = m_info.knockBackVel.y + owner->m_accumulatedGravity < 0.0f;
+	bool isFalling = m_info.knockBackVel.y + m_gravity < 0.0f;
 	if (owner->IsFloor() && isFalling)
 	{
 		owner->m_rb.m_vel = Vector3(0, 0, 0);
@@ -54,10 +55,6 @@ void EnemyHitDrop::Update()
 
 void EnemyHitDrop::Exit()
 {
-	auto owner = m_owner.lock();
-	if (!owner)return;
-	//重力の累積を戻しておく
-	owner->m_accumulatedGravity = 0.0f;
 }
 
 void EnemyHitDrop::DebugDraw()

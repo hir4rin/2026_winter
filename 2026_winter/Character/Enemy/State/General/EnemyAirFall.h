@@ -14,4 +14,7 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+
+private:
+    float m_gravity = 0.0f;//このステート中の重力の累積
 };

@@ -18,8 +18,8 @@ void EnemyHitAir::Enter()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
-	//重力の累積をリセット//縦の速度は初速(m_info.knockBackVel.y)と重力の累積から作る
-	owner->m_accumulatedGravity = 0.0f;
+	//縦の速度は初速(m_info.knockBackVel.y)と重力の累積(m_gravity)から作る
+	m_gravity = 0.0f;
 }
 
 void EnemyHitAir::Update()
@@ -31,11 +31,12 @@ void EnemyHitAir::Update()
 
 	//重力
 	//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、初速と累積から毎フレーム作り直す
-	owner->m_accumulatedGravity += -Game::kGravity * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
-	owner->m_rb.m_vel = m_info.knockBackVel + Vector3(0, owner->m_accumulatedGravity, 0);
+	//CharacterBase::ApplyPosは床にいるとm_accumulatedGravityを0に戻すので、ステートで持っている累積を使う
+	m_gravity += -Game::kGravity * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
+	owner->m_rb.m_vel = m_info.knockBackVel + Vector3(0, m_gravity, 0);
 
 	//上昇しきったら(縦の速度が0以下になったら)AirStayへ
-	if (m_info.knockBackVel.y + owner->m_accumulatedGravity <= 0.0f)
+	if (m_info.knockBackVel.y + m_gravity <= 0.0f)
 	{
 		owner->ChangeState(std::make_shared<EnemyAirStay>(owner));
 	}
@@ -43,10 +44,6 @@ void EnemyHitAir::Update()
 
 void EnemyHitAir::Exit()
 {
-	auto owner = m_owner.lock();
-	if (!owner)return;
-	//重力の累積を戻しておく
-	owner->m_accumulatedGravity = 0.0f;
 }
 
 void EnemyHitAir::DebugDraw()
