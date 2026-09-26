@@ -2,7 +2,6 @@
 #include "CharacterBase.h"
 #include "Player.h"
 #include "../Camera/CameraManager.h"
-#include "../Camera/LockOnManager.h"
 #include "../Camera/CameraState/CameraStateBase.h"
 #include "../System.h"
 #include "../BattleManager.h"
@@ -121,13 +120,14 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 			if (hitCol)
 			{
 				auto cameraManager = player->GetCameraManager().lock();
-				auto lockOnManager = player->GetLockOnManager().lock();
 				if (!cameraManager)
 				{
 					m_hitIds.push_back(otherId);//当たったidのリストにotherのidを追加する
 					return;
 				}
-
+				//ヒットした親
+				auto hitOwner = hitCol->GetOwner().lock();
+				if (!hitOwner)return;
 
 				///---------
 				/// ここで、Playerの初めて当たった時という関数を呼び出して、
@@ -148,34 +148,23 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				//プレイヤーの攻撃が当たった時の処理//カメラシェイクや、内部ターゲットのセット
 				player->OnAttackHit(otherId);
 
+				//当たった敵(HitColの持ち主)
+				auto hitOwnerEnemy = std::dynamic_pointer_cast<EnemyBase>(hitOwner);
+
 
 				//ownerに当たったことを連絡->AttackMoveを止める
-				bool isLockOn = cameraManager->GetIsLockOn();
-				if (isLockOn)
+				//ロックオンしていないときは、最初に当たった敵を内部ターゲットにする
+				if (!player->IsLockOn() && !player->GetSoftTarget())
 				{
-
-					//ロックオンしている敵がいて、そいつに当たったら攻撃の移動を止める
-					auto playerTarget = player->GetTargetEnemy();
-					auto targetEnemy = playerTarget.lock();
-					if (!targetEnemy)
-					{
-						//assert(false && "PlayerAttackOnCollision:ターゲットしている敵がいません");
-					}
-					if (otherId == targetEnemy->GetId())
-					{
-						//攻撃の移動を止める
-						auto& comboInfo = player->GetComboInfo();
-						comboInfo.isHit = true;//攻撃が当たったことを通知する//これで、攻撃の移動を止める
-					}
+					player->SetSoftTarget(hitOwnerEnemy);
 				}
-				//ロックオンしていない場合
-				else
+				//攻撃の対象に当たったら攻撃の移動を止める
+				if (hitOwnerEnemy && hitOwnerEnemy == player->GetAttackTarget())
 				{
-					//内部ターゲットにセットする//最初の敵だったら
-					if (m_hitIds.empty())lockOnManager->SetTargetEnemy(otherId);
-
+					//攻撃の移動を止める
+					auto& comboInfo = player->GetComboInfo();
+					comboInfo.isHit = true;//攻撃が当たったことを通知する//これで、攻撃の移動を止める
 				}
-
 			}
 			//もしプレイヤーの必殺技攻撃だったら
 			if (GetTag().role == Collider::ColRole::UltAttack)

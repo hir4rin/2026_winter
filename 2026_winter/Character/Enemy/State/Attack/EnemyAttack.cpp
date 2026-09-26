@@ -41,15 +41,16 @@ void EnemyAttack::Update()
 	if (owner->m_anim.GetAnimEndFlag())
 	{
 		owner->m_attackCoolTime = kEnemyAttackCoolTime;//攻撃のクールタイムをリセット
-		//owner->ChangeState(EnemyState::Back);//BackStateに移行
 		owner->ChangeState(std::make_shared<EnemyBack>(owner));
 	}
 }
 
 void EnemyAttack::Exit()
 {
-	//m_attackCol->SetIsActive(false);
-	//m_attackCol->ClearHitIds();
+	auto owner = m_owner.lock();
+	if (!owner)return;
+	/*owner->m_attackCol->SetIsActive(false);
+	owner->m_attackCol->ClearHitIds();*/
 }
 
 void EnemyAttack::DebugDraw()

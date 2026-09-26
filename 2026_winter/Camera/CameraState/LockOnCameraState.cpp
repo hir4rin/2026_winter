@@ -62,11 +62,10 @@ void LockOnCameraState::Update()
 
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto lockOnManager = cameraManager->GetLockOnManager().lock();
-	std::shared_ptr<EnemyBase> enemy;
-	if (lockOnManager) enemy = lockOnManager->GetTarget().lock();
+	auto enemy = cameraManager->GetLockTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
 	if (!player)return;
+	if (!enemy)return;
 
 	//ロックオン対象が切り替わったら、注視点のlerpをやり直す
 	if (enemy != m_lastTargetEnemy.lock())
@@ -83,18 +82,6 @@ void LockOnCameraState::Update()
 	Vector3 playerPos = player->GetRigidBody().GetPos();
 	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
 
-	float distance = (enemyPos - playerPos).Magnitude();
-	//ロックオンの最大距離を超えたらロックオンを解除する
-	if (distance > kLockOnMaxDistance)
-	{
-		//mainCamera->SetLockOn(false);
-		cameraManager->SetLockOn(false);
-		//解放
-		//m_lockOnEnemy.reset();
-
-		//PlayerCameraに切り替える//処理を呼ぶ
-		cameraManager->ChangeState(std::make_shared<PlayerFollowCamera>(m_owner));
-	}
 	Vector3 targetPos = (playerPos + enemyPos) / 2;
 	//注視点の割合を決める
 	float dis = (enemyPos - playerPos).Magnitude();
@@ -158,9 +145,7 @@ void LockOnCameraState::Draw()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto lockOnManager = cameraManager->GetLockOnManager().lock();
-	std::shared_ptr<EnemyBase> enemy;
-	if (lockOnManager) enemy = lockOnManager->GetTarget().lock();
+	auto enemy = cameraManager->GetLockTarget();
 	if (!enemy)return;
 
 	//敵の座標をスクリーン座標に変換する//ボスをロックオンしている時は、レティクルをさらに上げる
@@ -190,9 +175,7 @@ void LockOnCameraState::FixCameraPos()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto lockOnManager = cameraManager->GetLockOnManager().lock();
-	std::shared_ptr<EnemyBase> enemy;
-	if (lockOnManager) enemy = lockOnManager->GetTarget().lock();
+	auto enemy = cameraManager->GetLockTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
 	if (!enemy)return;
 	if (!player)return;

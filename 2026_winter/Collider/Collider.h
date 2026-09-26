@@ -80,7 +80,6 @@ public:
 	void  ColInit(ColInitParam);
 	//IDのセット//子Colliderは別でidを持っているが親を持っているため、親のidも仕えるようにする設計にする
 	void SetID();
-	void ResetID(int ownerID);//コライダーを持っている場合は、その親のidをセットする//今回は使わない
 	void SetStagePtr(std::weak_ptr<Stage> stage) { m_stage = stage; }//ステージへの弱参照をセット
 	//--------------------------------------------------------------------------
 

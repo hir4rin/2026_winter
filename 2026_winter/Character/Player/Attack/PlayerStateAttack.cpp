@@ -8,9 +8,10 @@
 #include "../System.h"
 #include "../../../BattleManager.h"
 #include "../../../Camera/CameraManager.h"
+#include "../../../Camera/CameraState/CameraStateBase.h"
 #include "../../../Camera/LockOnManager.h"
 #include "../../Enemy/EnemyBase.h"
-//#include "../../Enemy/EnemyManager.h"
+#include "../../Enemy/EnemyManager.h"
 //#include "../Effect/EffectManager.h"
 #include "EffekseerForDXLib.h"
 
@@ -63,8 +64,6 @@ void PlayerStateAttack::Enter()
 	if (!player) return;
 	//攻撃の方向を決める
 	DetermineAttackDirection();
-	//ホーミングする対象を初期化
-	m_homingEnemyTarget = {};
 	//ロックオン中の攻撃の方向を決める
 	LockOnAttackDirection();
 	//ロックオンしていないとき、入力方向に敵がいたらそいつをターゲットにする
@@ -130,7 +129,6 @@ void PlayerStateAttack::Enter()
 		.isActive = false,
 		.isTrigger = true
 		});//攻撃の当たり判定を初期化する//最初は無効にしておく
-	m_attackCol->ResetID(player->GetId());//いらないからのち程修正
 	m_attackCol->SetIsActive(false);//最初は当たり判定を無効にしておく
 
 	m_isSwingSePlayed = false;//振りのSEをまだ再生していない状態にする
@@ -398,15 +396,11 @@ void PlayerStateAttack::LockOnAttackDirection()
 	//ロックオンしているかどうか
 	auto cameraManager = player->m_cameraManager.lock();
 	if (!cameraManager)return;
-	//メインカメラを取得
-	//auto mainCamera = cameraManager->GetMainCamera();
-
-	//bool isLockOn = mainCamera->GetIsLockOn();
 	//ロックオンしていないならreturnする
-	//if (!isLockOn)return;
+	if (!player->IsLockOn())return;
 
 	//ターゲットしている敵を取得
-	auto lockedEnemy = cameraManager->GetTargetEnemy();
+	auto lockedEnemy = player->GetAttackTarget();
 	if (!lockedEnemy)return;
 	//ターゲットしている敵が死んでいるならreturnする
 	if (lockedEnemy->GetIsLifeZero())return;
@@ -424,158 +418,112 @@ void PlayerStateAttack::NoLockOnAttackDirection()
 
 	auto player = m_owner.lock();
 	if (!player) return;
-	//ロックオンしているかどうか
-	auto cameraManager = player->m_cameraManager.lock();
-	if (!cameraManager)return;
-	//メインカメラを取得
-	//auto mainCamera = cameraManager->GetMainCamera();
-
-	//bool isLockOn = mainCamera->GetIsLockOn();
 	//ロックオンしていたらreturnする
-	//if (isLockOn)return;
-	//ターゲットしている敵を取得
-	if (m_homingEnemyTarget.lock())
-	{
-		//ターゲットしている敵が死んでいるならreturnする
-		if (m_homingEnemyTarget.lock()->GetIsLifeZero())return;
+	if (player->IsLockOn())return;
 
-		Vector3 enemyPos = m_homingEnemyTarget.lock()->GetRigidBody().GetPos();
-		Vector3 playerPos = player->m_rb.m_pos;
-		enemyPos.y = playerPos.y = 0;//y軸方向は無視する//XZ平面での角度を計算する
+	//内部ターゲットの方向に吸い寄せる//死んでいたらnullptrが返る
+	auto softTarget = player->GetSoftTarget();
+	if (!softTarget)return;
 
-		Vector3 dirToEnemy = (enemyPos - playerPos).Normalize();
-		player->m_targetVec = dirToEnemy;
-	}
-	//ホーミングする対象がいない場合は、そのままスティック入力
+	Vector3 enemyPos = softTarget->GetRigidBody().GetPos();
+	Vector3 playerPos = player->m_rb.m_pos;
+	enemyPos.y = playerPos.y = 0;//y軸方向は無視する//XZ平面での角度を計算する
+	Vector3 dirToEnemy = (enemyPos - playerPos).Normalize();
+	player->m_targetVec = dirToEnemy;
+	//内部ターゲットがいない場合は、そのままスティック入力
 
 	//入力がないなら//インターンで得た情報
 	//ターゲットしている敵の方向にプレイヤーを向く
-	
-	
 }
 
 void PlayerStateAttack::CheckNoLockOnTargetEnemy()
 {
-	//auto player = m_owner.lock();
-	//if (!player) return;
-	//auto& input = Input::GetInstance();
+	auto player = m_owner.lock();
+	if (!player) return;
+	auto& input = Input::GetInstance();
 
-	////ロックオンしているかどうか
-	//auto cameraManager = player->m_cameraManager.lock();
-	//if (!cameraManager)return;
-	////メインカメラを取得
-	//auto mainCamera = cameraManager->GetMainCamera();
+	//ロックオンしているかどうか
+	auto cameraManager = player->m_cameraManager.lock();
+	if (!cameraManager)return;
 
-	//bool isLockOn = mainCamera->GetIsLockOn();
-	////ロックオンしていたらreturnする
-	//if (isLockOn)return;
-
-	////プレイヤーの一定範囲内にいる敵を取得
-	//auto enemyManager = player->m_enemyManager.lock();
-	//if (!enemyManager)return;
-	//auto enemies = enemyManager->GetEnemies();
-	//std::vector<std::shared_ptr<EnemyBase>> nearbyEnemies;
-	////playerが空中にいるなら空中の敵の身を取得
-	//bool isPlayerAir = !player->IsFloor();
-	//for (auto& enemy : enemies)
-	//{
-	//	if (enemy->GetIsLifeZero()) continue;
-	//	//playerが空中
-	//	if (isPlayerAir)
-	//	{
-	//		if (enemy->IsFloor()) continue;
-	//	}
-	//	//playerが地上
-	//	else
-	//	{
-	//		if (!enemy->IsFloor()) continue;
-	//	}
-
-	//	//範囲内にいる敵を集める
-	//	Vector3 enemyPos = enemy->GetPos();
-	//	float distance = (enemyPos - player->m_rb.m_pos).Magnitude();
-
-	//	if(distance < player->GetCameraRockOnRange() * kNearbyEnemyRangeMultiplier)
-	//	{
-	//		nearbyEnemies.push_back(enemy);
-	//	}
-	//}
-	////近くに敵がいなかったらreturnする
-	//if (nearbyEnemies.empty()) return;
+	//ロックオンしていたらreturnする
+	if (player->IsLockOn())return;
 
 	////入力方向にベクトルを飛ばし、そこと、cosΘで比較
 	////30度以内の敵がいたら、そいつをターゲットにする
-	//Vector3 inputDir = Vector3(0, 0, 0);
-	//float cosTheta = cosf(kEnemyTargetConeAngle);//角度以内の敵をターゲットにする//cosでの判定に使う
+	//スティックの入力方向を求める
+	Vector3 inputDir = Vector3(0, 0, 0);
+	if (input.IsPressed("Up")) inputDir += player->forward;
+	if (input.IsPressed("Down")) inputDir += player->down;
+	if (input.IsPressed("Left")) inputDir += player->left;
+	if (input.IsPressed("Right")) inputDir += player->right;
+	bool hasInput = inputDir.Magnitude() > 0.0f;
 
-	//if (input.IsPressed("Up")) inputDir += player->forward;
-	//if (input.IsPressed("Down")) inputDir += player->down;
-	//if (input.IsPressed("Left")) inputDir += player->left;
-	//if (input.IsPressed("Right")) inputDir += player->right;
+	//入力がないとき
+	//入力がないときは、playerの向いている方向を入力方向とする
+	if (!hasInput)
+	{
+		//内部ターゲットがいれば、そのまま使う
+		if (player->GetSoftTarget())return;
 
-	//if (inputDir.Magnitude() <= 0.0f)
-	//{
-	//	//入力がないときは、playerの向いている方向を入力方向とする
-	//	//→入力がないとき、かつ内部ターゲットがいないとき
-	//	if (!player->m_lockOnManager.lock()->GetTarget().lock())
-	//	{
-	//		inputDir = player->m_targetVec.Normalize();
-	//		//入力がないとき、かつ、敵ターゲットがまだいないときはカメラのベクトルにする
-	//		//そして、ターゲットを探す
-	//		if (!cameraManager->GetTargetEnemy())
-	//		{
-	//			Vector3 cameraPos = mainCamera->GetCameraPos();
-	//			Vector3 playerPos = player->m_rb.m_pos;
-	//			cameraPos.y = playerPos.y = 0;//y軸方向は無視する//XZ平面での角度を計算する
-	//			inputDir = (playerPos - cameraPos).Normalize();
-	//			//cosを広げる
-	//			cosTheta = cosf(kEnemyTargetConeAngle);//60度以内の敵をターゲットにする//cosでの判定に使う
-	//		}
-	//	}
-	//	else
-	//	{
-	//		//入力がないかつ内部ターゲットがいるときはそいつの方向に向かわせる
-	//		//吸い寄せ対象をセット
-	//		
-	//		m_homingEnemyTarget = player->m_lockOnManager.lock()->GetTarget();
-	//		return;
-	//	}
-	//	
-	//}
-	////入力があるとき
-	//else
-	//{
-	//	//入力方向から探す
-	//	inputDir = inputDir.Normalize();
-	//}
+		//内部ターゲットがいなければ、カメラの向いている方向から探す
+		auto cameraManager = player->m_cameraManager.lock();
+		if (!cameraManager)return;
+		auto camera = cameraManager->GetActiveCamera();
+		if (!camera)return;
+		Vector3 cameraPos = camera->GetPos();
+		Vector3 playerPos = player->m_rb.m_pos;
+		cameraPos.y = playerPos.y = 0.0f;//y軸方向は無視する//XZ平面での角度を計算する
+		inputDir = playerPos - cameraPos;
+	}
+	inputDir.y = 0.0f;
+	//カメラが真上にある場合など向きが決まらないときはreturnする
+	if (inputDir.Magnitude() <= 0.0f)return;
+	inputDir = inputDir.Normalize();
 
-	////cosが最大の敵をターゲットにする//-1.0fで初期化
-	//float MaxCos = -1.0f;
-	//
-	//std::shared_ptr<EnemyBase> bestTarget = nullptr;
-	//for(auto& enemy : nearbyEnemies)
-	//{
-	//	Vector3 enemyPos = enemy->GetPos();
-	//	Vector3 playerPos = player->m_rb.m_pos;
-	//	enemyPos.y = playerPos.y;//y軸方向は無視する//XZ平面での角度を計算する
-	//	Vector3 dirToEnemy = (enemyPos - player->m_rb.m_pos).Normalize();
-	//	float cos = inputDir.Dot(dirToEnemy);
-	//	if (cos < cosTheta) continue;//30度以内の敵じゃなかったらスキップ
-	//	if(cos > MaxCos)
-	//	{
-	//		MaxCos = cos;
-	//		bestTarget = enemy;
-	//	}
-	//}
-	////ターゲットが見つかったら、カメラにセットする
-	//if(bestTarget)
-	//{
-	//	/*auto lockOnManager = player->m_lockOnManager.lock();
-	//	lockOnManager->SetTargetEnemy(bestTarget->GetId());*/
-	//	//吸い寄せ対象をセット
-	//	m_homingEnemyTarget = bestTarget;
-	//}
+	//プレイヤーの一定範囲内にいる敵を集める
+	auto enemyManager = player->m_enemyManager.lock();
+	if (!enemyManager)return;
+	bool isPlayerAir = !player->IsFloor();
+	float range = player->GetCameraRockOnRange() * kNearbyEnemyRangeMultiplier;
+	float cosTheta = cosf(kEnemyTargetConeAngle);//この角度以内の敵をターゲットにする//cosでの判定に使う
 
+	//入力方向とのcosが最大の敵をターゲットにする
+	std::shared_ptr<EnemyBase> bestTarget = nullptr;
+	float maxCos = -1.0f;
+	for (auto& enemy : enemyManager->GetEnemies())
+	{
+		if (!enemy)continue;
+		if (enemy->GetIsLifeZero())continue;
+		//プレイヤーが空中なら空中の敵だけ、地上なら地上の敵だけを対象にする
+		if (isPlayerAir == enemy->IsFloor())continue;
+
+		Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+		Vector3 playerPos = player->m_rb.m_pos;
+		if ((enemyPos - playerPos).Magnitude() >= range)continue;
+
+		enemyPos.y = playerPos.y;//y軸方向は無視する//XZ平面での角度を計算する
+		Vector3 dirToEnemy = (enemyPos - playerPos).Normalize();
+		float cos = inputDir.Dot(dirToEnemy);
+		if (cos < cosTheta)continue;//角度の範囲外ならスキップ
+		if (cos > maxCos)
+		{
+			maxCos = cos;
+			bestTarget = enemy;
+		}
+	}
+
+	if (bestTarget)
+	{
+		//吸い寄せ対象
+		//見つかったら内部ターゲットにする
+		player->SetSoftTarget(bestTarget);
+	}
+	else if (hasInput)
+	{
+		//敵のいない方向に入力したときは、前の内部ターゲットを狙わない
+		player->ClearSoftTarget();
+	}
 }
 
 void PlayerStateAttack::AttackInputCheck()
@@ -842,7 +790,6 @@ void PlayerStateAttack::InpuctAttackSetUp()
 			.isTrigger = true,
 			.lifeTime = kDropAttackColLifeTime
 			});//攻撃の当たり判定を初期化する//最初は無効にしておく
-		player->m_burstAttackCol->ResetID(player->GetId());
 		player->m_burstAttackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
 	}
 }

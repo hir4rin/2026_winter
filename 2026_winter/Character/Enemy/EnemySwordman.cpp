@@ -77,8 +77,6 @@ void EnemySwordman::Init()
 		.isActive = true,
 		.isTrigger = true
 		});
-	m_hitCol->ResetID(GetId());
-
 	CharacterBase::ApplyPos();//座標の更新//モデルの座標を更新する
 	ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
 }

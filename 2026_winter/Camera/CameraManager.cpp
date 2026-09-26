@@ -1,6 +1,7 @@
 ﻿#include "CameraManager.h"
 #include "Camera.h"
 #include "LockOnManager.h"
+#include "Player.h"
 #include "CameraState/CameraStateBase.h"
 #include "CameraState/PlayerFollowCamera.h"
 #include "CameraState/LockOnCameraState.h"
@@ -47,18 +48,21 @@ CameraManager::~CameraManager()
 void CameraManager::Init(std::weak_ptr<Player> player,std::weak_ptr<Stage> stage)
 {
 	//プレイヤーカメラの初期化
-	SetWeakRef(player);
+	m_context->m_player = player;
 
 	////PlayerCameraでスタート
 	ChangeState(std::make_shared<PlayerFollowCamera>(shared_from_this()));
 }
 
-void CameraManager::Update(Vector3 pos, Vector3 pos2)
+void CameraManager::Update()
 {
 
 
 	// DXライブラリのカメラとEffekseerのカメラを同期する。
 	Effekseer_Sync3DSetting();
+
+	//ロックオン状態だったらロックオンカメラへ移行させる
+	SyncLockOnState();
 
 	m_currentState->Update();
 	//カメラに反映
@@ -184,19 +188,8 @@ void CameraManager::SetPhotoCamera()
 }
 
 
-void CameraManager::SetWeakRef(std::weak_ptr<Player> m_player, std::weak_ptr<EnemyBase> m_enemy)
-{
-	//カメラコンテキストにセット
-	m_context->m_player = m_player;
-	//m_context->m_targetEnemy = m_enemy;
-}
 
-std::shared_ptr<EnemyBase> CameraManager::GetTargetEnemy()const
-{
-	auto lockOnManager = m_lockOnManager.lock();
-	if (!lockOnManager)return nullptr;
-	return lockOnManager->GetTarget().lock();
-}
+
 void CameraManager::StartCameraShake(float power, float time)
 {
 	m_shakePower = power;
@@ -225,6 +218,32 @@ Vector3 CameraManager::CameraShakeUpdate()
 
 
 }
+
+bool CameraManager::IsLockOn()const
+{
+	auto player = m_context->m_player.lock();
+	return player && player->IsLockOn();
+}
+
+std::shared_ptr<EnemyBase> CameraManager::GetLockTarget() const
+{
+	auto player = m_context->m_player.lock();
+	if (!player)return nullptr;
+	auto lockOn = player->GetLockOnManager();
+	if (lockOn)
+	{
+		return lockOn->GetLockTarget();
+	}
+	return nullptr;
+}
+
+std::shared_ptr<EnemyBase> CameraManager::GetAttackTarget() const
+{
+	auto player = m_context->m_player.lock();
+	if (!player)return nullptr;
+	return player->GetAttackTarget();
+}
+
 
 void CameraManager::ChangeState(std::shared_ptr<CameraStateBase> newState)
 {
@@ -307,6 +326,23 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 	}
 
 	ChangeState(newState);
+}
+
+void CameraManager::SyncLockOnState()
+{	
+	if (!m_currentState)return;
+	auto type = m_currentState->GetCameraType();
+	bool isLockOn = IsLockOn();
+
+	//追従カメラとロックオンカメラの間だけ切り替える(必殺技・演出カメラには触らない)
+	if (isLockOn && type == CameraStateBase::Type::PlayerCamera)
+	{
+		ChangeStateFromScene(CameraStateName::LockOnCamera);
+	}
+	else if (!isLockOn && type == CameraStateBase::Type::LockOnCamera)
+	{
+		ChangeStateFromScene(CameraStateName::PlayerCaemra);
+	}
 }
 
 

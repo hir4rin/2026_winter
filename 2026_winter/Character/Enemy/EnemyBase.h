@@ -45,9 +45,12 @@ public:
 
 
 
+
 	std::shared_ptr<EnemyBase> GetSharedPtr() { return std::dynamic_pointer_cast<EnemyBase>(shared_from_this()); }
 	std::weak_ptr<EnemyBase> GetWeakPtr() { return GetSharedPtr(); }
 protected:
+	void ApplyPos()override;//座標の適用//
+
 	//ここでやりたいこと
 	//・プレイヤーを追いかける
 	//・攻撃する

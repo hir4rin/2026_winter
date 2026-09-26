@@ -59,10 +59,6 @@ void Collider::SetID()
 	m_id = IDManager::GetNextID();
 }
 
-void Collider::ResetID(int ownerID)
-{
-	m_id = ownerID;
-}
 
 
 

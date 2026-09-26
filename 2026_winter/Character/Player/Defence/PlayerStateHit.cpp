@@ -31,17 +31,27 @@ void PlayerStateHit::Update()
 
 	if(player->m_anim.GetAnimEndFlag())
 	{
-		//入力の有無で状態を変える
-		if(input.IsLeftStickInput())
+		if (player->IsFloor())
 		{
-			player->ChangeState(std::make_shared<PlayerStateMove>(m_owner));
-			return;
+			//入力の有無で状態を変える
+			if (input.IsLeftStickInput())
+			{
+				player->ChangeState(std::make_shared<PlayerStateMove>(m_owner));
+				return;
+			}
+			else
+			{
+				player->ChangeState(std::make_shared<PlayerStateIdle>(m_owner));
+				return;
+			}
 		}
+		//空中にいるとき
 		else
 		{
-			player->ChangeState(std::make_shared<PlayerStateIdle>(m_owner));
+			player->ChangeState(std::make_shared<PlayerStateFall>(m_owner));
 			return;
 		}
+		
 	}
 	player->m_anim.Update();
 

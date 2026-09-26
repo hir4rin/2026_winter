@@ -3,7 +3,6 @@
 #include <list>
 #include <vector>
 #include "../Math/Vector3.h"
-#include "Camera.h"
 
 class Input;
 class Player;
@@ -46,21 +45,13 @@ public:
 	/// </summary>
 	/// <param name="pos">targetの座標</param>
 	/// <param name="pos2">補助的な座標</param>
-	void Update(Vector3 pos, Vector3 pos2 = Vector3());
+	void Update();
 	void Draw();
 
 	/// <summary>
 	/// レンダーターゲットごとに変わってしまうので、カメラの設定を反映させる
 	/// </summary>
 	void ApplyCameraSettings();
-
-	//RefWeakptr用
-	void SetWeakRef(std::weak_ptr<Player> m_player, std::weak_ptr<EnemyBase> m_enemy = {});
-	//ターゲットのEnemyを取得する
-	std::shared_ptr<EnemyBase> GetTargetEnemy()const;
-	//ロックオンカメラをゲットする
-	std::weak_ptr<LockOnManager> GetLockOnManager() { return m_lockOnManager; }
-	void SetLockOnCamera(std::weak_ptr<LockOnManager> lockonMgr) {  m_lockOnManager = lockonMgr;}
 
 	//CameraContextのゲット
 	std::shared_ptr<CameraContext> GetContext() { return m_context; }
@@ -71,9 +62,13 @@ public:
 	//カメラシェイクのUpdate
 	Vector3 CameraShakeUpdate();
 
-	//ロックオン
-	void SetLockOn(bool isLockOn) { m_isLockOn = isLockOn; }
-	bool GetIsLockOn()const { return m_isLockOn; }
+	//ロックオン//Player経由で読むだけ
+	bool IsLockOn()const;
+	//ロックオンしていたらロックオンの敵を返し、違ったらnullptrを返す
+	std::shared_ptr<EnemyBase> GetLockTarget()const;
+	//攻撃の対象(ロックオンor内部ターゲット)を返す、違ったらnullptrを返す
+	std::shared_ptr<EnemyBase> GetAttackTarget()const;
+
 
 	//フォトモード中、入力からカメラを動かす
 	void UpdatePhotoCamera();
@@ -88,11 +83,12 @@ public:
 	//外部からステートを変えるとき
 	void ChangeStateFromScene(CameraStateName stateName);
 private:
+	//ロックオン状態とカメラのステートがずれていたら遷移する
+	void SyncLockOnState();
+private:
 	//必要な情報
 	std::shared_ptr<CameraContext> m_context;
 
-	//ロックオンマネージャー//実体はGameScene(またはシーン側)が持つため、弱参照で持つ
-	std::weak_ptr<LockOnManager> m_lockOnManager;
 
 	//カメラのステート
 	std::shared_ptr<CameraStateBase> m_currentState;
@@ -103,8 +99,6 @@ private:
 	float m_shakeTimerMax = 0.0f;//減衰用のコピー
 	bool m_isShaking = false;//今カメラが揺れているかどうか
 	Vector3 m_renderPos = Vector3();//カメラ描画用の座標
-
-	bool m_isLockOn = false;//ロックオンしているかどうか
 
 	//フォトモード用のフリーカメラ
 	Vector3 m_photoCamPos = Vector3();

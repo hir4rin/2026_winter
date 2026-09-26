@@ -68,7 +68,6 @@ void PlayerStateUlt::Enter()
 		.isActive = false,
 		.isTrigger = true
 		});//攻撃の当たり判定を初期化する//最初は無効にしておく
-	m_attackCol->ResetID(player->GetId());
 }
 
 void PlayerStateUlt::Update()

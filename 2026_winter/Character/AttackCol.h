@@ -17,6 +17,8 @@ public:
 
 	virtual void Update();
 
+	std::weak_ptr<CharacterBase> GetOwner() { return m_owner; }
+
 	void ClearHitIds() { m_hitIds.clear(); }//当たったIDのリストをクリアする//攻撃が終わったら呼ぶ
 protected:
 	void PlayerAttackOnCollision(Collider& other);//Playerの攻撃が当たった時の処理

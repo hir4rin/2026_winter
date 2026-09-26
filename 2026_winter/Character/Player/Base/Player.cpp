@@ -47,6 +47,9 @@ namespace
 	constexpr float kGroundCheckCapsuleTopOffset = 100.0f;//地面判定用カプセルの上端のy軸オフセット
 	constexpr float kGroundCheckCapsuleBottomOffset = -20.0f;//地面判定用カプセルの下端のy軸オフセット
 	constexpr float kGroundCheckCapsuleRadius = 40.0f;//地面判定用カプセルの半径
+
+	constexpr float kSoftTargetKeepFrame = 90.0f;//攻撃をやめてから内部ターゲットを保持するフレーム数
+	constexpr float kSoftTargetRangeMult = 3.0f;//これ以上離れたら内部ターゲットを消す(ロックオン範囲に対する倍率)
 }
 
 
@@ -132,7 +135,6 @@ void Player::Init()
 		.isActive = true,
 		.isTrigger = true
 		});
-	m_hitCol->ResetID(GetId());
 
 	CharacterBase::ApplyPos();//座標の更新//モデルの座標を更新する
 	ChangeState(m_currentState);//初期化
@@ -149,6 +151,8 @@ void Player::Init()
 	{
 		handle = System::GetInstance().GetHandle(AsyncData::AreaWallEffect);
 	}
+	m_lockOnManager = std::make_shared<LockOnManager>();
+	m_lockOnManager->Init(GetWeakPtr(), m_cameraManager, m_enemyManager);
 }
 
 void Player::Update(Camera& camera)
@@ -176,6 +180,12 @@ void Player::Update(Camera& camera)
 
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(Jump,Fall,Attack)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
+
+	//ロックオンと内部ターゲットの更新
+	m_lockOnManager->Update();
+	UpdateSoftTarget();
+	
+
 
 	if (m_currentState)
 	{
@@ -313,9 +323,6 @@ void Player::OnAttackHit(int otherId)
 {
 
 	auto cameraManager = GetCameraManager().lock();
-	auto lockOnManager = GetLockOnManager().lock();
-
-	
 
 	////ownerに当たったことを連絡->AttackMoveを止める
 	//bool isLockOn = mainCamera->GetIsLockOn();
@@ -416,6 +423,38 @@ void Player::AddUltGauge(int value)
 	{
 		m_comboInfo.UltGauge = kMaxGaugeValue;
 	}
+}
+
+bool Player::IsLockOn()const
+{
+	//trueでロックオン中
+	return m_lockOnManager && m_lockOnManager->IsLockOn();
+}
+
+void Player::SetSoftTarget(std::shared_ptr<EnemyBase> target)
+{
+	m_softTarget = target;
+	//制限時間をセット
+	m_softTargetKeepTimer = kSoftTargetKeepFrame;
+}
+
+std::shared_ptr<EnemyBase> Player::GetSoftTarget() const
+{
+	auto target = m_softTarget.lock();
+	if (!target || target->GetIsLifeZero())return nullptr;
+	return target;
+}
+
+std::shared_ptr<EnemyBase> Player::GetAttackTarget() const
+{
+	//ロックオンしているならロックオンの敵を返す
+
+	if (IsLockOn())
+	{
+		return m_lockOnManager->GetLockTarget();
+	}
+	//違うなら内部ターゲットを返す
+	return GetSoftTarget();
 }
 
 void Player::InitializeComboChain()
@@ -765,8 +804,37 @@ bool Player::CanUltAttack()
 	return false;
 }
 
-std::weak_ptr<EnemyBase> Player::GetTargetEnemy() const
+void Player::UpdateSoftTarget()
 {
-	auto lockOnMgr = m_lockOnManager.lock();
-	return std::weak_ptr<EnemyBase>(lockOnMgr->GetTarget());
+	auto target = m_softTarget.lock();
+	if (!target)return;
+
+	//死んだら消す
+	if (target->GetIsLifeZero())
+	{
+		ClearSoftTarget();
+		return;
+	}
+	//離れすぎたら消す
+	float distance = (target->GetRigidBody().GetPos() - m_rb.m_pos).Magnitude();
+	if (distance > kPlayerRockOnRange * kSoftTargetRangeMult)
+	{
+		ClearSoftTarget();
+		return;
+	}
+	//攻撃中はタイマーを進めない//おそらく空振りの攻撃でもタイマーがとまってしまうため、バグるかも
+	if (m_comboInfo.currentComboIndex != ComboIndex::None)
+	{
+		m_softTargetKeepTimer = kSoftTargetKeepFrame;
+		return;
+	}
+	m_softTargetKeepTimer -= System::GetInstance().GetTimeScale();
+	//TImerが過ぎていたら内部ターゲットを解放する
+	if (m_softTargetKeepTimer <= 0.0f)
+	{
+
+		ClearSoftTarget();
+	}
+
 }
+

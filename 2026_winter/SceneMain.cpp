@@ -5,8 +5,10 @@
 #include <unordered_map>
 #include "Character/Player/Base/Player.h"
 #include "Character/Enemy/EnemySwordman.h"
+#include "Character/Enemy/EnemyManager.h"
 #include "Camera/Camera.h"
 #include "Camera/CameraManager.h"
+#include "Camera/LockOnManager.h"
 #include "DataLoader/DataManager.h"
 #include "Managers/CollisionManager.h"
 #include "Stage/Stage.h"
@@ -78,7 +80,9 @@ void SceneMain::Init()
 	Input::GetInstance().Init();
 
 	CollisionManager::GetInstance().Init();
-	
+
+	//エネミーマネージャー
+	m_enemyManager = std::make_shared<EnemyManager>();
 
 	//ステージの生成//当たり判定の初期化のみ行う(モデル・CSVの読み込みなどのデータ部分は別途対応する)
 	m_stage = std::make_shared<Stage>();
@@ -91,11 +95,15 @@ void SceneMain::Init()
 	m_cameraManager = std::make_shared<CameraManager>();
 	m_camera = std::make_unique<Camera>();
 	m_player->SetCameraManager(m_cameraManager);
+	m_player->SetEnemyManager(m_enemyManager);
 	m_player->Init();
+
 
 	//敵の生成
 	m_enemy = std::make_shared<EnemySwordman>(m_player, kEnemyStartPos);
 	m_enemy->Init();
+	m_enemyManager->AddEnemy(m_enemy);//追加
+
 
 	m_battleManager = std::make_shared<BattleManager>();
 	System::GetInstance().SetBattleMgr(m_battleManager);
@@ -133,10 +141,13 @@ void SceneMain::NormalUpdate()
 	Input::GetInstance().SetInputBlocked(m_battleManager->GetIsEventPlaying());
 	Input::GetInstance().Update();
 	m_player->Update(*m_camera);
-	m_enemy->Update();
+	m_enemyManager->Update();
 	m_stage->Update();
 	CollisionManager::GetInstance().Update();
-	m_cameraManager->Update(m_player->GetRigidBody().GetPos());
+	//battleManagerをここで直でするか、Systemの中でするかどちらがいいか気になる
+	System::GetInstance().Update();
+
+	m_cameraManager->Update();
 }
 
 void SceneMain::FadeOutUpdate()
@@ -161,7 +172,7 @@ void SceneMain::NormalDraw()
 	DrawGrid();
 
 	m_player->Draw();
-	m_enemy->Draw();
+	m_enemyManager->Draw();
 	m_stage->Draw();
 	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);

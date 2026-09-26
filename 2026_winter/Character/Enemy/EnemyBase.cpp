@@ -135,6 +135,16 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 
 }
 
+void EnemyBase::ApplyPos()
+{
+	CharacterBase::ApplyPos();
+	//歩いて地面から離れたら落下ステートにする
+	if (IsLeftFloor())
+	{
+		ChangeState(std::make_shared<EnemyAirFall>(GetWeakPtr()));
+	}
+}
+
 Vector3 EnemyBase::TargetPlayerPos()
 {
 	if (auto player = m_player.lock())

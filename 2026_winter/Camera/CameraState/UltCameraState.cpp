@@ -50,11 +50,11 @@ void UltCameraState::Update()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto lockOnManager = cameraManager->GetLockOnManager().lock();
-	std::shared_ptr<EnemyBase> enemy;
-	if (lockOnManager) enemy = lockOnManager->GetTarget().lock();
+	auto enemy = cameraManager->GetAttackTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
 	if (!enemy)
+
+
 	{
 		//敵がいない場合は、PlayerCameraに切り替える//このカメラが一番優先度高いとき
 		cameraManager->ChangeState(std::make_shared<PlayerFollowCamera>(m_owner));
@@ -97,7 +97,7 @@ void UltCameraState::Update()
 	bool isUlt = System::GetInstance().GetBattleMgr()->GetIsUltimating();
 	if (!isUlt)
 	{
-		bool isLockOn = cameraManager->GetIsLockOn();
+		bool isLockOn = cameraManager->IsLockOn();
 		if (isLockOn)
 		{
 			cameraManager->ChangeState(std::make_shared<LockOnCameraState>(m_owner));
@@ -124,9 +124,7 @@ void UltCameraState::FixCameraPos()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto lockOnManager = cameraManager->GetLockOnManager().lock();
-	std::shared_ptr<EnemyBase> enemy;
-	if (lockOnManager) enemy = lockOnManager->GetTarget().lock();
+	auto enemy = cameraManager->GetAttackTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
 	if (!enemy)return;
 	if (!player)return;
@@ -195,7 +193,7 @@ using BlendSetting = CameraStateBase::BlendSetting;
 BlendSetting UltCameraState::GetBlendSetting() const
 {
 	auto cameraManager = m_owner.lock();
-	auto enemy = cameraManager->GetLockOnManager().lock()->GetTarget().lock();
+	auto enemy = cameraManager ? cameraManager->GetAttackTarget() : nullptr;
 
 
 	return BlendSetting{

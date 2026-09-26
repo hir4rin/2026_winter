@@ -170,14 +170,19 @@ public:
 	//鴉状態かどうか
 	bool GetIsRaven()const { return m_isRaven; }
 
-	//ターゲットしている敵の取得
-	std::weak_ptr<EnemyBase> GetTargetEnemy()const;
+	//ロックオン//読み取り専用で渡す
+	const std::shared_ptr<LockOnManager> GetLockOnManager()const { return m_lockOnManager;}
+	bool IsLockOn()const;
+
+	//内部ターゲット
+	void SetSoftTarget(std::shared_ptr<EnemyBase> target);
+	void ClearSoftTarget() { m_softTarget.reset(); }
+	std::shared_ptr<EnemyBase> GetSoftTarget()const;//死んでいたらnullptrを返す
+	//攻撃の対象//ロックオン中はロックオン対象、そうでなければ内部ターゲット
+	std::shared_ptr<EnemyBase> GetAttackTarget()const;
+
 	//内部ロックオンのために
 	std::weak_ptr<CameraManager> GetCameraManager()const { return m_cameraManager; }
-	//敵ターゲットを保存
-	std::weak_ptr<LockOnManager> GetLockOnManager()const { return m_lockOnManager; }
-	void SetLockOnManager(std::weak_ptr<LockOnManager> lockOnMgr) { m_lockOnManager = lockOnMgr; }
-
 	//プレイヤーの移動制限
 	void SetLimitPlayerArea(int num,bool value) { m_isWaveArea[num] = value; }
 
@@ -209,6 +214,8 @@ private:
 
 	bool CanSkillAttack(bool changeGauge = true);//スキル攻撃ができるかどうか//trueならゲージを減らす
 	bool CanUltAttack();//必殺技攻撃ができるかどうか//trueならゲージを減らす
+
+	void UpdateSoftTarget();//内部ターゲットの消去条件をチェック
 
 	std::shared_ptr<Player> GetSharedPtr() {return std::dynamic_pointer_cast<Player>(shared_from_this());}
 
@@ -261,7 +268,12 @@ private:
 
 	std::weak_ptr<CameraManager> m_cameraManager;//カメラマネージャ-の弱参照
 	std::weak_ptr<EnemyManager> m_enemyManager;//EnemyManagerの弱参照
-	std::weak_ptr<LockOnManager> m_lockOnManager;
+	
+
+	std::shared_ptr<LockOnManager> m_lockOnManager;//ロックオンマネージャー
+	//内部ターゲット
+	std::weak_ptr<EnemyBase> m_softTarget;
+	float m_softTargetKeepTimer  = 0.0f;//攻撃していない間に減り、0になったら内部ターゲットを消す
 	
 
 	//PlayerState
