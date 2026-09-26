@@ -1,6 +1,10 @@
 ﻿#pragma once
 #include "../General/EnemyStateBase.h"
 
+
+
+//今はまだ使っていない、後々ボスのノックダウン状態などに使う可能性高い
+
 class EnemyKnockDown :
     public EnemyStateBase
 {

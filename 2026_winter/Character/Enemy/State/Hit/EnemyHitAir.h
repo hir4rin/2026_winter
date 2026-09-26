@@ -2,15 +2,17 @@
 #include "../General/EnemyStateBase.h"
 #include "../../../CharacterBase.h"
 
+
+
 /// <summary>
-/// 地→地、空→空の際のHit
+/// 地上から空中へと遷移する攻撃
 /// </summary>
-class EnemyHitGround :
+class EnemyHitAir :
     public EnemyStateBase
 {
 public:
-    EnemyHitGround(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info);
-    virtual ~EnemyHitGround();
+    EnemyHitAir(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info);
+    virtual ~EnemyHitAir();
 
     void Enter() override;
 
@@ -21,5 +23,5 @@ public:
 
 private:
     CharacterBase::HitInfo m_info;//被弾情報
-    float m_frame = 0.0f;//経過時間
 };
+

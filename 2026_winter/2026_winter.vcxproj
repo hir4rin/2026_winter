@@ -198,6 +198,7 @@
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitDrop.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyDie.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitGround.cpp" />
+    <ClCompile Include="Character\Enemy\State\Hit\EnemyHitAir.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="IDManager.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -277,6 +278,7 @@
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitDrop.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyDie.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitGround.h" />
+    <ClInclude Include="Character\Enemy\State\Hit\EnemyHitAir.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="IDManager.h" />
     <ClInclude Include="Input.h" />
