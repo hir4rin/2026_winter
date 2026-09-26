@@ -22,5 +22,5 @@ public:
 
 private:
     CharacterBase::HitInfo m_info;//被弾情報
-    float m_gravity = 0.0f;//このステート中の重力の累積//CharacterBase::ApplyPosの床でのリセットに影響されないようにステートで持つ
+    float m_gravity = 0.0f;//このステート中の重力の累積
 };

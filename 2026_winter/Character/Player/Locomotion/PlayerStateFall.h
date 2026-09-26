@@ -16,5 +16,6 @@ class PlayerStateFall : public PlayerState
 private:
 	void Move(Input& input);//落下中の移動処理
 	Vector3 m_baseVel = {};//ジャンプ中の移動速度//ジャンプ中は空中での移動速度を一定にするために、ジャンプ開始時の移動速度を保存しておく
+	float m_gravity = 0.0f;//このステート中の重力の累積//縦の速度は累積から毎フレーム作る
 };
 

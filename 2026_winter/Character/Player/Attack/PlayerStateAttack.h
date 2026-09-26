@@ -45,6 +45,7 @@ private:
 
 	std::shared_ptr<AttackCol> m_attackCol;//攻撃の当たり判定
 	Vector3 m_InitVel = {};//攻撃開始時の速度を保存、上下差のある攻撃のタイムスケールに使う
+	float m_gravity = 0.0f;//上下差のある攻撃中の重力の累積
 
 	//攻撃吸い寄せ用の敵のポインタ
 	std::weak_ptr<EnemyBase> m_homingEnemyTarget = {};

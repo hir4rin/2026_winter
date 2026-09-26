@@ -174,8 +174,8 @@ void Player::Update(Camera& camera)
 #endif
 
 
-	//押し戻しの処理が続かないように消す
-	m_rb.m_vel = Vector3(0, m_rb.m_vel.y, 0);
+	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(Jump,Fall,Attack)が自分で作る
+	m_rb.m_vel = Vector3(0, 0, 0);
 
 	if (m_currentState)
 	{

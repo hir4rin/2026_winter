@@ -97,6 +97,7 @@ void PlayerStateAttack::Enter()
 		player->m_rb.m_vel = player->m_targetVec * node.moveSpeedX + Vector3(0, node.moveSpeedY, 0);
 		//上下の速度を保存
 		m_InitVel = player->m_rb.m_vel;
+		m_gravity = 0.0f;
 		//上昇攻撃
 		if (node.moveSpeedY > 0)
 		{
@@ -316,8 +317,8 @@ void PlayerStateAttack::AttackMoveMent()
 	{
 		float timeScale = System::GetInstance().GetTimeScale();
 		//重力
-		player->m_accumulatedGravity += -Game::kGravity * timeScale * player->m_ownTimeScale;
-		player->m_rb.m_vel = m_InitVel + Vector3(0, player->m_accumulatedGravity, 0);
+		m_gravity += -Game::kGravity * timeScale * player->m_ownTimeScale;
+		player->m_rb.m_vel = m_InitVel + Vector3(0, m_gravity, 0);
 		//player->m_rb.m_vel += Vector3(0, -Game::kGravity, 0) * timeScale;
 
 		//下方向は時間なし//上方向は時間制限あり

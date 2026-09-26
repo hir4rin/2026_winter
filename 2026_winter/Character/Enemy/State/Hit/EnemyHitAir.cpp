@@ -31,7 +31,7 @@ void EnemyHitAir::Update()
 
 	//重力
 	//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、初速と累積から毎フレーム作り直す
-	//CharacterBase::ApplyPosは床にいるとm_accumulatedGravityを0に戻すので、ステートで持っている累積を使う
+	//重力の累積はステートで持つ(ステートごとに0から始める)
 	m_gravity += -Game::kGravity * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 	owner->m_rb.m_vel = m_info.knockBackVel + Vector3(0, m_gravity, 0);
 

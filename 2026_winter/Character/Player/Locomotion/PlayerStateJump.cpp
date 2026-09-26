@@ -31,8 +31,9 @@ void PlayerStateJump::Enter()
 	if (!player) return;
 	//animationの初期化
 	
-	//上昇速度を与える
+	//上昇速度を与える//Enterは前のステートのUpdate中に呼ばれるので、このフレームから上昇させる
 	player->m_rb.m_vel.y = kJumpInitVel;//ジャンプの初速//この数値を変えることで、ジャンプの高さを調整できる
+	m_gravity = 0.0f;
 	//ジャンプ状態
 	player->m_isGround = false;//地面にいない状態にする
 	player->SetIsFloor(false);//地面にいない状態にする
@@ -50,8 +51,10 @@ void PlayerStateJump::Update()
 	if (!player) return;
 	auto& input = Input::GetInstance();
 
+	//重力の処理//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、初速と累積から毎フレーム作り直す
 	float timeScale = System::GetInstance().GetTimeScale();
-	player->m_rb.m_vel += Vector3(0, -Game::kGravity, 0) * timeScale;//重力の処理
+	m_gravity += -Game::kGravity * timeScale * player->m_ownTimeScale;
+	player->m_rb.m_vel.y = kJumpInitVel + m_gravity;
 
 	//スキル攻撃
 	if (input.IsPressed("LB") && input.IsTriggered("X"))

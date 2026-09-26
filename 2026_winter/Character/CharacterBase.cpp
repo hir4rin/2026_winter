@@ -66,13 +66,6 @@ void CharacterBase::ApplyPos()
 
 	//モデルの座標を更新する
 	UpdateAngleAndPos();
-
-	//地上にいたら、重力の累積値をリセットする
-	if (IsFloor())
-	{
-		m_accumulatedGravity = 0.0f;
-	}
-
 }
 
 const std::string& CharacterBase::GetAnimName(const std::string& key) const

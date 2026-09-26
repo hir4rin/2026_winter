@@ -28,6 +28,8 @@ void PlayerStateFall::Enter()
 	//下降時の初速を保存
 	m_baseVel = player->m_rb.m_vel;
 	m_baseVel.y = 0.0f;//y成分は移動に関係ないので、0にする
+	//静止状態から落ち始める
+	m_gravity = 0.0f;
 }
 
 void PlayerStateFall::Update()
@@ -37,7 +39,9 @@ void PlayerStateFall::Update()
 	if (!player) return;
 	auto& input = Input::GetInstance();
 
-	player->m_rb.m_vel += Vector3(0, -Game::kGravity, 0);//重力の処理//だんだん落ちていくようにする
+	//重力の処理//だんだん落ちていくようにする//累積から毎フレーム作り直す(タイムスケールで減衰しないように)
+	m_gravity += -Game::kGravity * System::GetInstance().GetTimeScale() * player->m_ownTimeScale;
+	player->m_rb.m_vel.y = m_gravity;
 	//地面に着いたら
 	if (player->IsFloor())
 	{

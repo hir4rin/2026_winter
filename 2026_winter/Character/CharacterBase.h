@@ -87,7 +87,6 @@ protected:
 	float m_rotAngleY = 0.0f;//回転角度
 	float m_rotAngleX = 0.0f;//回転角度
 	float m_targetAngleY = 0.0f;//目標の回転角度//回転を滑らかにするためのもの
-	float m_accumulatedGravity = 0.0f;//重力の累積値
 
 
 	Vector3 m_targetVec = {};//移動したい方向のベクトル
