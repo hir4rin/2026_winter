@@ -20,6 +20,10 @@ void EnemyHitDrop::Enter()
 	//縦の初速を渡す//縦の速度は初速と重力の累積からEnemySwordman::Updateが作る
 	owner->m_initVelY = m_info.knockBackVel.y;
 	owner->m_accumulatedGravity = 0.0f;
+
+	//地面にいない判定にする
+	owner->SetIsFloor(false);
+	owner->m_rb.m_vel = Vector3(m_info.knockBackVel.x, owner->m_rb.m_vel.y, m_info.knockBackVel.z);
 }
 
 void EnemyHitDrop::Update()
@@ -39,6 +43,7 @@ void EnemyHitDrop::Update()
 		{
 			owner->m_isDead = true;
 			owner->ChangeState(std::make_shared<EnemyDie>(owner));
+			return;
 		}
 
 		owner->m_rb.m_vel.y = 0.0f;
