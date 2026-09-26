@@ -139,7 +139,7 @@ void EnemyBase::ApplyPos()
 {
 	CharacterBase::ApplyPos();
 	//歩いて地面から離れたら落下ステートにする
-	if (IsLeftFloor())
+	if (IsLeftFloor() && m_rb.m_vel.y <= 0.0f)
 	{
 		ChangeState(std::make_shared<EnemyAirFall>(GetWeakPtr()));
 	}
