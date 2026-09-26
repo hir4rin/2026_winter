@@ -85,8 +85,8 @@ void EnemySwordman::Init()
 
 void EnemySwordman::Update()
 {
-	//押し戻しの処理が続かないように消す
-	m_rb.m_vel = Vector3(0, m_rb.m_vel.y, 0);
+	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(HitAir,HitDrop,AirFall)が自分で作る
+	m_rb.m_vel = Vector3(0, 0, 0);
 
 	if (m_currentState)
 	{
@@ -95,20 +95,6 @@ void EnemySwordman::Update()
 
 	//アニメーションの更新
 	m_anim.Update();
-
-	//重力の処理//初速と重力の累積から縦の速度を毎フレーム作り直す
-	//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、+=で積むとスロー時に減衰していく
-	//地面にいて、上向きの初速もない間は落下速度をリセットする
-	if (IsFloor() && m_initVelY <= 0.0f)
-	{
-		m_accumulatedGravity = 0.0f;
-		m_rb.m_vel.y = 0.0f;
-	}
-	else
-	{
-		m_accumulatedGravity += -Game::kGravity * System::GetInstance().GetTimeScale() * m_ownTimeScale;
-		m_rb.m_vel.y = m_initVelY + m_accumulatedGravity;
-	}
 }
 
 void EnemySwordman::Draw()

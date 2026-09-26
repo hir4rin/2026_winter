@@ -105,7 +105,6 @@ protected:
 	float m_knockBackFrame = 0;//吹き飛ばしのフレーム数
 	float m_knockBackDownFrame = 0.0f;//吹き飛ばし後のダウン時間
 	float m_airCount = 0.0f;//空中にいる時間//AirStayのときに使う
-	float m_initVelY = 0.0f;//縦方向の初速(タイムスケール未適用)//吹っ飛びなどで設定し、ステートのExitで0に戻す
 	bool m_isLifeZero = false;//体力が0になったか
 	HitType m_hitType = HitType::None;//空中にいるかどうか
 

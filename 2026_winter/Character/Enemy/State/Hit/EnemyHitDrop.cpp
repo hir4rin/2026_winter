@@ -1,5 +1,6 @@
 ﻿#include "EnemyHitDrop.h"
 #include "../../EnemyBase.h"
+#include "../../../System.h"
 #include "../Game.h"
 
 EnemyHitDrop::EnemyHitDrop(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
@@ -17,8 +18,7 @@ void EnemyHitDrop::Enter()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
-	//縦の初速を渡す//縦の速度は初速と重力の累積からEnemySwordman::Updateが作る
-	owner->m_initVelY = m_info.knockBackVel.y;
+	//重力の累積をリセット//縦の速度は初速(m_info.knockBackVel.y)と重力の累積から作る
 	owner->m_accumulatedGravity = 0.0f;
 }
 
@@ -29,19 +29,23 @@ void EnemyHitDrop::Update()
 
 	owner->m_anim.Update(owner->m_ownTimeScale);
 
-	//水平方向は毎フレームHitInfoの初速を与える(EnemySwordman::Updateで毎フレーム水平速度がリセットされるため)
-	owner->m_rb.m_vel = Vector3(m_info.knockBackVel.x, owner->m_rb.m_vel.y, m_info.knockBackVel.z);
+	//重力
+	//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、初速と累積から毎フレーム作り直す
+	owner->m_accumulatedGravity += -Game::kGravity * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
+	owner->m_rb.m_vel = m_info.knockBackVel + Vector3(0, owner->m_accumulatedGravity, 0);
 
-	//着地したら、死亡予定ならDie、そうでなければKnockBack
-	if (owner->IsFloor())
+	//落下中に床に着いたら着地//打ち上げ直後はまだ床の上にいるので判定しない
+	bool isFalling = m_info.knockBackVel.y + owner->m_accumulatedGravity < 0.0f;
+	if (owner->IsFloor() && isFalling)
 	{
+		owner->m_rb.m_vel = Vector3(0, 0, 0);
+		//死亡予定ならDie
 		if (owner->m_isDieOut)
 		{
 			owner->m_isDead = true;
 			owner->ChangeState(std::make_shared<EnemyDie>(owner));
+			return;
 		}
-
-		owner->m_rb.m_vel.y = 0.0f;
 
 		//地面についたらknockDown状態に入る//当たり判定がでて吹き飛ぶので、そちらで対応
 		owner->ChangeState(std::make_shared<EnemyKnockDown>(owner));
@@ -52,8 +56,8 @@ void EnemyHitDrop::Exit()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	//初速を戻しておく(残っていると着地後も縦の速度がかかり続ける)
-	owner->m_initVelY = 0.0f;
+	//重力の累積を戻しておく
+	owner->m_accumulatedGravity = 0.0f;
 }
 
 void EnemyHitDrop::DebugDraw()

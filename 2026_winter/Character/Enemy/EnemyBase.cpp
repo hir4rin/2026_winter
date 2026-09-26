@@ -107,32 +107,31 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 
 	//ヒット情報の作成
 	HitInfo hitinfo = {
-		.knockBackVel = pushBackVec,
+		.knockBackVel = Vector3(pushBackVec.x,data.knockBackPower.y,pushBackVec.z),//Y軸の上下降はここで加える
 		.duration = data.knockBackFrame,
 		.isKirimomi = data.isKirimomi,
 	};
 
 	//Stateの切り替え//敵を吹き飛ばす攻撃かどうかで切り替える
-	if (hitinfo.knockBackVel.y > 0.0f)
+
+	if (data.knockBackPower.y > 0.0f && !hitinfo.isKirimomi)
 	{
+		//上昇の時の攻撃
 		ChangeState(std::make_shared<EnemyHitAir>(GetWeakPtr(), hitinfo));
 		return;
 	}
 	else
-		if (hitinfo.knockBackVel.y < 0.0f || hitinfo.isKirimomi)
+		if (data.knockBackPower.y < 0.0f || hitinfo.isKirimomi)
 		{
+			//下降時の攻撃、もしくは吹っ飛び時の攻撃
 			ChangeState(std::make_shared<EnemyHitDrop>(GetWeakPtr(), hitinfo));
 			return;
 		}
 		else
 		{
-			
+			//普通の攻撃
 			ChangeState(std::make_shared<EnemyHitGround>(GetWeakPtr(), hitinfo));
 		}
-
-
-
-
 
 }
 
