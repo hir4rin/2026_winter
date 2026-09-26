@@ -2,7 +2,10 @@
 #include "../General/EnemyStateBase.h"
 #include "../../../CharacterBase.h"
 
-//打ち上げられた時の状態//上昇しきったらAirStayへ
+/// <summary>
+/// 地上から空中へと遷移する攻撃
+/// 打ち上げられた時の状態//上昇しきったらAirStayへ
+/// </summary>
 class EnemyHitAir :
     public EnemyStateBase
 {

@@ -42,7 +42,6 @@ public:
 	void OnCollision(Collider& other)override;
 	void OnDamage(Collider& other, AttackData& data)override;
 
-	void ApplyDamage();
 
 
 

@@ -2,6 +2,9 @@
 #include "../General/EnemyStateBase.h"
 #include "../../../CharacterBase.h"
 
+/// <summary>
+/// 地→地、空→空の際のHit
+/// </summary>
 class EnemyHitGround :
     public EnemyStateBase
 {

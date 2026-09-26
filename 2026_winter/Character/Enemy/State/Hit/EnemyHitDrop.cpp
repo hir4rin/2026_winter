@@ -1,5 +1,6 @@
 ﻿#include "EnemyHitDrop.h"
 #include "../../EnemyBase.h"
+#include "../Game.h"
 
 EnemyHitDrop::EnemyHitDrop(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
 	EnemyStateBase(owner),
@@ -34,15 +35,16 @@ void EnemyHitDrop::Update()
 	//着地したら、死亡予定ならDie、そうでなければKnockBack
 	if (owner->IsFloor())
 	{
-		owner->m_rb.m_vel = Vector3(0, 0, 0);
-		if (m_info.willDie)
+		if (owner->m_isDieOut)
 		{
+			owner->m_isDead = true;
 			owner->ChangeState(std::make_shared<EnemyDie>(owner));
 		}
-		else
-		{
-			owner->ChangeState(std::make_shared<EnemyKnockBack>(owner));
-		}
+
+		owner->m_rb.m_vel.y = 0.0f;
+
+		//地面についたらknockDown状態に入る//当たり判定がでて吹き飛ぶので、そちらで対応
+		owner->ChangeState(std::make_shared<EnemyKnockDown>(owner));
 	}
 }
 

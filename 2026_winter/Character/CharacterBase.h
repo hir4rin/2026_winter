@@ -42,7 +42,6 @@ public:
 		Vector3 knockBackVel;
 		float duration = 0.0f;
 		bool isKirimomi = false;
-		bool willDie = false;
 	};
 
 

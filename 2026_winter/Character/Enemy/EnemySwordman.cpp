@@ -128,11 +128,5 @@ void EnemySwordman::OnCollision(Collider& other)
 
 void EnemySwordman::OnDamage(Collider& other, AttackData& data)
 {
-	//体力を減らす//被弾のリアクションはまだ作っていない
-	m_hp -= static_cast<int>(data.attackPower);
-	if (m_hp <= 0)
-	{
-		m_hp = 0;
-		m_isLifeZero = true;
-	}
+	EnemyBase::OnDamage(other, data);
 }

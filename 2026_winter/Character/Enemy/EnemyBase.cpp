@@ -15,6 +15,9 @@ namespace
 	constexpr int kStateChangeRandomMax = 100;//Chase/Caution遷移の抽選範囲
 	constexpr int kStateChangeThreshold = 50;//Chase/Caution遷移のしきい値
 
+	constexpr float kToTargetPower = 3.0f;//プレイヤーの正面に行くようにknockBackする力
+
+
 	constexpr float kEnemyDistance = 50.0f;
 
 }
@@ -92,9 +95,43 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	//}
 
 	//Enemy->Playerのベクトルに吹き飛ばす力を加える//プレイヤーの正面に行くようにknockBackする//いずれkirimomi吹っ飛びの時の処理と分ける
+	//吸着させる
 	Vector3 front = player->GetTargetVec();
 	Vector3 pos = player->GetRigidBody().GetPos();
 	Vector3 TargetPos = pos + front * kEnemyDistance;
+	Vector3 toTarget = (TargetPos - m_rb.m_pos).Normalize() * kToTargetPower;
+
+	Vector3 pushBackVec = (m_rb.m_pos - other.GetRigidBody().GetPos()).Normalize() *
+		data.knockBackPower.x;
+	pushBackVec += toTarget;
+
+	//ヒット情報の作成
+	HitInfo hitinfo = {
+		.knockBackVel = pushBackVec,
+		.duration = data.knockBackFrame,
+		.isKirimomi = data.isKirimomi,
+	};
+
+	//Stateの切り替え//敵を吹き飛ばす攻撃かどうかで切り替える
+	if (hitinfo.knockBackVel.y > 0.0f)
+	{
+		ChangeState(std::make_shared<EnemyHitAir>(GetWeakPtr(), hitinfo));
+		return;
+	}
+	else
+		if (hitinfo.knockBackVel.y < 0.0f || hitinfo.isKirimomi)
+		{
+			ChangeState(std::make_shared<EnemyHitDrop>(GetWeakPtr(), hitinfo));
+			return;
+		}
+		else
+		{
+			
+			ChangeState(std::make_shared<EnemyHitGround>(GetWeakPtr(), hitinfo));
+		}
+
+
+
 
 
 }
@@ -109,7 +146,7 @@ Vector3 EnemyBase::TargetPlayerPos()
 	return Vector3();
 }
 
-bool EnemyBase::ChasePlayer(Vector3 target,float distance)
+bool EnemyBase::ChasePlayer(Vector3 target, float distance)
 {
 	//プレイヤーの位置に向かって移動する//Y軸は移動しない
 	target.y = 0.0f;
@@ -131,7 +168,7 @@ bool EnemyBase::ChasePlayer(Vector3 target,float distance)
 
 }
 
-void EnemyBase::CautionMove(Vector3 target,float distance)
+void EnemyBase::CautionMove(Vector3 target, float distance)
 {
 	//プレイヤーの位置と自分の位置から円を描くように移動する//Y軸は移動しない
 	//playerからEnemyへのベクトルの接線方向に移動
@@ -219,7 +256,7 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 	if (CanMeleeAttack(kEnemyMeleeAttackRange))
 	{
 		//return ChangeState(EnemyState::Attack);
-	
+
 		return 	std::make_shared<EnemyAttack>(GetWeakPtr());;
 	}
 	//ランダム
@@ -227,7 +264,7 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 	{
 		//ChangeState(EnemyState::Chase);
 		return std::make_shared<EnemyChase>(GetWeakPtr());
-		
+
 	}
 	else if (rand() % kStateChangeRandomMax >= kStateChangeThreshold)
 	{
