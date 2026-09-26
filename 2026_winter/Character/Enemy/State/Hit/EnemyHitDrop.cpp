@@ -20,10 +20,6 @@ void EnemyHitDrop::Enter()
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
 	//重力の累積をリセット//縦の速度は初速(m_info.knockBackVel.y)と重力の累積から作る
 	owner->m_accumulatedGravity = 0.0f;
-
-	//地面にいない判定にする
-	owner->SetIsFloor(false);
-	owner->m_rb.m_vel = Vector3(m_info.knockBackVel.x, owner->m_rb.m_vel.y, m_info.knockBackVel.z);
 }
 
 void EnemyHitDrop::Update()
