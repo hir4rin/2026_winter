@@ -13,6 +13,7 @@
 #include "State/Hit/EnemyDie.h"
 #include "State/Hit/EnemyHitGround.h"
 #include "State/Hit/EnemyHitAir.h"
+#include "State/Hit/EnemyAssasined.h"
 
 
 class Player;
@@ -41,6 +42,8 @@ public:
 
 	void OnCollision(Collider& other)override;
 	void OnDamage(Collider& other, AttackData& data)override;
+
+	void OnAssasined();//暗殺確定時
 
 
 
@@ -125,6 +128,7 @@ protected:
 	friend class EnemyDie;
 	friend class EnemyHitGround;
 	friend class EnemyHitAir;
+	friend class EnemyAssasined;
 
 };
 

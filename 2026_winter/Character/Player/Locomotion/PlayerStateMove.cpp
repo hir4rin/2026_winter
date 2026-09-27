@@ -55,6 +55,12 @@ void PlayerStateMove::Update()
 		player->m_isRaven = false;
 	}
 
+	//回避
+	if (input.IsTriggered("B"))
+	{
+		player->ChangeState(std::make_shared<PlayerStateDodge>(m_owner));
+	}
+
 	if (!input.IsLeftStickInput())
 	{
 		//移動状態に遷移する

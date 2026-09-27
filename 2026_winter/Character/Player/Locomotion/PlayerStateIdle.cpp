@@ -34,6 +34,9 @@ void PlayerStateIdle::Update()
 	//押し戻しの処理が続かないように消す
 	player->m_rb.m_vel = Vector3(0, 0, 0);
 
+
+
+
 	//鴉状態の更新
 	if (input.IsPressed("LB"))
 	{
@@ -42,6 +45,19 @@ void PlayerStateIdle::Update()
 	else
 	{
 		player->m_isRaven = false;
+	}
+
+	//暗殺
+	if (input.IsTriggered("Y") && player->CanAssasin())
+	{
+		player->ChangeState(std::make_shared<PlayerStateAssasin>(m_owner));
+		return;
+	}
+	//回避
+	if (input.IsTriggered("B"))
+	{
+		player->ChangeState(std::make_shared<PlayerStateDodge>(m_owner));
+		return;
 	}
 
 	//移動状態に遷移する
@@ -90,6 +106,8 @@ void PlayerStateIdle::Update()
 		player->ChangeState(std::make_shared<PlayerStateJump>(m_owner));
 		return;
 	}
+
+
 
 
 	//アニメーションの更新

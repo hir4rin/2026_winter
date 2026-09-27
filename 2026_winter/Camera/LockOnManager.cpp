@@ -40,10 +40,17 @@ void LockOnManager::Update()
 {
 	auto& input = Input::GetInstance();
 
+
+	//暗殺周り
+	AssasinUpdate();
+
+	//必殺技、ラストヒット中はreturn;
+	//ロックオンの処理-------------------------------------
 	if (!CanOperate())return;
+	
 
 	//ターゲットの距離・死んでいるかのチェック
-	CheckTarget();
+	CheckLockOnTarget();
 
 	if (input.IsTriggered("RB"))
 	{
@@ -154,7 +161,7 @@ void LockOnManager::Switch(int dir)
 
 }
 
-void LockOnManager::CheckTarget()
+void LockOnManager::CheckLockOnTarget()
 {
 	auto target = m_lockTarget.lock();
 	auto player = m_player.lock();
@@ -195,6 +202,71 @@ void LockOnManager::CheckTarget()
 	}
 
 
+}
+
+void LockOnManager::TryAssasinTarget()
+{
+	auto player = m_player.lock();
+	if (!player)return;
+	Vector3 cameraPos, cameraDir;
+	//カメラの座標とカメラレイ
+	if (!GetCameraInfo(cameraPos, cameraDir))return;
+
+	//細かい範囲の調整は後で調整
+
+	//範囲内にいる敵を見つける
+	std::vector<std::shared_ptr<EnemyBase>> candidates;
+	//範囲をだんだん広げる
+	for (int i = 1; i <= kLockOnCheckNum; i++)
+	{
+		candidates = CollectEnemiesRange(player->GetCameraRockOnRange() * i);
+		if (!candidates.empty())break;
+	}
+
+	//画面の中央にいる敵をロックオン
+	auto best = PickByCos(cameraPos, cameraDir, candidates);
+	if (!best)return;
+
+	//playerの暗殺対象にセット
+	player->SetAssasinTarget(best);
+}
+
+void LockOnManager::CheckAssasinTarget()
+{
+	auto player = m_player.lock();
+	if (!player)return;
+	auto target = player->GetAssasinTarget();
+	if (!target)return;
+
+	//細かい範囲の調整は後で調整
+
+
+	//離れすぎたら解除
+	float distance = (target->GetRigidBody().GetPos() - player->GetRigidBody().GetPos()).Magnitude();
+	if (distance > kLockOnMaxDistance)
+	{
+		//解除
+		player->ClearAssasinTarget();
+		return;
+	}
+	//生きていれば早期リターン
+	if (!target->GetIsLifeZero())return;
+
+	//死んでいたら、解除
+	Vector3 cameraPos, cameraDir;
+	if (!GetCameraInfo(cameraPos, cameraDir))
+	{
+		player->ClearAssasinTarget();
+		return;
+	}
+}
+
+void LockOnManager::AssasinUpdate()
+{
+	//暗殺対象を探す
+	TryAssasinTarget();
+	//暗殺対象を外すかチェック
+	CheckAssasinTarget();
 }
 
 bool LockOnManager::GetCameraInfo(Vector3& pos, Vector3& dir) const

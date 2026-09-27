@@ -9,8 +9,10 @@
 #include "PlayerStateAttack.h"//以下同文
 #include "PlayerStateSkillAttack.h"//以下同文
 #include "PlayerStateUlt.h"//以下同文
+#include "PlayerStateAssasin.h"//以下同文
 #include "PlayerStateDie.h"//以下同文
 #include "PlayerStateDashAttack.h"//以下同文
+#include "PlayerStateDodge.h"//以下同文
 #include "PlayerStateResultMove.h"//以下同文
 #include "../../../DataLoader/AnimData.h"
 #include <memory>
@@ -181,6 +183,13 @@ public:
 	//攻撃の対象//ロックオン中はロックオン対象、そうでなければ内部ターゲット
 	std::shared_ptr<EnemyBase> GetAttackTarget()const;
 
+	//暗殺
+
+	void SetAssasinTarget(std::shared_ptr<EnemyBase> target) { m_assasinTarget = target; }
+	void ClearAssasinTarget() { m_assasinTarget.reset(); }
+	std::shared_ptr<EnemyBase> GetAssasinTarget()const;//死んでいたらnullptrを返す
+	const bool CanAssasin()const;
+
 	//内部ロックオンのために
 	std::weak_ptr<CameraManager> GetCameraManager()const { return m_cameraManager; }
 	//プレイヤーの移動制限
@@ -274,6 +283,8 @@ private:
 	//内部ターゲット
 	std::weak_ptr<EnemyBase> m_softTarget;
 	float m_softTargetKeepTimer  = 0.0f;//攻撃していない間に減り、0になったら内部ターゲットを消す
+	//暗殺ターゲット
+	std::weak_ptr<EnemyBase> m_assasinTarget;
 	
 
 	//PlayerState
@@ -286,8 +297,10 @@ private:
 	friend class PlayerStateAttack;
 	friend class PlayerStateSkillAttack;
 	friend class PlayerStateUlt;
+	friend class PlayerStateAssasin;
 	friend class PlayerStateDie;
 	friend class PlayerStateDashAttack;
+	friend class PlayerStateDodge;
 	friend class PlayerStateResultMove;
 	//武器
 	friend class Weapon;

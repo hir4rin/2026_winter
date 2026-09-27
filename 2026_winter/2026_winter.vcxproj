@@ -200,6 +200,7 @@
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitGround.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitAir.cpp" />
     <ClCompile Include="Character\Enemy\EnemyManager.cpp" />
+    <ClCompile Include="Character\Enemy\State\Hit\EnemyAssasined.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="IDManager.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -211,6 +212,8 @@
     <ClCompile Include="Math\Quaternion.cpp" />
     <ClCompile Include="Math\Vector3.cpp" />
     <ClCompile Include="Collider\RigidBody.cpp" />
+    <ClCompile Include="Character\Player\Defence\PlayerStateDodge.cpp" />
+    <ClCompile Include="Character\Player\Attack\PlayerStateAssasin.cpp" />
     <ClCompile Include="SceneMain.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\SceneController.cpp" />
@@ -281,6 +284,7 @@
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitGround.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitAir.h" />
     <ClInclude Include="Character\Enemy\EnemyManager.h" />
+    <ClInclude Include="Character\Enemy\State\Hit\EnemyAssasined.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="IDManager.h" />
     <ClInclude Include="Input.h" />
@@ -291,6 +295,8 @@
     <ClInclude Include="Math\Quaternion.h" />
     <ClInclude Include="Math\Vector3.h" />
     <ClInclude Include="Collider\RigidBody.h" />
+    <ClInclude Include="Character\Player\Defence\PlayerStateDodge.h" />
+    <ClInclude Include="Character\Player\Attack\PlayerStateAssasin.h" />
     <ClInclude Include="SceneMain.h" />
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Scene\SceneController.h" />

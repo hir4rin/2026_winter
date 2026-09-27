@@ -135,6 +135,13 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 
 }
 
+void EnemyBase::OnAssasined()
+{
+	//StateをAssasinに変える
+	ChangeState(std::make_shared<EnemyAssasined>(GetWeakPtr()));
+	return;
+}
+
 void EnemyBase::ApplyPos()
 {
 	CharacterBase::ApplyPos();

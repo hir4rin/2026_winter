@@ -16,6 +16,14 @@ JumpDown,root|Jump_Combat_Loop_0
 UltAttack,root|Execution_01
 Hit,root|Hit_Combat_F
 Death,root|Hit_Death
-HouseDance,root|Ninja_Idle_LoosenUp01
-SillyDance,root|Ninja_Idle_LoosenUp02
-TwistDance,root|Ninja_Idle_LoosenUp03
+Idle01,root|Ninja_Idle_LoosenUp01
+Idle02,root|Ninja_Idle_LoosenUp02
+Idle03,root|Ninja_Idle_LoosenUp03
+Execute01,root|Execution_01
+Execute02,root|Execution_02
+Execute03,root|Execution_03
+Execute04,root|Ninja_Chudan_Attack_FootPlantJumpSlash_Attacker
+Assasin01,root|Ninja_Chudan_Attack_RunSlashFinisher_Attacker
+Assasin02,root|Ninja_Chudan_Attack_RunSlideUnderbellyCut
+Assasin03,root|Ninja_Chudan_Attack_StabBehind_Attacker
+Assasin04,root|Ninja_Chudan_Attack_StabChest_Attacker

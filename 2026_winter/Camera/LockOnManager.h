@@ -38,7 +38,14 @@ private:
 	//dir:右が正、左が負
 	void Switch(int dir);
 	//死亡なら次の敵へ、離れすぎたら解除
-	void CheckTarget();
+	void CheckLockOnTarget();
+
+	//暗殺対象がいるかチェック
+	void TryAssasinTarget();
+	//暗殺対象を外すかチェック
+	void CheckAssasinTarget();
+	//暗殺周りUpdate
+	void AssasinUpdate();
 
 
 

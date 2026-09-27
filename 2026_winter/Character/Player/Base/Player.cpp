@@ -457,6 +457,21 @@ std::shared_ptr<EnemyBase> Player::GetAttackTarget() const
 	return GetSoftTarget();
 }
 
+std::shared_ptr<EnemyBase> Player::GetAssasinTarget() const
+{
+	return m_assasinTarget.lock();
+}
+
+const bool Player::CanAssasin() const
+{
+	auto assasinTarget = GetAssasinTarget();
+
+	return assasinTarget ? true : false;
+}
+
+
+
+
 void Player::InitializeComboChain()
 {
 	//コンボチェーンの初期化
