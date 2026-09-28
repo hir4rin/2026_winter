@@ -11,6 +11,10 @@ namespace
 
 	const std::string kEnemyModelpath = "data/Enemy/Enemy.mv1";
 
+	//部位破壊で落ちるパーツのモデル//原点はそれぞれのボーンの付け根
+	const std::string kEnemyPartLeftArmModelPath = "data/Enemy/Part/Swordman/LeftArm.mv1";
+	const std::string kEnemyPartHeadModelPath = "data/Enemy/Part/Swordman/Head.mv1";
+
 	//ステージのモデル
 	const std::string kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
 }
@@ -27,6 +31,8 @@ void System::LoadAll()
 
 	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyModel] = MV1LoadModel(kEnemyModelpath.c_str());
+	m_asyncHandles[AsyncData::EnemyPartLeftArmModel] = MV1LoadModel(kEnemyPartLeftArmModelPath.c_str());
+	m_asyncHandles[AsyncData::EnemyPartHeadModel] = MV1LoadModel(kEnemyPartHeadModelPath.c_str());
 	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
 
 	SetUseASyncLoadFlag(FALSE);//ほかの場所の読み込みは同期に戻す
@@ -45,6 +51,8 @@ void System::Terminate()
 
 	//enemy
 	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyPartLeftArmModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyPartHeadModel]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::EnemyHitEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::EnemyHitEffectUlt]);
 	//ボス

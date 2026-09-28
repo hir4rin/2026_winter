@@ -252,7 +252,7 @@ void PlayerStateAttack::DebugDraw()
 {
 	DrawFormatString(10, 10, GetColor(255, 255, 255), "PlayerState:Attack");
 	DrawFormatString(10, 30, GetColor(255, 255, 255), "ComboIndex:%d", m_owner.lock()->m_comboInfo.currentComboIndex);
-	DrawFormatString(10, 50, GetColor(255, 255, 255), "m_attackCol Active:%d", m_attackCol->IsActive());
+	DrawFormatString(10, 50, GetColor(255, 255, 255), "m_attackCol Active:%d", m_attackCol->GetIsActive());
 	//isHitの表示
 	DrawFormatString(10, 70, GetColor(255, 255, 255), "isHit:%d", m_owner.lock()->m_comboInfo.isHit);
 }

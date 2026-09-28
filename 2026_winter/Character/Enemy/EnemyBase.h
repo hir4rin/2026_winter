@@ -43,7 +43,7 @@ public:
 	void OnCollision(Collider& other)override;
 	void OnDamage(Collider& other, AttackData& data)override;
 
-	void OnAssasined();//暗殺確定時
+	virtual void OnAssasined();//暗殺確定時
 
 
 

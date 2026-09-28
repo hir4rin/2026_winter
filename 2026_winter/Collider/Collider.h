@@ -104,8 +104,10 @@ public:
 
 	//有効・トリガー
 	void SetIsActive(bool isActive) { m_isActive = isActive; }
-	bool IsActive()const { return m_isActive; }
+	bool GetIsActive()const { return m_isActive; }
 	bool GetIsTrigger()const { return m_isTrigger; }
+	void SetIsGhost(bool isGhost) { m_isGhost = isGhost; }
+	bool GetIsGhost()const { return m_isGhost; }
 
 	//地面・壁への接触
 	void SetIsFloor(bool isFloor) { m_isFloor = isFloor; }
@@ -144,6 +146,7 @@ protected:
 	
 	bool m_isActive = false;;//当たり判定が有効かどうか
 	bool m_isTrigger = false;;//押しもどしを行わない当たり判定かどうか
+	bool m_isGhost = false;//キャラ同士の押し戻しだけ無視する
 
 	bool m_isFloor = true;;//床についているかどうか
 	bool m_wasFloor = true;//押し戻し前に床についていたかどうか

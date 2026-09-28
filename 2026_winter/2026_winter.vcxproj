@@ -187,6 +187,7 @@
     <ClCompile Include="Character\Enemy\State\General\EnemyStateBase.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyIdle.cpp" />
     <ClCompile Include="Character\Enemy\EnemySwordman.cpp" />
+    <ClCompile Include="Character\Enemy\EnemyPart.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyChase.cpp" />
     <ClCompile Include="Character\Enemy\State\Attack\EnemyAttack.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyBack.cpp" />
@@ -271,6 +272,7 @@
     <ClInclude Include="Character\Enemy\State\General\EnemyStateBase.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyIdle.h" />
     <ClInclude Include="Character\Enemy\EnemySwordman.h" />
+    <ClInclude Include="Character\Enemy\EnemyPart.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyChase.h" />
     <ClInclude Include="Character\Enemy\State\Attack\EnemyAttack.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyBack.h" />

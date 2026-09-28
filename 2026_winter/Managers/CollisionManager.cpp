@@ -142,7 +142,7 @@ void CollisionManager::Update()
 		{
 			std::shared_ptr<Collider> colliderA = m_colliders[i].lock();
 			if (!colliderA)continue;
-			if (!colliderA->IsActive())continue;
+			if (!colliderA->GetIsActive())continue;
 
 			for (size_t j = i + 1; j < m_colliders.size(); j++)
 			{
@@ -150,7 +150,7 @@ void CollisionManager::Update()
 				std::shared_ptr<Collider> colliderB = m_colliders[j].lock();
 				//アクティブなコライダーだけをチェックする//ここ関数化
 				if (!colliderB)continue;
-				if (!colliderB->IsActive())continue;
+				if (!colliderB->GetIsActive())continue;
 				//静的オブジェクト同士の時無視
 				if (colliderA->GetTag().faction == Collider::Faction::StaticObject &&
 					colliderB->GetTag().faction == Collider::Faction::StaticObject)continue;
@@ -177,6 +177,13 @@ void CollisionManager::Update()
 					//ここで押し戻し
 					//isTriggerは押し戻しを無視
 					if (colliderA->GetIsTrigger() || colliderB->GetIsTrigger()) continue;
+					//isGhostはキャラ同士の押し戻しを無視する
+					if (colliderA->GetIsGhost() &&
+						colliderB->GetFaction() != Collider::Faction::StaticObject)continue;
+					if (colliderB->GetIsGhost() &&
+						colliderA->GetFaction() != Collider::Faction::StaticObject)continue;
+
+
 					//押し戻しの処理
 					//ここで速度を変更する//ここでタイムスケールを変更<-？？多分違う
 					//PushBackのvelを加える
@@ -226,7 +233,7 @@ void CollisionManager::DebugDraw() const
 	{
 		auto collider = weakCollider.lock();
 		//アクティブなコライダーだけを描画する
-		if (collider && collider->IsActive())
+		if (collider && collider->GetIsActive())
 			collider->DebugDraw();
 	}
 }
@@ -278,7 +285,7 @@ void CollisionManager::ApplyAdjustments()
 	{
 		auto collider = weakCollider.lock();
 		if (!collider)continue;
-		if (!collider->IsActive())continue;
+		if (!collider->GetIsActive())continue;
 		//staticは無視
 		if (collider->GetTag().faction == Collider::Faction::StaticObject)continue;
 
@@ -292,7 +299,7 @@ void CollisionManager::AddVelocity()
 	{
 		std::shared_ptr<Collider> colliderA = m_colliders[i].lock();
 		if (!colliderA)continue;
-		if (!colliderA->IsActive())continue;
+		if (!colliderA->GetIsActive())continue;
 		float timescale = System::GetInstance().GetTimeScale();
 		//ここですべてのコライダーに速度、timescaleをかける
 		colliderA->GetRigidBody().m_vel *= timescale * colliderA->GetTimeScale();
@@ -308,7 +315,7 @@ void CollisionManager::SnapToGround()
 	{
 		auto collider = weakCollider.lock();
 		if (!collider)continue;
-		if (!collider->IsActive())continue;
+		if (!collider->GetIsActive())continue;
 		if (!collider->m_useGroundSnap)continue;
 		//前フレーム地面にいて、押し戻しで床に当たらなかったものだけ
 		if (!collider->m_wasFloor || collider->m_isFloor)continue;

@@ -174,8 +174,10 @@ void SceneMain::NormalDraw()
 	m_player->Draw();
 	m_enemyManager->Draw();
 	m_stage->Draw();
+#ifdef _DEBUG
 	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
+#endif
 }
 
 void SceneMain::FadeOutDraw()

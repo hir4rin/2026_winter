@@ -26,6 +26,8 @@ enum class AsyncData : int
 	EnemyModel,
 	EnemyHitEffect,
 	EnemyHitEffectUlt,
+	EnemyPartLeftArmModel,//部位破壊で落ちる左腕
+	EnemyPartHeadModel,//部位破壊で落ちる頭(ヘルメット)
 	//ボス
 	BossModel,
 	BossAttackHadouEffect,
