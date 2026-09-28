@@ -45,6 +45,8 @@ public:
 
 	virtual void OnAssasined();//暗殺確定時
 
+	virtual void OnHeadBreak() {};
+
 
 
 

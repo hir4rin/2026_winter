@@ -18,6 +18,7 @@ public:
     void OnDamage(Collider& other, AttackData& data)override;
 
     void OnAssasined()override;
+    void OnHeadBreak()override;
 private:
     void SetUpBreakLeftArm();
     void SetUpBreakHead();

@@ -73,6 +73,7 @@ void EnemyAssasined::Update()
 		if (m_startTimer > kStartMaxTimer)
 		{
 			m_state = AssasinState::Execute;
+			owner->OnHeadBreak();
 		}
 		break;
 	case AssasinState::Execute:

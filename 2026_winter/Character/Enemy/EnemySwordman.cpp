@@ -189,6 +189,12 @@ void EnemySwordman::OnAssasined()
 	EnemyBase::OnAssasined();
 }
 
+void EnemySwordman::OnHeadBreak()
+{
+	SetUpBreakHead();
+	//SetUpBreakLeftArm();
+}
+
 void EnemySwordman::SetUpBreakLeftArm()
 {
 	//切り落とした腕のモデルを、本体の向きのまま左腕ボーンの付け根に置く
