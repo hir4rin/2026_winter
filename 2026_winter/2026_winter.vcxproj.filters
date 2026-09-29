@@ -141,6 +141,9 @@
     <ClCompile Include="Camera\CameraState\PlayerFollowCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Camera\CameraState\AssasinCamera.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Camera\CameraState\ResultCameraState.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -393,6 +396,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\PlayerFollowCamera.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\CameraState\AssasinCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\ResultCameraState.h">

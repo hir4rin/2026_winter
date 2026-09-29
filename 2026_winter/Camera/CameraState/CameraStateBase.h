@@ -50,6 +50,7 @@ public:
 		FinishingFirstCamera = 8,
 		FinishingSecondCamera = 9,
 		ResultCamera = 10,
+		AssasinCamera = 11,
 
 		//他のカメラもここに追加していく
 	};

@@ -30,7 +30,8 @@ public:
 		TitleCamera,
 		FinishingFirstCamera,
 		FinishingSecondCamera,
-		ResultCamera
+		ResultCamera,
+		AssasinCamera
 
 	};
 

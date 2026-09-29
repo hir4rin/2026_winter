@@ -10,6 +10,7 @@
 #include "CameraState/FinishingFirstCamera.h"
 #include "CameraState/FinishingSecondCamera.h"
 #include "CameraState/ResultCameraState.h"
+#include "CameraState/AssasinCamera.h"
 #include "../Managers/CollisionManager.h"
 #include "../System.h"
 #include "../BattleManager.h"
@@ -319,6 +320,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::ResultCamera:
 		newState = std::make_shared<ResultCameraState>(shared_from_this());
+		break;
+	case CameraStateName::AssasinCamera:
+		newState = std::make_shared<AssasinCameraState>(shared_from_this());
 		break;
 	default:
 		return;
