@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <DxLib.h>
+#include "Easing.h"
 class Vector2;
 class Vector3
 {
@@ -62,6 +63,11 @@ public:
 	static Vector3 Lerp(const Vector3& start, const Vector3& end, float t);
 	//Slerp//球面線形補間//ベクトルの補完//大きさが1のものを入れる
 	static Vector3 Slerp(const Vector3& start, const Vector3& end, float t);
+
+	//イージング付きLerp//tは0~1の経過割合。EaseOutBackなどは内部で1.0を超えて行き過ぎることがある
+	static Vector3 EaseLerp(const Vector3& start, const Vector3& end, float t, EasingMode mode, float power = 1.0f);
+	//イージング付きSlerp//大きさが1のものを入れる
+	static Vector3 EaseSlerp(const Vector3& start, const Vector3& end, float t, EasingMode mode, float power = 1.0f);
 
 	//演算子オーバーロード
 	Vector3 operator+(const Vector3& right)const;

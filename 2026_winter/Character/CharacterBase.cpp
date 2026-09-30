@@ -31,6 +31,12 @@ void CharacterBase::OnTriggerExit(Collider& other)
 {
 }
 
+Vector3 CharacterBase::GetWaistPos() const
+{
+	if (m_waistFrame < 0)return m_rb.m_pos;
+	return Vector3::FromDxLibVector(MV1GetFramePosition(m_modelHandle, m_waistFrame));
+}
+
 void CharacterBase::UpdateAngleAndPos()
 {
 	float targetAngle = 0.0f;//目標の角度

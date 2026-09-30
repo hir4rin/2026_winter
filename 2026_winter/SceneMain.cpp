@@ -16,6 +16,8 @@
 #include "System.h"
 #include "BattleManager.h"
 #include "Game.h"
+#include "imguiApp.h"
+#include "Scene/PauseScene.h"
 
 namespace
 {
@@ -43,6 +45,9 @@ namespace
 
 	//敵の出現位置
 	const Vector3 kEnemyStartPos = Vector3(0.0f, 0.0f, 500.0f);
+
+	//スクリーンショットの保存先
+	const char* const kScreenshotPath = "data/SaveData/screenShot.png";
 }
 
 SceneMain::SceneMain(SceneController& controller) :
@@ -140,6 +145,38 @@ void SceneMain::NormalUpdate()
 
 	Input::GetInstance().SetInputBlocked(m_battleManager->GetIsEventPlaying());
 	Input::GetInstance().Update();
+
+	auto& input = Input::GetInstance();
+	auto battleMgr = System::GetInstance().GetBattleMgr();
+
+	//Startでポーズシーンを積む
+	if (input.IsTriggered("Start"))
+	{
+		//フォトモード中はフリーカメラの位置を保持したままにする
+		if (!battleMgr->GetPhotoMode())
+		{
+			//今のカメラの座標・角度をフォトカメラに保存しておく
+			m_cameraManager->GetActiveCamera()->Exit();
+			m_cameraManager->SetPhotoCamera();
+		}
+		m_controller.PushScene(std::make_shared<PauseScene>(m_controller));
+		return;
+	}
+
+	//フォトモード中はカメラだけを動かす
+	if (battleMgr->GetPhotoMode())
+	{
+		m_cameraManager->UpdatePhotoCamera();
+		m_cameraManager->ApplyCameraSettings();
+
+		if (input.IsTriggered("Y"))
+		{
+			//今フレームの描画はまだ終わっていないので、保存はDrawの最後で行う
+			m_requestScreenshot = true;
+		}
+		return;
+	}
+
 	m_player->Update(*m_camera);
 	m_enemyManager->Update();
 	m_stage->Update();
@@ -178,6 +215,25 @@ void SceneMain::NormalDraw()
 	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
 #endif
+
+	//フォトモード中はカメラ調整用のImGuiウィンドウを出す(F2で表示/非表示)
+	if (System::GetInstance().GetBattleMgr()->GetPhotoMode())
+	{
+		imguiApp::GetInstance().DrawCameraDebugWindow(
+			m_cameraManager->GetPhotoCameraPos(),
+			m_cameraManager->GetPhotoCameraTarget());
+		imguiApp::GetInstance().DrawCameraAnimatorWindow(
+			m_cameraManager->GetPhotoCameraPos(),
+			m_cameraManager->GetPhotoCameraTarget());
+		imguiApp::GetInstance().DrawCameraKeyframeEditorWindow();
+	}
+
+	//スクリーンショットが要求されていたら、全描画完了後に保存する
+	if (m_requestScreenshot)
+	{
+		SaveDrawScreenToPNG(0, 0, Game::GetScreenWidth(), Game::GetScreenHeight(), kScreenshotPath);
+		m_requestScreenshot = false;
+	}
 }
 
 void SceneMain::FadeOutDraw()

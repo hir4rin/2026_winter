@@ -49,4 +49,6 @@ private:
 	std::shared_ptr<BattleManager> m_battleManager;
 	std::unique_ptr<Camera> m_camera;//Player::Updateに渡すだけ(実際のカメラはCameraManagerが制御する)
 	std::shared_ptr<Stage> m_stage;
+
+	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか
 };

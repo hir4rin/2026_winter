@@ -1,4 +1,5 @@
 ﻿#include "EnemyIdle.h"
+#include "../../../System.h"
 #include "../../EnemyBase.h"
 
 namespace
@@ -42,7 +43,7 @@ void EnemyIdle::Update()
 
 	owner->m_anim.Update(owner->m_ownTimeScale);
 	//m_idleTime += 1.0f * timeScale * m_ownTimeScale;
-	owner->m_idleTime += 1.0f;
+	owner->m_idleTime += 1.0f * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 	
 
 	//一定時間Idle状態でいる

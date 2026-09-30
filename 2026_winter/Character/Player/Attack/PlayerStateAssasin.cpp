@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "../../Enemy/EnemyBase.h"
 #include "../../../System.h"
+#include "../Camera/CameraManager.h"
 
 
 namespace
@@ -57,6 +58,14 @@ void PlayerStateAssasin::Enter()
 	//敵のほうを向く
 	Vector3 toEnemy = assasinTarget->GetRigidBody().GetPos() - player->GetRigidBody().GetPos();
 	player->m_targetVec = toEnemy.Normalize();
+
+	//カメラを切り替える
+	auto cameraManager = player->m_cameraManager.lock();
+	if (!cameraManager)return;
+	cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::AssasinCameraStart);
+
+
+	System::GetInstance().SetTimeScale(0.7f);
 }
 
 void PlayerStateAssasin::Update()
@@ -65,6 +74,8 @@ void PlayerStateAssasin::Update()
 	if (!player) return;
 	auto assasinTarget = player->GetAssasinTarget();
 	if (!assasinTarget)return;
+	auto cameraManager = player->m_cameraManager.lock();
+	if (!cameraManager)return;
 
 	Vector3 playerPos = player->GetRigidBody().GetPos();
 	Vector3 enemyPos = assasinTarget->GetRigidBody().GetPos();
@@ -87,6 +98,8 @@ void PlayerStateAssasin::Update()
 		if (m_startTimer > kStartMaxTimer)
 		{
 			m_state = AssasinState::Execute;
+			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::AssasinCamera);
+			System::GetInstance().SetTimeScale(0.7f);
 		}
 
 	}
@@ -99,6 +112,8 @@ void PlayerStateAssasin::Update()
 		if (m_excuteTimer > kExecuteTimer)
 		{
 			m_state = AssasinState::End;
+			System::GetInstance().SetTimeScale(1.0f);
+			//cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PlayerCaemra);
 		}
 
 		break;

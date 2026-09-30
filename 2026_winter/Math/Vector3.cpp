@@ -123,6 +123,16 @@ Vector3 Vector3::Slerp(const Vector3& start, const Vector3& end, float t)
 	return ans;
 }
 
+Vector3 Vector3::EaseLerp(const Vector3& start, const Vector3& end, float t, EasingMode mode, float power)
+{
+	return Lerp(start, end, Easing::Apply(mode, t, power));
+}
+
+Vector3 Vector3::EaseSlerp(const Vector3& start, const Vector3& end, float t, EasingMode mode, float power)
+{
+	return Slerp(start, end, Easing::Apply(mode, t, power));
+}
+
 Vector3 Vector3::operator+(const Vector3& right) const
 {
 	Vector3 ans;

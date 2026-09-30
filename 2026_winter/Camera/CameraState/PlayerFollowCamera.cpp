@@ -38,6 +38,8 @@ namespace
 	constexpr float kAngleVLimitOffset = 0.6f;//垂直角度上下限のオフセット
 
 	constexpr float kWallMargin = 20.0f;//カメラを壁の手前に押し戻す時の余白
+
+	constexpr float kAngleH = DX_PI_F / 10;//見やすい垂直アングル
 }
 
 PlayerFollowCamera::PlayerFollowCamera(std::weak_ptr<CameraManager> owner):CameraStateBase(owner)
@@ -64,14 +66,15 @@ void PlayerFollowCamera::Enter(CameraData data)
 	{
 		//上書きではない遷移なら書き換える
 		m_angleH = data.angleH;
-		m_angleV = data.angleV;
+		m_angleV = kAngleH;
 	}
 	//指定がある遷移
 	else
 	{
 		//指定があるときは変えない
 	}
-	
+	//カメラの位置を調整する
+	FixCameraPos();
 
 
 	ResetBlend(data.pos, data.target);

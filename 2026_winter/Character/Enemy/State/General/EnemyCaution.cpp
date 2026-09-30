@@ -1,4 +1,5 @@
 ﻿#include "EnemyCaution.h"
+#include "../../../System.h"
 #include "Player.h"
 #include "../../EnemyBase.h"
 
@@ -49,7 +50,7 @@ void EnemyCaution::Update()
 	//その後、Chaseに移行
 
 	//owner->m_cautionTime += 1.0f * timeScale * m_ownTimeScale;
-	owner->m_cautionTime += 1.0f;
+	owner->m_cautionTime += 1.0f * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 	if (owner->m_cautionTime > kEnemyCautionMaxTime)
 	{
 		owner->m_cautionTime = 0.0f;

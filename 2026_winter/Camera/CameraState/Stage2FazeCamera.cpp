@@ -1,4 +1,5 @@
 ﻿#include "Stage2FazeCamera.h"
+#include "../System.h"
 #include "../CameraManager.h"
 #include "PlayerFollowCamera.h"
 #include <cmath>
@@ -34,7 +35,7 @@ void Stage2FazeCamera::Enter(CameraData data)
 
 void Stage2FazeCamera::Update()
 {
-	m_timer += 1.0f;
+	m_timer += 1.0f * System::GetInstance().GetTimeScale();
 
 	//Blend中はBlendのほうのlerp
 	if (IsBlending())

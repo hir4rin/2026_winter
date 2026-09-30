@@ -40,6 +40,7 @@ EnemySwordman::EnemySwordman(std::weak_ptr<Player> player, Vector3 startPos):Ene
 	m_hp = kInitialHp;
 
 	m_modelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::EnemyModel));
+	m_waistFrame = MV1SearchFrame(m_modelHandle, "mixamorig:Hips");//腰のボーン
 	//部位破壊のパーツのモデル//読み込みはSystemで済ませているので複製する
 	m_leftArmModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::EnemyPartLeftArmModel));
 	m_headModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::EnemyPartHeadModel));
@@ -191,6 +192,7 @@ void EnemySwordman::OnAssasined()
 
 void EnemySwordman::OnHeadBreak()
 {
+	m_isPartBroken = true;
 	SetUpBreakHead();
 	//SetUpBreakLeftArm();
 }

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <memory>
 #include "../../Math/Vector3.h"
+#include "../../Math/Easing.h"
 #include "DxLib.h"
 #include <memory>
 
@@ -18,9 +19,12 @@ public:
 	struct BlendSetting
 	{
 		enum class Mode { None, Lerp, Slerp, Chase };
+		//イージングの種類(実体はMath/Easing.h。Vector3のEaseLerp等からも使うため、あちらに定義している)
+		using EasingMode = ::EasingMode;
 		Mode mode = Mode::None;
 		float duration = 0.0f;   //何フレームでtargetに到達させるか
-		float easingPower = 1.0f;
+		EasingMode easingMode = EasingMode::EaseIn;//イージングの種類
+		float easingPower = 1.0f;//EaseIn/EaseOut/EaseInOutの指数
 		Vector3 pivot = Vector3();//Slerp時の基軸(回転の中心)
 	};
 
@@ -51,6 +55,7 @@ public:
 		FinishingSecondCamera = 9,
 		ResultCamera = 10,
 		AssasinCamera = 11,
+		AssasinCameraStart = 12,
 
 		//他のカメラもここに追加していく
 	};

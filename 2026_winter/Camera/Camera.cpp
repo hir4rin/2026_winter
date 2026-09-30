@@ -1,4 +1,5 @@
 ﻿#include "Camera.h"
+#include "../System.h"
 #include "../Math/Matrix4x4.h"
 #include "EffekseerForDXLib.h"
 namespace
@@ -81,7 +82,7 @@ Vector3 Camera::CameraShakeUpdate()
 		m_isShaking = false;
 		return Vector3();
 	}
-	m_shakeTimer -= 1.0;//
+	m_shakeTimer -= 1.0f * System::GetInstance().GetTimeScale();//
 
 	float progress = m_shakeTimer / m_shakeTimerMax;//揺れの進行度合いを0から1の範囲で表す
 	float currentPower = m_shakePower * progress;//現在の揺れの強さを計算する

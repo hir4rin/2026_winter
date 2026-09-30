@@ -4,6 +4,8 @@
 #include "SceneMain.h"
 #include "Scene/SceneController.h"
 #include "System.h"
+#include "imguiApp.h"
+#include <d3d11.h>
 
 namespace
 {
@@ -69,6 +71,12 @@ bool Application::Init()
 	// Effekseerを使用する場合、2DゲームでもZバッファを使用する。
 	SetUseZBuffer3D(TRUE);
 
+	//ImGuiの初期化(DxLibが作ったウィンドウ・DirectX11デバイスを借りて使う)
+	imguiApp::GetInstance().Init(
+		GetMainWindowHandle(),
+		const_cast<ID3D11Device*>(static_cast<const ID3D11Device*>(GetUseDirect3D11Device())),
+		const_cast<ID3D11DeviceContext*>(static_cast<const ID3D11DeviceContext*>(GetUseDirect3D11DeviceContext())));
+
 	//モデル・エフェクトの読み込み
 	System::GetInstance().LoadAll();
 	//TODO:ローディングシーンができたら、そちらで待つようにする
@@ -96,6 +104,16 @@ void Application::Run()
 		//前のフレームに描画した内容をクリアする
 		ClearDrawScreen();
 
+		//ImGuiの新しいフレームを開始する(この後でないとImGui::Beginは使えない)
+		imguiApp::GetInstance().NewFrame();
+
+		//F2キーでImGuiのデバッグウィンドウの表示/非表示を切り替える
+		if (CheckHitKey(KEY_INPUT_F2) && !m_wasF2Pressed)
+		{
+			imguiApp::GetInstance().ToggleDebugUIVisible();
+		}
+		m_wasF2Pressed = CheckHitKey(KEY_INPUT_F2) != 0;
+
 		//ここにゲームの処理を書く
 		sceneController.Update();
 
@@ -106,6 +124,8 @@ void Application::Run()
 		{
 			break;
 		}
+		//組み立てたImGuiのウィンドウを描画する(ScreenFlipより前に呼ぶ)
+		imguiApp::GetInstance().Render();
 		//描画した内容を画面に反映する
 		ScreenFlip();
 
@@ -119,6 +139,9 @@ void Application::Run()
 
 void Application::Terminate()
 {
+	//ImGuiのリソースを解放する(DxLib_Endより前)
+	imguiApp::GetInstance().Uninit();
+
 	//読み込んだモデル・エフェクトを解放する(Effekseer・DxLibの終了より前に行う)
 	System::GetInstance().Terminate();
 

@@ -1,4 +1,5 @@
 ﻿#include "EnemyChase.h"
+#include "../../../System.h"
 #include "../../EnemyBase.h"
 #include "Player.h"
 
@@ -51,7 +52,7 @@ void EnemyChase::Update()
 	{
 		//後ほど
 		//owner->m_chasingTime += 1.0f * timeScale * m_ownTimeScale;
-		owner->m_chasingTime += 1.0f;
+		owner->m_chasingTime += 1.0f * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 		//更新
 		if (owner->m_chasingTime > kEnemyTargetUpdateTime)
 		{

@@ -75,6 +75,9 @@ public:
 
 	int GetHp()const { return m_hp; }//体力の取得
 
+	int GetWaistFrame()const { return m_waistFrame; }//腰のボーンのフレーム番号を返す
+	Vector3 GetWaistPos()const;//腰のボーンのワールド座標を返す(ボーンが無ければキャラの座標)
+
 	void OnTriggerEnter(Collider& other)override;
 	void OnTriggerExit(Collider& other)override;
 
@@ -84,6 +87,7 @@ protected:
 
 	int m_modelHandle = -1;//モデルのハンドル
 	int m_hp = -1;//体力
+	int m_waistFrame = -1;//腰のボーンのフレーム番号//継承先でモデル読み込み後にセットする
 	float m_rotAngleY = 0.0f;//回転角度
 	float m_rotAngleX = 0.0f;//回転角度
 	float m_targetAngleY = 0.0f;//目標の回転角度//回転を滑らかにするためのもの

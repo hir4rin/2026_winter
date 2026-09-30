@@ -1,7 +1,7 @@
 ﻿#include "Animation.h"
 #include "DxLib.h"
 #include <algorithm>
-//#include "../System.h"
+#include "System.h"
 
 namespace
 {
@@ -54,7 +54,7 @@ void Animation::Init(int modelHandle, std::string name, bool isRoop, float times
 void Animation::Update(float ownTimeScale)
 {
 	//float timeScale = System::GetInstance().GetTimeScale();//時間のスケールを取得する//0から1の値を返す//0.5なら、時間が半分になる
-	float timeScale = 1.0f;
+	float timeScale = System::GetInstance().GetTimeScale();
 	//アニメーションの更新
 	m_currentAnimCount += 1.0f * timeScale * m_animtimeScale * ownTimeScale;//アニメーションのフレーム数を増やす
 	m_prevAnimCount += 1.0f * timeScale * m_prevAnimTimeScale * ownTimeScale;//前のアニメーションのフレーム数を増やす
@@ -111,7 +111,7 @@ void Animation::AnimBlend(float ownTimeScale)
 	{
 		//timeScale
 		//float timeScale = System::GetInstance().GetTimeScale();//時間のスケールを取得する//0から1の値を返す//0.5なら、時間が半分になる
-		float timeScale = 1.0f;
+		float timeScale = System::GetInstance().GetTimeScale();
 
 		//m_animtimeScaleを足さないといけないと思った//どっちのm_animTimeScaleを足すか不明なのでいったんパス
 		m_animChangeFrame += 1.0f * timeScale * ownTimeScale;//アニメーションを切り替えるフレーム数を増やす

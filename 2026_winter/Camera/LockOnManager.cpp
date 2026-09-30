@@ -44,6 +44,9 @@ void LockOnManager::Update()
 	//暗殺周り
 	AssasinUpdate();
 
+	//確殺周り
+	PartBrokenUpdate();
+
 	//必殺技、ラストヒット中はreturn;
 	//ロックオンの処理-------------------------------------
 	if (!CanOperate())return;
@@ -267,6 +270,77 @@ void LockOnManager::AssasinUpdate()
 	TryAssasinTarget();
 	//暗殺対象を外すかチェック
 	CheckAssasinTarget();
+}
+
+void LockOnManager::TryPartBrokenTarget()
+{
+	auto player = m_player.lock();
+	if (!player)return;
+	Vector3 cameraPos, cameraDir;
+	//カメラの座標とカメラレイ
+	if (!GetCameraInfo(cameraPos, cameraDir))return;
+
+	//細かい範囲の調整は後で調整
+
+	//範囲内にいる敵を見つける
+	std::vector<std::shared_ptr<EnemyBase>> candidates;
+	//範囲をだんだん広げる
+	for (int i = 1; i <= kLockOnCheckNum; i++)
+	{
+		candidates = CollectEnemiesRange(player->GetCameraRockOnRange() * i);
+		if (!candidates.empty())break;
+	}
+	//部位破壊している敵のみにする//trueのものをけす
+	std::erase_if(candidates, [](const auto& enemy)
+	{
+		return !enemy->GetIsPartBroken();
+	});
+
+
+	//画面の中央にいる敵をロックオン
+	auto best = PickByCos(cameraPos, cameraDir, candidates);
+	if (!best)return;
+
+	//playerの暗殺対象にセット
+	player->SetPartBrokenTarget(best);
+}
+
+void LockOnManager::CheckPartBrokenTarget()
+{
+	auto player = m_player.lock();
+	if (!player)return;
+	auto target = player->GetPartBrokenTarget();
+	if (!target)return;
+
+	//細かい範囲の調整は後で調整
+
+
+	//離れすぎたら解除
+	float distance = (target->GetRigidBody().GetPos() - player->GetRigidBody().GetPos()).Magnitude();
+	if (distance > kLockOnMaxDistance)
+	{
+		//解除
+		player->ClearPartBrokenTarget();
+		return;
+	}
+	//生きていれば早期リターン
+	if (!target->GetIsLifeZero())return;
+
+	//死んでいたら、解除
+	Vector3 cameraPos, cameraDir;
+	if (!GetCameraInfo(cameraPos, cameraDir))
+	{
+		player->ClearPartBrokenTarget();
+		return;
+	}
+}
+
+void LockOnManager::PartBrokenUpdate()
+{
+	//確殺対象を探す
+	TryPartBrokenTarget();
+	//確殺対象を外すかチェック
+	CheckPartBrokenTarget();
 }
 
 bool LockOnManager::GetCameraInfo(Vector3& pos, Vector3& dir) const

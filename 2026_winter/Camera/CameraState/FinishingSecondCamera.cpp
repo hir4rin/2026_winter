@@ -1,4 +1,5 @@
 ﻿#include "FinishingSecondCamera.h"
+#include "../System.h"
 #include "../CameraManager.h"
 #include "PlayerFollowCamera.h"
 #include <cmath>
@@ -34,7 +35,7 @@ void FinishingSecondCamera::Enter(CameraData data)
 
 void FinishingSecondCamera::Update()
 {
-	m_timer += 1.0f;
+	m_timer += 1.0f * System::GetInstance().GetTimeScale();
 
 
 	//途中でisUltを読んでもいい

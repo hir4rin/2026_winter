@@ -1,6 +1,7 @@
 ﻿#include "CameraStateBase.h"
 #include <algorithm>
 #include <cmath>
+#include "../System.h"
 
 namespace
 {
@@ -41,7 +42,7 @@ Vector3 CameraStateBase::CameraShakeUpdate()
 		m_isShaking = false;
 		return Vector3();
 	}
-	m_shakeTimer -= 1.0;//
+	m_shakeTimer -= 1.0f * System::GetInstance().GetTimeScale();//
 
 	float progress = m_shakeTimer / m_shakeTimerMax;//揺れの進行度合いを0から1の範囲で表す
 	float currentPower = m_shakePower * progress;//現在の揺れの強さを計算する
@@ -62,12 +63,12 @@ void CameraStateBase::CameraSetting()
 
 void CameraStateBase::UpdateBlend(const Vector3& rawPos, const Vector3& rawTarget)
 {
-	m_blendElapsed += 1.0f;
+	m_blendElapsed += 1.0f * System::GetInstance().GetTimeScale();
 	//経過時間の割合//0.0だったら1.0経過していることにする
 	float t = (m_activeBlend.duration > 0.0f) ? m_blendElapsed / m_activeBlend.duration : 1.0f;
 	t = std::clamp(t, 0.0f, 1.0f);
-	//イージング //0～1の範囲で乗倍する
-	float tEased = std::pow(t, m_activeBlend.easingPower);
+	//イージング //EaseOutBackは1.0を超えて行き過ぎることがある
+	float tEased = Easing::Apply(m_activeBlend.easingMode, t, m_activeBlend.easingPower);
 
 	switch (m_activeBlend.mode)
 	{
@@ -77,8 +78,8 @@ void CameraStateBase::UpdateBlend(const Vector3& rawPos, const Vector3& rawTarge
 		break;
 
 	case BlendSetting::Mode::Lerp:
-		m_pos = Vector3::Lerp(m_startPos, rawPos, tEased);
-		m_target = Vector3::Lerp(m_startTarget, rawTarget, tEased);
+		m_pos = Vector3::EaseLerp(m_startPos, rawPos, t, m_activeBlend.easingMode, m_activeBlend.easingPower);
+		m_target = Vector3::EaseLerp(m_startTarget, rawTarget, t, m_activeBlend.easingMode, m_activeBlend.easingPower);
 		break;
 
 	case BlendSetting::Mode::Slerp:
@@ -93,10 +94,10 @@ void CameraStateBase::UpdateBlend(const Vector3& rawPos, const Vector3& rawTarge
 		//距離の部分をlerp
 		float dist = std::lerp(distStart, distTarget, tEased);
 		//方向をSlerpかけて、距離をかけて、座標を算出
-		m_pos = Vector3::Slerp(dirStart, dirTarget, tEased) * dist + pivot;
+		m_pos = Vector3::EaseSlerp(dirStart, dirTarget, t, m_activeBlend.easingMode, m_activeBlend.easingPower) * dist + pivot;
 
 		//注視点はlerp
-		m_target = Vector3::Lerp(m_startTarget, rawTarget, tEased);
+		m_target = Vector3::EaseLerp(m_startTarget, rawTarget, t, m_activeBlend.easingMode, m_activeBlend.easingPower);
 		break;
 	}
 	default:

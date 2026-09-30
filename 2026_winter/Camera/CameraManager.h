@@ -31,7 +31,8 @@ public:
 		FinishingFirstCamera,
 		FinishingSecondCamera,
 		ResultCamera,
-		AssasinCamera
+		AssasinCamera,
+		AssasinCameraStart
 
 	};
 

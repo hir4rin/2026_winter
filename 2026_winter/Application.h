@@ -18,6 +18,7 @@ private:
 
 	bool m_requestedExit = false;//ゲームの終了をがリクエスト
 	bool m_isFullScreen = false;//現在フルスクリーンかどうか
+	bool m_wasF2Pressed = false;//F2キーの押しっぱなし判定用
 
 public:
 	~Application();

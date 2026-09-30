@@ -60,6 +60,7 @@ Player::Player()
 	m_comboInfo.UltGauge = kMaxGaugeValue;
 	//m_modelHandle = MV1LoadModel("data/Player/Player.mv1");
 	m_modelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::PlayerModel));
+	m_waistFrame = MV1SearchFrame(m_modelHandle, "pelvis");//腰のボーン
 	//m_modelHandle = MV1LoadModel("data/Player/Player_true.mv1");
 	//m_modelHandle = MV1LoadModel("data/Player/1danme.mv1");
 
@@ -467,6 +468,18 @@ const bool Player::CanAssasin() const
 	auto assasinTarget = GetAssasinTarget();
 
 	return assasinTarget ? true : false;
+}
+
+std::shared_ptr<EnemyBase> Player::GetPartBrokenTarget() const
+{
+	return m_partBrokenTarget.lock();
+}
+
+const bool Player::CanPartBrokenFinish() const
+{
+	auto partBrokenTarget = GetPartBrokenTarget();
+
+	return partBrokenTarget ? true : false;
 }
 
 

@@ -47,6 +47,13 @@ private:
 	//暗殺周りUpdate
 	void AssasinUpdate();
 
+	//確殺対象がいるかチェック
+	void TryPartBrokenTarget();
+	//確殺対象を外すかチェック
+	void CheckPartBrokenTarget();
+	//確殺周りUpdate
+	void PartBrokenUpdate();
+
 
 
 	//カメラの座標と向きを取得

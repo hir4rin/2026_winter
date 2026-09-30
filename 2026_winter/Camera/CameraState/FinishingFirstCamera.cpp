@@ -1,4 +1,5 @@
 ﻿#include "FinishingFirstCamera.h"
+#include "../System.h"
 #include "FinishingSecondCamera.h"
 #include "../CameraManager.h"
 #include "PlayerFollowCamera.h"
@@ -40,7 +41,7 @@ void FinishingFirstCamera::Enter(CameraData data)
 
 void FinishingFirstCamera::Update()
 {
-	m_timer += 1.0f;
+	m_timer += 1.0f * System::GetInstance().GetTimeScale();
 
 	//Blend中はBlendのほうのlerp
 	if (IsBlending())

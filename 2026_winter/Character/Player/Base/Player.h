@@ -10,6 +10,7 @@
 #include "PlayerStateSkillAttack.h"//以下同文
 #include "PlayerStateUlt.h"//以下同文
 #include "PlayerStateAssasin.h"//以下同文
+#include "PlayerStatePartBroken.h"//以下同文
 #include "PlayerStateDie.h"//以下同文
 #include "PlayerStateDashAttack.h"//以下同文
 #include "PlayerStateDodge.h"//以下同文
@@ -190,6 +191,13 @@ public:
 	std::shared_ptr<EnemyBase> GetAssasinTarget()const;//死んでいたらnullptrを返す
 	const bool CanAssasin()const;
 
+	//確殺
+	void SetPartBrokenTarget(std::shared_ptr<EnemyBase> target) { m_partBrokenTarget = target; }
+	void ClearPartBrokenTarget() { m_partBrokenTarget.reset(); }
+	std::shared_ptr<EnemyBase> GetPartBrokenTarget()const;//死んでいたらnullptrを返す
+	const bool CanPartBrokenFinish()const;
+
+
 	//内部ロックオンのために
 	std::weak_ptr<CameraManager> GetCameraManager()const { return m_cameraManager; }
 	//プレイヤーの移動制限
@@ -283,8 +291,10 @@ private:
 	//内部ターゲット
 	std::weak_ptr<EnemyBase> m_softTarget;
 	float m_softTargetKeepTimer  = 0.0f;//攻撃していない間に減り、0になったら内部ターゲットを消す
-	//暗殺ターゲット
+	//暗殺ターゲット//サーチはロックオンマネージャーに任せてる
 	std::weak_ptr<EnemyBase> m_assasinTarget;
+	//部位破壊したターゲット//サーチはロックオンマネージャーに任せてる
+	std::weak_ptr<EnemyBase> m_partBrokenTarget;
 	
 
 	//PlayerState
@@ -298,6 +308,7 @@ private:
 	friend class PlayerStateSkillAttack;
 	friend class PlayerStateUlt;
 	friend class PlayerStateAssasin;
+	friend class PlayerStatePartBrokenKill;
 	friend class PlayerStateDie;
 	friend class PlayerStateDashAttack;
 	friend class PlayerStateDodge;

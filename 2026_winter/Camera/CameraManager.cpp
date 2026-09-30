@@ -11,6 +11,7 @@
 #include "CameraState/FinishingSecondCamera.h"
 #include "CameraState/ResultCameraState.h"
 #include "CameraState/AssasinCamera.h"
+#include "CameraState/AssasinCameraStart.h"
 #include "../Managers/CollisionManager.h"
 #include "../System.h"
 #include "../BattleManager.h"
@@ -18,7 +19,7 @@
 #include "EffekseerForDXLib.h"
 #include "../Input.h"
 #include "../Math/Matrix4x4.h"
-//#include "../imguiApp.h"
+#include "../imguiApp.h"
 #include <algorithm>
 #include <cmath>
 
@@ -83,29 +84,28 @@ void CameraManager::ApplyCameraSettings()
 	//ImGuiのカメラアニメーターで"Execute"を押して再生中なら、保存したキーフレーム間を補間した座標を
 	//そのままDxLibに渡す(Override Cameraよりもこちらを優先する)
 	//(Debug/Release問わず判定する。Release版ではF2キーでウィンドウを開かない限りこれらのフラグはtrueにならない)
-	//imguiApp.hが存在しないため一旦コメントアウト
-	//if (imguiApp::GetInstance().IsCameraAnimatorPlaying())
-	//{
-	//	SetCameraPositionAndTarget_UpVecY(
-	//		imguiApp::GetInstance().GetAnimatorCameraPos().ToDxLibVector(),
-	//		imguiApp::GetInstance().GetAnimatorCameraTarget().ToDxLibVector());
-	//	Effekseer_Sync3DSetting();
-	//	return;
-	//}
+	if (imguiApp::GetInstance().IsCameraAnimatorPlaying())
+	{
+		SetCameraPositionAndTarget_UpVecY(
+			imguiApp::GetInstance().GetAnimatorCameraPos().ToDxLibVector(),
+			imguiApp::GetInstance().GetAnimatorCameraTarget().ToDxLibVector());
+		Effekseer_Sync3DSetting();
+		return;
+	}
 
 	//ImGuiのカメラデバッグウィンドウで"Override Camera"がONになっているなら、
 	//下にある通常のカメラ計算(フォトモード判定やStateの計算結果)をすべて無視して、
 	//ImGui側で編集した座標・注視点をそのままDxLibに渡す
-	//if (imguiApp::GetInstance().IsCameraOverrideEnabled())
-	//{
-	//	SetCameraPositionAndTarget_UpVecY(
-	//		imguiApp::GetInstance().GetOverrideCameraPos().ToDxLibVector(),
-	//		imguiApp::GetInstance().GetOverrideCameraTarget().ToDxLibVector());
-	//	//DxLib側のカメラ情報が変わったので、Effekseer(エフェクト)側のカメラ情報も合わせて更新する
-	//	//(これをしないとエフェクトの見た目・位置がカメラとズレる)
-	//	Effekseer_Sync3DSetting();
-	//	return;//ここで抜けるので、この下の通常カメラ処理(フォトモード判定など)は実行されない
-	//}
+	if (imguiApp::GetInstance().IsCameraOverrideEnabled())
+	{
+		SetCameraPositionAndTarget_UpVecY(
+			imguiApp::GetInstance().GetOverrideCameraPos().ToDxLibVector(),
+			imguiApp::GetInstance().GetOverrideCameraTarget().ToDxLibVector());
+		//DxLib側のカメラ情報が変わったので、Effekseer(エフェクト)側のカメラ情報も合わせて更新する
+		//(これをしないとエフェクトの見た目・位置がカメラとズレる)
+		Effekseer_Sync3DSetting();
+		return;//ここで抜けるので、この下の通常カメラ処理(フォトモード判定など)は実行されない
+	}
 
 	//フォトモード中は、Stateが計算した値ではなく、フリーカメラの座標をそのままDxLibに渡す
 	if (System::GetInstance().GetBattleMgr()->GetPhotoMode())
@@ -206,7 +206,7 @@ Vector3 CameraManager::CameraShakeUpdate()
 		m_isShaking = false;
 		return Vector3();
 	}
-	m_shakeTimer -= 1.0;//
+	m_shakeTimer -= 1.0f * System::GetInstance().GetTimeScale();//
 
 	float progress = m_shakeTimer / m_shakeTimerMax;//揺れの進行度合いを0から1の範囲で表す
 	float currentPower = m_shakePower * progress;//現在の揺れの強さを計算する
@@ -323,6 +323,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::AssasinCamera:
 		newState = std::make_shared<AssasinCameraState>(shared_from_this());
+		break;
+	case CameraStateName::AssasinCameraStart:
+		newState = std::make_shared<AssasinCameraStart>(shared_from_this());
 		break;
 	default:
 		return;

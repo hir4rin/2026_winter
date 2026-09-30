@@ -45,7 +45,11 @@ public:
 
 	virtual void OnAssasined();//暗殺確定時
 
+	//部位破壊
 	virtual void OnHeadBreak() {};
+
+	//部位破壊したかどうか
+	bool GetIsPartBroken() { return m_isPartBroken; }
 
 
 
@@ -115,6 +119,10 @@ protected:
 	float m_airCount = 0.0f;//空中にいる時間//AirStayのときに使う
 	bool m_isLifeZero = false;//体力が0になったか
 	HitType m_hitType = HitType::None;//空中にいるかどうか
+
+	//部位破壊したかどうか
+	bool m_isPartBroken = false;
+
 
 
 	friend class EnemyIdle;

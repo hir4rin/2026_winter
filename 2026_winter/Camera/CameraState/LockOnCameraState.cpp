@@ -1,4 +1,5 @@
 ﻿#include "LockOnCameraState.h"
+#include "../System.h"
 #include "../CameraManager.h"
 #include "../LockOnManager.h"
 #include "PlayerFollowCamera.h"
@@ -126,7 +127,7 @@ void LockOnCameraState::Update()
 		m_pos = m_goalPos;
 
 		//注視点はロックオン対象切り替え時になめらかに補間する
-		m_targetLerpElapsed += 1.0f;
+		m_targetLerpElapsed += 1.0f * System::GetInstance().GetTimeScale();
 		float lerpT = std::clamp(m_targetLerpElapsed / kTargetSwitchLerpFrame, 0.0f, 1.0f);
 		m_target = Vector3::Lerp(m_targetLerpStart, m_goalTarget, lerpT);
 	}
