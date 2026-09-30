@@ -10,7 +10,7 @@
 #include "PlayerStateSkillAttack.h"//以下同文
 #include "PlayerStateUlt.h"//以下同文
 #include "PlayerStateAssasin.h"//以下同文
-#include "PlayerStatePartBroken.h"//以下同文
+#include "PlayerStatePartBrokenKill.h"//以下同文
 #include "PlayerStateDie.h"//以下同文
 #include "PlayerStateDashAttack.h"//以下同文
 #include "PlayerStateDodge.h"//以下同文

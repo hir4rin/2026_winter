@@ -14,6 +14,7 @@
 #include "State/Hit/EnemyHitGround.h"
 #include "State/Hit/EnemyHitAir.h"
 #include "State/Hit/EnemyAssasined.h"
+#include "State/Hit/EnemyPartBrokenKilled.h"
 
 
 class Player;
@@ -139,6 +140,7 @@ protected:
 	friend class EnemyHitGround;
 	friend class EnemyHitAir;
 	friend class EnemyAssasined;
+	friend class EnemyPartBrokenKilled;
 
 };
 
