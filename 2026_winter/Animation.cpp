@@ -32,6 +32,22 @@ Animation::~Animation()
 
 void Animation::Init(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame)
 {
+	//古いモデルに残っているルートモーションの上書きを解除する
+	SetRootMotionEnable(RootMotionCancel::None);
+	// 違うモデルに切り替える前に、古いモデルのアニメーションを全てデタッチする
+	if (m_currentAnimHandle != -1)
+	{
+		MV1DetachAnim(m_modelHandle, m_currentAnimHandle);
+		m_currentAnimHandle = -1;
+	}
+	if (m_prevAnimHandle != -1)
+	{
+		MV1DetachAnim(m_modelHandle, m_prevAnimHandle);
+		m_prevAnimHandle = -1;
+	}
+	//m_prevAnimCount = 0.0f;
+	m_animChangeFrame = 0.0f;
+
 	m_endFrame = endFrame;//最終フレームを保存する
 	m_prevEndFrame = -1.0f;
 	SetAnim(isRoop);
@@ -245,6 +261,26 @@ float Animation::GetNowAnimFrame(const std::string& name)
 	float animFrame = MV1GetAttachAnimTime(m_modelHandle, animIndex);//アタッチしているアニメーションの現在のフレーム数を取得する
 
 	return animFrame;
+}
+
+float Animation::GetAnimEndFrame()
+{
+	return ResolveEndFrame(m_modelHandle, m_currentAnimHandle, m_endFrame);
+}
+
+float Animation::GetAnimRemainFrame()
+{
+	return (std::max)(0.0f, GetAnimEndFrame() - m_currentAnimCount);
+}
+
+bool Animation::IsAnimFrameOver(float frame)
+{
+	return m_currentAnimCount >= frame;
+}
+
+bool Animation::IsAnimFrameBetween(float startFrame, float endFrame)
+{
+	return m_currentAnimCount >= startFrame && m_currentAnimCount < endFrame;
 }
 
 void Animation::SetRootMotionEnable(RootMotionCancel mode, const char* frameName)

@@ -134,13 +134,14 @@ void EnemySwordman::Update()
 	if (CheckHitKey(KEY_INPUT_Z) && !m_isBreakLeftArm)
 	{
 		SetUpBreakLeftArm();
+		m_isPartBroken = true;
 	}
 
 	//デバッグ用//Xで頭を部位破壊する
 	if (CheckHitKey(KEY_INPUT_X) && !m_isBreakHead)
 	{
 		SetUpBreakHead();
-	
+		m_isPartBroken = true;
 	}
 
 	if (m_isBreakLeftArm)

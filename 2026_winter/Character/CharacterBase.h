@@ -25,6 +25,13 @@ public:
 		High,
 	};
 
+	//部位破壊確殺のパターン//プレイヤーと敵で共通して使う
+	enum class PartBrokenPattern
+	{
+		A,
+		B,
+	};
+
 	//攻撃パラメーター
 	struct AttackData
 	{

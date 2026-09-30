@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "../General/EnemyStateBase.h"
+#include "../../../CharacterBase.h"
 class EnemyPartBrokenKilled :
     public EnemyStateBase
 {
@@ -11,7 +12,7 @@ public:
         End,
     };
 public:
-    EnemyPartBrokenKilled(std::weak_ptr<EnemyBase> owner);
+    EnemyPartBrokenKilled(std::weak_ptr<EnemyBase> owner, CharacterBase::PartBrokenPattern pattern);
     virtual ~EnemyPartBrokenKilled();
 
     void Enter() override;
@@ -20,9 +21,16 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+
 private:
-    PartBrokenKill m_state;
+    void PatternAUpdate();
+    void PatternBUpdate();
+private:
+    PartBrokenKill m_state = PartBrokenKill::Start;
     float m_startTimer = 0.0f;
     float m_excuteTimer = 0.0f;
+
+    CharacterBase::PartBrokenPattern m_pattern;
+
 };
 

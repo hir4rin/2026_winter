@@ -43,7 +43,7 @@ void PlayerStateAssasin::Enter()
 	//	Assasin04->StabChestVictim   わりかし
 
 
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Execute02"), false, 0.7f);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Execute04"), false, 0.7f);
 	//スタートする
 	m_state = AssasinState::Start;
 

@@ -45,6 +45,7 @@ public:
 	void OnDamage(Collider& other, AttackData& data)override;
 
 	virtual void OnAssasined();//暗殺確定時
+	virtual void OnPartBrokenKilled(PartBrokenPattern pattern);//確殺確定時
 
 	//部位破壊
 	virtual void OnHeadBreak() {};
@@ -52,7 +53,7 @@ public:
 	//部位破壊したかどうか
 	bool GetIsPartBroken() { return m_isPartBroken; }
 
-
+	std::shared_ptr<EnemyStateBase> GetCurrentState() { return m_currentState; }
 
 
 

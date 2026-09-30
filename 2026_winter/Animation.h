@@ -51,6 +51,10 @@ public:
 	float GetAnimTotalFrame(const std::string& name);//指定したアニメーションの総フレーム数を返す
 	float GetNowAnimFrame();//現在のアニメーションのフレーム数を返す
 	float GetNowAnimFrame(const std::string& name);//指定したアニメーションの現在のフレーム数を返す
+	float GetAnimEndFrame();//現在のアニメーションの実効の最終フレームを返す//endFrameの指定がなければ総フレーム数
+	float GetAnimRemainFrame();//最終フレームまでの残りフレーム数を返す
+	bool IsAnimFrameOver(float frame);//現在のフレームが指定フレーム以上かどうか
+	bool IsAnimFrameBetween(float startFrame, float endFrame);//現在のフレームが範囲内(start以上end未満)かどうか
 
 	/// <summary>
 	/// 現在のアニメーションのルートモーション(上下方向の移動)を見た目から消す

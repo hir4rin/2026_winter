@@ -142,6 +142,13 @@ void EnemyBase::OnAssasined()
 	return;
 }
 
+void EnemyBase::OnPartBrokenKilled(PartBrokenPattern pattern)
+{
+	//StateをPartBrokenKilledに変える(パターンはコンストラクタで渡す)
+	ChangeState(std::make_shared<EnemyPartBrokenKilled>(GetWeakPtr(), pattern));
+	return;
+}
+
 void EnemyBase::ApplyPos()
 {
 	CharacterBase::ApplyPos();
