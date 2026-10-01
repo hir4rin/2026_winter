@@ -29,11 +29,17 @@ public:
 	}
 
 private:
+	//今のカメラ位置に近いほうへ回るように、回転方向(m_rotateSign)を決める
+	void DecideRotateSign(Vector3 playerPos, Vector3 enemyPos);
+
+private:
 	static constexpr float kBlendDuration = 25.0f;//ブレンドにかけるフレーム数
 	static constexpr float kBlendEasingPower = 0.3f;//ブレンドのイージング指数
 
 	std::weak_ptr<EnemyBase> m_lastTargetEnemy;//前フレームでロックオンしていた敵(切り替え検知用)
+	Vector3 m_posLerpStart;//座標lerpの開始位置
 	Vector3 m_targetLerpStart;//注視点lerpの開始位置
+	float m_rotateSign = 1.0f;//カメラを回転させる向き(+1 or -1)//対象切り替え時に決める
 	float m_targetLerpElapsed = 0.0f;//注視点lerpの経過フレーム
 
 	int m_raticleHandle = -1;//ロックオンレティクルの画像ハンドル

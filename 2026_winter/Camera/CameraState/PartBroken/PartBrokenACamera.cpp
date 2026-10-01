@@ -146,8 +146,8 @@ BlendSetting PartBrokenACamera::GetOverrideBlendSetting() const
 	}
 	return BlendSetting{
 		.mode = BlendSetting::Mode::Slerp,
-		.duration = kBlendDuration,
-		.easingMode = EasingMode::EaseOutBack,
+		.duration = 30.0f,
+		.easingMode = EasingMode::EaseIn,
 		.easingPower = kBlendEasingPower,
 		.pivot = pivot,
 		.orbitDirection = OrbitDirection::CounterClockwise

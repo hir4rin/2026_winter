@@ -61,6 +61,7 @@ public:
 		PartBrokenCameraAStart = 14,
 		PartBrokenCameraB = 15,
 		PartBrokenCameraBStart = 16,
+		PartBrokenCameraAEnd = 17,
 
 		
 

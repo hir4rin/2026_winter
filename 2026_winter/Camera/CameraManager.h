@@ -35,6 +35,7 @@ public:
 		AssasinCameraStart,
 		PartBrokenACamera,
 		PartBrokenACameraStart,
+		PartBrokenACameraEnd,
 		PartBrokenBCamera,
 		PartBrokenBCameraStart
 

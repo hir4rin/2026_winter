@@ -1,6 +1,7 @@
 ﻿#include "EnemyBase.h"
 #include "Enemy/State/General/EnemyStateBase.h"
 #include "Player.h"
+#include "HitCol.h"
 #include "../../Game.h"
 #include "../System.h"
 
@@ -303,6 +304,12 @@ void EnemyBase::FinisherPerformanceProcess()
 {
 	m_isDead = true;
 	m_isLifeZero = true;
+	//やられ判定を消す
+	if (m_hitCol)
+	{
+		m_hitCol->SetIsActive(false);
+	}
+
 }
 
 std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()

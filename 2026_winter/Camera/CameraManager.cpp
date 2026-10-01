@@ -14,6 +14,7 @@
 #include "CameraState/Assasin/AssasinCameraStart.h"
 #include "CameraState/PartBroken/PartBrokenACamera.h"
 #include "CameraState/PartBroken/PartBrokenACameraStart.h"
+#include "CameraState/PartBroken/PartBrokenACameraEnd.h"
 #include "CameraState/PartBroken/PartBrokenBCamera.h"
 #include "CameraState/PartBroken/PartBrokenBCameraStart.h"
 #include "../Managers/CollisionManager.h"
@@ -336,6 +337,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::PartBrokenACameraStart:
 		newState = std::make_shared<PartBrokenACameraStart>(shared_from_this());
+		break;
+	case CameraStateName::PartBrokenACameraEnd:
+		newState = std::make_shared<PartBrokenACameraEnd>(shared_from_this());
 		break;
 	case CameraStateName::PartBrokenBCamera:
 		newState = std::make_shared<PartBrokenBCamera>(shared_from_this());

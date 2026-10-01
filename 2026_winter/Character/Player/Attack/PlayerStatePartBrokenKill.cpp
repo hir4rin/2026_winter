@@ -278,7 +278,7 @@ void PlayerStatePartBrokenKill::PatternAUpdate()
 		{
 			m_state = PartBrokenKill::End;
 			System::GetInstance().SetTimeScale(1.0f);
-			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PlayerCaemra);
+			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PartBrokenACameraEnd);
 		}
 
 		break;

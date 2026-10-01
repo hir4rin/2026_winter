@@ -68,12 +68,22 @@ void LockOnCameraState::Update()
 	if (!player)return;
 	if (!enemy)return;
 
-	//ロックオン対象が切り替わったら、注視点のlerpをやり直す
+	//ロックオン対象が切り替わったら(Enter直後も含む)、回転方向を決め直し、座標・注視点のlerpをやり直す
 	if (enemy != m_lastTargetEnemy.lock())
 	{
-		m_targetLerpStart = m_target;
-		m_targetLerpElapsed = 0.0f;
 		m_lastTargetEnemy = enemy;
+		DecideRotateSign(player->GetRigidBody().GetPos(), enemy->GetRigidBody().GetPos());
+		if (IsBlending())
+		{
+			//ブレンド中はブレンド側で補間するので、切り替えlerpは完了扱いにする
+			m_targetLerpElapsed = kTargetSwitchLerpFrame;
+		}
+		else
+		{
+			m_posLerpStart = m_pos;
+			m_targetLerpStart = m_target;
+			m_targetLerpElapsed = 0.0f;
+		}
 	}
 
 
@@ -123,12 +133,10 @@ void LockOnCameraState::Update()
 	//Blend中ではない
 	else
 	{
-		//通常時:座標は今まで通り、生の計算値をそのまま使う
-		m_pos = m_goalPos;
-
-		//注視点はロックオン対象切り替え時になめらかに補間する
+		//座標・注視点はロックオン対象切り替え時になめらかに補間する(切り替え後kTargetSwitchLerpFrame経過したら生の計算値)
 		m_targetLerpElapsed += 1.0f * System::GetInstance().GetTimeScale();
 		float lerpT = std::clamp(m_targetLerpElapsed / kTargetSwitchLerpFrame, 0.0f, 1.0f);
+		m_pos = Vector3::Lerp(m_posLerpStart, m_goalPos, lerpT);
 		m_target = Vector3::Lerp(m_targetLerpStart, m_goalTarget, lerpT);
 	}
 }
@@ -200,23 +208,8 @@ void LockOnCameraState::FixCameraPos()
 	Vector3 EtoPVec = (playerPos - enemyPos).Normalize();
 	EtoPVec *= cameraToPlayerLength;
 
-	//EtoPVecを90度回転させたベクトルとMainCtoPVecの内積が正か負かでどちらに回転させるかを決める
-	Vector3 upVec = Vector3(0.0f, 1.0f, 0.0f);
-	Vector3 rotateBase = EtoPVec.Cross(upVec).Normalize();//EtoPVecを90度回転させたベクトル
-	Vector3 PtoMainCVec = (m_pos - playerPos).Normalize();//プレイヤーからメインカメラへのベクトル
-	float dot = rotateBase.Dot(PtoMainCVec);
-	if (dot >= 0.0f)
-	{
-		//正の時、rotateBaseの方向に回転させる
-		rotY = Matrix4x4::MakeRotationY(-kRotateAngle);
-	}
-	else
-	{
-		//負の時、rotateBaseの逆方向に回転させる
-		rotY = Matrix4x4::MakeRotationY(kRotateAngle);
-	}
-	//やり方がわからないので、一旦これで
-	rotY = Matrix4x4::MakeRotationY(kRotateAngle);
+	//回転方向は対象切り替え時にDecideRotateSignで決めたものを使う(毎フレーム判定すると反転することがあるため)
+	rotY = Matrix4x4::MakeRotationY(kRotateAngle * m_rotateSign);
 
 	//auto CtoP = Vector3(0.0f, 0.0f, -cameraToPlayerLength);//プレイヤーからカメラへのベクトル
 
@@ -265,4 +258,21 @@ void LockOnCameraState::FixCameraPos()
 
 void LockOnCameraState::CameraSetting()
 {
+}
+
+void LockOnCameraState::DecideRotateSign(Vector3 playerPos, Vector3 enemyPos)
+{
+	//y座標を0にする
+	playerPos.y = enemyPos.y = 0.0f;
+	Vector3 cameraPos = m_pos;
+	cameraPos.y = 0.0f;
+
+	//EtoPVecを90度回転させたベクトルとPtoMainCVecの内積が正か負かで、今のカメラに近いほうへ回転させる
+	Vector3 EtoPVec = (playerPos - enemyPos).Normalize();
+	Vector3 rotateBase = EtoPVec.Cross(Vector3(0.0f, 1.0f, 0.0f)).Normalize();//EtoPVecを90度回転させたベクトル
+	Vector3 PtoMainCVec = (cameraPos - playerPos).Normalize();//プレイヤーから今のカメラへのベクトル
+	float dot = rotateBase.Dot(PtoMainCVec);
+
+	//MakeRotationY(-角度)でrotateBase側、MakeRotationY(+角度)でその逆側に回る
+	m_rotateSign = (dot >= 0.0f) ? -1.0f : 1.0f;
 }

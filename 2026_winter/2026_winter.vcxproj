@@ -222,6 +222,7 @@
     <ClCompile Include="Character\Player\Attack\PlayerStatePartBrokenKill.cpp" />
     <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenACamera.cpp" />
     <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenACameraStart.cpp" />
+    <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenACameraEnd.cpp" />
     <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenBCameraStart.cpp" />
     <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenBCamera.cpp" />
     <ClCompile Include="SceneMain.cpp" />
@@ -323,6 +324,7 @@
     <ClInclude Include="Character\Player\Attack\PlayerStatePartBrokenKill.h" />
     <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenACamera.h" />
     <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenACameraStart.h" />
+    <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenACameraEnd.h" />
     <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenBCameraStart.h" />
     <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenBCamera.h" />
     <ClInclude Include="SceneMain.h" />

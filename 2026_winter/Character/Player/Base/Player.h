@@ -199,6 +199,8 @@ public:
 	void ClearPartBrokenTarget() { m_partBrokenTarget.reset(); }
 	std::shared_ptr<EnemyBase> GetPartBrokenTarget()const;//死んでいたらnullptrを返す
 	const bool CanPartBrokenFinish()const;
+	//プレイヤーの向いている方向
+	Vector3 GetTargetVec()const { return m_targetVec; }
 	//確殺演出中かどうか//演出中は確殺対象を固定する
 	void SetIsPartBrokenKilling(bool value) { m_isPartBrokenKilling = value; }
 	bool GetIsPartBrokenKilling()const { return m_isPartBrokenKilling; }

@@ -19,7 +19,8 @@ public:
 		return BlendSetting{
 			.mode = BlendSetting::Mode::Lerp,
 			.duration = kBlendDuration,
-			.easingPower = 1.0f,
+			.easingMode = BlendSetting::EasingMode::EaseIn,
+			.easingPower = 0.5f,
 			.pivot = Vector3()
 		};
 	}
@@ -28,7 +29,7 @@ private:
 	void InputRightStick();//右スティックの入力を処理する
 	void FixCameraPosLockOn();//ロックオン時のカメラの位置を調整する
 private:
-	static constexpr float kBlendDuration = 5.0f;//ブレンドにかけるフレーム数
+	static constexpr float kBlendDuration = 20.0f;//ブレンドにかけるフレーム数
 
 	XINPUT_STATE  xi;
 	Vector3 m_rayVec = Vector3(0, 0, 0);//カメラの前方向のベクトル//カメラの注視点を決めるために使う
