@@ -74,9 +74,7 @@ void PlayerStateAttack::Enter()
 	//アニメーションの初期化//コンボの段数によってアニメーションを変える//-1はplayerがいないとき
 	int currentComboIndex = SelectAnimInit();
 	const ComboNode& node = player->m_comboChain[currentComboIndex];
-	//モデルハンドルの取得//攻撃モデルか通常モデルかで切り替える
-	int modelHandle = (node.modelType == 0) ? player->m_modelHandle : player->m_attackModelHandle;
-	player->m_anim.ChangeAnimWithModelHandle(modelHandle, node.animName, false, 0.8f, node.endFrame);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, 0.8f, node.endFrame);
 	//切り上げ攻撃は、上昇をプログラム(moveSpeedY)で行うので、アニメーションの上昇を見た目から消す
 	//アニメーションが切り替わってブレンドが終わると、Animation側で自動的に解除される
 	if (node.index == kRootMotionCancelComboIndex)
@@ -109,6 +107,7 @@ void PlayerStateAttack::Enter()
 	//ここでColliderを生成する//あとhitstopとkAttackColOffset
 	player->m_attackData = {
 	.attackPower = node.attackPower,
+	.brokenRate = node.brokenRate,
 	.knockBackPower = Vector3(node.knockBackXZ, node.knockBackY,0),
 	//.knockBackPower = Vector3(0.0f,node.knockBackY,0.0f),//吹き飛ばない攻撃にする
 	.knockBackFrame = totalAnimFrame,

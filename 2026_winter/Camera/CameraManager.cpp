@@ -10,8 +10,12 @@
 #include "CameraState/FinishingFirstCamera.h"
 #include "CameraState/FinishingSecondCamera.h"
 #include "CameraState/ResultCameraState.h"
-#include "CameraState/AssasinCamera.h"
-#include "CameraState/AssasinCameraStart.h"
+#include "CameraState/Assasin/AssasinCamera.h"
+#include "CameraState/Assasin/AssasinCameraStart.h"
+#include "CameraState/PartBroken/PartBrokenACamera.h"
+#include "CameraState/PartBroken/PartBrokenACameraStart.h"
+#include "CameraState/PartBroken/PartBrokenBCamera.h"
+#include "CameraState/PartBroken/PartBrokenBCameraStart.h"
 #include "../Managers/CollisionManager.h"
 #include "../System.h"
 #include "../BattleManager.h"
@@ -326,6 +330,18 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::AssasinCameraStart:
 		newState = std::make_shared<AssasinCameraStart>(shared_from_this());
+		break;
+	case CameraStateName::PartBrokenACamera:
+		newState = std::make_shared<PartBrokenACamera>(shared_from_this());
+		break;
+	case CameraStateName::PartBrokenACameraStart:
+		newState = std::make_shared<PartBrokenACameraStart>(shared_from_this());
+		break;
+	case CameraStateName::PartBrokenBCamera:
+		newState = std::make_shared<PartBrokenBCamera>(shared_from_this());
+		break;
+	case CameraStateName::PartBrokenBCameraStart:
+		newState = std::make_shared<PartBrokenBCameraStart>(shared_from_this());
 		break;
 	default:
 		return;

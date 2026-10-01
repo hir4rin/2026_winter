@@ -26,6 +26,7 @@ public:
 		EasingMode easingMode = EasingMode::EaseIn;//イージングの種類
 		float easingPower = 1.0f;//EaseIn/EaseOut/EaseInOutの指数
 		Vector3 pivot = Vector3();//Slerp時の基軸(回転の中心)
+		OrbitDirection orbitDirection = OrbitDirection::Shortest;//Slerp時に水平にどちら向きに回すか(基本は最短)
 	};
 
 	//受け渡し用
@@ -56,6 +57,12 @@ public:
 		ResultCamera = 10,
 		AssasinCamera = 11,
 		AssasinCameraStart = 12,
+		PartBrokenCameraA = 13,
+		PartBrokenCameraAStart = 14,
+		PartBrokenCameraB = 15,
+		PartBrokenCameraBStart = 16,
+
+		
 
 		//他のカメラもここに追加していく
 	};

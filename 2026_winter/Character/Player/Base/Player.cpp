@@ -178,6 +178,15 @@ void Player::Update(Camera& camera)
 	}
 #endif
 
+	//デバッグ用//Qを押した瞬間だけComboChain.csvを読み込み直してコンボノードを更新する
+	bool isQPressed = CheckHitKey(KEY_INPUT_Q) != 0;
+	if (isQPressed && !m_wasQPressed)
+	{
+		DataManager::GetInstance().ReloadComboRawData();
+		InitializeComboChain();
+	}
+	m_wasQPressed = isQPressed;
+
 
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(Jump,Fall,Attack)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
@@ -493,6 +502,8 @@ void Player::InitializeComboChain()
 	//CSVファイルを読み込む
 	const auto& rawData = DataManager::GetInstance().GetComboRawData();
 
+	m_comboChain.clear();//読み込み直しのときに前のデータが残らないように消す
+
 	for (const auto& tokens : rawData)
 	{
 		//列数チェック//tokensはvector<string>で、1行分のデータが入っている//横
@@ -503,10 +514,10 @@ void Player::InitializeComboChain()
 		}
 		ComboNode node;
 		node.animName = tokens[ComboNodeType::AnimName];
-		node.modelType = std::stoi(tokens[ComboNodeType::Model]);
 		node.type = static_cast<AttackType>(std::stoi(tokens[ComboNodeType::Type]));
 		node.index = std::stoi(tokens[ComboNodeType::Index]);
 		node.attackPower = std::stof(tokens[ComboNodeType::AttackPower]);
+		node.brokenRate = std::stof(tokens[ComboNodeType::BrokenRate]);
 		node.moveFrame = std::stof(tokens[ComboNodeType::MoveTimeRate]);
 		node.moveSpeedX = std::stof(tokens[ComboNodeType::MoveSpeedX]);
 		node.moveSpeedY = std::stof(tokens[ComboNodeType::MoveSpeedY]);

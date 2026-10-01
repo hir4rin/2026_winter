@@ -50,11 +50,11 @@ void PlayerStateIdle::Update()
 	//暗殺
 	if (input.IsTriggered("Y") && player->CanAssasin())
 	{
-		//player->ChangeState(std::make_shared<PlayerStateAssasin>(m_owner));
-		//return;
+		/*player->ChangeState(std::make_shared<PlayerStateAssasin>(m_owner));
+		return;*/
 	}
 
-	//暗殺
+	//確殺
 	if (input.IsTriggered("Y") && player->CanPartBrokenFinish())
 	{
 		player->ChangeState(std::make_shared<PlayerStatePartBrokenKill>(m_owner));
@@ -127,5 +127,9 @@ void PlayerStateIdle::Exit()
 
 void PlayerStateIdle::DebugDraw()
 {
+	auto player = m_owner.lock();
 	DrawFormatString(10, 10, GetColor(255, 255, 255), "PlayerState:Idle");
+
+	//確殺のパターン分け用の範囲
+	//DrawSphere3D(player->GetRigidBody().GetPos().ToDxLibVector(), 150.0f, 16.0f, GetColor(255, 255, 255), GetColor(255, 255, 255), false);
 }

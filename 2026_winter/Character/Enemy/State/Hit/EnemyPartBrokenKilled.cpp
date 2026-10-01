@@ -6,15 +6,20 @@
 
 namespace
 {
+	//パターンAの最初のアニメーションA
+	constexpr float playerAnimSpeedPatternA = 0.7f;
+	//パターンAの2個目のアニメーション
+	constexpr float playerAnimSpeedPatternASecond = 1.0f;
+
 	//最初のStartのフレーム
-	const float kStartMaxTimer = 23.07 * 1.0f;//playerの再生速度分遅くする
+	const float kStartMaxTimer = 23.07 / playerAnimSpeedPatternA;//playerの再生速度分遅くする
 	//頭が取れるタイミング
-	const float kHeadBrokenTime = 37.0f * 1.0f;//playerのアニメーションの再生速度分遅くする
+	const float kHeadBrokenTime = 37.0f / playerAnimSpeedPatternASecond;//playerのアニメーションの再生速度分遅くする
 
 	//実行中の動く速度
-	constexpr float kExecuteSpeed = 7.0f;
+	//constexpr float kExecuteSpeed = 7.0f;
 	//実行中のフレーム
-	constexpr float kExecuteTimer = 25.0f;
+	//constexpr float kExecuteTimer = 25.0f;
 
 	//パターンBでのステート間のフレーム
 	constexpr float kStartMoveFrame = 21.68f;
@@ -56,7 +61,7 @@ void EnemyPartBrokenKilled::Enter()
 	case CharacterBase::PartBrokenPattern::A:
 	{
 		//最初はヒットアニメーションを流し、そのあとにアニメーションを流す
-		owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false, 1.0f);
+		owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false, playerAnimSpeedPatternA);
 
 		//owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("StabChestVictim"), false, 1.0f);
 		//スタートする
@@ -69,7 +74,7 @@ void EnemyPartBrokenKilled::Enter()
 	}
 		break;
 	case CharacterBase::PartBrokenPattern::B:
-		owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("RunSlashFinisher"), false, 1.0f);
+		owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("RunSlashFinisher"), false, 1.0f,107.0f);
 		//スタートする
 		m_state = PartBrokenKill::Start;
 	
@@ -95,6 +100,12 @@ void EnemyPartBrokenKilled::Update()
 	case CharacterBase::PartBrokenPattern::B:
 		PatternBUpdate();
 		break;
+	}
+
+	//死んだ判定
+	if (m_state == PartBrokenKill::End && owner->m_anim.GetAnimEndFlag())
+	{
+		owner->FinisherPerformanceProcess();
 	}
 	
 
@@ -130,7 +141,7 @@ void EnemyPartBrokenKilled::PatternAUpdate()
 		{
 			m_state = PartBrokenKill::Execute;
 			//処刑アニメーション再生
-			owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("StabChestVictim"), false, 1.0f);
+			owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("StabChestVictim"), false, playerAnimSpeedPatternASecond);
 		}
 		break;
 	case PartBrokenKill::Execute:
@@ -148,11 +159,6 @@ void EnemyPartBrokenKilled::PatternAUpdate()
 		break;
 	}
 
-	//今はテスト中だから終わったらIdleに戻す
-	if (owner->m_anim.GetAnimEndFlag())
-	{
-		owner->ChangeState(std::make_shared<EnemyIdle>(owner));
-	}
 }
 
 void EnemyPartBrokenKilled::PatternBUpdate()
@@ -195,9 +201,4 @@ void EnemyPartBrokenKilled::PatternBUpdate()
 		break;
 	}
 
-	//今はテスト中だから終わったらIdleに戻す
-	if (owner->m_anim.GetAnimEndFlag())
-	{
-		owner->ChangeState(std::make_shared<EnemyIdle>(owner));
-	}
 }

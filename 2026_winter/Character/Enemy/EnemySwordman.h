@@ -19,6 +19,8 @@ public:
 
     void OnAssasined()override;
     void OnHeadBreak()override;
+    void OnPartBreak()override;//攻撃で部位破壊したら左腕を落とす
+    void SetOpacity(float rate)override;//本体に加えて、切り離したパーツの不透明度も設定する
 private:
     void SetUpBreakLeftArm();
     void SetUpBreakHead();

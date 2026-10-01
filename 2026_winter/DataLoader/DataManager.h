@@ -20,6 +20,11 @@ public:
 	/// </summary>
 	void LoadAll();
 
+	/// <summary>
+	/// ComboChain.csvを読み込み直す(デバッグ用)
+	/// </summary>
+	void ReloadComboRawData() { LoadComboRawData(); }
+
 	const AnimData& GetPlayerAnimData() const { return m_playerAnimData;}
 	const AnimData& GetEnemySwordmanAnimData() const { return m_enemySwordmanAnimData; }
 	const AnimData& GetBossAnimData() const { return m_bossAnimData;}

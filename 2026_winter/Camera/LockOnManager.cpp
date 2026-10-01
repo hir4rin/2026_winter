@@ -223,6 +223,11 @@ void LockOnManager::TryAssasinTarget()
 	for (int i = 1; i <= kLockOnCheckNum; i++)
 	{
 		candidates = CollectEnemiesRange(player->GetCameraRockOnRange() * i);
+		//処刑済み(確殺・暗殺が始まった)敵、空中にいる敵は外す//範囲を広げる判定より前に外す
+		std::erase_if(candidates, [](const auto& enemy)
+		{
+			return enemy->GetIsExecuted() || !enemy->IsFloor();
+		});
 		if (!candidates.empty())break;
 	}
 
@@ -240,6 +245,20 @@ void LockOnManager::CheckAssasinTarget()
 	if (!player)return;
 	auto target = player->GetAssasinTarget();
 	if (!target)return;
+
+	//処刑済みなら解除(確殺で倒された敵が暗殺対象に残らないようにする)
+	if (target->GetIsExecuted())
+	{
+		player->ClearAssasinTarget();
+		return;
+	}
+
+	//空中にいる敵は解除
+	if (!target->IsFloor())
+	{
+		player->ClearAssasinTarget();
+		return;
+	}
 
 	//細かい範囲の調整は後で調整
 
@@ -266,6 +285,11 @@ void LockOnManager::CheckAssasinTarget()
 
 void LockOnManager::AssasinUpdate()
 {
+	//暗殺演出中は対象を固定する(途中で別の敵に切り替わらないようにする)
+	auto player = m_player.lock();
+	if (!player)return;
+	if (player->GetIsAssasinating())return;
+
 	//暗殺対象を探す
 	TryAssasinTarget();
 	//暗殺対象を外すかチェック
@@ -288,13 +312,13 @@ void LockOnManager::TryPartBrokenTarget()
 	for (int i = 1; i <= kLockOnCheckNum; i++)
 	{
 		candidates = CollectEnemiesRange(player->GetCameraRockOnRange() * i);
+		//部位破壊している、かつ処刑済みでない、かつ地上にいる敵のみにする//範囲を広げる判定より前に外す
+		std::erase_if(candidates, [](const auto& enemy)
+		{
+			return !enemy->GetIsPartBroken() || enemy->GetIsExecuted() || !enemy->IsFloor();
+		});
 		if (!candidates.empty())break;
 	}
-	//部位破壊している敵のみにする//trueのものをけす
-	std::erase_if(candidates, [](const auto& enemy)
-	{
-		return !enemy->GetIsPartBroken();
-	});
 
 
 	//画面の中央にいる敵をロックオン
@@ -311,6 +335,20 @@ void LockOnManager::CheckPartBrokenTarget()
 	if (!player)return;
 	auto target = player->GetPartBrokenTarget();
 	if (!target)return;
+
+	//処刑済みなら解除(暗殺で倒された敵が確殺対象に残らないようにする)
+	if (target->GetIsExecuted())
+	{
+		player->ClearPartBrokenTarget();
+		return;
+	}
+
+	//空中にいる敵は解除
+	if (!target->IsFloor())
+	{
+		player->ClearPartBrokenTarget();
+		return;
+	}
 
 	//細かい範囲の調整は後で調整
 
@@ -337,6 +375,11 @@ void LockOnManager::CheckPartBrokenTarget()
 
 void LockOnManager::PartBrokenUpdate()
 {
+	//確殺演出中は対象を固定する(途中で別の敵に切り替わらないようにする)
+	auto player = m_player.lock();
+	if (!player)return;
+	if (player->GetIsPartBrokenKilling())return;
+
 	//確殺対象を探す
 	TryPartBrokenTarget();
 	//確殺対象を外すかチェック

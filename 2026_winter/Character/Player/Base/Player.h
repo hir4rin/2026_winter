@@ -31,10 +31,10 @@ struct ComboNode
 {
 
 	std::string animName;//アニメーションの名
-	int  modelType = 0;//モデルの種類//0:通常モデル、1:攻撃モデル
 	AttackType type = AttackType::None;//攻撃するタイプ
 	int index = -1;//攻撃の種類を管理するための変数
 	float attackPower = 0;//攻撃力
+	float brokenRate = 0;//部位破壊率(%)//0〜100
 	float moveFrame = -1;//突進する時間
 	float moveSpeedX = 0;//前方向に突進する速度
 	float moveSpeedY = 0;//垂直方向の速度
@@ -68,10 +68,10 @@ enum ComboNodeType : int
 {
 	None = 0,
 	AnimName = 1,
-	Model = 2,
-	Type = 3,
-	Index = 4,
-	AttackPower = 5,
+	Type = 2,
+	Index = 3,
+	AttackPower = 4,
+	BrokenRate = 5,
 	MoveTimeRate = 6,
 	MoveSpeedX = 7,
 	MoveSpeedY = 8,
@@ -190,12 +190,18 @@ public:
 	void ClearAssasinTarget() { m_assasinTarget.reset(); }
 	std::shared_ptr<EnemyBase> GetAssasinTarget()const;//死んでいたらnullptrを返す
 	const bool CanAssasin()const;
+	//暗殺演出中かどうか//演出中は暗殺対象を固定する
+	void SetIsAssasinating(bool value) { m_isAssasinating = value; }
+	bool GetIsAssasinating()const { return m_isAssasinating; }
 
 	//確殺
 	void SetPartBrokenTarget(std::shared_ptr<EnemyBase> target) { m_partBrokenTarget = target; }
 	void ClearPartBrokenTarget() { m_partBrokenTarget.reset(); }
 	std::shared_ptr<EnemyBase> GetPartBrokenTarget()const;//死んでいたらnullptrを返す
 	const bool CanPartBrokenFinish()const;
+	//確殺演出中かどうか//演出中は確殺対象を固定する
+	void SetIsPartBrokenKilling(bool value) { m_isPartBrokenKilling = value; }
+	bool GetIsPartBrokenKilling()const { return m_isPartBrokenKilling; }
 
 
 	//内部ロックオンのために
@@ -244,6 +250,7 @@ private:
 	ComboInfo m_comboInfo = {};//コンボの情報//現在のコンボの段数などを管理するためのもの
 	DamageInfo m_damageInfo = {};//被ダメ後無敵時間の情報
 	std::shared_ptr<AttackCol> m_burstAttackCol;//吹き飛ばしようのCollider
+	bool m_wasQPressed = false;//Qキーの押しっぱなし判定用(ComboChain.csvの読み込み直し)
 
 
 	//リザルト集計用
@@ -293,8 +300,10 @@ private:
 	float m_softTargetKeepTimer  = 0.0f;//攻撃していない間に減り、0になったら内部ターゲットを消す
 	//暗殺ターゲット//サーチはロックオンマネージャーに任せてる
 	std::weak_ptr<EnemyBase> m_assasinTarget;
+	bool m_isAssasinating = false;//暗殺演出中かどうか//trueの間はロックオンマネージャーが暗殺対象を更新しない
 	//部位破壊したターゲット//サーチはロックオンマネージャーに任せてる
 	std::weak_ptr<EnemyBase> m_partBrokenTarget;
+	bool m_isPartBrokenKilling = false;//確殺演出中かどうか//trueの間はロックオンマネージャーが確殺対象を更新しない
 	
 
 	//PlayerState

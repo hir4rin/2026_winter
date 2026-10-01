@@ -34,6 +34,9 @@ namespace
 	const char* const kBlendModeItems[] = { "None", "Lerp", "Slerp", "Chase" };//Combo表示用。BlendMode enumの並び順と一致させること
 	constexpr int kBlendModeItemCount = sizeof(kBlendModeItems) / sizeof(kBlendModeItems[0]);
 
+	const char* const kOrbitDirectionItems[] = { "Shortest", "Clockwise", "CounterClockwise" };//Combo表示用。OrbitDirection enumの並び順と一致させること
+	constexpr int kOrbitDirectionItemCount = sizeof(kOrbitDirectionItems) / sizeof(kOrbitDirectionItems[0]);
+
 	const char* const kEasingModeItems[] = { "EaseIn", "EaseOut", "EaseInOut", "EaseOutBack", "EaseOutExpo" };//Combo表示用。EasingMode enumの並び順と一致させること
 	constexpr int kEasingModeItemCount = sizeof(kEasingModeItems) / sizeof(kEasingModeItems[0]);
 
@@ -324,6 +327,11 @@ void imguiApp::DrawCameraKeyframeEditorWindow()
 	if (keyframe.blendSetting.mode == BlendMode::Slerp)
 	{
 		ImGui::DragFloat3("Slerp Pivot", &keyframe.blendSetting.pivot.x, kPosDragSpeed);
+		int orbitDirIndex = static_cast<int>(keyframe.blendSetting.orbitDirection);
+		if (ImGui::Combo("Orbit Direction", &orbitDirIndex, kOrbitDirectionItems, kOrbitDirectionItemCount))
+		{
+			keyframe.blendSetting.orbitDirection = static_cast<OrbitDirection>(orbitDirIndex);
+		}
 	}
 
 	ImGui::End();
@@ -392,9 +400,9 @@ void imguiApp::UpdateCameraAnimatorPlayback()
 		float distFrom = (from.pos - pivot).Magnitude();
 		float distTo = (to.pos - pivot).Magnitude();
 
-		//距離をLerp、方向をSlerpしてから合成して座標を求める
+		//距離をLerp、方向を水平回転で補間してから合成して座標を求める
 		float dist = std::lerp(distFrom, distTo, tEased);
-		m_animatorCamPos = Vector3::EaseSlerp(dirFrom, dirTo, t, blend.easingMode, blend.easingPower) * dist + pivot;
+		m_animatorCamPos = Vector3::EaseOrbitLerp(dirFrom, dirTo, t, blend.easingMode, blend.easingPower, blend.orbitDirection) * dist + pivot;
 
 		//注視点はLerp
 		m_animatorCamTarget = Vector3::EaseLerp(from.target, to.target, t, blend.easingMode, blend.easingPower);

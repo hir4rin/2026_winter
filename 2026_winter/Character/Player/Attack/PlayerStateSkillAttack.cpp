@@ -52,6 +52,7 @@ void PlayerStateSkillAttack::Enter()
 	//ここでColliderを生成する//あとhitstopとkAttackColOffset
 	player->m_attackData = {
 	.attackPower = node.attackPower,
+	.brokenRate = node.brokenRate,
 	//.knockBackPower = Vector3(node.knockBackXZ, node.knockBackY,0),
 	.knockBackPower = Vector3(0.0f,node.knockBackY,0.0f),//吹き飛ばない攻撃にする
 	.knockBackFrame = totalAnimFrame,

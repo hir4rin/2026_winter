@@ -32,7 +32,11 @@ public:
 		FinishingSecondCamera,
 		ResultCamera,
 		AssasinCamera,
-		AssasinCameraStart
+		AssasinCameraStart,
+		PartBrokenACamera,
+		PartBrokenACameraStart,
+		PartBrokenBCamera,
+		PartBrokenBCameraStart
 
 	};
 

@@ -51,11 +51,12 @@ void EnemyHitGround::Update()
 		Vector3 pos = player->GetNextPos();
 		Vector3 TargetPos = pos + front * kEnemyDistance;
 		Vector3 toTarget = (TargetPos - owner->m_rb.m_pos).Normalize() * kToTargetPower;
+		toTarget.y = 0.0f;
 
 		Vector3 knockBackDir = (owner->m_rb.m_pos - player->GetRigidBody().GetPos()).Normalize();
 		knockBackDir.y = 0.0f;//y軸の吹き飛ばしはなし
-		knockBackDir += toTarget;
-		owner->m_rb.m_vel += knockBackDir * m_info.knockBackVel.x * rate;
+		//吹き飛ばしの強さは吹き飛ばし方向にだけ掛ける(吸着の向きが負の力で反転しないように)
+		owner->m_rb.m_vel += (knockBackDir * m_info.knockBackPowerXZ + toTarget) * rate;
 	}
 
 

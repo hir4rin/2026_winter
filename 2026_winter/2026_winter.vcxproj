@@ -154,8 +154,8 @@
     <ClCompile Include="Camera\CameraState\FinishingSecondCamera.cpp" />
     <ClCompile Include="Camera\CameraState\LockOnCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\PlayerFollowCamera.cpp" />
-    <ClCompile Include="Camera\CameraState\AssasinCamera.cpp" />
-    <ClCompile Include="Camera\CameraState\AssasinCameraStart.cpp" />
+    <ClCompile Include="Camera\CameraState\Assasin\AssasinCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\Assasin\AssasinCameraStart.cpp" />
     <ClCompile Include="Camera\CameraState\ResultCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\Stage1FazeCamera.cpp" />
     <ClCompile Include="Camera\CameraState\Stage2FazeCamera.cpp" />
@@ -200,6 +200,7 @@
     <ClCompile Include="Character\Enemy\State\General\EnemyAirFall.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitDrop.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyDie.cpp" />
+    <ClCompile Include="Character\Enemy\State\Hit\EnemyVanish.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitGround.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitAir.cpp" />
     <ClCompile Include="Character\Enemy\EnemyManager.cpp" />
@@ -219,6 +220,10 @@
     <ClCompile Include="Character\Player\Defence\PlayerStateDodge.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateAssasin.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStatePartBrokenKill.cpp" />
+    <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenACamera.cpp" />
+    <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenACameraStart.cpp" />
+    <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenBCameraStart.cpp" />
+    <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenBCamera.cpp" />
     <ClCompile Include="SceneMain.cpp" />
     <ClCompile Include="imguiApp.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
@@ -249,8 +254,8 @@
     <ClInclude Include="Camera\CameraState\FinishingSecondCamera.h" />
     <ClInclude Include="Camera\CameraState\LockOnCameraState.h" />
     <ClInclude Include="Camera\CameraState\PlayerFollowCamera.h" />
-    <ClInclude Include="Camera\CameraState\AssasinCamera.h" />
-    <ClInclude Include="Camera\CameraState\AssasinCameraStart.h" />
+    <ClInclude Include="Camera\CameraState\Assasin\AssasinCamera.h" />
+    <ClInclude Include="Camera\CameraState\Assasin\AssasinCameraStart.h" />
     <ClInclude Include="Camera\CameraState\ResultCameraState.h" />
     <ClInclude Include="Camera\CameraState\Stage1FazeCamera.h" />
     <ClInclude Include="Camera\CameraState\Stage2FazeCamera.h" />
@@ -297,6 +302,7 @@
     <ClInclude Include="Character\Enemy\State\General\EnemyAirFall.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitDrop.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyDie.h" />
+    <ClInclude Include="Character\Enemy\State\Hit\EnemyVanish.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitGround.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitAir.h" />
     <ClInclude Include="Character\Enemy\EnemyManager.h" />
@@ -315,6 +321,10 @@
     <ClInclude Include="Character\Player\Defence\PlayerStateDodge.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateAssasin.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStatePartBrokenKill.h" />
+    <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenACamera.h" />
+    <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenACameraStart.h" />
+    <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenBCameraStart.h" />
+    <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenBCamera.h" />
     <ClInclude Include="SceneMain.h" />
     <ClInclude Include="imguiApp.h" />
     <ClInclude Include="imgui\imgui.h" />

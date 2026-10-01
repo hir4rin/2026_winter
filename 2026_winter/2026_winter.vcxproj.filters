@@ -171,10 +171,10 @@
     <ClCompile Include="Camera\CameraState\PlayerFollowCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Camera\CameraState\AssasinCamera.cpp">
+    <ClCompile Include="Camera\CameraState\Assasin\AssasinCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Camera\CameraState\AssasinCameraStart.cpp">
+    <ClCompile Include="Camera\CameraState\Assasin\AssasinCameraStart.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\ResultCameraState.cpp">
@@ -274,6 +274,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\State\Hit\EnemyDie.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\State\Hit\EnemyVanish.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitGround.cpp">
@@ -461,10 +464,10 @@
     <ClInclude Include="Camera\CameraState\PlayerFollowCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Camera\CameraState\AssasinCamera.h">
+    <ClInclude Include="Camera\CameraState\Assasin\AssasinCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Camera\CameraState\AssasinCameraStart.h">
+    <ClInclude Include="Camera\CameraState\Assasin\AssasinCameraStart.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\ResultCameraState.h">
@@ -564,6 +567,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Hit\EnemyDie.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\State\Hit\EnemyVanish.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitGround.h">

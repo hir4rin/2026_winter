@@ -43,7 +43,7 @@ void PlayerStateAssasin::Enter()
 	//	Assasin04->StabChestVictim   わりかし
 
 
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Execute04"), false, 0.7f);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Execute02"), false, 0.7f);
 	//スタートする
 	m_state = AssasinState::Start;
 
@@ -51,6 +51,9 @@ void PlayerStateAssasin::Enter()
 	auto assasinTarget = player->GetAssasinTarget();
 	if (!assasinTarget)return;
 	assasinTarget->OnAssasined();
+
+	//暗殺対象を固定する
+	player->SetIsAssasinating(true);
 
 	//キャラ同士の押し戻しを有効化
 	player->SetIsGhost(true);
@@ -137,6 +140,11 @@ void PlayerStateAssasin::Exit()
 
 	//キャラ同士の押し戻しを有効化
 	player->SetIsGhost(false);
+
+	//暗殺対象の固定を解除する
+	player->SetIsAssasinating(false);
+	//ターゲットをリセット
+	player->ClearAssasinTarget();
 }
 
 void PlayerStateAssasin::DebugDraw()

@@ -97,30 +97,79 @@ Vector3 Vector3::Lerp(const Vector3& start, const Vector3& end, float t)
 
 Vector3 Vector3::Slerp(const Vector3& start, const Vector3& end, float t)
 {
-	
-
-
-	Vector3 ans;
 	//Θをacos(内積)で求める//ベクトルを正規化する
 	Vector3 startNorm = start.Normalize();
 	Vector3 endNorm = end.Normalize();
+
+	//ゼロベクトルは補間できないのでそのまま返す
+	if (startNorm.sqMagnitude() <= 0.0f || endNorm.sqMagnitude() <= 0.0f)return startNorm;
+
 	float dot = startNorm.Dot(endNorm);
 	//clampする
 	dot = std::clamp(dot, -1.0f, 1.0f);
-	float rad = acos(dot);
-	
-	//ゼロ除算を除く
-	if (rad <= kSlerpEpsilon)return start;
+	float rad = acosf(dot);
+
+	//ほぼ同じ向きなら補間不要
+	if (rad <= kSlerpEpsilon)return startNorm;
+
 	float sinRad = sinf(rad);
 
+	//ほぼ真逆(180度)だと回転軸が一意に決まらないので、startに垂直な任意の軸を選んで回す
 	if (fabsf(sinRad) < kSlerpEpsilon)
 	{
-		return start;
+		//startと平行になりにくい軸を選ぶ
+		Vector3 axis = (fabsf(startNorm.y) < 0.9f) ? Vector3(0.0f, 1.0f, 0.0f) : Vector3(1.0f, 0.0f, 0.0f);
+		//startに垂直な単位ベクトル
+		Vector3 perp = axis.Cross(startNorm).Normalize();
+		//start→perp方向へ、π*tだけ回す
+		float angle = DX_PI_F * t;
+		return startNorm * cosf(angle) + perp * sinf(angle);
 	}
 
-	ans = startNorm * (sin((1 - t) * rad) / sin(rad)) + endNorm * (sin(t * rad) / sin(rad));
+	return startNorm * (sinf((1.0f - t) * rad) / sinRad) + endNorm * (sinf(t * rad) / sinRad);
+}
 
-	return ans;
+Vector3 Vector3::OrbitLerp(const Vector3& start, const Vector3& end, float t, OrbitDirection dir)
+{
+	Vector3 startNorm = start.Normalize();
+	Vector3 endNorm = end.Normalize();
+
+	//ほぼ真上/真下だと水平角が定まらないので、通常のSlerpに任せる
+	float horizS = sqrtf(startNorm.x * startNorm.x + startNorm.z * startNorm.z);
+	float horizE = sqrtf(endNorm.x * endNorm.x + endNorm.z * endNorm.z);
+	if (horizS < kSlerpEpsilon || horizE < kSlerpEpsilon)
+	{
+		return Slerp(startNorm, endNorm, t);
+	}
+
+	float yawS = atan2f(startNorm.x, startNorm.z);
+	float yawE = atan2f(endNorm.x, endNorm.z);
+
+	//水平角の差を-π~πに正規化(最短側)
+	float dYaw = yawE - yawS;
+	dYaw = fmodf(dYaw + DX_PI_F, DX_TWO_PI_F);
+	if (dYaw < 0.0f)dYaw += DX_TWO_PI_F;
+	dYaw -= DX_PI_F;
+
+	//向きが指定されていて最短と逆なら、反対側(もう片方の弧)に回す
+	//yawが増える向き=真上から見て時計回り
+	if (dir == OrbitDirection::Clockwise && dYaw < 0.0f)dYaw += DX_TWO_PI_F;
+	else if (dir == OrbitDirection::CounterClockwise && dYaw > 0.0f)dYaw -= DX_TWO_PI_F;
+
+	float pitchS = asinf(std::clamp(startNorm.y, -1.0f, 1.0f));
+	float pitchE = asinf(std::clamp(endNorm.y, -1.0f, 1.0f));
+
+	//tが1.0を超えても(EaseOutBack)、そのまま外挿される
+	float yaw = yawS + dYaw * t;
+	float pitch = pitchS + (pitchE - pitchS) * t;
+
+	float cosPitch = cosf(pitch);
+	return Vector3(cosPitch * sinf(yaw), sinf(pitch), cosPitch * cosf(yaw));
+}
+
+Vector3 Vector3::EaseOrbitLerp(const Vector3& start, const Vector3& end, float t, EasingMode mode, float power, OrbitDirection dir)
+{
+	return OrbitLerp(start, end, Easing::Apply(mode, t, power), dir);
 }
 
 Vector3 Vector3::EaseLerp(const Vector3& start, const Vector3& end, float t, EasingMode mode, float power)

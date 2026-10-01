@@ -4,6 +4,7 @@
 #include "../../Enemy/State/Hit/EnemyPartBrokenKilled.h"
 #include "../../../System.h"
 #include "../Camera/CameraManager.h"
+#include "../../../Math/Easing.h"
 #include <algorithm>
 
 namespace
@@ -17,8 +18,24 @@ namespace
 	//実行中のフレーム
 	constexpr float kExecuteTimer = 25.0f;
 
+	//確殺のパターン分岐の条件の敵とプレイヤーの距離
+	constexpr float kPatternSelectDistance = 180.0f;
+
+
+
 	const std::string kAttackStartName = "root|Combo_Attack_01_01";
 	const float kAttackAnimEndFrame = 23.07f;//アニメーション倍率をかける
+
+	//パターンAのStart中のタイムスケールイージング(min->max->min)
+	constexpr float kTimeScaleMin = 0.3f;
+	constexpr float kTimeScaleMax = 0.9f;
+	constexpr float kTimeScalePeakRate = 0.5f;//Startのアニメ進行度のどこで最大になるか(0~1)
+	constexpr float kTimeScalePower = 2.0f;
+
+	//パターンAのExecute中のタイムスケールイージング(1.0->kExecuteTimeScaleEnd)
+	constexpr float kPatternAHeadBrokenAnimFrame = 37.0f;//頭が取れるアニメフレーム(Assasin04)
+	constexpr float kExecuteTimeScaleEnd = 0.4f;
+	constexpr float kExecuteTimeScalePower = 2.0f;
 
 	//パターンB----
 	// 最初はイースインアウト
@@ -49,7 +66,12 @@ void PlayerStatePartBrokenKill::Enter()
 	auto partBrokenTarget = player->GetPartBrokenTarget();
 	if (!partBrokenTarget)return;
 
-	m_pattern = CharacterBase::PartBrokenPattern::B;
+
+	//パターン分岐//もっと細かく分けてもいい
+	SelectedPattern();
+
+	//確殺対象を固定する
+	player->SetIsPartBrokenKilling(true);
 
 	//キャラ同士の押し戻しを有効化
 	player->SetIsGhost(true);
@@ -75,7 +97,7 @@ void PlayerStatePartBrokenKill::Enter()
 	case CharacterBase::PartBrokenPattern::A:
 	{
 		//player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Assasin04"), false, 1.0f);
-		player->m_anim.Init(player->m_modelHandle, kAttackStartName.c_str(), false, 1.0f);
+		player->m_anim.Init(player->m_modelHandle, kAttackStartName.c_str(), false, 0.7f);
 		//スタートする
 		m_state = PartBrokenKill::Start;
 
@@ -85,7 +107,7 @@ void PlayerStatePartBrokenKill::Enter()
 		//カメラを切り替える
 		auto cameraManager = player->m_cameraManager.lock();
 		if (!cameraManager)return;
-		//cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::AssasinCameraStart);
+		cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PartBrokenACameraStart);
 
 		//System::GetInstance().SetTimeScale(0.7f);
 	}
@@ -102,7 +124,7 @@ void PlayerStatePartBrokenKill::Enter()
 		//カメラを切り替える
 		auto cameraManager = player->m_cameraManager.lock();
 		if (!cameraManager)return;
-		//cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::AssasinCameraStart);
+		cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PartBrokenBCameraStart);
 		//System::GetInstance().SetTimeScale(0.7f);
 	}
 		break;
@@ -140,10 +162,43 @@ void PlayerStatePartBrokenKill::Exit()
 
 	//キャラ同士の押し戻しを有効化
 	player->SetIsGhost(false);
+
+	//確殺対象の固定を解除する
+	player->SetIsPartBrokenKilling(false);
+	//ターゲットをリセット
+	player->ClearPartBrokenTarget();
+
+	//タイムスケールを戻し忘れないようにする
+	System::GetInstance().SetTimeScale(1.0f);
 }
 
 void PlayerStatePartBrokenKill::DebugDraw()
 {
+	auto player = m_owner.lock();
+	if (!player) return;
+
+}
+
+void PlayerStatePartBrokenKill::SelectedPattern()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+	auto partBrokenTarget = player->GetPartBrokenTarget();
+	if (!partBrokenTarget)return;
+
+	float distance = (player->GetRigidBody().GetPos() - partBrokenTarget->GetRigidBody().GetPos()).Magnitude();
+
+	if (distance < kPatternSelectDistance)
+	{
+		//近距離
+		m_pattern = CharacterBase::PartBrokenPattern::A;
+	}
+	else
+	{
+		//遠距離
+		m_pattern = CharacterBase::PartBrokenPattern::B;
+	}
+
 }
 
 void PlayerStatePartBrokenKill::PatternAUpdate()
@@ -181,10 +236,29 @@ void PlayerStatePartBrokenKill::PatternAUpdate()
 		//	//cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::AssasinCamera);
 		//	//System::GetInstance().SetTimeScale(0.7f);
 		//}
+		//Startのアニメの進行度(0~1)でタイムスケールをイージングする 0.3->0.9->0.3
+		{
+			float p = std::clamp(player->m_anim.GetNowAnimFrame() / kAttackAnimEndFrame, 0.0f, 1.0f);
+			float scale;
+			if (p < kTimeScalePeakRate)
+			{
+				float e = Easing::Apply(EasingMode::EaseOut, p / kTimeScalePeakRate, kTimeScalePower);
+				scale = kTimeScaleMin + (kTimeScaleMax - kTimeScaleMin) * e;
+			}
+			else
+			{
+				float e = Easing::Apply(EasingMode::EaseIn, (p - kTimeScalePeakRate) / (1.0f - kTimeScalePeakRate), kTimeScalePower);
+				scale = kTimeScaleMax + (kTimeScaleMin - kTimeScaleMax) * e;
+			}
+			System::GetInstance().SetTimeScale(scale);
+		}
+
 		if (player->m_anim.GetNowAnimFrame() >= kAttackAnimEndFrame)
 		{
 			m_state = PartBrokenKill::Execute;
 			player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Assasin04"), false, 1.0f);
+			System::GetInstance().SetTimeScale(1.0f);
+			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PartBrokenACamera);
 		}
 
 	}
@@ -194,11 +268,17 @@ void PlayerStatePartBrokenKill::PatternAUpdate()
 		//ちょこっとだけ動かす
 		//player->m_rb.m_vel = toPlayer * -1 * kExecuteSpeed;
 		m_excuteTimer += 1.0f * System::GetInstance().GetTimeScale();
-		if (m_excuteTimer > kExecuteTimer)
+		{
+			//頭が取れるフレームまでのアニメ進行度(0~1)でタイムスケールをイージングする 1.0->0.4
+			float p = std::clamp(player->m_anim.GetNowAnimFrame() / kPatternAHeadBrokenAnimFrame, 0.0f, 1.0f);
+			float e = Easing::Apply(EasingMode::EaseIn, p, kExecuteTimeScalePower);
+			System::GetInstance().SetTimeScale(1.0f + (kExecuteTimeScaleEnd - 1.0f) * e);
+		}
+		if (player->m_anim.GetNowAnimFrame() >= kPatternAHeadBrokenAnimFrame)
 		{
 			m_state = PartBrokenKill::End;
-			//System::GetInstance().SetTimeScale(1.0f);
-			//cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PlayerCaemra);
+			System::GetInstance().SetTimeScale(1.0f);
+			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PlayerCaemra);
 		}
 
 		break;
@@ -255,6 +335,8 @@ void PlayerStatePartBrokenKill::PatternBUpdate()
 		if (player->m_anim.GetNowAnimFrame() >= kStartMoveFrame)
 		{
 			m_state = PartBrokenKill::Execute;
+			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PartBrokenBCamera);
+
 		}
 
 	}

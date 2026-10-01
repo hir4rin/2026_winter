@@ -91,16 +91,11 @@ void EnemyAssasined::Update()
 		break;
 	}
 
-
-
-
-	//今はテスト中だから終わったらIdleに戻す
-	if (owner->m_anim.GetAnimEndFlag())
+	//死んだ判定
+	if (m_state == AssasinState::End && owner->m_anim.GetAnimEndFlag())
 	{
-		owner->ChangeState(std::make_shared<EnemyIdle>(owner));
+		owner->FinisherPerformanceProcess();
 	}
-
-	
 }
 
 void EnemyAssasined::Exit()

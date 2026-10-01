@@ -43,7 +43,6 @@ private:
 	int m_lightHandle = -1;
 
 	std::shared_ptr<Player> m_player;
-	std::shared_ptr<EnemySwordman> m_enemy;
 	std::shared_ptr<EnemyManager> m_enemyManager;
 	std::shared_ptr<CameraManager> m_cameraManager;
 	std::shared_ptr<BattleManager> m_battleManager;

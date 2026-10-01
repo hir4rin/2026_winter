@@ -15,6 +15,7 @@
 #include "State/Hit/EnemyHitAir.h"
 #include "State/Hit/EnemyAssasined.h"
 #include "State/Hit/EnemyPartBrokenKilled.h"
+#include "State/Hit/EnemyVanish.h"
 
 
 class Player;
@@ -46,14 +47,22 @@ public:
 
 	virtual void OnAssasined();//暗殺確定時
 	virtual void OnPartBrokenKilled(PartBrokenPattern pattern);//確殺確定時
+	bool GetIsExecuted()const { return m_isExecuted; }//確殺・暗殺が始まったかどうか//trueなら確殺・暗殺の対象にしない
 
 	//部位破壊
 	virtual void OnHeadBreak() {};
+	virtual void OnPartBreak() { m_isPartBroken = true; };//攻撃で部位破壊したとき
 
 	//部位破壊したかどうか
 	bool GetIsPartBroken() { return m_isPartBroken; }
 
 	std::shared_ptr<EnemyStateBase> GetCurrentState() { return m_currentState; }
+
+	//死体の消去
+	void StartVanish();//死体を消え始めさせる
+	bool GetIsVanishing()const { return m_isVanishing; }//消えている途中かどうか
+	bool GetIsVanished()const { return m_isVanished; }//消え終わったかどうか//trueならEnemyManagerが削除する
+	virtual void SetOpacity(float rate);//モデルの不透明度を設定する(1.0で不透明、0.0で透明)
 
 
 
@@ -99,6 +108,8 @@ protected:
 
 	void ToPlayerLook();//Playerの方を向く
 	void FinishHitProcess();//Hitの終了処理
+	//確殺、暗殺後のenemyの状態制御
+	void FinisherPerformanceProcess();//確殺、暗殺後のenemyの状態制御
 
 	//Idleの後のState遷移
 	virtual std::shared_ptr<EnemyStateBase> NextAfterIdle();
@@ -106,6 +117,9 @@ protected:
 
 	void ChangeState(std::shared_ptr<EnemyStateBase> newState);//状態遷移用
 
+
+
+protected:
 	std::shared_ptr<EnemyStateBase> m_currentState;
 	std::shared_ptr<EnemyStateBase> m_prevState;
 
@@ -124,6 +138,12 @@ protected:
 
 	//部位破壊したかどうか
 	bool m_isPartBroken = false;
+	//確殺・暗殺が始まったか(処刑済み)//アニメの終わりを待たずに対象から外すためのもの
+	bool m_isExecuted = false;
+
+	//死体の消去
+	bool m_isVanishing = false;//消えている途中か
+	bool m_isVanished = false;//消え終わったか
 
 
 
@@ -142,6 +162,7 @@ protected:
 	friend class EnemyHitAir;
 	friend class EnemyAssasined;
 	friend class EnemyPartBrokenKilled;
+	friend class EnemyVanish;
 
 };
 

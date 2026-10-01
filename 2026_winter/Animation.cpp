@@ -245,7 +245,11 @@ float Animation::GetAnimRate()
 
 float Animation::GetAnimTotalFrame(const std::string& name)
 {
-	float totalAnimCount = MV1GetAttachAnimTotalTime(m_modelHandle, MV1GetAnimIndex(m_modelHandle, name.c_str()));//アタッチしているアニメーションの総フレーム数を取得する
+	//MV1GetAttachAnimTotalTimeはアタッチ番号を受け取るので、アニメーション番号を渡すと別のアニメ(or -1)の値になる
+	//アニメーション番号から直接総フレーム数を取る
+	int animIndex = MV1GetAnimIndex(m_modelHandle, name.c_str());
+	if (animIndex == -1) return 0.0f;//アニメーションが存在しない場合は0を返す
+	float totalAnimCount = MV1GetAnimTotalTime(m_modelHandle, animIndex);
 	return totalAnimCount;
 }
 

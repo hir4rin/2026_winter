@@ -36,6 +36,7 @@ public:
 	struct AttackData
 	{
 		float attackPower;//攻撃力
+		float brokenRate;//部位破壊率(%)//0〜100
 		Vector3 knockBackPower;//攻撃が当たったときの吹き飛ばしの力//YがY方向の吹き飛ばしの力、Xが水平面での吹き飛ばしの力
 		float knockBackFrame;//攻撃が当たった時の吹き飛ばす時間の割合
 		float hitStopTime;//攻撃が当たったときのヒットストップの時間
@@ -47,6 +48,7 @@ public:
 	struct HitInfo
 	{
 		Vector3 knockBackVel;
+		float knockBackPowerXZ = 0.0f;//水平方向の吹き飛ばしの強さ(負ならプレイヤー側へ引き寄せる)
 		float duration = 0.0f;
 		bool isKirimomi = false;
 	};

@@ -55,6 +55,20 @@ void PlayerStateMove::Update()
 		player->m_isRaven = false;
 	}
 
+	//暗殺
+	if (input.IsTriggered("Y") && player->CanAssasin())
+	{
+		/*player->ChangeState(std::make_shared<PlayerStateAssasin>(m_owner));
+		return;*/
+	}
+
+	//確殺
+	if (input.IsTriggered("Y") && player->CanPartBrokenFinish())
+	{
+		player->ChangeState(std::make_shared<PlayerStatePartBrokenKill>(m_owner));
+		return;
+	}
+
 	//回避
 	if (input.IsTriggered("B"))
 	{

@@ -74,6 +74,8 @@ void DataManager::LoadComboRawData()
 	std::ifstream file("data/Player_CSV/ComboChain.csv");
 	assert(file.is_open() && "ComboChain.csvが開けませんでした");
 
+	m_comboRawData.clear();//読み込み直しのときに前のデータが残らないように消す
+
     std::string line;
     while (std::getline(file, line))
     {

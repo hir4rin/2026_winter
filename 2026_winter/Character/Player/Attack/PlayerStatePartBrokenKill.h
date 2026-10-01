@@ -44,6 +44,8 @@ public:
 
     void DebugDraw() override;
 private:
+    void SelectedPattern();
+
     void PatternAUpdate();
     void PatternBUpdate();
 private:

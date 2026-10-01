@@ -40,6 +40,9 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	auto player = m_player.lock();
 	if (!player)return;
 
+	//処刑済み(確殺・暗殺中)なら被弾しない(演出中のStateが上書きされないようにする)
+	if (m_isExecuted)return;
+
 	//データの保存
 	m_attackData = data;
 
@@ -49,6 +52,12 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	if (m_isDieOut)return;
 	//Playerの攻撃データをもとに被ダメ処理をする
 	m_hp -= static_cast<int>(data.attackPower);
+
+	//部位破壊率の確率で部位破壊する//GetRand(99)は0〜99を返す
+	if (!m_isPartBroken && GetRand(99) < data.brokenRate)
+	{
+		OnPartBreak();
+	}
 
 	////ダメージがあるなら、ヒットエフェクトを再生する//必殺技の時は、ヒットエフェクトをスローのものにする
 	//if (static_cast<int>(data.attackPower) > 0)
@@ -108,6 +117,7 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	//ヒット情報の作成
 	HitInfo hitinfo = {
 		.knockBackVel = Vector3(pushBackVec.x,data.knockBackPower.y,pushBackVec.z),//Y軸の上下降はここで加える
+		.knockBackPowerXZ = data.knockBackPower.x,
 		.duration = data.knockBackFrame,
 		.isKirimomi = data.isKirimomi,
 	};
@@ -137,6 +147,8 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 
 void EnemyBase::OnAssasined()
 {
+	//処刑済みにする(もう一度暗殺・確殺の対象にならないようにする)
+	m_isExecuted = true;
 	//StateをAssasinに変える
 	ChangeState(std::make_shared<EnemyAssasined>(GetWeakPtr()));
 	return;
@@ -144,16 +156,30 @@ void EnemyBase::OnAssasined()
 
 void EnemyBase::OnPartBrokenKilled(PartBrokenPattern pattern)
 {
+	//処刑済みにする(もう一度暗殺・確殺の対象にならないようにする)
+	m_isExecuted = true;
 	//StateをPartBrokenKilledに変える(パターンはコンストラクタで渡す)
 	ChangeState(std::make_shared<EnemyPartBrokenKilled>(GetWeakPtr(), pattern));
 	return;
 }
 
+void EnemyBase::StartVanish()
+{
+	//すでに消えている途中なら何もしない
+	if (m_isVanishing)return;
+	ChangeState(std::make_shared<EnemyVanish>(GetWeakPtr()));
+}
+
+void EnemyBase::SetOpacity(float rate)
+{
+	MV1SetOpacityRate(m_modelHandle, rate);
+}
+
 void EnemyBase::ApplyPos()
 {
 	CharacterBase::ApplyPos();
-	//歩いて地面から離れたら落下ステートにする
-	if (IsLeftFloor() && m_rb.m_vel.y <= 0.0f)
+	//歩いて地面から離れたら落下ステートにする//消えている途中の死体は落下ステートにしない
+	if (IsLeftFloor() && m_rb.m_vel.y <= 0.0f && !m_isVanishing)
 	{
 		ChangeState(std::make_shared<EnemyAirFall>(GetWeakPtr()));
 	}
@@ -271,6 +297,12 @@ void EnemyBase::FinishHitProcess()
 	//m_knockBackVel = Vector3(0, 0, 0);
 	m_knockBackFrame = 0;
 	m_hitType = HitType::None;
+}
+
+void EnemyBase::FinisherPerformanceProcess()
+{
+	m_isDead = true;
+	m_isLifeZero = true;
 }
 
 std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()

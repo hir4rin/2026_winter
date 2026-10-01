@@ -93,8 +93,8 @@ void CameraStateBase::UpdateBlend(const Vector3& rawPos, const Vector3& rawTarge
 
 		//距離の部分をlerp
 		float dist = std::lerp(distStart, distTarget, tEased);
-		//方向をSlerpかけて、距離をかけて、座標を算出
-		m_pos = Vector3::EaseSlerp(dirStart, dirTarget, t, m_activeBlend.easingMode, m_activeBlend.easingPower) * dist + pivot;
+		//方向を水平回転で補間して(上を通らない)、距離をかけて、座標を算出
+		m_pos = Vector3::EaseOrbitLerp(dirStart, dirTarget, t, m_activeBlend.easingMode, m_activeBlend.easingPower, m_activeBlend.orbitDirection) * dist + pivot;
 
 		//注視点はlerp
 		m_target = Vector3::EaseLerp(m_startTarget, rawTarget, t, m_activeBlend.easingMode, m_activeBlend.easingPower);

@@ -130,6 +130,15 @@ void EnemySwordman::Update()
 	m_rb.m_vel = Vector3(0, 0, 0);
 	auto& input = Input::GetInstance();
 
+	//体力0なら更新しない
+	//なんかバグったので、一旦しない
+	if (m_isLifeZero)
+	{
+		////アニメーションの更新
+		//m_anim.Update();
+		//return;
+	}
+
 	//デバッグ用//Zで左腕を部位破壊する
 	if (CheckHitKey(KEY_INPUT_Z) && !m_isBreakLeftArm)
 	{
@@ -158,7 +167,6 @@ void EnemySwordman::Update()
 	{
 		m_currentState->Update();//状態の更新
 	}
-
 	//アニメーションの更新
 	m_anim.Update();
 }
@@ -196,6 +204,20 @@ void EnemySwordman::OnHeadBreak()
 	m_isPartBroken = true;
 	SetUpBreakHead();
 	//SetUpBreakLeftArm();
+}
+
+void EnemySwordman::OnPartBreak()
+{
+	if (m_isBreakLeftArm)return;
+	m_isPartBroken = true;
+	SetUpBreakLeftArm();
+}
+
+void EnemySwordman::SetOpacity(float rate)
+{
+	EnemyBase::SetOpacity(rate);
+	MV1SetOpacityRate(m_leftArmModelHandle, rate);
+	MV1SetOpacityRate(m_headModelHandle, rate);
 }
 
 void EnemySwordman::SetUpBreakLeftArm()

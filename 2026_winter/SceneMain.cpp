@@ -65,7 +65,6 @@ SceneMain::~SceneMain()
 	//プレイヤー・ステージのコライダーをマネージャーから外してからモデルを解放する
 	CollisionManager::GetInstance().Terminate();
 	m_player.reset();
-	m_enemy.reset();
 	m_stage.reset();
 	if (m_lightHandle != -1)
 	{
@@ -105,9 +104,11 @@ void SceneMain::Init()
 
 
 	//敵の生成
-	m_enemy = std::make_shared<EnemySwordman>(m_player, kEnemyStartPos);
-	m_enemy->Init();
-	m_enemyManager->AddEnemy(m_enemy);//追加
+	//EnemyManagerだけが所有する(ここで持ち続けると、死体を消しても実体が残ってしまう)
+	auto enemy = std::make_shared<EnemySwordman>(m_player, kEnemyStartPos);
+	enemy->Init();
+	m_enemyManager->AddEnemy(enemy);//追加
+	m_enemyManager->SetPlayer(m_player);
 
 
 	m_battleManager = std::make_shared<BattleManager>();
