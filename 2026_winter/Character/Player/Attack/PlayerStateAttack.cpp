@@ -150,18 +150,34 @@ void PlayerStateAttack::Update()
 	//コンボ予約の入力を取る//予約を取ったらもうここは通らないようにする
 	AttackInputCheck();
 	//攻撃の進行率によってジャンプの入力を受け付けるかどうかを決める
-	//ジャンプ
-	if (input.IsTriggered("A"))
+	float animRate = player->m_anim.GetAnimRate();
+	if (animRate >= 0.5f && player->IsFloor())
 	{
-		if (player->IsFloor())
+		//確殺
+		if (input.IsTriggered("Y") && player->CanPartBrokenFinish())
 		{
-			AttackFinishProcess();//攻撃の段数を初期化するなどの処理
-			player->ChangeState(std::make_shared<PlayerStateJump>(m_owner));
+			player->ChangeState(std::make_shared<PlayerStatePartBrokenKill>(m_owner));
 			return;
 		}
+		//回避
+		if (input.IsTriggered("B"))
+		{
+			player->ChangeState(std::make_shared<PlayerStateDodge>(m_owner));
+			return;
+		}
+		//ジャンプ
+		if (input.IsTriggered("A"))
+		{
+			if (player->IsFloor())
+			{
+				AttackFinishProcess();//攻撃の段数を初期化するなどの処理
+				player->ChangeState(std::make_shared<PlayerStateJump>(m_owner));
+				return;
+			}
 
+		}
 	}
-	float animRate = player->m_anim.GetAnimRate();
+	
 	//コンボに移行
 	if (animRate >= 0.5f)
 	{

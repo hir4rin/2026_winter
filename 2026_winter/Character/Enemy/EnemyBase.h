@@ -5,6 +5,7 @@
 #include "State/Attack/EnemyAttack.h"
 #include "State/General/EnemyBack.h"
 #include "State/General/EnemyCaution.h"
+#include "State/General/EnemyPatrol.h"
 #include "State/Hit/EnemyKnockBack.h"
 #include "State/Hit/EnemyKnockDown.h"
 #include "State/General/EnemyAirStay.h"
@@ -30,6 +31,14 @@ public:
 		Air = 0,
 		Ground = 1,
 		Drop = 2,
+	};
+
+	struct PatrolPoint
+	{
+		Vector3 pos;
+		float waitTime = 0.0f;
+		int index = -1;//パトロールポイントのインデックス//EnemyManagerで管理するために使う
+
 	};
 
 	//struct HitInfo
@@ -145,6 +154,9 @@ protected:
 	bool m_isVanishing = false;//消えている途中か
 	bool m_isVanished = false;//消え終わったか
 
+	//巡回ルートのデータ
+	std::vector<PatrolPoint> m_patrolPoints;
+
 
 
 	friend class EnemyIdle;
@@ -152,6 +164,7 @@ protected:
 	friend class EnemyAttack;
 	friend class EnemyBack;
 	friend class EnemyCaution;
+	friend class EnemyPatrol;
 	friend class EnemyKnockBack;
 	friend class EnemyKnockDown;
 	friend class EnemyAirStay;

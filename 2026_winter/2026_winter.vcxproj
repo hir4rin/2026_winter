@@ -194,6 +194,7 @@
     <ClCompile Include="Character\Enemy\State\Attack\EnemyAttack.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyBack.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyCaution.cpp" />
+    <ClCompile Include="Character\Enemy\State\General\EnemyPatrol.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyKnockBack.cpp" />
     <ClCompile Include="Character\Enemy\State\Hit\EnemyKnockDown.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyAirStay.cpp" />
@@ -297,6 +298,7 @@
     <ClInclude Include="Character\Enemy\State\Attack\EnemyAttack.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyBack.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyCaution.h" />
+    <ClInclude Include="Character\Enemy\State\General\EnemyPatrol.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyKnockBack.h" />
     <ClInclude Include="Character\Enemy\State\Hit\EnemyKnockDown.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyAirStay.h" />
