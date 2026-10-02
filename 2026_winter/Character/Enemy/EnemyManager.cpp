@@ -73,6 +73,14 @@ void EnemyManager::Draw()
 	{
 		enemy->Draw();
 	}
+
+#ifdef _DEBUG
+	//敵のステートのデバッグ描画
+	for (auto& enemy : m_enemies)
+	{
+		enemy->DebugDraw();
+	}
+#endif
 }
 
 void EnemyManager::SpawnEnemy()
@@ -80,5 +88,7 @@ void EnemyManager::SpawnEnemy()
 
 	auto enemy = std::make_shared<EnemySwordman>(m_player,Vector3());
 	enemy->Init();
+	enemy->SetPatrolRoute(0);//パトロールルート0を設定
+	enemy->SetPatrolState();
 	m_enemies.push_back(enemy);
 }

@@ -48,7 +48,7 @@ void EnemyChase::Update()
 	}
 
 	//定期的にプレイヤーの位置を更新する
-	if (!owner->ChasePlayer(owner->m_targetPos, kEnemyMeleeAttackRange))
+	if (!owner->ChaseTarget(owner->m_targetPos, kEnemyMeleeAttackRange))
 	{
 		//後ほど
 		//owner->m_chasingTime += 1.0f * timeScale * m_ownTimeScale;

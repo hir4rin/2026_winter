@@ -223,10 +223,10 @@ void LockOnManager::TryAssasinTarget()
 	for (int i = 1; i <= kLockOnCheckNum; i++)
 	{
 		candidates = CollectEnemiesRange(player->GetCameraRockOnRange() * i);
-		//処刑済み(確殺・暗殺が始まった)敵、空中にいる敵は外す//範囲を広げる判定より前に外す
+		//処刑済み(確殺・暗殺が始まった)敵、空中にいる敵、プレイヤーを発見している敵は外す//範囲を広げる判定より前に外す
 		std::erase_if(candidates, [](const auto& enemy)
 		{
-			return enemy->GetIsExecuted() || !enemy->IsFloor();
+			return enemy->GetIsExecuted() || !enemy->IsFloor() || enemy->GetIsPlayerFound();
 		});
 		if (!candidates.empty())break;
 	}
@@ -255,6 +255,13 @@ void LockOnManager::CheckAssasinTarget()
 
 	//空中にいる敵は解除
 	if (!target->IsFloor())
+	{
+		player->ClearAssasinTarget();
+		return;
+	}
+
+	//プレイヤーを発見した敵は解除(暗殺対象にした後で見つかった場合)
+	if (target->GetIsPlayerFound())
 	{
 		player->ClearAssasinTarget();
 		return;

@@ -17,6 +17,7 @@
 #include "State/Hit/EnemyAssasined.h"
 #include "State/Hit/EnemyPartBrokenKilled.h"
 #include "State/Hit/EnemyVanish.h"
+#include "../../Game.h"
 
 
 class Player;
@@ -36,7 +37,7 @@ public:
 	struct PatrolPoint
 	{
 		Vector3 pos;
-		float waitTime = 0.0f;
+		float waitTime = 0.0f;//このポイントにたどり着いてから、次のポイントへ出発するまでの待機フレーム数//0なら待たずに出発、負の値ならずっと待機
 		int index = -1;//パトロールポイントのインデックス//EnemyManagerで管理するために使う
 
 	};
@@ -49,6 +50,7 @@ public:
 	virtual void Init() = 0;
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
+	virtual void DebugDraw() = 0;
 	bool GetIsLifeZero()const { return m_isLifeZero; }//体力が0になったかどうかを返す
 
 	void OnCollision(Collider& other)override;
@@ -57,6 +59,7 @@ public:
 	virtual void OnAssasined();//暗殺確定時
 	virtual void OnPartBrokenKilled(PartBrokenPattern pattern);//確殺確定時
 	bool GetIsExecuted()const { return m_isExecuted; }//確殺・暗殺が始まったかどうか//trueなら確殺・暗殺の対象にしない
+	bool GetIsPlayerFound()const { return m_isPlayerFound; }//プレイヤーを発見したかどうか//trueなら暗殺の対象にしない
 
 	//部位破壊
 	virtual void OnHeadBreak() {};
@@ -65,6 +68,9 @@ public:
 	//部位破壊したかどうか
 	bool GetIsPartBroken() { return m_isPartBroken; }
 
+	//PatrollStateに設定
+	void SetPatrolState() { ChangeState(std::make_shared<EnemyPatrol>(GetSharedPtr())); }
+
 	std::shared_ptr<EnemyStateBase> GetCurrentState() { return m_currentState; }
 
 	//死体の消去
@@ -72,6 +78,9 @@ public:
 	bool GetIsVanishing()const { return m_isVanishing; }//消えている途中かどうか
 	bool GetIsVanished()const { return m_isVanished; }//消え終わったかどうか//trueならEnemyManagerが削除する
 	virtual void SetOpacity(float rate);//モデルの不透明度を設定する(1.0で不透明、0.0で透明)
+
+	//巡回ルートの設定//routeIdはPatrolRouteX.csvのXの番号
+	void SetPatrolRoute(int routeId);
 
 
 
@@ -107,7 +116,7 @@ protected:
 	/// </summary>
 	/// <param name="distance">オフセット</param>
 	/// <returns>到達したらtrueを返す</returns>
-	bool ChasePlayer(Vector3 target, float distance);
+	bool ChaseTarget(Vector3 target, float distance,float speed = Game::kEnemyMoveSpeed);
 	/// <summary>
 	/// 半円上を移動、またdistance分の距離は確保する
 	/// </summary>
@@ -156,6 +165,8 @@ protected:
 
 	//巡回ルートのデータ
 	std::vector<PatrolPoint> m_patrolPoints;
+	int m_currentPatrolIndex = -1;//現在の巡回ポイントのインデックス
+	bool m_isPlayerFound = false;//プレイヤーを発見したか(一度見つけたらtrueのまま)
 
 
 

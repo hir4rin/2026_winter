@@ -50,8 +50,8 @@ void PlayerStateIdle::Update()
 	//暗殺
 	if (input.IsTriggered("Y") && player->CanAssasin())
 	{
-		/*player->ChangeState(std::make_shared<PlayerStateAssasin>(m_owner));
-		return;*/
+		player->ChangeState(std::make_shared<PlayerStateAssasin>(m_owner));
+		return;
 	}
 
 	//確殺

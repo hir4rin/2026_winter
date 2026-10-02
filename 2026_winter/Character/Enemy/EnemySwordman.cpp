@@ -7,6 +7,7 @@
 #include "EnemyPart.h"
 #include "HitCol.h"
 #include "State/General/EnemyIdle.h"
+#include "State/General/EnemyPatrol.h"
 #include "../Input.h"
 
 namespace
@@ -120,6 +121,7 @@ void EnemySwordman::Init()
 		.tag = {Collider::Faction::Enemy, Collider::ColRole::None},
 		.isActive = false
 		});
+
 	m_headPart->SetIsGhost(true);
 	m_headPart->SetUseGroundSnap(true);
 }
@@ -177,12 +179,14 @@ void EnemySwordman::Draw()
 	//部位破壊したパーツの描画
 	if (m_isBreakLeftArm) m_leftArmPart->Draw();
 	if (m_isBreakHead) m_headPart->Draw();
-#ifdef _DEBUG
+}
+
+void EnemySwordman::DebugDraw()
+{
 	if (m_currentState)
 	{
-		m_currentState->DebugDraw();//デバッグ描画
+		m_currentState->DebugDraw();//ステートごとのデバッグ描画
 	}
-#endif
 }
 
 void EnemySwordman::OnCollision(Collider& other)

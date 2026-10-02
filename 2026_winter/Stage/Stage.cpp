@@ -14,6 +14,10 @@ namespace
 
 	const Vector3 kTitleStageGraphicPos = Vector3(4800, -890, 0);//タイトルステージの描画位置オフセット
 	constexpr float kTitleStageScale = 0.5f;//タイトルステージの描画スケール
+
+	constexpr float kFloorCheckStartY = 800.0f;//床を調べる線分の開始高さ(モデル座標)//以前の配置(-800)でキャラが立っていた床を拾うため
+	constexpr float kFloorCheckEndY = -100000.0f;//床を調べる線分の終了高さ(モデル座標)
+	constexpr float kGameStageDefaultPosY = -800.0f;//床が見つからなかったときのステージの高さ
 }
 
 
@@ -48,11 +52,20 @@ void Stage::GameInit()
 {
 	m_stageModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TitleStageModel));
 	m_stageViewHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TitleStageModel));
-	m_rb.m_pos = Vector3(0, -800, 0);
-	m_pos_graphic = Vector3(0, -800, 0);
-
 	// モデルのポリゴンの当たり判定を構築する(第二引数を-1にすると全てのポリゴンを対象にする)
 	MV1SetupCollInfo(m_stageModelHandle, -1);
+
+	//原点の真下の床の高さを調べて、床がy=0に来るようにステージをずらす
+	//(プレイヤー・敵・巡回ポイントはy=0基準で置いているため)
+	float floorY = kGameStageDefaultPosY;
+	MV1_COLL_RESULT_POLY hit = MV1CollCheck_Line(m_stageModelHandle, -1,
+		VGet(0.0f, kFloorCheckStartY, 0.0f), VGet(0.0f, kFloorCheckEndY, 0.0f));
+	if (hit.HitFlag)
+	{
+		floorY = -hit.HitPosition.y;
+	}
+	m_rb.m_pos = Vector3(0, floorY, 0);
+	m_pos_graphic = Vector3(0, floorY, 0);
 	auto polygonShape = dynamic_cast<PolygonShape*>(&GetShape());
 	if (polygonShape)
 	{
@@ -67,6 +80,7 @@ void Stage::GameInit()
 
 	MV1SetMatrix(m_stageModelHandle, Matrix4x4::ToDxLibMatrix(trans));
 	MV1SetMatrix(m_stageViewHandle, transmat_graphic);
+	MV1RefreshCollInfo(m_stageModelHandle, -1);//ずらした位置で当たり判定を作り直す
 }
 
 Stage::~Stage()

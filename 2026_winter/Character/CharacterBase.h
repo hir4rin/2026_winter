@@ -72,7 +72,7 @@ public:
 
 	int GetModelHandle() const { return m_modelHandle; }
 	Animation& GetAnimation() { return m_anim; }//アニメーションの取得
-	Vector3 GetForward() const { return forward; }//前方向のベクトルを返す
+	Vector3 GetForward() const { return forward; }//カメラの前方向のベクトルを返す
 	//const AttackData& GetAttackData() { return m_attackData; }//攻撃データの取得
 	virtual void OnDamage(Collider& other, AttackData& data) = 0;//ダメージを受けた時の処理
 

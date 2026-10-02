@@ -13,6 +13,7 @@ public:
     void Init()override;
     void Update()override;
     void Draw()override;
+    void DebugDraw()override;
 
     void OnCollision(Collider& other)override;
     void OnDamage(Collider& other, AttackData& data)override;

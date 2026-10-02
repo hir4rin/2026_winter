@@ -4,9 +4,23 @@
 #include "HitCol.h"
 #include "../../Game.h"
 #include "../System.h"
+#include "../../DataLoader/DataManager.h"
+#include <algorithm>
+#include <cassert>
 
 namespace
 {
+	//PatrolRouteX.csvの列番号
+	enum PatrolRouteColumn : int
+	{
+		PosX = 0,
+		PosY = 1,
+		PosZ = 2,
+		WaitTime = 3,
+		Index = 4,
+		Size,//列数
+	};
+
 	constexpr float kCautionMoveSpeedRate = 0.5f;//警戒移動時の速度倍率
 	constexpr float kCautionBackVecRate = 0.2f;//半径を維持するためのベクトルの倍率
 
@@ -30,6 +44,42 @@ EnemyBase::EnemyBase(std::weak_ptr<Player> player)
 
 EnemyBase::~EnemyBase()
 {
+}
+
+void EnemyBase::SetPatrolRoute(int routeId)
+{
+	//CSVファイルを読み込む
+	const auto& rawData = DataManager::GetInstance().GetPatrolRouteRawData();
+
+	m_patrolPoints.clear();//設定し直しのときに前のデータが残らないように消す
+	m_currentPatrolIndex = -1;//最初のポイントから巡回し直す
+
+	if (routeId < 0 || routeId >= static_cast<int>(rawData.size()))
+	{
+		assert(false && "存在しない巡回ルート番号です");
+		return;
+	}
+
+	for (const auto& tokens : rawData[routeId])
+	{
+		//列数チェック//tokensは1行分のデータ
+		if (tokens.size() < PatrolRouteColumn::Size)
+		{
+			assert(false && "PatrolRoute.csvの列数が不足しています");
+			continue;
+		}
+		PatrolPoint point;
+		point.pos = Vector3(std::stof(tokens[PatrolRouteColumn::PosX]),
+			std::stof(tokens[PatrolRouteColumn::PosY]),
+			std::stof(tokens[PatrolRouteColumn::PosZ]));
+		point.waitTime = std::stof(tokens[PatrolRouteColumn::WaitTime]);
+		point.index = std::stoi(tokens[PatrolRouteColumn::Index]);
+		m_patrolPoints.push_back(point);
+	}
+
+	//CSVの行の順番ではなく、indexの順番で巡回する
+	std::sort(m_patrolPoints.begin(), m_patrolPoints.end(),
+		[](const PatrolPoint& a, const PatrolPoint& b) { return a.index < b.index; });
 }
 
 void EnemyBase::OnCollision(Collider& other)
@@ -196,7 +246,7 @@ Vector3 EnemyBase::TargetPlayerPos()
 	return Vector3();
 }
 
-bool EnemyBase::ChasePlayer(Vector3 target, float distance)
+bool EnemyBase::ChaseTarget(Vector3 target, float distance,float speed)
 {
 	//プレイヤーの位置に向かって移動する//Y軸は移動しない
 	target.y = 0.0f;
@@ -212,7 +262,9 @@ bool EnemyBase::ChasePlayer(Vector3 target, float distance)
 		return true;
 	}
 	//速度を指定
-	m_rb.m_vel = toPlayer.Normalize() * Game::kEnemyMoveSpeed;
+	m_rb.m_vel = toPlayer.Normalize() * speed;
+	//向きを指定
+	m_targetVec = toPlayer.Normalize();
 
 	return false;
 

@@ -31,6 +31,7 @@ public:
 	const std::vector<std::vector<std::string>>& GetComboRawData() const { return m_comboRawData;}
 	//今後追加する場合はここにgetterを追加する
 	const std::vector<std::vector<std::string>>& GetSpawnData() const { return m_spawnData; }//敵のスポーンデータを返す
+	const std::vector<std::vector<std::vector<std::string>>>& GetPatrolRouteRawData() const { return m_patrolRouteRawData; }//巡回ルートの生データを返す//[ルート番号][行][列]
 private:
 	//シングルトンパターンの実装
 	DataManager() = default;
@@ -46,6 +47,7 @@ private:
 	void LoadComboRawData(); //コンボの生データを読み込む関数
 	//今後追加する場合はここにLoad関数を追加する
 	void LoadSpawnData(); //敵のスポーンデータを読み込む関数
+	void LoadPatrolRouteRawData(); //巡回ルートの生データを読み込む関数
 
 	AnimData m_playerAnimData;//プレイヤーのアニメーションデータ
 	AnimData m_enemySwordmanAnimData;//敵(ソードマン)のアニメデータ
@@ -53,6 +55,7 @@ private:
 	std::vector<std::vector<std::string>> m_comboRawData;//コンボの生データ
 	//今後追加する場合はここにデータのメンバ変数を追加する
 	std::vector<std::vector<std::string>> m_spawnData;//敵のスポーンデータ
+	std::vector<std::vector<std::vector<std::string>>> m_patrolRouteRawData;//巡回ルートの生データ//[ルート番号][行][列]
 
 };
 
