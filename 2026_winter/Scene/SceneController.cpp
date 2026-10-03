@@ -39,7 +39,9 @@ void SceneController::PopScene()
 void SceneController::Update()
 {
 	// 末尾の要素に対してのみUpdateする
-	scenes_.back()->Update();
+	// Update中にResetSceneなどで自分自身が破棄されても、Updateを抜けるまでは生きているようにコピーを持っておく
+	auto scene = scenes_.back();
+	scene->Update();
 }
 
 void SceneController::Draw()

@@ -20,5 +20,20 @@ public:
 	void FadeInDraw() override;
 	void NormalDraw() override;
 	void FadeOutDraw() override;
+
+private:
+	//ポーズメニューの項目
+	enum class MenuItem
+	{
+		ReturnGame,//ゲームに戻る
+		PhotoMode,//フォトモード(カメラデバッグ)
+		StageEdit,//ステージ編集(壁ゾーン)
+		StageSelect,//ステージセレクトへ戻る
+		Num
+	};
+	int m_cursor = 0;//選択中の項目(MenuItemのint値)
+
+	//選択した項目を実行する
+	void Decide();
 };
 

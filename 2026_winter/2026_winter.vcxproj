@@ -182,6 +182,7 @@
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallRun.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallKick.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallStay.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateWallRunKick.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateRun.cpp" />
     <ClCompile Include="Character\Player\Weapon.cpp" />
     <ClCompile Include="Collider\CapsuleShape.cpp" />
@@ -238,12 +239,15 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Scene\PauseScene.cpp" />
+    <ClCompile Include="Scene\StageSelectScene.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\SceneController.cpp" />
     <ClCompile Include="Collider\SphereShape.cpp" />
     <ClCompile Include="Stage\SkyBox.cpp" />
     <ClCompile Include="Stage\Stage.cpp" />
     <ClCompile Include="Stage\StageCsvIO.cpp" />
+    <ClCompile Include="Stage\WallZone.cpp" />
+    <ClCompile Include="Stage\WallZoneEditor.cpp" />
     <ClCompile Include="Stage\StageObject.cpp" />
     <ClCompile Include="System.cpp" />
   </ItemGroup>
@@ -288,6 +292,7 @@
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallRun.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallKick.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallStay.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateWallRunKick.h" />
     <ClInclude Include="Character\Player\Weapon.h" />
     <ClInclude Include="Collider\CapsuleShape.h" />
     <ClInclude Include="Collider\BoxShape.h" />
@@ -346,6 +351,7 @@
     <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Scene\PauseScene.h" />
+    <ClInclude Include="Scene\StageSelectScene.h" />
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Scene\SceneController.h" />
     <ClInclude Include="Collider\SphereShape.h" />
@@ -353,6 +359,11 @@
     <ClInclude Include="Stage\SkyBox.h" />
     <ClInclude Include="Stage\Stage.h" />
     <ClInclude Include="Stage\StageCsvIO.h" />
+    <ClInclude Include="Stage\WallZone.h" />
+    <ClInclude Include="Stage\WallZoneData.h" />
+    <ClInclude Include="Stage\EnemySpawnData.h" />
+    <ClInclude Include="Stage\StageInfo.h" />
+    <ClInclude Include="Stage\WallZoneEditor.h" />
     <ClInclude Include="Stage\StageObject.h" />
     <ClInclude Include="Stage\StageObjectData.h" />
     <ClInclude Include="System.h" />

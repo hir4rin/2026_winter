@@ -60,8 +60,8 @@ void PlayerStateWallKick::Update()
 
 	player->m_rb.m_vel = m_InitVel + Vector3(0.0f,m_gravity,0.0f);//初速を毎フレーム与える//重力累積も与える
 
-	//壁と当たったらまたStayにする
-	if(CheckWall())
+	//壁キックゾーンの中で壁と当たったらまたStayにする
+	if(IsInWallZone(Collider::ColRole::WallKickZone) && CheckWall())
 	{
 
 

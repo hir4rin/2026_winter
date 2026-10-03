@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include "AnimData.h"
+#include "../Stage/WallZoneData.h"
+#include "../Stage/EnemySpawnData.h"
 #include <vector>
 #include <string>
 
@@ -32,6 +34,33 @@ public:
 	//今後追加する場合はここにgetterを追加する
 	const std::vector<std::vector<std::string>>& GetSpawnData() const { return m_spawnData; }//敵のスポーンデータを返す
 	const std::vector<std::vector<std::vector<std::string>>>& GetPatrolRouteRawData() const { return m_patrolRouteRawData; }//巡回ルートの生データを返す//[ルート番号][行][列]
+
+	//壁ゾーン(WallKickZone/WallRunZone)------------------------------------------
+	/// <summary>
+	/// 指定したステージ番号の壁ゾーンCSV(data/Stage/WallZones/Stage001.csvなど)を読み込む
+	/// ファイルが無ければ空のデータになる(新規ステージ作成時など)
+	/// </summary>
+	void LoadWallZoneData(int stageNumber);
+	/// <summary>指定したステージ番号の壁ゾーンCSVに書き出す(既存ファイルは上書きする)。成功したら持っているデータも更新する</summary>
+	/// <returns>書き込みに成功したらtrue</returns>
+	bool SaveWallZoneData(int stageNumber, const std::vector<WallZoneData>& zones);
+	/// <summary>最後にLoad/Saveした壁ゾーンのデータを返す</summary>
+	const std::vector<WallZoneData>& GetWallZoneData() const { return m_wallZoneData; }
+	/// <summary>ステージ番号から壁ゾーンCSVのファイルパスを組み立てる</summary>
+	static std::string GetWallZoneFilePath(int stageNumber);
+	//---------------------------------------------------------------------------
+
+	//敵の配置(UnityのEnemySpawnExporterで書き出したもの)--------------------------
+	/// <summary>
+	/// 指定したステージ番号の敵配置CSV(data/Stage/Enemies/Stage003.csvなど)を読み込む
+	/// ファイルが無ければ空のデータになる
+	/// </summary>
+	void LoadEnemySpawnData(int stageNumber);
+	/// <summary>最後にLoadした敵配置のデータを返す</summary>
+	const std::vector<EnemySpawnData>& GetEnemySpawnData() const { return m_enemySpawnData; }
+	/// <summary>ステージ番号から敵配置CSVのファイルパスを組み立てる</summary>
+	static std::string GetEnemySpawnFilePath(int stageNumber);
+	//---------------------------------------------------------------------------
 private:
 	//シングルトンパターンの実装
 	DataManager() = default;
@@ -56,6 +85,8 @@ private:
 	//今後追加する場合はここにデータのメンバ変数を追加する
 	std::vector<std::vector<std::string>> m_spawnData;//敵のスポーンデータ
 	std::vector<std::vector<std::vector<std::string>>> m_patrolRouteRawData;//巡回ルートの生データ//[ルート番号][行][列]
+	std::vector<WallZoneData> m_wallZoneData;//壁ゾーンのデータ(最後にLoad/Saveしたステージのもの)
+	std::vector<EnemySpawnData> m_enemySpawnData;//敵配置のデータ(最後にLoadしたステージのもの)
 
 };
 

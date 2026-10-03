@@ -99,3 +99,9 @@ public:
 	float x, y, z;
 };
 
+//float * Vector3 用(左辺がfloatなのでメンバ関数では書けない)
+inline Vector3 operator*(const float& left, const Vector3& right)
+{
+	return right * left;
+}
+

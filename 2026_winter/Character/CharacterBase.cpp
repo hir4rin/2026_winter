@@ -7,6 +7,7 @@
 namespace
 {
 	constexpr float kRotationLerpRate = 0.1f;//モデルの向きを目標角度に近づける速さ//ほぼlerp
+	constexpr float kTiltLerpRate = 0.2f;//モデルの傾きを目標角度に近づける速さ//ほぼlerp
 }
 
 CharacterBase::CharacterBase()
@@ -57,11 +58,17 @@ void CharacterBase::UpdateAngleAndPos()
 	//モデルは、座標の位置のcenter分下で表示
 
 
+	//傾きを目標に少しずつ近づける
+	m_tiltAngle += (m_targetTiltAngle - m_tiltAngle) * kTiltLerpRate;
+
 	Matrix4x4 rotY = Matrix4x4::MakeRotationY(m_rotAngleY);
+	//モデルのローカルの前後軸(Z)まわりに傾ける//足元(原点)が回転の中心
+	Matrix4x4 tilt = Matrix4x4::MakeRotationZ(m_tiltAngle);
 	MATRIX transmat = MGetTranslate(m_rb.m_pos.ToDxLibVector());
 	Matrix4x4 trans = Matrix4x4::FromDxLibMatrix(transmat);
 
-	Matrix4x4 mtx = trans * rotY;
+	//傾ける→Y回転→移動の順
+	Matrix4x4 mtx = trans * rotY * tilt;
 	MV1SetMatrix(m_modelHandle, Matrix4x4::ToDxLibMatrix(mtx));
 }
 

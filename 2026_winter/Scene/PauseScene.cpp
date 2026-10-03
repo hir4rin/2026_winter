@@ -5,6 +5,8 @@
 #include "../Game.h"
 #include "../System.h"
 #include "../BattleManager.h"
+#include "StageSelectScene.h"
+#include <iterator>
 
 namespace
 {
@@ -40,23 +42,63 @@ void PauseScene::NormalUpdate()
 	auto& input = Input::GetInstance();
 	input.Update();
 
-	auto battleMgr = System::GetInstance().GetBattleMgr();
+	const int itemNum = static_cast<int>(MenuItem::Num);
 
-	if (input.IsTriggered("Y"))
+	//上下で項目を選ぶ(端まで行ったら反対側に回る)
+	if (input.IsTriggered("Up"))
 	{
-		//フォトモードにして、ポーズを解除してSceneMainに戻る
-		battleMgr->SetPhotoMode(true);
-		m_controller.PopScene();
+		m_cursor = (m_cursor + itemNum - 1) % itemNum;
+	}
+	if (input.IsTriggered("Down"))
+	{
+		m_cursor = (m_cursor + 1) % itemNum;
+	}
+
+	//Aで決定
+	if (input.IsTriggered("A"))
+	{
+		Decide();
 		return;
 	}
 
+	//Startはいつでもゲームに戻る
 	if (input.IsTriggered("Start"))
 	{
-		//フォトモードを解除して、ポーズを解除してSceneMainに戻る
-		battleMgr->SetPhotoMode(false);
-		m_controller.PopScene();
+		m_cursor = static_cast<int>(MenuItem::ReturnGame);
+		Decide();
 		return;
 	}
+}
+
+void PauseScene::Decide()
+{
+	auto battleMgr = System::GetInstance().GetBattleMgr();
+
+	switch (static_cast<MenuItem>(m_cursor))
+	{
+	case MenuItem::ReturnGame:
+		//フォトモード・ステージ編集を解除してSceneMainに戻る
+		battleMgr->SetPhotoMode(false);
+		battleMgr->SetStageEditMode(false);
+		break;
+	case MenuItem::PhotoMode:
+		battleMgr->SetPhotoMode(true);
+		battleMgr->SetStageEditMode(false);
+		break;
+	case MenuItem::StageEdit:
+		battleMgr->SetPhotoMode(false);
+		battleMgr->SetStageEditMode(true);
+		break;
+	case MenuItem::StageSelect:
+		battleMgr->SetPhotoMode(false);
+		battleMgr->SetStageEditMode(false);
+		//下のSceneMainごと破棄してステージセレクトに戻る(このシーンも破棄されるので、呼んだ後は何もしない)
+		m_controller.ResetScene<StageSelectScene>();
+		return;
+	default:
+		return;
+	}
+	m_controller.PopScene();
 }
 
 void PauseScene::FadeOutUpdate()
@@ -80,9 +122,24 @@ void PauseScene::NormalDraw()
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
 	const unsigned int white = GetColor(255, 255, 255);
-	DrawFormatString(kTextX, kTextY, white, "PauseScene");
-	DrawFormatString(kTextX, kTextY + kTextLineHeight, white, "Yボタン : フォトモード");
-	DrawFormatString(kTextX, kTextY + kTextLineHeight * 2, white, "Startボタン : ゲームに戻る");
+	const unsigned int yellow = GetColor(255, 255, 0);
+	DrawFormatString(kTextX, kTextY, white, "PauseScene  (上下:選択 A:決定 Start:ゲームに戻る)");
+
+	const char* const itemNames[] =
+	{
+		"ゲームに戻る",
+		"フォトモード(カメラデバッグ)",
+		"ステージ編集(壁キック/壁走りゾーン)",
+		"ステージセレクトへ戻る",
+	};
+	static_assert(std::size(itemNames) == static_cast<size_t>(MenuItem::Num), "項目名の数をMenuItemと合わせる");
+
+	for (int i = 0; i < static_cast<int>(MenuItem::Num); ++i)
+	{
+		const bool isSelected = (i == m_cursor);
+		DrawFormatString(kTextX, kTextY + kTextLineHeight * (i + 1), isSelected ? yellow : white,
+			"%s %s", isSelected ? ">" : " ", itemNames[i]);
+	}
 }
 
 void PauseScene::FadeOutDraw()

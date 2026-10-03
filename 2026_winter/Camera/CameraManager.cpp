@@ -112,8 +112,9 @@ void CameraManager::ApplyCameraSettings()
 		return;//ここで抜けるので、この下の通常カメラ処理(フォトモード判定など)は実行されない
 	}
 
-	//フォトモード中は、Stateが計算した値ではなく、フリーカメラの座標をそのままDxLibに渡す
-	if (System::GetInstance().GetBattleMgr()->GetPhotoMode())
+	//フォトモード・ステージ編集中は、Stateが計算した値ではなく、フリーカメラの座標をそのままDxLibに渡す
+	auto battleMgr = System::GetInstance().GetBattleMgr();
+	if (battleMgr->GetPhotoMode() || battleMgr->GetStageEditMode())
 	{
 		SetCameraPositionAndTarget_UpVecY(m_photoCamPos.ToDxLibVector(), m_photoCamTarget.ToDxLibVector());
 		Effekseer_Sync3DSetting();

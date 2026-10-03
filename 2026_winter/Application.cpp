@@ -1,7 +1,7 @@
 ﻿#include "Application.h"
 #include "EffekseerForDXLib.h"
 #include "Game.h"
-#include "SceneMain.h"
+#include "Scene/StageSelectScene.h"
 #include "Scene/SceneController.h"
 #include "System.h"
 #include "imguiApp.h"
@@ -94,7 +94,7 @@ bool Application::Init()
 void Application::Run()
 {
 	SceneController sceneController;
-	sceneController.ResetScene<SceneMain>();
+	sceneController.ResetScene<StageSelectScene>();
 
 	while (ProcessMessage() != -1)
 	{

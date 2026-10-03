@@ -81,6 +81,8 @@ public:
 
 	//向き(Y軸回転)を直接セットする//演出などで座標と一緒に向きも固定したいときに使う
 	void SetRotY(float angleY) { m_rotAngleY = angleY; }
+	//モデルの傾き(前後軸まわり)の目標をセットする//壁走りなどで使う//見た目だけでカプセルは傾かない
+	void SetTargetTilt(float angle) { m_targetTiltAngle = angle; }
 
 	int GetHp()const { return m_hp; }//体力の取得
 
@@ -100,6 +102,8 @@ protected:
 	float m_rotAngleY = 0.0f;//回転角度
 	float m_rotAngleX = 0.0f;//回転角度
 	float m_targetAngleY = 0.0f;//目標の回転角度//回転を滑らかにするためのもの
+	float m_tiltAngle = 0.0f;//今の傾き(モデルの前後軸まわり)
+	float m_targetTiltAngle = 0.0f;//目標の傾き
 
 
 	Vector3 m_targetVec = {};//移動したい方向のベクトル

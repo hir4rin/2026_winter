@@ -18,6 +18,7 @@
 #include "PlayerStateWallRun.h"//以下同文
 #include "PlayerStateWallKick.h"//以下同文
 #include "PlayerStateWallStay.h"//以下同文
+#include "PlayerStateWallRunKick.h"//以下同文
 #include "../../../DataLoader/AnimData.h"
 #include <memory>
 
@@ -344,6 +345,7 @@ private:
 	friend class PlayerStateWallRun;
 	friend class PlayerStateWallKick;
 	friend class PlayerStateWallStay;
+	friend class PlayerStateWallRunKick;
 	//武器
 	friend class Weapon;
 

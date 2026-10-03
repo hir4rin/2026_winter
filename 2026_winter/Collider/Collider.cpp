@@ -27,6 +27,15 @@ void Collider::DebugDraw() const
 	default:
 		break;
 	}
+	//壁ゾーンは役割で色を分ける
+	if (m_tag.role == ColRole::WallKickZone)
+	{
+		color = GetColor(255, 128, 0);//壁キックゾーンはオレンジ
+	}
+	else if (m_tag.role == ColRole::WallRunZone)
+	{
+		color = GetColor(0, 200, 255);//壁走りゾーンは水色
+	}
 
 	m_shape->DebugDraw(GetWorldPos(), color); // switch(m_type)が丸ごと消える
 }

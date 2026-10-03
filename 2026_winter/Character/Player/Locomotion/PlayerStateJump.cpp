@@ -104,8 +104,16 @@ void PlayerStateJump::Update()
 	//animationFrameで経過時間を取る
 	if(player->m_anim.GetNowAnimFrame() >= kJumpForWallStayFrame)
 	{
-		//最期に壁との当たり判定をチェックする//壁に当たったら、壁に沿って移動する
-		if (CheckWall() && input.IsLeftStickInput())
+		//最期に壁との当たり判定をチェックする//壁走りゾーンの中で壁に当たったら、壁に沿って移動する
+		if (IsInWallZone(Collider::ColRole::WallRunZone) && CheckWall() && input.IsLeftStickInput())
+		{
+			player->ChangeState(std::make_shared<PlayerStateWallRun>(m_owner));//壁に沿って移動する
+			return;
+		}
+
+
+		//壁キック//壁キックゾーンの中で壁に当たったとき
+		if (IsInWallZone(Collider::ColRole::WallKickZone) && CheckWall() && input.IsLeftStickInput())
 		{
 			player->ChangeState(std::make_shared<PlayerStateWallStay>(m_owner));//壁に沿って移動する
 			return;

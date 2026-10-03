@@ -18,6 +18,7 @@
 #include "State/Hit/EnemyPartBrokenKilled.h"
 #include "State/Hit/EnemyVanish.h"
 #include "../../Game.h"
+#include "../../Stage/EnemySpawnData.h"
 
 
 class Player;
@@ -81,6 +82,20 @@ public:
 
 	//巡回ルートの設定//routeIdはPatrolRouteX.csvのXの番号
 	void SetPatrolRoute(int routeId);
+
+	//敵配置CSV(EnemySpawnData)から設定する用----------------------------------------
+	//向きを設定する//rotYDegは0で+Zを向く(Unityと同じ)
+	void SetFacing(float rotYDeg);
+	//巡回ルートを直接設定する
+	void SetPatrolPoints(const std::vector<EnemySpawnRoutePoint>& route);
+	//その場で見張る//今いる位置に、ずっと待機する巡回ポイントを1つだけ置く(視界でプレイヤーを探す処理を巡回と共通にするため)
+	void SetGuardPoint();
+	//グループ(同じgroupIdの敵)
+	void SetGroupId(const std::string& groupId) { m_groupId = groupId; }
+	const std::string& GetGroupId()const { return m_groupId; }
+	//同じグループの敵がプレイヤーを見つけたときに呼ばれる//巡回・見張り中なら追跡を始める
+	void OnAlerted();
+	//------------------------------------------------------------------------------
 
 
 
@@ -167,6 +182,7 @@ protected:
 	std::vector<PatrolPoint> m_patrolPoints;
 	int m_currentPatrolIndex = -1;//現在の巡回ポイントのインデックス
 	bool m_isPlayerFound = false;//プレイヤーを発見したか(一度見つけたらtrueのまま)
+	std::string m_groupId;//同じグループの敵がプレイヤーを見つけたら一緒に気づく//空ならグループ無し
 
 
 

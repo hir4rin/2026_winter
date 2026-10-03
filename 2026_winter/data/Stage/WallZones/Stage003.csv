@@ -1,0 +1,6 @@
+#type,name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg,isActive
+WallRunZone,WallRunZone_Roof_Gap,855,300,5050,105,270,1050,0,1
+WallRunZone,WallRunZone_Street_LeftWall,-1930,-900,10200,80,270,2200,0,1
+WallKickZone,WallKickZone_Shaft,0,-650,13000,170,550,400,0,1
+WallRunZone,WallRunZone_Highway_Gap1,830,100,17850,80,270,1050,0,1
+WallRunZone,WallRunZone_Highway_Gap2,-830,100,23050,80,270,1250,0,1

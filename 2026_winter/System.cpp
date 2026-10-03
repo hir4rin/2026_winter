@@ -18,6 +18,7 @@ namespace
 
 	//ステージのモデル
 	const std::string kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
+	const std::string kDemoStageModelPath = "data/Stage/DemoStage/DemoStage.mv1";//テクスチャは同じ場所のTextures/を参照する
 }
 
 void System::LoadAll()
@@ -35,6 +36,7 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::EnemyPartLeftArmModel] = MV1LoadModel(kEnemyPartLeftArmModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyPartHeadModel] = MV1LoadModel(kEnemyPartHeadModelPath.c_str());
 	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
+	m_asyncHandles[AsyncData::DemoStageModel] = MV1LoadModel(kDemoStageModelPath.c_str());
 
 	SetUseASyncLoadFlag(FALSE);//ほかの場所の読み込みは同期に戻す
 }
@@ -66,6 +68,7 @@ void System::Terminate()
 
 	//stage
 	MV1DeleteModel(m_asyncHandles[AsyncData::TitleStageModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::DemoStageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModelCollider]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::AreaWallEffect]);

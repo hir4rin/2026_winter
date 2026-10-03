@@ -1,5 +1,6 @@
 ﻿#include "Stage.h"
 #include "StageCsvIO.h"
+#include "../DataLoader/DataManager.h"
 #include "../Math/Matrix4x4.h"
 #include "../System.h"
 #include "../Managers/CollisionManager.h"
@@ -48,10 +49,10 @@ void Stage::TitleInit()
 	MV1SetScale(m_stageViewHandle, VGet(kTitleStageScale, kTitleStageScale, kTitleStageScale));
 }
 
-void Stage::GameInit()
+void Stage::GameInit(AsyncData model)
 {
-	m_stageModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TitleStageModel));
-	m_stageViewHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TitleStageModel));
+	m_stageModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(model));
+	m_stageViewHandle = MV1DuplicateModel(System::GetInstance().GetHandle(model));
 	// モデルのポリゴンの当たり判定を構築する(第二引数を-1にすると全てのポリゴンを対象にする)
 	MV1SetupCollInfo(m_stageModelHandle, -1);
 
@@ -88,6 +89,7 @@ Stage::~Stage()
 	MV1DeleteModel(m_stageModelHandle);
 	MV1DeleteModel(m_stageViewHandle);
 	ClearStageObjects();
+	ClearWallZones();
 }
 
 void Stage::Update()
@@ -134,4 +136,118 @@ void Stage::ClearStageObjects()
 		CollisionManager::GetInstance().ReleaseCollider(object);
 	}
 	m_stageObjects.clear();
+}
+
+void Stage::LoadWallZones(int stageNumber)
+{
+	ClearWallZones();
+
+	//CSVの読み込みはDataManagerに任せ、読み込んだデータをゾーン(コライダー)に当てはめる
+	auto& dataManager = DataManager::GetInstance();
+	dataManager.LoadWallZoneData(stageNumber);
+	for (const auto& data : dataManager.GetWallZoneData())
+	{
+		AddWallZone(data);
+	}
+}
+
+bool Stage::SaveWallZones(int stageNumber) const
+{
+	return DataManager::GetInstance().SaveWallZoneData(stageNumber, GetAllWallZoneData());
+}
+
+std::vector<WallZoneData> Stage::GetAllWallZoneData() const
+{
+	std::vector<WallZoneData> zones;
+	zones.reserve(m_wallZones.size());
+	for (const auto& zone : m_wallZones)
+	{
+		zones.push_back(zone->GetData());
+	}
+	return zones;
+}
+
+void Stage::SetAllWallZoneData(const std::vector<WallZoneData>& zones)
+{
+	ClearWallZones();
+	for (const auto& data : zones)
+	{
+		AddWallZone(data);
+	}
+}
+
+bool Stage::IsInWallZone(Collider::ColRole role, const Collider& col) const
+{
+	for (const auto& zone : m_wallZones)
+	{
+		if (zone->GetRole() != role)continue;
+		if (zone->IsOverlap(col))return true;
+	}
+	return false;
+}
+
+const WallZoneData& Stage::GetWallZoneData(int index) const
+{
+	return m_wallZones.at(index)->GetData();
+}
+
+void Stage::SetWallZoneData(int index, const WallZoneData& data)
+{
+	m_wallZones.at(index)->SetData(data);
+}
+
+int Stage::AddWallZone(const WallZoneData& data)
+{
+	auto zone = std::make_shared<WallZone>();
+	zone->Init(data);
+	m_wallZones.push_back(zone);
+	return static_cast<int>(m_wallZones.size()) - 1;
+}
+
+void Stage::RemoveWallZone(int index)
+{
+	if (index < 0 || index >= static_cast<int>(m_wallZones.size()))return;
+	CollisionManager::GetInstance().ReleaseCollider(m_wallZones[index]);
+	m_wallZones.erase(m_wallZones.begin() + index);
+}
+
+bool Stage::IsWallZoneOverlap(int index, const Collider& col) const
+{
+	if (index < 0 || index >= static_cast<int>(m_wallZones.size()))return false;
+	return m_wallZones[index]->IsOverlap(col);
+}
+
+void Stage::DrawWallZones(int selectedIndex) const
+{
+	for (int i = 0; i < static_cast<int>(m_wallZones.size()); ++i)
+	{
+		const auto& zone = m_wallZones[i];
+		unsigned int color;
+		if (i == selectedIndex)
+		{
+			color = GetColor(255, 255, 255);//選択中は白
+		}
+		else if (!zone->GetData().isActive)
+		{
+			color = GetColor(90, 90, 90);//無効は暗い灰色
+		}
+		else if (zone->GetRole() == Collider::ColRole::WallKickZone)
+		{
+			color = GetColor(255, 128, 0);//壁キックはオレンジ
+		}
+		else
+		{
+			color = GetColor(0, 200, 255);//壁走りは水色
+		}
+		zone->DrawWithColor(color);
+	}
+}
+
+void Stage::ClearWallZones()
+{
+	for (auto& zone : m_wallZones)
+	{
+		CollisionManager::GetInstance().ReleaseCollider(zone);
+	}
+	m_wallZones.clear();
 }

@@ -39,6 +39,7 @@ enum class AsyncData : int
 	TitleStageModel,
 	StageModel,
 	StageModelCollider,
+	DemoStageModel,//デモステージ(UnityのDemoStageBuilderで生成)
 	AreaWallEffect,
 	WallBreakEffect,
 	Goal,

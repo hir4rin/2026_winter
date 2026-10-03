@@ -10,7 +10,9 @@
 
 namespace
 {
-	constexpr float kWallCheckDistance = 50.0f;//壁判定の距離
+	//constexpr float kWallCheckDistance = 50.0f;//壁判定の距離//壁キック時ちょうどよかった
+	constexpr float kWallCheckDistance = 120.0f;//壁判定の距離//壁走り時
+	constexpr float kWallSideCheckDistance = 80.0f;//左右の壁判定の距離//正面より短め
 	constexpr float kWallThreshold = 0.5f;//壁判定の法線のY成分の閾値//Yが大きいものは床か天井なので、壁扱いしない
 }
 
@@ -81,15 +83,59 @@ bool PlayerState::CheckWall()
 	player->m_wallHitInfo = { false, Vector3(0, 0, 0), Vector3(0, 0, 0) };
 
 
-	//playerのrayを飛ばし、壁に当たったかどうかを判定する
-	Vector3 playerForward = player->m_targetVec;
-	playerForward.y = 0.0f;
-	playerForward = playerForward.Normalize();
-	Vector3 rayVec = playerForward * kWallCheckDistance;//今はこの距離が短すぎるから壁に向き合う形じゃないと当たってる判定にならない
+	//playerのrayを正面・左・右の順に飛ばし、どれか1本でも壁に当たったらtrue
+	for (int i = 0; i < kWallRayNum; ++i)
+	{
+		Vector3 rayStart, rayEnd;
+		if (!GetWallCheckRay(i, rayStart, rayEnd)) return false;
 
-	//playerの座標からrayVecの方向にrayを飛ばす
-	Vector3 rayStart = player->GetRigidBody().GetPos() + Vector3(0, 10, 0);//上にずらしすぎたら、壁キックができなくなるので注意
-	Vector3 rayEnd = rayStart + rayVec;
+		auto hit = MV1CollCheck_Line(stageHandle, -1,
+		rayStart.ToDxLibVector(), rayEnd.ToDxLibVector());
+
+		//何にも当たらなかった
+		if (!hit.HitFlag)
+		{
+			continue;
+		}
+
+		//法線のYが大きいものは床か天井なので、壁扱いしない
+		if (abs(hit.Normal.y) >= kWallThreshold)
+		{
+			continue;
+		}
+
+		//壁キックした壁と同じ壁に当たった場合は、壁キックできないようにする
+		if (player->m_lastKickWallNormal.Dot(Vector3::FromDxLibVector(hit.Normal)) > 0.9f)//数字は適当
+		{
+			continue;
+		}
+
+
+		//横の壁か前の壁かを判定する必要がある
+
+		//ここまで来たら当たっている
+		//ヒット情報を更新
+		player->m_wallHitInfo = { true,Vector3::FromDxLibVector(hit.Normal),Vector3::FromDxLibVector(hit.HitPosition) };//Position[0]はポリゴンの頂点なので、交点のHitPositionを使う
+		return true;
+	}
+
+	return false;
+}
+
+bool PlayerState::CheckNextFrameWall()
+{
+	auto player = m_owner.lock();
+	if (!player) return false;
+	auto stage = player->m_stage.lock();
+	if (!stage)return false;
+	auto stageHandle = stage->GetStageModelHandle();
+
+	//playerの最新のm_wallHitInfoの法線を使って、次のフレームで壁に当たるかどうかを判定する
+	Vector3 wallNormal = player->m_wallHitInfo.wallNormal;
+
+	Vector3 rayStart, rayEnd;
+	rayStart = player->GetNextPos() + Vector3(0, 10, 0);//上にずらしすぎたら
+	rayEnd = rayStart + wallNormal * kWallCheckDistance * -1;//壁の法線の逆方向にrayを飛ばす
 
 	auto hit = MV1CollCheck_Line(stageHandle, -1,
 	rayStart.ToDxLibVector(), rayEnd.ToDxLibVector());
@@ -106,16 +152,76 @@ bool PlayerState::CheckWall()
 		return false;
 	}
 
-	//壁キックした壁と同じ壁に当たった場合は、壁キックできないようにする
-	if (player->m_lastKickWallNormal.Dot(Vector3::FromDxLibVector(hit.Normal)) > 0.9f)//数字は適当
+	//ここまで来たら当たっている
+	return true;
+}
+
+bool PlayerState::IsInWallZone(Collider::ColRole zoneRole)
+{
+	auto player = m_owner.lock();
+	if (!player) return false;
+	auto stage = player->m_stage.lock();
+	if (!stage)return false;
+
+	//ステージ編集で置いたゾーンとプレイヤーのカプセルが重なっているか
+	return stage->IsInWallZone(zoneRole, *player);
+}
+
+bool PlayerState::GetWallCheckRay(int index, Vector3& rayStart, Vector3& rayEnd)
+{
+	auto player = m_owner.lock();
+	if (!player) return false;
+
+	Vector3 playerForward = player->m_targetVec;
+	playerForward.y = 0.0f;
+	playerForward = playerForward.Normalize();
+	//正面に対して水平に90度回したもの
+	Vector3 playerRight = Vector3(playerForward.z, 0.0f, -playerForward.x);
+
+	Vector3 rayVec;
+	switch (index)
 	{
+	case 0://正面
+		rayVec = playerForward * kWallCheckDistance;
+		break;
+	case 1://左
+		rayVec = playerRight * -kWallSideCheckDistance;
+		break;
+	case 2://右
+		rayVec = playerRight * kWallSideCheckDistance;
+		break;
+	default:
 		return false;
 	}
 
-	//ここまで来たら当たっている
-	//ヒット情報を更新
-	player->m_wallHitInfo = { true,Vector3::FromDxLibVector(hit.Normal),Vector3::FromDxLibVector(hit.Position[0])};
-
-
+	//playerの座標からrayVecの方向にrayを飛ばす
+	rayStart = player->GetRigidBody().GetPos() + Vector3(0, 10, 0);//上にずらしすぎたら、壁キックができなくなるので注意
+	rayEnd = rayStart + rayVec;
 	return true;
+}
+
+void PlayerState::DebugDrawWallCheck()
+{
+#ifdef _DEBUG
+	auto player = m_owner.lock();
+	if (!player) return;
+
+	//最後のCheckWallで当たっていたら緑
+	bool isHit = player->m_wallHitInfo.isWallHit;
+	unsigned int color = isHit ? GetColor(0, 255, 0) : GetColor(255, 0, 0);
+
+	//正面・左・右の3本
+	for (int i = 0; i < kWallRayNum; ++i)
+	{
+		Vector3 rayStart, rayEnd;
+		if (!GetWallCheckRay(i, rayStart, rayEnd)) return;
+		DrawLine3D(rayStart.ToDxLibVector(), rayEnd.ToDxLibVector(), color);
+	}
+
+	//当たった位置
+	if (isHit)
+	{
+		DrawSphere3D(player->m_wallHitInfo.hitPos.ToDxLibVector(), 3.0f, 8, color, color, false);
+	}
+#endif
 }

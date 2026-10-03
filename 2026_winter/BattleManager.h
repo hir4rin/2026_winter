@@ -17,6 +17,9 @@ public:
 
 	void SetPhotoMode(bool ans) { m_isPhotoMode = ans; }
 	bool GetPhotoMode() { return m_isPhotoMode; }
+	//ステージ編集モード(壁ゾーンの配置・編集)。フォトモードと同じフリーカメラを使う
+	void SetStageEditMode(bool ans) { m_isStageEditMode = ans; }
+	bool GetStageEditMode() { return m_isStageEditMode; }
 
 	//イベント演出中(カメラ演出+その戻りのBlend中)はプレイヤー/敵の入力・行動を止めるためのフラグ
 	void SetIsEventPlaying(bool ans) { m_isEventPlaying = ans; }
@@ -32,6 +35,7 @@ private:
 	int m_ultCount = -1;//必殺技の演出時間カウント
 
 	bool m_isPhotoMode = false;
+	bool m_isStageEditMode = false;//ステージ編集モード中かどうか
 
 	bool m_isEventPlaying = false;//イベント演出中かどうか
 

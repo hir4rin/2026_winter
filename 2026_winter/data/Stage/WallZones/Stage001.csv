@@ -1,0 +1,6 @@
+#type,name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg,isActive
+WallKickZone,Kick_0,3236.2,707,2273.52,297,681,174,0,1
+WallRunZone,Kick_1,3637,122.8,-2568.5,607,200,75,90,1
+WallRunZone,Kick_2,-1905.49,193.212,-2750,496,348,174,180,1
+WallRunZone,Kick_2_copy,-1855.49,193.212,-2195,496,348,174,180,1
+WallRunZone,Kick_4,2397.8,205.711,-3000,1234,200,100,180,1

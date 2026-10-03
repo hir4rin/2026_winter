@@ -18,6 +18,13 @@ namespace
 	{
 		return !a.owner_before(b) && !b.owner_before(a);
 	}
+
+	//壁キック/壁走りのゾーンかどうか
+	bool IsWallZone(const Collider& col)
+	{
+		return col.GetRole() == Collider::ColRole::WallKickZone ||
+			col.GetRole() == Collider::ColRole::WallRunZone;
+	}
 }
 
 void CollisionManager::RegisterCollider(std::weak_ptr<Collider> collider)
@@ -135,25 +142,29 @@ void CollisionManager::Update()
 		collider->m_isFloor = false;
 	}
 
+	//OnCollision等の中でステート遷移→Register/ReleaseColliderされても壊れないようにコピーで回す
+	auto colliders = m_colliders;
 	for (int t = 0; t < 3; t++)
 	{
 		//すべてのコライダーの組み合わせをチェックする//当たっているかの確認かつ、速度をいじる
-		for (size_t i = 0; i < m_colliders.size(); i++)
+		for (size_t i = 0; i < colliders.size(); i++)
 		{
-			std::shared_ptr<Collider> colliderA = m_colliders[i].lock();
+			std::shared_ptr<Collider> colliderA = colliders[i].lock();
 			if (!colliderA)continue;
 			if (!colliderA->GetIsActive())continue;
 
-			for (size_t j = i + 1; j < m_colliders.size(); j++)
+			for (size_t j = i + 1; j < colliders.size(); j++)
 			{
 
-				std::shared_ptr<Collider> colliderB = m_colliders[j].lock();
+				std::shared_ptr<Collider> colliderB = colliders[j].lock();
 				//アクティブなコライダーだけをチェックする//ここ関数化
 				if (!colliderB)continue;
 				if (!colliderB->GetIsActive())continue;
 				//静的オブジェクト同士の時無視
 				if (colliderA->GetTag().faction == Collider::Faction::StaticObject &&
 					colliderB->GetTag().faction == Collider::Faction::StaticObject)continue;
+				//壁ゾーンは押し戻し・衝突処理をしない(プレイヤーがStage::IsInWallZoneで問い合わせる)
+				if (IsWallZone(*colliderA) || IsWallZone(*colliderB))continue;
 
 				//衝突判定//球と球、BoxとBox、CapsuleとCapsuleとかで分ける
 				if (m_collisionChecker->IsCollide(*colliderA, *colliderB))
@@ -193,7 +204,7 @@ void CollisionManager::Update()
 		}
 	}
 	//ループが終わった後、ExitTriggerの処理を検出
-	for (auto& weakCollider : m_colliders)
+	for (auto& weakCollider : colliders)
 	{
 		auto collider = weakCollider.lock();
 		if (!collider)continue;
@@ -281,7 +292,9 @@ bool CollisionManager::ContainsCollider(const std::vector<std::weak_ptr<Collider
 void CollisionManager::ApplyAdjustments()
 {
 	//Colliderの座標を確定//Col自身に座標の更新をさせる
-	for (auto& weakCollider : m_colliders)
+	//ApplyPos内でステート遷移→Register/ReleaseColliderされてもイテレータが壊れないようにコピーで回す
+	auto colliders = m_colliders;
+	for (auto& weakCollider : colliders)
 	{
 		auto collider = weakCollider.lock();
 		if (!collider)continue;

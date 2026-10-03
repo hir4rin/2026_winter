@@ -82,6 +82,48 @@ void EnemyBase::SetPatrolRoute(int routeId)
 		[](const PatrolPoint& a, const PatrolPoint& b) { return a.index < b.index; });
 }
 
+void EnemyBase::SetFacing(float rotYDeg)
+{
+	float rad = rotYDeg * DX_PI_F / 180.0f;
+	//向きたい方向//Unityと同じで、0度なら+Z、90度なら+Xを向く
+	m_targetVec = Vector3(sinf(rad), 0.0f, cosf(rad));
+	//UpdateAngleAndPosがm_targetVecに少しずつ近づけるので、最初から向いた状態にしておく
+	//(モデルが180度ずれているので、UpdateAngleAndPosと同じくDX_PI_Fずらす)
+	m_rotAngleY = rad - DX_PI_F;
+}
+
+void EnemyBase::SetPatrolPoints(const std::vector<EnemySpawnRoutePoint>& route)
+{
+	m_patrolPoints.clear();//設定し直しのときに前のデータが残らないように消す
+	m_currentPatrolIndex = -1;//最初のポイントから巡回し直す
+
+	for (int i = 0; i < static_cast<int>(route.size()); ++i)
+	{
+		PatrolPoint point;
+		point.pos = route[i].pos;
+		point.waitTime = route[i].waitTime;
+		point.index = i;
+		m_patrolPoints.push_back(point);
+	}
+}
+
+void EnemyBase::SetGuardPoint()
+{
+	//今の位置で、ずっと待機する(waitTimeが負なら次へ出発しない)
+	SetPatrolPoints({ { m_rb.m_pos, -1.0f } });
+}
+
+void EnemyBase::OnAlerted()
+{
+	if (m_isPlayerFound)return;//もう気づいている
+	if (m_isLifeZero || m_isExecuted)return;
+	//巡回・見張り中のときだけ追跡を始める(戦闘中や被弾中のStateは上書きしない)
+	if (!std::dynamic_pointer_cast<EnemyPatrol>(m_currentState))return;
+
+	m_isPlayerFound = true;
+	ChangeState(std::make_shared<EnemyChase>(GetWeakPtr()));
+}
+
 void EnemyBase::OnCollision(Collider& other)
 {
 }
