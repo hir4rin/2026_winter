@@ -12,6 +12,8 @@ namespace
 	constexpr float kJumpInitVel = 20.0f;//ジャンプの初速//この数値を変えることで、ジャンプの高さを調整できる
 	constexpr float kJumpMoveSpeedMultiplier = 0.5f;//ジャンプ中の移動速度倍率(通常の0.5倍)
 	constexpr float kMaxJumpAnimFrame = 21.67f;
+
+	constexpr float kJumpForWallStayFrame = 10.0f;//壁に沿って移動する状態に遷移するまでのフレーム数
 }
 
 
@@ -98,6 +100,21 @@ void PlayerStateJump::Update()
 	}
 	//移動処理
 	Move(input);
+
+	//animationFrameで経過時間を取る
+	if(player->m_anim.GetNowAnimFrame() >= kJumpForWallStayFrame)
+	{
+		//最期に壁との当たり判定をチェックする//壁に当たったら、壁に沿って移動する
+		if (CheckWall() && input.IsLeftStickInput())
+		{
+			player->ChangeState(std::make_shared<PlayerStateWallStay>(m_owner));//壁に沿って移動する
+			return;
+		}
+	}
+
+
+	
+
 
 	//アニメーション
 	player->m_anim.Update();

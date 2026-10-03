@@ -7,7 +7,8 @@
 namespace
 {
 	//プレイヤーのモデル
-	const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
+	//const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
+	const std::string kPlayerModelPath = "data/Player01.mv1";
 
 	const std::string kEnemyModelpath = "data/Enemy/Enemy.mv1";
 

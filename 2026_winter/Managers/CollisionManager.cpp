@@ -91,7 +91,7 @@ void CollisionManager::Update()
 	{
 		auto collider = weakCollider.lock();
 		if (!collider)continue;
-		//collider->SetStagePtr(m_stage);
+		collider->SetStagePtr(m_stage);
 	}
 
 	//CollisionのUpdate(今は寿命カウント用)

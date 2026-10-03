@@ -15,6 +15,9 @@
 #include "PlayerStateDashAttack.h"//以下同文
 #include "PlayerStateDodge.h"//以下同文
 #include "PlayerStateResultMove.h"//以下同文
+#include "PlayerStateWallRun.h"//以下同文
+#include "PlayerStateWallKick.h"//以下同文
+#include "PlayerStateWallStay.h"//以下同文
 #include "../../../DataLoader/AnimData.h"
 #include <memory>
 
@@ -122,6 +125,15 @@ struct DamageInfo
 	float damageTimer = 0.0f;//被ダメ後無敵時間
 	const float kDamageTime = 180.0f;//被ダメ後無敵時間の長さ
 };
+
+//壁キック、壁走り用
+struct WallHitInfo
+{
+	bool isWallHit = false;//壁に接触しているかどうか
+	Vector3 wallNormal = Vector3(0, 0, 0);//壁の法線ベクトル//壁の向き
+	Vector3 hitPos = Vector3(0, 0, 0);//壁に接触した座標//壁走りの開始位置の判定に使う
+};;
+
 
 enum class WaveNumForPlayer : int
 {
@@ -306,6 +318,11 @@ private:
 	//部位破壊したターゲット//サーチはロックオンマネージャーに任せてる
 	std::weak_ptr<EnemyBase> m_partBrokenTarget;
 	bool m_isPartBrokenKilling = false;//確殺演出中かどうか//trueの間はロックオンマネージャーが確殺対象を更新しない
+
+	//壁走り、壁キック用
+	//当たった壁との情報//壁走りの開始位置の判定に使う
+	WallHitInfo m_wallHitInfo = {};////当たったかどうか//壁の法線ベクトル//壁に接触した座標
+	Vector3 m_lastKickWallNormal = Vector3(0, 0, 0);//最後に壁キックした壁の法線ベクトル
 	
 
 	//PlayerState
@@ -324,6 +341,9 @@ private:
 	friend class PlayerStateDashAttack;
 	friend class PlayerStateDodge;
 	friend class PlayerStateResultMove;
+	friend class PlayerStateWallRun;
+	friend class PlayerStateWallKick;
+	friend class PlayerStateWallStay;
 	//武器
 	friend class Weapon;
 

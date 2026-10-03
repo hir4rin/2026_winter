@@ -5,6 +5,15 @@
 #include "../../../Camera/CameraManager.h"
 #include "../../../Camera/CameraState/CameraStateBase.h"
 #include "../../../Game.h"
+#include "../Stage/Stage.h"
+//#include "../Character/CharacterBase.h"
+
+namespace
+{
+	constexpr float kWallCheckDistance = 50.0f;//壁判定の距離
+	constexpr float kWallThreshold = 0.5f;//壁判定の法線のY成分の閾値//Yが大きいものは床か天井なので、壁扱いしない
+}
+
 
 PlayerState::PlayerState(std::weak_ptr<Player> owner) :
 	m_owner(owner)
@@ -57,4 +66,56 @@ void PlayerState::ClampSpeed()
 		player->m_rb.m_vel.x = velXZ.x;
 		player->m_rb.m_vel.z = velXZ.z;
 	}
+}
+
+bool PlayerState::CheckWall()
+{
+	auto player = m_owner.lock();
+	if (!player) return false;
+	auto stage = player->m_stage.lock();
+	if (!stage)return false;
+	auto stageHandle = stage->GetStageModelHandle();
+
+
+	//Hit情報を更新//初期化
+	player->m_wallHitInfo = { false, Vector3(0, 0, 0), Vector3(0, 0, 0) };
+
+
+	//playerのrayを飛ばし、壁に当たったかどうかを判定する
+	Vector3 playerForward = player->m_targetVec;
+	playerForward.y = 0.0f;
+	playerForward = playerForward.Normalize();
+	Vector3 rayVec = playerForward * kWallCheckDistance;//今はこの距離が短すぎるから壁に向き合う形じゃないと当たってる判定にならない
+
+	//playerの座標からrayVecの方向にrayを飛ばす
+	Vector3 rayStart = player->GetRigidBody().GetPos() + Vector3(0, 10, 0);//上にずらしすぎたら、壁キックができなくなるので注意
+	Vector3 rayEnd = rayStart + rayVec;
+
+	auto hit = MV1CollCheck_Line(stageHandle, -1,
+	rayStart.ToDxLibVector(), rayEnd.ToDxLibVector());
+
+	//何にも当たらなかった
+	if (!hit.HitFlag)
+	{
+		return false;
+	}
+
+	//法線のYが大きいものは床か天井なので、壁扱いしない
+	if (abs(hit.Normal.y) >= kWallThreshold)
+	{
+		return false;
+	}
+
+	//壁キックした壁と同じ壁に当たった場合は、壁キックできないようにする
+	if (player->m_lastKickWallNormal.Dot(Vector3::FromDxLibVector(hit.Normal)) > 0.9f)//数字は適当
+	{
+		return false;
+	}
+
+	//ここまで来たら当たっている
+	//ヒット情報を更新
+	player->m_wallHitInfo = { true,Vector3::FromDxLibVector(hit.Normal),Vector3::FromDxLibVector(hit.Position[0])};
+
+
+	return true;
 }

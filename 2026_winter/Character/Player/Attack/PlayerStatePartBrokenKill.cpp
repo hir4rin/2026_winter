@@ -23,7 +23,8 @@ namespace
 
 
 
-	const std::string kAttackStartName = "root|Combo_Attack_01_01";
+	//const std::string kAttackStartName = "root|Combo_Attack_01_01";
+	const std::string kAttackStartName = "Combo_Attack_01_01";
 	const float kAttackAnimEndFrame = 23.07f;//アニメーション倍率をかける
 
 	//パターンAのStart中のタイムスケールイージング(min->max->min)

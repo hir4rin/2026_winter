@@ -29,5 +29,8 @@ protected:
 	//XZ平面の速度制限
 	void ClampSpeed();
 
+	//壁と当たったかどうかの判定
+	bool CheckWall();
+
 };
 

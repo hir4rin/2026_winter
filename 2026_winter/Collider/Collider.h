@@ -160,7 +160,7 @@ protected:
 	float m_ownTimeScale = 1.0f;//自分のTimeScale
 	float m_timeCounter = 0.0f;//TimeScaleのカウンター
 
-	std::weak_ptr<Stage> m_stage;//ステージへの弱参照//ステージとのレイキャスト用
+	std::weak_ptr<Stage> m_stage;//ステージへの弱参照
 
 	std::vector<std::weak_ptr<Collider>> m_currentPressColliders;///現在触れているコライダーのリスト
 	std::vector<std::weak_ptr<Collider>> m_prevPressColliders;///前のフレームで触れていたコライダーのリスト

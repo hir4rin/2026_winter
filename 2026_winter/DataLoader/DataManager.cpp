@@ -6,7 +6,12 @@
 
 namespace
 {
-    const  std::string kPlayerAnimPath = "data/Player_CSV/PlayerAnim.csv";
+    //const  std::string kPlayerAnimPath = "data/Player_CSV/PlayerAnim.csv";
+    const  std::string kPlayerAnimPath = "data/Player_CSV/Player01Anim.csv";
+
+	//const std::string kPlayerComboChainPath = "data/Player_CSV/ComboChain.csv";
+	const std::string kPlayerComboChainPath = "data/Player_CSV/ComboChain01.csv";
+
     const std::string kEnemySwordmanAnimPath = "data/Enemy/EnemySwordmanAnim.csv";
 
     const std::string kBossAnimPath = "data/Enemy/Boss/BossAnim.csv";
@@ -74,7 +79,7 @@ void DataManager::LoadBossAnimData()
 
 void DataManager::LoadComboRawData()
 {
-	std::ifstream file("data/Player_CSV/ComboChain.csv");
+	std::ifstream file(kPlayerComboChainPath);
 	assert(file.is_open() && "ComboChain.csvが開けませんでした");
 
 	m_comboRawData.clear();//読み込み直しのときに前のデータが残らないように消す

@@ -179,6 +179,9 @@
     <ClCompile Include="Character\Player\Locomotion\PlayerStateJump.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateMove.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateResultMove.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateWallRun.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateWallKick.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateWallStay.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateRun.cpp" />
     <ClCompile Include="Character\Player\Weapon.cpp" />
     <ClCompile Include="Collider\CapsuleShape.cpp" />
@@ -282,6 +285,9 @@
     <ClInclude Include="Character\Player\Locomotion\PlayerStateJump.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateMove.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateResultMove.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateWallRun.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateWallKick.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateWallStay.h" />
     <ClInclude Include="Character\Player\Weapon.h" />
     <ClInclude Include="Collider\CapsuleShape.h" />
     <ClInclude Include="Collider\BoxShape.h" />
