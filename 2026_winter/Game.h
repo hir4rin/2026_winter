@@ -27,6 +27,7 @@ namespace Game
 	constexpr float kMoveSpeed = 12.0f;//移動速度
 	constexpr float kAirMaxSpeed = 12.0f;//空中での最大移動速度
 	constexpr float kDodgeSpeed = 20.0f;//回避速度
+	constexpr float kPlayerAnimJumpUpEndFrame = 21.6f;//ジャンプアップのエンドフレーム
 
 
 

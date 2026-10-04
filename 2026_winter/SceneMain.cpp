@@ -198,6 +198,20 @@ void SceneMain::NormalUpdate()
 		return;
 	}
 
+	//Wキーを押したらタイムスケールを0.1にする
+	if (CheckHitKey(KEY_INPUT_W))
+	{
+		if (System::GetInstance().GetTimeScale() != 0.1f)
+		{
+			System::GetInstance().SetTimeScale(0.1f);
+		}
+		else
+		{
+			System::GetInstance().SetTimeScale(1.0f);
+		}
+	}
+
+
 	//フォトモード中はカメラだけを動かす
 	if (battleMgr->GetPhotoMode())
 	{

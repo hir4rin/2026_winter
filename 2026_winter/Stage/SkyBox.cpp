@@ -1,20 +1,6 @@
 ﻿#include "SkyBox.h"
 #include "../Camera/CameraManager.h"
 #include "../Camera/CameraState/CameraStateBase.h"
-namespace
-{
-	VERTEX3D MakeV(Vector3 pos, float u, float v)
-	{
-		VERTEX3D vtx;
-		vtx.pos = pos.ToDxLibVector();
-		vtx.norm = VGet(0.0f, 0.0f, 0.0f);//法線は使わないので0で初期化
-		vtx.dif = GetColorU8(255, 255, 255,255);//ディフューズカラーは白で初期化
-		vtx.spc = GetColorU8(0, 0, 0, 255);//スペキュラカラーは黒で初期化
-		vtx.u = u; vtx.v = v;//テクスチャ座標
-		vtx.su = 0.0f; vtx.sv = 0.0f;//補助テクスチャ座標は使わないので0で初期化
-		return vtx;
-	}
-}
 
 
 
@@ -106,4 +92,16 @@ void SkyBox::SetFaceVertices(int face, Vector3 topleft, Vector3 topright, Vector
 	m_vertex[face][3] = MakeV(topleft, 0.0f, 0.0f);
 	m_vertex[face][4] = MakeV(bottomright, 1.0f, 1.0f);
 	m_vertex[face][5] = MakeV(bottomleft, 0.0f, 1.0f);
+}
+
+VERTEX3D SkyBox::MakeV(Vector3 pos, float u, float v)
+{
+	VERTEX3D vtx;
+	vtx.pos = pos.ToDxLibVector();
+	vtx.norm = VGet(0.0f, 0.0f, 0.0f);//法線は使わないので0で初期化
+	vtx.dif = GetColorU8(255, 255, 255,255);//ディフューズカラーは白で初期化
+	vtx.spc = GetColorU8(0, 0, 0, 255);//スペキュラカラーは黒で初期化
+	vtx.u = u; vtx.v = v;//テクスチャ座標
+	vtx.su = 0.0f; vtx.sv = 0.0f;//補助テクスチャ座標は使わないので0で初期化
+	return vtx;
 }

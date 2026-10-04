@@ -78,6 +78,24 @@ private:
 	void LoadSpawnData(); //敵のスポーンデータを読み込む関数
 	void LoadPatrolRouteRawData(); //巡回ルートの生データを読み込む関数
 
+	//CSV読み書き用の補助関数-----------------------------------------------------
+	//壁ゾーンのtypeとCSVに書く文字列の変換
+	static const char* WallZoneTypeToString(Collider::ColRole type);
+	static bool StringToWallZoneType(const std::string& str, Collider::ColRole& outType);
+	//敵配置CSVの文字列とenumの変換
+	static bool StringToEnemyType(const std::string& str, EnemyType& outType);
+	static bool StringToEnemyInitialState(const std::string& str, EnemyInitialState& outState);
+	/// <summary>strをseparatorで分割する(空の要素も残す)</summary>
+	static std::vector<std::string> Split(const std::string& str, char separator);
+	/// <summary>
+	/// route列("x:y:z:wait|x:y:z:wait|...")を巡回ポイントの配列にする
+	/// 数値にできない値があったら例外を投げる(呼び出し側で行ごとスキップする)
+	/// </summary>
+	static std::vector<EnemySpawnRoutePoint> ParseRoute(const std::string& str);
+	/// <summary>名前にカンマや改行が入るとCSVが壊れるので、別の文字に置き換える</summary>
+	static std::string SanitizeCsvCell(const std::string& str);
+	//---------------------------------------------------------------------------
+
 	AnimData m_playerAnimData;//プレイヤーのアニメーションデータ
 	AnimData m_enemySwordmanAnimData;//敵(ソードマン)のアニメデータ
 	AnimData m_bossAnimData;//ボスのアニメーションデータ

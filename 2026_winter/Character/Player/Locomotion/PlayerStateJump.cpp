@@ -11,7 +11,6 @@ namespace
 
 	constexpr float kJumpInitVel = 20.0f;//ジャンプの初速//この数値を変えることで、ジャンプの高さを調整できる
 	constexpr float kJumpMoveSpeedMultiplier = 0.5f;//ジャンプ中の移動速度倍率(通常の0.5倍)
-	constexpr float kMaxJumpAnimFrame = 21.67f;
 
 	constexpr float kJumpForWallStayFrame = 10.0f;//壁に沿って移動する状態に遷移するまでのフレーム数
 }
@@ -42,7 +41,7 @@ void PlayerStateJump::Enter()
 	//ジャンプ開始時の移動速度を保存する
 	m_baseVel = player->m_rb.m_vel;
 	m_baseVel.y = 0.0f;//y成分は移動に関係ないので、0にする
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("JumpUp"), false, 1.0f, kMaxJumpAnimFrame);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("JumpUp"), false, 1.0f, Game::kPlayerAnimJumpUpEndFrame);
 	//System::GetInstance().GetSoundManager().PlaySE("JumpUpAndDown");
 }
 

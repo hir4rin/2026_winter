@@ -30,7 +30,7 @@ Animation::~Animation()
 	MV1DeleteModel(m_modelHandle);
 }
 
-void Animation::Init(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame)
+void Animation::Init(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame, float startFrame)
 {
 	//古いモデルに残っているルートモーションの上書きを解除する
 	SetRootMotionEnable(RootMotionCancel::None);
@@ -59,7 +59,8 @@ void Animation::Init(int modelHandle, std::string name, bool isRoop, float times
 
 	//m_animHandleに入れることで、アニメーションを変えるときや、ブレンドするときにm_animHandleを使う
 	m_currentAnimHandle = MV1AttachAnim(m_modelHandle, animNo, -1, -1);//アニメーションをアタッチする
-	m_currentAnimCount = 0.0f;//アニメーションのフレーム数を0にする
+	m_currentAnimCount = (std::max)(0.0f, startFrame);//アニメーションのフレーム数を開始フレームにする
+	MV1SetAttachAnimTime(m_modelHandle, m_currentAnimHandle, m_currentAnimCount);//Updateより前に描画されても開始フレームの姿勢になるようにする
 
 	m_prevAnimHandle = -1;//前のアニメーションのハンドルを-1にする
 	m_prevAnimCount = 0.0f;//前のアニメーションのフレーム数を0にする
@@ -163,7 +164,7 @@ void Animation::SetAnim(bool isRoop)
 
 
 
-void Animation::ChangeAnim(std::string name, bool isRoop, float timescale, float endFrame)
+void Animation::ChangeAnim(std::string name, bool isRoop, float timescale, float endFrame, float startFrame)
 {
 	m_prevEndFrame = m_endFrame;//現在の最終フレームを前のアニメーション用に保存する
 	m_endFrame = endFrame;
@@ -193,18 +194,19 @@ void Animation::ChangeAnim(std::string name, bool isRoop, float timescale, float
 
 	MV1SetAttachAnimBlendRate(m_modelHandle, m_currentAnimHandle, 0.0f); // 新アニメを非表示から開始
 	MV1SetAttachAnimBlendRate(m_modelHandle, m_prevAnimHandle, 1.0f);    // 旧アニメを完全表示に明示
-	m_currentAnimCount = 0.0f;//新しいアニメーションのフレーム数を0にする
+	m_currentAnimCount = (std::max)(0.0f, startFrame);//新しいアニメーションのフレーム数を開始フレームにする
+	MV1SetAttachAnimTime(m_modelHandle, m_currentAnimHandle, m_currentAnimCount);//Updateより前に描画されても開始フレームの姿勢になるようにする
 	m_animChangeFrame = 0.0f;//アニメーションを切り替えるフレーム数を0にする
 
 
 }
 
-void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame)
+void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame, float startFrame)
 {
 	if (m_modelHandle == modelHandle)
 	{
 		//同じモデルなら、ブレンド遷移
-		ChangeAnim(name, isRoop, timescale, endFrame);
+		ChangeAnim(name, isRoop, timescale, endFrame, startFrame);
 	}
 	else
 	{
@@ -225,7 +227,7 @@ void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, boo
 		m_animChangeFrame = 0.0f;
 
 		//違うモデルなら、Initで初期化//ブレンドなし	
-		Init(modelHandle, name, isRoop, timescale, endFrame);
+		Init(modelHandle, name, isRoop, timescale, endFrame, startFrame);
 	}
 }
 

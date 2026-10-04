@@ -39,6 +39,10 @@ private:
 	/// <param name="bottomright">左下</param>
 	/// <param name="bottomleft">右下</param>
 	void SetFaceVertices(int face, Vector3 topleft, Vector3 topright, Vector3 bottomright, Vector3 bottomleft);
+	/// <summary>
+	/// 座標とテクスチャ座標から頂点1つ分のデータを作る
+	/// </summary>
+	static VERTEX3D MakeV(Vector3 pos, float u, float v);
 
 
 

@@ -168,6 +168,7 @@
     <ClCompile Include="Character\HitCol.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateAttack.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateDashAttack.cpp" />
+    <ClCompile Include="Character\Player\Attack\PlayerStateAttackLanding.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateSkillAttack.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateUlt.cpp" />
     <ClCompile Include="Character\Player\Base\Player.cpp" />
@@ -277,6 +278,7 @@
     <ClInclude Include="Character\HitCol.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateAttack.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateDashAttack.h" />
+    <ClInclude Include="Character\Player\Attack\PlayerStateAttackLanding.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateSkillAttack.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateUlt.h" />
     <ClInclude Include="Character\Player\Base\Player.h" />

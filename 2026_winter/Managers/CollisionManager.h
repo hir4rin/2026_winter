@@ -45,6 +45,10 @@ public:
 private:
 	//隠し関数
 	bool ContainsCollider(const std::vector<std::weak_ptr<Collider>>& list, const std::shared_ptr<Collider>& target);
+	//weak_ptr同士が同じ実体を指しているかどうかを判定する(lockせずに比較できる)
+	static bool IsSameOwner(const std::weak_ptr<Collider>& a, const std::weak_ptr<Collider>& b);
+	//壁キック/壁走りのゾーンかどうか
+	static bool IsWallZone(const Collider& col);
 
 private:
 	//コンストラクタとデストラクタをプライベートにして、シングルトンパターンを実装

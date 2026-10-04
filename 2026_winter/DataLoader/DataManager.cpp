@@ -46,80 +46,6 @@ namespace
     constexpr char kRoutePointSeparator = '|';//巡回ポイント同士の区切り
     constexpr char kRouteValueSeparator = ':';//巡回ポイントの中の値(x,y,z,wait)の区切り
     constexpr int kRouteValueNum = 4;//巡回ポイント1つの値の数(x,y,z,wait)
-
-    //壁ゾーンのtypeとCSVに書く文字列の変換
-    const char* WallZoneTypeToString(Collider::ColRole type)
-    {
-        switch (type)
-        {
-        case Collider::ColRole::WallKickZone: return "WallKickZone";
-        case Collider::ColRole::WallRunZone: return "WallRunZone";
-        default: return "Unknown";
-        }
-    }
-    bool StringToWallZoneType(const std::string& str, Collider::ColRole& outType)
-    {
-        if (str == "WallKickZone") { outType = Collider::ColRole::WallKickZone; return true; }
-        if (str == "WallRunZone") { outType = Collider::ColRole::WallRunZone; return true; }
-        return false;
-    }
-
-    //敵配置CSVの文字列とenumの変換
-    bool StringToEnemyType(const std::string& str, EnemyType& outType)
-    {
-        if (str == "Swordman") { outType = EnemyType::Swordman; return true; }
-        return false;
-    }
-    bool StringToEnemyInitialState(const std::string& str, EnemyInitialState& outState)
-    {
-        if (str == "Idle") { outState = EnemyInitialState::Idle; return true; }
-        if (str == "Patrol") { outState = EnemyInitialState::Patrol; return true; }
-        if (str == "Guard") { outState = EnemyInitialState::Guard; return true; }
-        return false;
-    }
-
-    //strをseparatorで分割する(空の要素も残す)
-    std::vector<std::string> Split(const std::string& str, char separator)
-    {
-        std::vector<std::string> result;
-        std::istringstream ss(str);
-        std::string token;
-        while (std::getline(ss, token, separator))
-        {
-            result.push_back(token);
-        }
-        return result;
-    }
-
-    //route列("x:y:z:wait|x:y:z:wait|...")を巡回ポイントの配列にする
-    //数値にできない値があったら例外を投げる(呼び出し側で行ごとスキップする)
-    std::vector<EnemySpawnRoutePoint> ParseRoute(const std::string& str)
-    {
-        std::vector<EnemySpawnRoutePoint> route;
-        for (const auto& pointStr : Split(str, kRoutePointSeparator))
-        {
-            if (pointStr.empty()) continue;
-            auto values = Split(pointStr, kRouteValueSeparator);
-            if (values.size() < kRouteValueNum) continue;//値が足りないポイントは無視する
-
-            EnemySpawnRoutePoint point;
-            point.pos = Vector3(std::stof(values[0]), std::stof(values[1]), std::stof(values[2]));
-            point.waitTime = std::stof(values[3]);
-            route.push_back(point);
-        }
-        return route;
-    }
-
-    //名前にカンマや改行が入るとCSVが壊れるので、別の文字に置き換える
-    std::string SanitizeCsvCell(const std::string& str)
-    {
-        std::string result = str;
-        for (auto& c : result)
-        {
-            if (c == ',' || c == '\n' || c == '\r') c = '_';
-        }
-        return result;
-    }
 }
 
 void DataManager::LoadAll()
@@ -367,4 +293,74 @@ void DataManager::LoadEnemySpawnData(int stageNumber)
         }
         m_enemySpawnData.push_back(data);
     }
+}
+
+const char* DataManager::WallZoneTypeToString(Collider::ColRole type)
+{
+    switch (type)
+    {
+    case Collider::ColRole::WallKickZone: return "WallKickZone";
+    case Collider::ColRole::WallRunZone: return "WallRunZone";
+    default: return "Unknown";
+    }
+}
+
+bool DataManager::StringToWallZoneType(const std::string& str, Collider::ColRole& outType)
+{
+    if (str == "WallKickZone") { outType = Collider::ColRole::WallKickZone; return true; }
+    if (str == "WallRunZone") { outType = Collider::ColRole::WallRunZone; return true; }
+    return false;
+}
+
+bool DataManager::StringToEnemyType(const std::string& str, EnemyType& outType)
+{
+    if (str == "Swordman") { outType = EnemyType::Swordman; return true; }
+    return false;
+}
+
+bool DataManager::StringToEnemyInitialState(const std::string& str, EnemyInitialState& outState)
+{
+    if (str == "Idle") { outState = EnemyInitialState::Idle; return true; }
+    if (str == "Patrol") { outState = EnemyInitialState::Patrol; return true; }
+    if (str == "Guard") { outState = EnemyInitialState::Guard; return true; }
+    return false;
+}
+
+std::vector<std::string> DataManager::Split(const std::string& str, char separator)
+{
+    std::vector<std::string> result;
+    std::istringstream ss(str);
+    std::string token;
+    while (std::getline(ss, token, separator))
+    {
+        result.push_back(token);
+    }
+    return result;
+}
+
+std::vector<EnemySpawnRoutePoint> DataManager::ParseRoute(const std::string& str)
+{
+    std::vector<EnemySpawnRoutePoint> route;
+    for (const auto& pointStr : Split(str, kRoutePointSeparator))
+    {
+        if (pointStr.empty()) continue;
+        auto values = Split(pointStr, kRouteValueSeparator);
+        if (values.size() < kRouteValueNum) continue;//値が足りないポイントは無視する
+
+        EnemySpawnRoutePoint point;
+        point.pos = Vector3(std::stof(values[0]), std::stof(values[1]), std::stof(values[2]));
+        point.waitTime = std::stof(values[3]);
+        route.push_back(point);
+    }
+    return route;
+}
+
+std::string DataManager::SanitizeCsvCell(const std::string& str)
+{
+    std::string result = str;
+    for (auto& c : result)
+    {
+        if (c == ',' || c == '\n' || c == '\r') c = '_';
+    }
+    return result;
 }

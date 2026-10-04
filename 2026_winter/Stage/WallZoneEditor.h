@@ -64,6 +64,20 @@ private:
 	void DrawHistoryButtons();
 	//----------------------------------------------------------------------------
 
+	//補助関数--------------------------------------------------------------------
+	//ImGuiのコンボボックスのindexとColRoleの変換
+	static int TypeToIndex(Collider::ColRole type);
+	static Collider::ColRole IndexToType(int index);
+	static const char* TypeShortName(Collider::ColRole type);
+	//ImGuiでVector3をまとめて編集するための変換
+	static bool DragVector3(const char* label, Vector3& value, float speed, float min = 0.0f, float max = 0.0f);
+	static bool IsSameVector3(const Vector3& a, const Vector3& b);
+	//2つのゾーン一覧が全く同じか(Undo履歴を積むかどうかの判定に使う)
+	static bool IsSameZones(const std::vector<WallZoneData>& a, const std::vector<WallZoneData>& b);
+	//ゾーンの名前を自動で付ける
+	static std::string MakeDefaultName(Collider::ColRole type, int index);
+	//----------------------------------------------------------------------------
+
 private:
 	int m_stageNumber = 1;//Load/Saveするステージ番号
 	int m_selectedIndex = -1;//選択中のゾーン(-1なら未選択)

@@ -515,11 +515,14 @@ void Player::InitializeComboChain()
 		}
 		ComboNode node;
 		node.animName = tokens[ComboNodeType::AnimName];
-		node.type = static_cast<AttackType>(std::stoi(tokens[ComboNodeType::Type]));
+		//アニメーションの再生速度//空欄なら1.0(等速)
+		node.animTimeScale = tokens[ComboNodeType::AnimTimeScale].empty() ? 1.0f : std::stof(tokens[ComboNodeType::AnimTimeScale]);
 		node.index = std::stoi(tokens[ComboNodeType::Index]);
 		node.attackPower = std::stof(tokens[ComboNodeType::AttackPower]);
 		node.brokenRate = std::stof(tokens[ComboNodeType::BrokenRate]);
-		node.moveFrame = std::stof(tokens[ComboNodeType::MoveTimeRate]);
+		//突進フレーム//開始が空欄なら0(最初から)、終了が空欄なら-1(進行率のデフォルト値を使う)
+		node.moveStartFrame = tokens[ComboNodeType::MoveTimeStart].empty() ? 0.0f : std::stof(tokens[ComboNodeType::MoveTimeStart]);
+		node.moveEndFrame = tokens[ComboNodeType::MoveTimeEnd].empty() ? -1.0f : std::stof(tokens[ComboNodeType::MoveTimeEnd]);
 		node.moveSpeedX = std::stof(tokens[ComboNodeType::MoveSpeedX]);
 		node.moveSpeedY = std::stof(tokens[ComboNodeType::MoveSpeedY]);
 		//nextWeakAttack(空なら空vector)
@@ -548,10 +551,15 @@ void Player::InitializeComboChain()
 		node.isKirimomi = tokens[ComboNodeType::IsKirimomi] == "1" ? true : false;//CSVの値が1ならtrue、0ならfalse
 		node.seFrameRate = std::stof(tokens[ComboNodeType::SeFrameRate]);
 		node.seName = tokens[ComboNodeType::SeName];
-		node.attackColStartRate = std::stof(tokens[ComboNodeType::AttackColStartRate]);
-		node.attackColEndRate = std::stof(tokens[ComboNodeType::AttackColEndRate]);
+		node.attackColStartFrame = std::stof(tokens[ComboNodeType::AttackColStartFrame]);
+		node.attackColEndFrame = std::stof(tokens[ComboNodeType::AttackColEndFrame]);
 		//空欄なら-1(総フレーム数を使う)
 		node.endFrame = tokens[ComboNodeType::EndFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::EndFrame]);
+		//遷移フレーム//空欄なら-1(進行率のデフォルト値を使う)
+		node.comboInputStartFrame = tokens[ComboNodeType::ComboInputStartFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::ComboInputStartFrame]);
+		node.comboInputEndFrame = tokens[ComboNodeType::ComboInputEndFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::ComboInputEndFrame]);
+		node.cancelFrame = tokens[ComboNodeType::CancelFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::CancelFrame]);
+		node.actionCancelFrame = tokens[ComboNodeType::ActionCancelFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::ActionCancelFrame]);
 		m_comboChain.push_back(node);
 	}
 
@@ -775,7 +783,9 @@ void Player::ApplyPos()
 		//歩いて地面から離れたら落下ステートにする
 	if (IsLeftFloor())
 	{
-		ChangeState(std::make_shared<PlayerStateFall>(GetWeakPtr()));
+		//歩いて地面から離れたときだけコヨーテタイムのジャンプを許可する
+		bool canCoyoteJump = std::dynamic_pointer_cast<PlayerStateMove>(m_currentState) != nullptr;
+		ChangeState(std::make_shared<PlayerStateFall>(GetWeakPtr(), canCoyoteJump));
 	}
 
 

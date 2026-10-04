@@ -21,65 +21,7 @@ namespace
 
 	const char* const kTypeNames[] = { "WallKickZone", "WallRunZone" };
 
-	//ImGuiのコンボボックスのindexとColRoleの変換
-	int TypeToIndex(Collider::ColRole type)
-	{
-		return (type == Collider::ColRole::WallRunZone) ? 1 : 0;
-	}
-	Collider::ColRole IndexToType(int index)
-	{
-		return (index == 1) ? Collider::ColRole::WallRunZone : Collider::ColRole::WallKickZone;
-	}
-	const char* TypeShortName(Collider::ColRole type)
-	{
-		return (type == Collider::ColRole::WallRunZone) ? "Run " : "Kick";
-	}
-
-	//ImGuiでVector3をまとめて編集するための変換
-	bool DragVector3(const char* label, Vector3& value, float speed, float min = 0.0f, float max = 0.0f)
-	{
-		float v[3] = { value.x, value.y, value.z };
-		if (ImGui::DragFloat3(label, v, speed, min, max, "%.1f"))
-		{
-			value = Vector3(v[0], v[1], v[2]);
-			return true;
-		}
-		return false;
-	}
-
 	constexpr size_t kMaxHistoryNum = 100;//Undoで戻れる最大回数
-
-	bool IsSameVector3(const Vector3& a, const Vector3& b)
-	{
-		return a.x == b.x && a.y == b.y && a.z == b.z;
-	}
-
-	//2つのゾーン一覧が全く同じか(Undo履歴を積むかどうかの判定に使う)
-	bool IsSameZones(const std::vector<WallZoneData>& a, const std::vector<WallZoneData>& b)
-	{
-		if (a.size() != b.size())return false;
-		for (size_t i = 0; i < a.size(); ++i)
-		{
-			if (a[i].type != b[i].type ||
-				a[i].name != b[i].name ||
-				!IsSameVector3(a[i].position, b[i].position) ||
-				!IsSameVector3(a[i].halfExtents, b[i].halfExtents) ||
-				a[i].rotYDeg != b[i].rotYDeg ||
-				a[i].isActive != b[i].isActive)
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	//ゾーンの名前を自動で付ける
-	std::string MakeDefaultName(Collider::ColRole type, int index)
-	{
-		char buf[kNameBufferSize];
-		snprintf(buf, sizeof(buf), "%s_%d", (type == Collider::ColRole::WallRunZone) ? "Run" : "Kick", index);
-		return buf;
-	}
 }
 
 void WallZoneEditor::DrawWindow(Stage& stage, const Collider* player, const Vector3& camPos, const Vector3& camTarget)
@@ -500,4 +442,60 @@ bool WallZoneEditor::FindFloorY(const Stage& stage, const Vector3& pos, float& o
 
 	outFloorY = hit.HitPosition.y;
 	return true;
+}
+
+int WallZoneEditor::TypeToIndex(Collider::ColRole type)
+{
+	return (type == Collider::ColRole::WallRunZone) ? 1 : 0;
+}
+
+Collider::ColRole WallZoneEditor::IndexToType(int index)
+{
+	return (index == 1) ? Collider::ColRole::WallRunZone : Collider::ColRole::WallKickZone;
+}
+
+const char* WallZoneEditor::TypeShortName(Collider::ColRole type)
+{
+	return (type == Collider::ColRole::WallRunZone) ? "Run " : "Kick";
+}
+
+bool WallZoneEditor::DragVector3(const char* label, Vector3& value, float speed, float min, float max)
+{
+	float v[3] = { value.x, value.y, value.z };
+	if (ImGui::DragFloat3(label, v, speed, min, max, "%.1f"))
+	{
+		value = Vector3(v[0], v[1], v[2]);
+		return true;
+	}
+	return false;
+}
+
+bool WallZoneEditor::IsSameVector3(const Vector3& a, const Vector3& b)
+{
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+bool WallZoneEditor::IsSameZones(const std::vector<WallZoneData>& a, const std::vector<WallZoneData>& b)
+{
+	if (a.size() != b.size())return false;
+	for (size_t i = 0; i < a.size(); ++i)
+	{
+		if (a[i].type != b[i].type ||
+			a[i].name != b[i].name ||
+			!IsSameVector3(a[i].position, b[i].position) ||
+			!IsSameVector3(a[i].halfExtents, b[i].halfExtents) ||
+			a[i].rotYDeg != b[i].rotYDeg ||
+			a[i].isActive != b[i].isActive)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+std::string WallZoneEditor::MakeDefaultName(Collider::ColRole type, int index)
+{
+	char buf[kNameBufferSize];
+	snprintf(buf, sizeof(buf), "%s_%d", (type == Collider::ColRole::WallRunZone) ? "Run" : "Kick", index);
+	return buf;
 }

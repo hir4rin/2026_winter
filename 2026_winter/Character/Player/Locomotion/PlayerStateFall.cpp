@@ -7,9 +7,11 @@
 namespace
 {
 	constexpr float kFallMoveSpeedMultiplier = 0.8f;//落下中の移動速度倍率(通常の0.8倍)
+	constexpr int kCoyoteFrame = 6;//地面から離れてもジャンプを受け付けるフレーム数
 }
 
-PlayerStateFall::PlayerStateFall(std::weak_ptr<Player> player) : PlayerState(player)
+PlayerStateFall::PlayerStateFall(std::weak_ptr<Player> player, bool canCoyoteJump) : PlayerState(player),
+	m_canCoyoteJump(canCoyoteJump)
 {
 	//playerが既に破棄されていたら早期リターンする
 	if (m_owner.expired())return;
@@ -83,7 +85,14 @@ void PlayerStateFall::Update()
 	//	}
 	//}
 
-	
+	//コヨーテタイム//歩いて地面から離れた直後の数フレームはジャンプを受け付ける
+	m_frame++;
+	if (m_canCoyoteJump && m_frame <= kCoyoteFrame && input.IsTriggered("A"))
+	{
+		player->ChangeState(std::make_shared<PlayerStateJump>(m_owner));
+		return;
+	}
+
 	//スキル攻撃
 	if (input.IsPressed("LB") && input.IsTriggered("X"))
 	{

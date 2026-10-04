@@ -56,7 +56,7 @@ void PlayerStateWallRunKick::Enter()
 	m_gravity = 0.0f;
 
 	//アニメーションの切り替え
-	player->m_anim.ChangeAnim(player->GetAnimName("JumpUp"), false, 1.0f);
+	player->m_anim.ChangeAnim(player->GetAnimName("JumpUp"), false, 1.3f, Game::kPlayerAnimJumpUpEndFrame);
 
 	//壁キックの法線を保存する//同じ壁にすぐ張り付かないように
 	player->m_lastKickWallNormal = player->m_wallHitInfo.wallNormal;

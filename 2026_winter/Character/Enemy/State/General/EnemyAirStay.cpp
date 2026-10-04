@@ -4,7 +4,7 @@
 
 namespace
 {
-	constexpr float kAirStayTime = 60.0f;//空中で浮いている時間(frame)
+	constexpr float kAirStayTime = 90.0f;//空中で浮いている時間(frame)
 }
 
 EnemyAirStay::EnemyAirStay(std::weak_ptr<EnemyBase> owner) :EnemyStateBase(owner)

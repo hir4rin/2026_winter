@@ -9,6 +9,7 @@ namespace
 	constexpr float kWallKickSpeed = 10.0f;//壁キックの速度
 
 	constexpr float KkJumpInitVel = 20.0f;//ジャンプの初速//上方向の速度
+
 }
 
 PlayerStateWallKick::PlayerStateWallKick(std::weak_ptr<Player> player) : PlayerState(player)
@@ -42,7 +43,7 @@ void PlayerStateWallKick::Enter()
 	m_gravity = 0.0f;
 
 	//アニメーションの切り替え
-	player->m_anim.ChangeAnim(player->GetAnimName("JumpUp"), false, 1.0f, -1.0f);
+	player->m_anim.Init(player->m_modelHandle,player->GetAnimName("JumpUp"), false, 1.0f,Game::kPlayerAnimJumpUpEndFrame,7.8f);
 
 	//壁キックの法線を保存する
 	player->m_lastKickWallNormal = player->m_wallHitInfo.wallNormal;

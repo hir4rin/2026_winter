@@ -38,7 +38,7 @@ void PlayerStateSkillAttack::Enter()
 	//アニメーションの初期化//コンボの段数によってアニメーションを変える//-1はplayerがいないとき
 	int currentComboIndex = SelectAnimInit();
 	const ComboNode& node = player->m_comboChain[currentComboIndex];
-	player->m_anim.ChangeAnim(node.animName, false, 1.0f);
+	player->m_anim.ChangeAnim(node.animName, false, node.animTimeScale);
 	//上下差がある攻撃の時はここで初速を与える
 	if (node.moveSpeedY != 0)
 	{

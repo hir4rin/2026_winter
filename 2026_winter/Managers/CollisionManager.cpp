@@ -11,20 +11,17 @@ namespace
 	constexpr float kMinFloorNormalY = 0.5f;//これ以上なら床
 	constexpr float kGroundSnapDistance = 15.0f;//下り坂で離れる量の許容//playerの移動量に依存している
 	constexpr float kSnapOverlapGap = 1.0f;//少し離す
+}
 
+bool CollisionManager::IsSameOwner(const std::weak_ptr<Collider>& a, const std::weak_ptr<Collider>& b)
+{
+	return !a.owner_before(b) && !b.owner_before(a);
+}
 
-	//weak_ptr同士が同じ実体を指しているかどうかを判定する(lockせずに比較できる)
-	bool IsSameOwner(const std::weak_ptr<Collider>& a, const std::weak_ptr<Collider>& b)
-	{
-		return !a.owner_before(b) && !b.owner_before(a);
-	}
-
-	//壁キック/壁走りのゾーンかどうか
-	bool IsWallZone(const Collider& col)
-	{
-		return col.GetRole() == Collider::ColRole::WallKickZone ||
-			col.GetRole() == Collider::ColRole::WallRunZone;
-	}
+bool CollisionManager::IsWallZone(const Collider& col)
+{
+	return col.GetRole() == Collider::ColRole::WallKickZone ||
+		col.GetRole() == Collider::ColRole::WallRunZone;
 }
 
 void CollisionManager::RegisterCollider(std::weak_ptr<Collider> collider)

@@ -51,6 +51,9 @@ void EnemyAssasined::Enter()
 	//Playerのほうを向く
 	Vector3 toPlayer = player->GetRigidBody().GetPos() - owner->GetRigidBody().GetPos();
 	owner->m_targetVec = toPlayer.Normalize();
+
+	//playerを見つけた判定にする
+	owner->m_isPlayerFound = true;
 }
 
 void EnemyAssasined::Update()

@@ -145,12 +145,19 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	if (m_isDieOut)return;
 	//Playerの攻撃データをもとに被ダメ処理をする
 	m_hp -= static_cast<int>(data.attackPower);
+	
+	//被ダメをしたらplayerを見つけた判定にする
+	m_isPlayerFound = true;
+
 
 	//部位破壊率の確率で部位破壊する//GetRand(99)は0〜99を返す
 	if (!m_isPartBroken && GetRand(99) < data.brokenRate)
 	{
 		OnPartBreak();
 	}
+
+
+
 
 	////ダメージがあるなら、ヒットエフェクトを再生する//必殺技の時は、ヒットエフェクトをスローのものにする
 	//if (static_cast<int>(data.attackPower) > 0)
@@ -223,18 +230,24 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 		ChangeState(std::make_shared<EnemyHitAir>(GetWeakPtr(), hitinfo));
 		return;
 	}
+	else if (data.knockBackPower.y < 0.0f || hitinfo.isKirimomi)
+	{
+		//下降時の攻撃、もしくは吹っ飛び時の攻撃
+		ChangeState(std::make_shared<EnemyHitDrop>(GetWeakPtr(), hitinfo));
+		return;
+	}
 	else
-		if (data.knockBackPower.y < 0.0f || hitinfo.isKirimomi)
+	{
+		//敵が空中にいる状態になるのを防ぐ
+		//吹き飛ばし攻撃中は遷移しない
+		if (std::dynamic_pointer_cast<EnemyHitAir>(m_currentState) ||
+			std::dynamic_pointer_cast<EnemyHitDrop>(m_currentState))
 		{
-			//下降時の攻撃、もしくは吹っ飛び時の攻撃
-			ChangeState(std::make_shared<EnemyHitDrop>(GetWeakPtr(), hitinfo));
 			return;
 		}
-		else
-		{
-			//普通の攻撃
-			ChangeState(std::make_shared<EnemyHitGround>(GetWeakPtr(), hitinfo));
-		}
+		//普通の攻撃
+		ChangeState(std::make_shared<EnemyHitGround>(GetWeakPtr(), hitinfo));
+	}
 
 }
 
@@ -288,7 +301,7 @@ Vector3 EnemyBase::TargetPlayerPos()
 	return Vector3();
 }
 
-bool EnemyBase::ChaseTarget(Vector3 target, float distance,float speed)
+bool EnemyBase::ChaseTarget(Vector3 target, float distance, float speed)
 {
 	//プレイヤーの位置に向かって移動する//Y軸は移動しない
 	target.y = 0.0f;

@@ -13,6 +13,7 @@
 #include "PlayerStatePartBrokenKill.h"//以下同文
 #include "PlayerStateDie.h"//以下同文
 #include "PlayerStateDashAttack.h"//以下同文
+#include "PlayerStateAttackLanding.h"//以下同文
 #include "PlayerStateDodge.h"//以下同文
 #include "PlayerStateResultMove.h"//以下同文
 #include "PlayerStateWallRun.h"//以下同文
@@ -35,11 +36,12 @@ struct ComboNode
 {
 
 	std::string animName;//アニメーションの名
-	AttackType type = AttackType::None;//攻撃するタイプ
+	float animTimeScale = 1.0f;//アニメーションの再生速度
 	int index = -1;//攻撃の種類を管理するための変数
 	float attackPower = 0;//攻撃力
 	float brokenRate = 0;//部位破壊率(%)//0〜100
-	float moveFrame = -1;//突進する時間
+	float moveStartFrame = 0.0f;//突進を開始するアニメーションのフレーム
+	float moveEndFrame = -1.0f;//突進を終了するアニメーションのフレーム//負の値なら進行率のデフォルト値を使う
 	float moveSpeedX = 0;//前方向に突進する速度
 	float moveSpeedY = 0;//垂直方向の速度
 	std::vector<int> nextWeakAttack;//弱攻撃ボタンでつながる次のコンボ番号
@@ -49,9 +51,13 @@ struct ComboNode
 	bool isKirimomi = false;//吹っ飛ぶかどうか//吹っ飛ばない攻撃は、相手を引き寄せるような攻撃にする<-かなりあり！！！！！！！！
 	float seFrameRate = -1;//攻撃のSEを鳴らすフレームの割合//アニメーションの再生時間に対する割合で指定
 	std::string seName;//攻撃のSEの名前
-	float attackColStartRate = 0.0f;//攻撃の当たり判定を有効にするアニメーション進行率
-	float attackColEndRate = 0.0f;//攻撃の当たり判定を無効にするアニメーション進行率
-	float endFrame = -1.0f;//アニメーションの最終フレーム//負の値なら総フレーム数
+	float attackColStartFrame = 0.0f;//攻撃の当たり判定を有効にするアニメーションのフレーム
+	float attackColEndFrame = 0.0f;//攻撃の当たり判定を無効にするアニメーションのフレーム
+	float endFrame = -1.0f;//アニメーションの最終フレーム//負の値なら総フレーム数//コンボが途切れるフレームも兼ねる
+	float comboInputStartFrame = -1.0f;//コンボの先行入力の受付開始フレーム//負の値なら進行率のデフォルト値を使う
+	float comboInputEndFrame = -1.0f;//コンボの入力の受付終了フレーム//負の値なら進行率のデフォルト値を使う
+	float cancelFrame = -1.0f;//予約済みの次のコンボに移行するフレーム//負の値なら進行率のデフォルト値を使う
+	float actionCancelFrame = -1.0f;//回避・ジャンプ・確殺でキャンセルできるフレーム//負の値なら進行率のデフォルト値を使う
 
 };
 struct ComboInfo
@@ -72,24 +78,29 @@ enum ComboNodeType : int
 {
 	None = 0,
 	AnimName = 1,
-	Type = 2,
+	AnimTimeScale = 2,
 	Index = 3,
 	AttackPower = 4,
 	BrokenRate = 5,
-	MoveTimeRate = 6,
-	MoveSpeedX = 7,
-	MoveSpeedY = 8,
-	NextLightAttack = 9,
-	NextHeavyAttack = 10,
-	knockBackXZ = 11,
-	knockBackY = 12,
-	IsKirimomi = 13,
-	SeFrameRate = 14,
-	SeName = 15,
-	AttackColStartRate = 16,
-	AttackColEndRate = 17,
-	EndFrame = 18,
-	Size = 19,
+	MoveTimeStart = 6,
+	MoveTimeEnd = 7,
+	MoveSpeedX = 8,
+	MoveSpeedY = 9,
+	NextLightAttack = 10,
+	NextHeavyAttack = 11,
+	knockBackXZ = 12,
+	knockBackY = 13,
+	IsKirimomi = 14,
+	SeFrameRate = 15,
+	SeName = 16,
+	AttackColStartFrame = 17,
+	AttackColEndFrame = 18,
+	EndFrame = 19,
+	ComboInputStartFrame = 20,
+	ComboInputEndFrame = 21,
+	CancelFrame = 22,
+	ActionCancelFrame = 23,
+	Size = 24,
 
 };
 namespace ComboIndex
@@ -111,13 +122,14 @@ namespace ComboIndex
 	constexpr int AirAttack2 = 10;
 	constexpr int AirAttack3 = 11;
 	constexpr int AirAttack4 = 12;
+	constexpr int AirAttack5 = 13;
 
-	constexpr int AirHeavyAttack1 = 13;
+	constexpr int AirHeavyAttack1 = 14;
 
-	constexpr int DashAttack = 14;
-	constexpr int SkillAttack1 = 15;
-	constexpr int SkillAttack2 = 16;
-	constexpr int SkillAttack3 = 17;
+	constexpr int DashAttack = 15;
+	constexpr int SkillAttack1 = 16;
+	constexpr int SkillAttack2 = 17;
+	constexpr int SkillAttack3 = 18;
 
 };
 
@@ -340,6 +352,7 @@ private:
 	friend class PlayerStatePartBrokenKill;
 	friend class PlayerStateDie;
 	friend class PlayerStateDashAttack;
+	friend class PlayerStateAttackLanding;
 	friend class PlayerStateDodge;
 	friend class PlayerStateResultMove;
 	friend class PlayerStateWallRun;
