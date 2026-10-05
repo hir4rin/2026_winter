@@ -128,9 +128,10 @@ namespace ComboIndex
 	constexpr int AirHeavyAttack1 = 14;
 
 	constexpr int DashAttack = 15;
-	constexpr int SkillAttack1 = 16;
-	constexpr int SkillAttack2 = 17;
-	constexpr int SkillAttack3 = 18;
+	constexpr int SkillAttack0 = 16;//地上スキルの打ち上げ//終わったら自動でスキル攻撃1へ
+	constexpr int SkillAttack1 = 17;
+	constexpr int SkillAttack2 = 18;
+	constexpr int SkillAttack3 = 19;
 
 };
 
@@ -199,6 +200,9 @@ public:
 
 	//鴉状態かどうか
 	bool GetIsRaven()const { return m_isRaven; }
+
+	//カメラが注視するプレイヤーの座標//打ち上げ(スキル0)が当たってからスキル1が終わるまでは、Yだけ打ち上げた敵の高さになる
+	Vector3 GetCameraFocusPos()const;
 
 	//ロックオン//読み取り専用で渡す
 	const std::shared_ptr<LockOnManager> GetLockOnManager()const { return m_lockOnManager;}
@@ -293,6 +297,9 @@ private:
 	std::shared_ptr<PlayerState> m_prevState;//前の状態
 
 	bool m_isRaven = false;//鴉状態かどうか//攻撃が変化する
+	bool m_isSkillInvisible = false;//スキル攻撃中にモデル(本体・羽・武器)を描画しないか//代わりにエフェクトを出す
+	bool m_isCameraFocusOverride = false;//カメラの注視点のYを敵の高さで上書きするか//打ち上げ(スキル0)が当たってからスキル1の間だけtrue
+	std::weak_ptr<EnemyBase> m_cameraFocusEnemy;//上書き中にカメラが高さを合わせる敵(打ち上げた敵)
 	bool m_isTitleMode = false;//タイトル画面かどうか//trueの場合、移動方向をカメラ基準ではなく固定軸にする
 	const int kPlayerNeckBoneIndex = 25;//首のボーンのインデックス
 	int m_wingModelHandle = -1;//鴉の羽のモデルのハンドル//鴉状態の時に表示する
@@ -348,6 +355,7 @@ private:
 	friend class PlayerStateFall;
 	friend class PlayerStateHit;
 	friend class PlayerStateAttack;
+	friend class PlayerStateAttackBase;
 	friend class PlayerStateSkillAttack;
 	friend class PlayerStateUlt;
 	friend class PlayerStateAssasin;

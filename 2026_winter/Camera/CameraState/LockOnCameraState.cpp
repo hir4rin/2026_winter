@@ -90,7 +90,7 @@ void LockOnCameraState::Update()
 
 	//目標ターゲットを計算
 	FixCameraPos();
-	Vector3 playerPos = player->GetRigidBody().GetPos();
+	Vector3 playerPos = player->GetCameraFocusPos();//打ち上げスキル中はYが先読みした到達点になる
 	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
 
 	Vector3 targetPos = (playerPos + enemyPos) / 2;
@@ -235,7 +235,7 @@ void LockOnCameraState::FixCameraPos()
 	m_angleH = atan2f(RotPtoC.x, RotPtoC.z) + DX_PI_F;
 
 
-	auto pos = VAdd(RotPtoC, player->GetRigidBody().GetPos().ToDxLibVector());//プレイヤーの座標に足す
+	auto pos = VAdd(RotPtoC, player->GetCameraFocusPos().ToDxLibVector());//プレイヤーの座標に足す
 
 	m_goalPos = Vector3::FromDxLibVector(pos);
 

@@ -19,6 +19,10 @@ namespace
 	//ステージのモデル
 	const std::string kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
 	const std::string kDemoStageModelPath = "data/Stage/DemoStage/DemoStage.mv1";//テクスチャは同じ場所のTextures/を参照する
+
+	//スキルエフェクト確認用(モデル・テクスチャは同じ場所を参照する)
+	const std::string kDebugGhostDashEffectPath = "data/Effect/Skill/GhostDash.efk";
+	const std::string kDebugGhostDash3DEffectPath = "data/Effect/Skill/GhostDash3D.efk";
 }
 
 void System::LoadAll()
@@ -39,6 +43,10 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::DemoStageModel] = MV1LoadModel(kDemoStageModelPath.c_str());
 
 	SetUseASyncLoadFlag(FALSE);//ほかの場所の読み込みは同期に戻す
+
+	//エフェクトは同期で読み込む
+	m_asyncHandles[AsyncData::DebugGhostDashEffect] = LoadEffekseerEffect(kDebugGhostDashEffectPath.c_str());
+	m_asyncHandles[AsyncData::DebugGhostDash3DEffect] = LoadEffekseerEffect(kDebugGhostDash3DEffectPath.c_str());
 }
 
 void System::Terminate()
@@ -72,6 +80,9 @@ void System::Terminate()
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModelCollider]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::AreaWallEffect]);
+	//デバッグ
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGhostDashEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGhostDash3DEffect]);
 
 }
 

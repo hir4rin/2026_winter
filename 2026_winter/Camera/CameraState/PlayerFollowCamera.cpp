@@ -96,7 +96,7 @@ void PlayerFollowCamera::Update()
 	InputRightStick();
 
 	//ターゲットの位置を更新
-	Vector3 playerPos = player->GetRigidBody().GetPos();
+	Vector3 playerPos = player->GetCameraFocusPos();//打ち上げスキル中はYが先読みした到達点になる
 	m_testPos = playerPos;
 	//プレイヤーの位置と直下の地面との距離が一定以下の場合、カメラを動かさない
 	Vector3 endPos = playerPos + Vector3(0.0f, -kGroundCheckDistance, 0.0f);

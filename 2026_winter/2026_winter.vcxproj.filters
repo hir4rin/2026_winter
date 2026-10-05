@@ -114,6 +114,9 @@
     <ClCompile Include="Character\Player\Attack\PlayerStateAttack.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Player\Attack\PlayerStateAttackBase.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Player\Attack\PlayerStateDashAttack.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -447,6 +450,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\Attack\PlayerStateAttack.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Player\Attack\PlayerStateAttackBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\Attack\PlayerStateDashAttack.h">

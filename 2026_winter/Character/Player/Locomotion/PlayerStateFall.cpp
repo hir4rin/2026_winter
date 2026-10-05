@@ -94,14 +94,14 @@ void PlayerStateFall::Update()
 	}
 
 	//スキル攻撃
-	if (input.IsPressed("LB") && input.IsTriggered("X"))
+	if (input.IsTriggered("LB"))
 	{
 		//初めての攻撃だったら
 		if (!player->m_comboInfo.isAirSkillAttack)
 		{
 			if (player->CanSkillAttack())
 			{
-				player->ChangeState(std::make_shared<PlayerStateAttack>(m_owner, AttackType::SkillAttack));
+				player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner));
 				return;
 			}
 		}

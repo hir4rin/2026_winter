@@ -37,6 +37,8 @@ private:
 	void DrawGrid();
 	//フェード用の黒い板を描画する
 	void DrawFade();
+	//デバッグ用//プレイヤーの正面にスキルエフェクトを再生する
+	void PlayDebugSkillEffect(int effectHandle);
 
 private:
 	int m_frameCount;
@@ -55,4 +57,6 @@ private:
 	std::unique_ptr<WallZoneEditor> m_wallZoneEditor;//ステージ編集モードで壁ゾーンを設置・編集するImGuiウィンドウ
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか
+	bool m_wasF5Pressed = false;//前フレームにF5キーが押されていたか(スキルエフェクト確認用)
+	bool m_wasF6Pressed = false;//前フレームにF6キーが押されていたか(スキルエフェクト確認用)
 };

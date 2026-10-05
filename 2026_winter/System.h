@@ -42,6 +42,9 @@ enum class AsyncData : int
 	DemoStageModel,//デモステージ(UnityのDemoStageBuilderで生成)
 	AreaWallEffect,
 	WallBreakEffect,
+	//デバッグ
+	DebugGhostDashEffect,//スキルエフェクト確認用(F5キーで再生)
+	DebugGhostDash3DEffect,//スキルエフェクト確認用(F6キーで再生)
 	Goal,
 };
 

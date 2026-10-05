@@ -232,19 +232,23 @@ void Player::Update(Camera& camera)
 }
 void Player::Draw()
 {
-	//モデルの描画
-	if (m_anim.GetModelHandleForCheck() == m_modelHandle)
+	//スキル攻撃中はモデルを描画しない(代わりにスキルのエフェクトが出ている)
+	if (!m_isSkillInvisible)
 	{
-		MV1DrawModel(m_modelHandle);
-	}
-	else
-	{
-		MV1DrawModel(m_attackModelHandle);
-	}
+		//モデルの描画
+		if (m_anim.GetModelHandleForCheck() == m_modelHandle)
+		{
+			MV1DrawModel(m_modelHandle);
+		}
+		else
+		{
+			MV1DrawModel(m_attackModelHandle);
+		}
 
-	//鴉状態のときのみ描画
-	if (m_isRaven)MV1DrawModel(m_wingModelHandle);
-	m_weapon->Draw();//武器
+		//鴉状態のときのみ描画
+		if (m_isRaven)MV1DrawModel(m_wingModelHandle);
+		m_weapon->Draw();//武器
+	}
 	//コンボチェーンの描画
 	for (int i = 0; i < m_comboChain.size(); ++i)
 	{
@@ -311,9 +315,7 @@ void Player::OnDamage(Collider& other, AttackData& data)
 	m_attackData = data;
 
 	//スキル攻撃中、必殺技中は被弾アニメーションに遷移しない(ダメージ自体は通常通り受ける)
-	bool isSkillAttacking = m_comboInfo.currentComboIndex == ComboIndex::SkillAttack1 ||
-		m_comboInfo.currentComboIndex == ComboIndex::SkillAttack2 ||
-		m_comboInfo.currentComboIndex == ComboIndex::SkillAttack3;
+	bool isSkillAttacking = std::dynamic_pointer_cast<PlayerStateSkillAttack>(m_currentState) != nullptr;//打ち上げ(スキル0)も含む
 	bool isUltAttacking = std::dynamic_pointer_cast<PlayerStateUlt>(m_currentState) != nullptr;
 	if (isSkillAttacking || isUltAttacking)return;
 
@@ -429,6 +431,7 @@ void Player::ChangeState(std::shared_ptr<PlayerState> newState)
 
 void Player::AddSkillGauge(int value)
 {
+	return;//一旦100のまま
 	m_comboInfo.SkillGauge += value;
 	if (m_comboInfo.SkillGauge > kMaxGaugeValue)
 	{
@@ -463,6 +466,21 @@ std::shared_ptr<EnemyBase> Player::GetSoftTarget() const
 	auto target = m_softTarget.lock();
 	if (!target || target->GetIsLifeZero())return nullptr;
 	return target;
+}
+
+Vector3 Player::GetCameraFocusPos() const
+{
+	//これはスキル0->1の時のカメラをカッコいい角度にするようなので、汎用性はない
+
+
+	Vector3 pos = m_rb.m_pos;
+	if (!m_isCameraFocusOverride)return pos;
+	//打ち上げた敵が死んでいたら通常の注視点
+	auto enemy = m_cameraFocusEnemy.lock();
+	if (!enemy || enemy->GetIsLifeZero())return pos;
+	//Yだけ敵に合わせる//プレイヤーの方が高いときはプレイヤー
+	pos.y = (std::max)(pos.y, enemy->GetRigidBody().GetPos().y);
+	return pos;
 }
 
 std::shared_ptr<EnemyBase> Player::GetAttackTarget() const
@@ -839,6 +857,8 @@ void Player::ApplyPosWithAttackModel()
 
 bool Player::CanSkillAttack(bool changeGauge)
 {
+	return true;//一旦true
+
 	bool canSkill = m_comboInfo.SkillGauge >= kSkillAttackGaugeCost;
 
 	if (canSkill)

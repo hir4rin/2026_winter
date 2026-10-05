@@ -22,12 +22,6 @@ namespace
 	constexpr float kDefaultComboInputEndRate = 0.8f;//コンボ入力受付終了
 	constexpr float kDefaultCancelRate = 0.5f;//予約済みの次のコンボに移行する
 	constexpr float kDefaultActionCancelRate = 0.5f;//回避・ジャンプ・確殺でキャンセルできる
-	constexpr float kDefaultMoveEndRate = 0.2f;//突進終了
-
-	constexpr float kPlayerCenter = 100.0f;//プレイヤーの当たり判定の中心点までのy軸の距離
-
-	constexpr float kEffectTriggerTime = 0.2f;//エフェクトを出すタイミング
-	constexpr float kEffect2TriggerTime = 0.4f;//エフェクトを出すタイミング
 
 	constexpr float kHitStopTime = 0.1f;//攻撃ヒット時のヒットストップ時間
 	constexpr float kAttackColOffset = 30.0f;//攻撃の当たり判定を前に出す距離
@@ -37,12 +31,8 @@ namespace
 	const Vector3 kDropAttackColOffset = Vector3(0.0f, 50.0f, 0.0f);//ドロップ攻撃着地時の当たり判定オフセット
 	constexpr float kDropAttackColLifeTime = 10.0f;//ドロップ攻撃着地時の当たり判定の生存時間
 
-	const Vector3 kSkillEffectOffset = Vector3(0.0f, 100.0f, 0.0f);//スキル攻撃エフェクトのオフセット
-
 	constexpr float kEnemyTargetConeAngle = DX_PI_F / 3.0f;//入力方向にいる敵をターゲットにする角度範囲(60度)
 	constexpr float kNearbyEnemyRangeMultiplier = 2.0f;//近くの敵を集める範囲(ロックオン範囲の倍率)
-
-	constexpr int kSkillAttackGaugeCost = 20;//スキル攻撃に移行/コンボする際に消費するスキルゲージ量
 
 	//アニメーションの上昇(ルートモーション)を見た目から消す攻撃//ComboChain.csvのindex(切り上げ攻撃)
 	//ComboIndex::upAttackはCSVとずれているので、CSVの値を直接使う
@@ -57,7 +47,7 @@ namespace
 
 
 PlayerStateAttack::PlayerStateAttack(std::weak_ptr<Player> player, AttackType type) :
-	PlayerState(player), m_attackType(type)
+	PlayerStateAttackBase(player), m_attackType(type)
 {
 	//playerが既に破棄されていたら早期リターンする//trueで破棄されている
 	if (m_owner.expired())return;
@@ -71,14 +61,8 @@ void PlayerStateAttack::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
-	//攻撃の方向を決める
-	DetermineAttackDirection();
-	//ロックオン中の攻撃の方向を決める
-	LockOnAttackDirection();
-	//ロックオンしていないとき、入力方向に敵がいたらそいつをターゲットにする
-	CheckNoLockOnTargetEnemy();
-	//ロックオンしていないときの攻撃の方向を決める//内部ターゲット
-	NoLockOnAttackDirection();
+	//攻撃の方向を決める(入力→ロックオン→内部ターゲット)
+	DecideAttackDirection();
 
 	//アニメーションの初期化//コンボの段数によってアニメーションを変える//-1はplayerがいないとき
 	int currentComboIndex = SelectAnimInit();
@@ -103,40 +87,9 @@ void PlayerStateAttack::Enter()
 	}
 
 	//上下差がある攻撃の時はここで初速を決めておく//実際に動き出すのはmoveStartFrameから(AttackMoveMent)
-	if (node.moveSpeedY != 0)
-	{
-		//上下の速度を保存
-		m_InitVel = player->m_targetVec * node.moveSpeedX + Vector3(0, node.moveSpeedY, 0);
-		m_gravity = 0.0f;
-		player->m_rb.m_vel = Vector3(0, 0, 0);
-	}
-
-	float totalAnimFrame = player->m_anim.GetAnimTotalFrame(node.animName);
-	//ここでColliderを生成する//あとhitstopとkAttackColOffset
-	player->m_attackData = {
-	.attackPower = node.attackPower,
-	.brokenRate = node.brokenRate,
-	.knockBackPower = Vector3(node.knockBackXZ, node.knockBackY,0),
-	//.knockBackPower = Vector3(0.0f,node.knockBackY,0.0f),//吹き飛ばない攻撃にする
-	.knockBackFrame = totalAnimFrame,
-	.hitStopTime = kHitStopTime,
-	.kAttackColOffset = kAttackColOffset,
-	.isKirimomi = node.isKirimomi
-	};
-
-	m_attackCol = std::make_shared<AttackCol>(m_owner, player->m_attackData);
-	Vector3 offset = player->m_targetVec * player->m_attackData.kAttackColOffset
-		+ Vector3(0, kPlayerCenter, 0);//プレイヤーの前方に50.0f、y軸方向にkPlayerCenterだけオフセットする
-
-	m_attackCol->ColInit({
-		.pos = player->m_rb.m_pos,
-		.offset = offset,
-		.shape = std::make_unique<SphereShape>(kAttackColRadius),
-		.tag = {Collider::Faction::Player, Collider::ColRole::Attack},
-		.isActive = false,
-		.isTrigger = true
-		});//攻撃の当たり判定を初期化する//最初は無効にしておく
-	m_attackCol->SetIsActive(false);//最初は当たり判定を無効にしておく
+	InitVerticalMove(node);
+	//攻撃データと当たり判定を生成する//最初は無効
+	CreateAttackCol(node);
 
 	m_isSwingSePlayed = false;//振りのSEをまだ再生していない状態にする
 }
@@ -149,8 +102,6 @@ void PlayerStateAttack::Update()
 
 	//攻撃中の移動処理
 	AttackMoveMent();
-	//エフェクトを出す
-	EffectCheck();
 	//振りのSEを出す
 	SwingSeCheck();
 
@@ -198,12 +149,12 @@ void PlayerStateAttack::Update()
 		if (m_isSkillAttackReserved)
 		{
 			m_isSkillAttackReserved = false;//スキル攻撃の予約を解除する
-			AttackFinishProcess();//攻撃の段数を初期化するなどの処理
+			AttackFinishProcess();//攻撃の段数を初期化するなどの処理//ここでcurrentComboIndexがNoneに戻るので、スキル攻撃1から始まる
 			//スキルゲージを減らす
-			player->AddSkillGauge(-kSkillAttackGaugeCost);
+			player->AddSkillGauge(-player->kSkillAttackGaugeCost);
 
 			//スキル攻撃に移行する
-			player->ChangeState(std::make_shared<PlayerStateAttack>(m_owner, AttackType::SkillAttack));
+			player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner));
 			return;
 		}
 
@@ -288,14 +239,8 @@ void PlayerStateAttack::Exit()
 		player->m_isRaven = false;//鴉状態を解除する
 	}
 
-	//攻撃の当たり判定を削除する//
-	if (m_attackCol)
-	{
-		CollisionManager::GetInstance().ReleaseCollider(m_attackCol);//当たり判定を削除する
-		m_attackCol->SetIsActive(false);
-		m_attackCol->SetLifeTimeLimited();
-		m_attackCol.reset();
-	}
+	//攻撃の当たり判定を削除する
+	ReleaseAttackCol();
 }
 
 void PlayerStateAttack::DebugDraw()
@@ -305,289 +250,6 @@ void PlayerStateAttack::DebugDraw()
 	DrawFormatString(10, 50, GetColor(255, 255, 255), "m_attackCol Active:%d", m_attackCol->GetIsActive());
 	//isHitの表示
 	DrawFormatString(10, 70, GetColor(255, 255, 255), "isHit:%d", m_owner.lock()->m_comboInfo.isHit);
-}
-
-void PlayerStateAttack::AttackMoveMent()
-{
-	auto player = m_owner.lock();
-	if (!player) return;
-
-	//ラストヒットの演出用//当たり判定を消す//動きもしない
-	if (System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
-	{
-		m_attackCol->SetIsActive(false);
-		return;
-	}
-
-
-	int currentComboIndex = player->m_comboInfo.currentComboIndex;
-	const ComboNode& node = player->m_comboChain[currentComboIndex];
-
-	//上下差がない攻撃とある攻撃で処理を分ける//moveSpeedYが0のときは、上下差がない攻撃とする
-	if (node.moveSpeedY == 0.0f)
-	{
-		//攻撃判定//いったん
-		if (player->m_anim.IsAnimFrameBetween(node.attackColStartFrame, node.attackColEndFrame))
-		{
-			m_attackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
-		}
-		else
-		{
-			m_attackCol->SetIsActive(false);//攻撃の当たり判定を無効にする
-		}
-
-		//ラストヒットの演出用//当たり判定を消す(下のisHitのreturnより前で必ず通しておく)
-		if (System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
-		{
-			m_attackCol->SetIsActive(false);
-		}
-
-		//攻撃が当たったときは、動きを止める
-		if (player->m_comboInfo.isHit)
-		{
-			player->m_rb.m_vel = Vector3(0, 0, 0);//攻撃が当たったときは、速度を0にする
-			return;
-		}
-
-
-		//コンボノードで設定されたフレームの間だけ突進
-		float moveEndFrame = ResolveTransitionFrame(node.moveEndFrame, kDefaultMoveEndRate);
-		if (player->m_anim.IsAnimFrameBetween(node.moveStartFrame, moveEndFrame))
-		{
-			player->m_rb.m_vel = player->m_targetVec * node.moveSpeedX;//攻撃の最初の数秒は前に突進する
-		}
-		else
-		{
-			player->m_rb.m_vel = Vector3(0, 0, 0);//突進が終わったら、速度を0にする
-		}
-	}
-	else//上下差あり//終了は地面につくまで(上昇は速度が0になるまで)なので、moveEndFrameは使わない
-	{
-		//moveStartFrameまでは動かない(重力も加算しない)
-		if (player->m_anim.GetNowAnimFrame() < node.moveStartFrame)
-		{
-			player->m_rb.m_vel = Vector3(0, 0, 0);
-			return;
-		}
-
-		//上昇攻撃は、動き出したタイミングで床から離れる
-		if (node.moveSpeedY > 0)
-		{
-			player->m_isGround = false;//ジャンプ状態にする
-		}
-
-		float timeScale = System::GetInstance().GetTimeScale();
-		//重力
-		m_gravity += -Game::kGravity * timeScale * player->m_ownTimeScale;
-		player->m_rb.m_vel = m_InitVel + Vector3(0, m_gravity, 0);
-		//player->m_rb.m_vel += Vector3(0, -Game::kGravity, 0) * timeScale;
-
-		//下方向は時間なし//上方向は時間制限あり
-		if (node.moveSpeedY > 0)//上向き
-		{
-			//床から離れる
-			player->SetIsFloor(false);
-			if (player->m_rb.m_vel.y <= 0)//速度が0になったら上昇終了
-			{
-				//player->m_rb.m_vel = player->m_targetVec * node.moveSpeedX + Vector3(0, 0, 0);
-				player->m_rb.m_vel = Vector3(0, 0, 0);//終わったら、速度を0にする
-				m_attackCol->SetIsActive(false);//攻撃の当たり判定を無効にする
-			}
-			//まだ上昇中
-			else
-			{
-				//判定を有効
-				m_attackCol->SetIsActive(true);//攻撃の当たり判定
-			}
-		}
-		else//下向き//常に下方向の速度を与える
-		{
-			//判定を有効
-			m_attackCol->SetIsActive(true);//攻撃の当たり判定
-		}
-
-
-	}
-
-	
-
-}
-
-void PlayerStateAttack::DetermineAttackDirection()
-{
-	auto player = m_owner.lock();
-	if (!player) return;
-
-	auto& input = Input::GetInstance();
-	Vector3 attackDir = Vector3(0, 0, 0);
-
-	//攻撃の方向を決める//カメラの向きと入力から、方向を決める
-	if (input.IsPressed("Up"))
-	{
-		attackDir += player->forward;
-	}
-	if (input.IsPressed("Down"))
-	{
-		attackDir += player->down;
-	}
-	if (input.IsPressed("Left"))
-	{
-		attackDir += player->left;
-	}
-	if (input.IsPressed("Right"))
-	{
-		attackDir += player->right;
-	}
-	//入力がないときは、playerの向いている方向に進む//あるときはその方向に進む//この処理に問題があるらしい
-	if (attackDir.Magnitude() <= 0.0f)
-	{
-		player->m_targetVec = player->m_targetVec.Normalize();
-
-		//player->m_targetVec = player->forward.Normalize();
-	}
-	else
-	{
-		player->m_targetVec = attackDir.Normalize();
-	}
-
-}
-
-void PlayerStateAttack::LockOnAttackDirection()
-{
-	auto player = m_owner.lock();
-	if (!player) return;
-	//ロックオンしているかどうか
-	auto cameraManager = player->m_cameraManager.lock();
-	if (!cameraManager)return;
-	//ロックオンしていないならreturnする
-	if (!player->IsLockOn())return;
-
-	//ターゲットしている敵を取得
-	auto lockedEnemy = player->GetAttackTarget();
-	if (!lockedEnemy)return;
-	//ターゲットしている敵が死んでいるならreturnする
-	if (lockedEnemy->GetIsLifeZero())return;
-	//ターゲットしている敵の方向にプレイヤーを向く
-	Vector3 enemyPos = lockedEnemy->GetRigidBody().GetPos();
-
-	Vector3 dirToEnemy = (enemyPos - player->m_rb.m_pos).Normalize();
-	dirToEnemy.y = 0.0f;
-	player->m_targetVec = dirToEnemy;
-
-}
-
-void PlayerStateAttack::NoLockOnAttackDirection()
-{
-	auto& input = Input::GetInstance();
-
-	auto player = m_owner.lock();
-	if (!player) return;
-	//ロックオンしていたらreturnする
-	if (player->IsLockOn())return;
-
-	//内部ターゲットの方向に吸い寄せる//死んでいたらnullptrが返る
-	auto softTarget = player->GetSoftTarget();
-	if (!softTarget)return;
-
-	Vector3 enemyPos = softTarget->GetRigidBody().GetPos();
-	Vector3 playerPos = player->m_rb.m_pos;
-	enemyPos.y = playerPos.y = 0;//y軸方向は無視する//XZ平面での角度を計算する
-	Vector3 dirToEnemy = (enemyPos - playerPos).Normalize();
-	player->m_targetVec = dirToEnemy;
-	//内部ターゲットがいない場合は、そのままスティック入力
-
-	//入力がないなら//インターンで得た情報
-	//ターゲットしている敵の方向にプレイヤーを向く
-}
-
-void PlayerStateAttack::CheckNoLockOnTargetEnemy()
-{
-	auto player = m_owner.lock();
-	if (!player) return;
-	auto& input = Input::GetInstance();
-
-	//ロックオンしているかどうか
-	auto cameraManager = player->m_cameraManager.lock();
-	if (!cameraManager)return;
-
-	//ロックオンしていたらreturnする
-	if (player->IsLockOn())return;
-
-	////入力方向にベクトルを飛ばし、そこと、cosΘで比較
-	////30度以内の敵がいたら、そいつをターゲットにする
-	//スティックの入力方向を求める
-	Vector3 inputDir = Vector3(0, 0, 0);
-	if (input.IsPressed("Up")) inputDir += player->forward;
-	if (input.IsPressed("Down")) inputDir += player->down;
-	if (input.IsPressed("Left")) inputDir += player->left;
-	if (input.IsPressed("Right")) inputDir += player->right;
-	bool hasInput = inputDir.Magnitude() > 0.0f;
-
-	//入力がないとき
-	//入力がないときは、playerの向いている方向を入力方向とする
-	if (!hasInput)
-	{
-		//内部ターゲットがいれば、そのまま使う
-		if (player->GetSoftTarget())return;
-
-		//内部ターゲットがいなければ、カメラの向いている方向から探す
-		auto cameraManager = player->m_cameraManager.lock();
-		if (!cameraManager)return;
-		auto camera = cameraManager->GetActiveCamera();
-		if (!camera)return;
-		Vector3 cameraPos = camera->GetPos();
-		Vector3 playerPos = player->m_rb.m_pos;
-		cameraPos.y = playerPos.y = 0.0f;//y軸方向は無視する//XZ平面での角度を計算する
-		inputDir = playerPos - cameraPos;
-	}
-	inputDir.y = 0.0f;
-	//カメラが真上にある場合など向きが決まらないときはreturnする
-	if (inputDir.Magnitude() <= 0.0f)return;
-	inputDir = inputDir.Normalize();
-
-	//プレイヤーの一定範囲内にいる敵を集める
-	auto enemyManager = player->m_enemyManager.lock();
-	if (!enemyManager)return;
-	bool isPlayerAir = !player->IsFloor();
-	float range = player->GetCameraRockOnRange() * kNearbyEnemyRangeMultiplier;
-	float cosTheta = cosf(kEnemyTargetConeAngle);//この角度以内の敵をターゲットにする//cosでの判定に使う
-
-	//入力方向とのcosが最大の敵をターゲットにする
-	std::shared_ptr<EnemyBase> bestTarget = nullptr;
-	float maxCos = -1.0f;
-	for (auto& enemy : enemyManager->GetEnemies())
-	{
-		if (!enemy)continue;
-		if (enemy->GetIsLifeZero())continue;
-		//プレイヤーが空中なら空中の敵だけ、地上なら地上の敵だけを対象にする
-		if (isPlayerAir == enemy->IsFloor())continue;
-
-		Vector3 enemyPos = enemy->GetRigidBody().GetPos();
-		Vector3 playerPos = player->m_rb.m_pos;
-		if ((enemyPos - playerPos).Magnitude() >= range)continue;
-
-		enemyPos.y = playerPos.y;//y軸方向は無視する//XZ平面での角度を計算する
-		Vector3 dirToEnemy = (enemyPos - playerPos).Normalize();
-		float cos = inputDir.Dot(dirToEnemy);
-		if (cos < cosTheta)continue;//角度の範囲外ならスキップ
-		if (cos > maxCos)
-		{
-			maxCos = cos;
-			bestTarget = enemy;
-		}
-	}
-
-	if (bestTarget)
-	{
-		//吸い寄せ対象
-		//見つかったら内部ターゲットにする
-		player->SetSoftTarget(bestTarget);
-	}
-	else if (hasInput)
-	{
-		//敵のいない方向に入力したときは、前の内部ターゲットを狙わない
-		player->ClearSoftTarget();
-	}
 }
 
 void PlayerStateAttack::CheckNoLockOnTargetEnemyForAirAttack5()
@@ -714,64 +376,25 @@ void PlayerStateAttack::AttackInputCheck()
 	float nowFrame = player->m_anim.GetNowAnimFrame();
 	bool canInput = nowFrame >= inputStartFrame && nowFrame <= inputEndFrame;//コンボ入力受付時間内かどうか
 	if (!canInput)return;//コンボ入力受付時間外なら、ここで処理を終える
-	//スキル攻撃かどうか
-	bool isSkillAttack = currentNode.index == ComboIndex::SkillAttack1 ||
-		currentNode.index == ComboIndex::SkillAttack2 ||
-		currentNode.index == ComboIndex::SkillAttack3;
-	bool isPlayerAir = !player->IsFloor();//空中にいるかどうか//空中にいるときは、空中攻撃に移行する
+	bool isPlayerAir = !player->IsFloor();//空中にいるかどうか
 	bool WasSkillAirAttack = player->m_comboInfo.isAirSkillAttack;//空中でスキル攻撃をしたかどうか
-	bool WasAirAttack = player->m_comboInfo.isAirAttack;//空中で攻撃をしたかどうか
 
-	//スキル攻撃
-	if (input.IsPressed("LB") && input.IsTriggered("X"))
+	//スキル攻撃//コンボを終了して、PlayerStateSkillAttackに移行する
+	if (input.IsTriggered("LB"))
 	{
-		//スキル攻撃ができるかどうか
+		//スキル攻撃ができるかどうか//ゲージは移行するときに減らす
 		if (player->CanSkillAttack(false))
 		{
-			//通常攻撃ならば、攻撃を終了して、スキル攻撃に移行
-			//スキル攻撃ならばコンボ攻撃に移行
-			if (isSkillAttack)
-			{
-				//コンボ攻撃に移行する
-				//弱攻撃ボタンでつながる次のコンボがあるか
-				if (!currentNode.nextWeakAttack.empty())//空じゃなかったら
-				{
-					m_nextComboIndex = currentNode.nextWeakAttack[0];//次のコンボ番号をセットする//今回は1つしかないので、0番目をセットする
-					m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
-				}
-			}
-			//コンボ処理を終了して、スキル攻撃に移行する
-			else
-			{
-				//空中でスキル攻撃を行っていたらスキル攻撃に移行しない
-				if (isPlayerAir && WasSkillAirAttack)return;
+			//空中でスキル攻撃を行っていたらスキル攻撃に移行しない
+			if (isPlayerAir && WasSkillAirAttack)return;
 
-				m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
-				m_isSkillAttackReserved = true;//スキル攻撃の予約がされているフラグを立てる
-			}
+			m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
+			m_isSkillAttackReserved = true;//スキル攻撃の予約がされているフラグを立てる
 		}
 	}
 	//強攻撃
 	else if (!input.IsPressed("LB") && input.IsTriggered("Y"))
 	{
-		//スキルアタックだったら弱攻撃につなぐ
-		if (isSkillAttack)
-		{
-			//地上だったら弱攻撃1に移行する//空中だったら空中弱攻撃に移行する
-			if (player->IsFloor())
-			{
-				m_nextComboIndex = ComboIndex::HeavyAttack1;//強攻撃1に移行する
-				m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
-			}
-			else
-			{
-				m_nextComboIndex = ComboIndex::AirHeavyAttack1;//空中強攻撃に移行する
-				m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
-			}
-
-		}
-
-		if (isSkillAttack)return;
 		if (!currentNode.nextHeavyAttack.empty())//空じゃなかったら
 		{
 			m_nextComboIndex = currentNode.nextHeavyAttack[0];//次のコンボ番号をセットする//今回は1つしかないので、0番目をセットする
@@ -781,28 +404,6 @@ void PlayerStateAttack::AttackInputCheck()
 	//弱攻撃
 	else if (!input.IsPressed("LB") && input.IsTriggered("X"))
 	{
-		//スキルアタックだったら弱攻撃につなぐ
-		if (isSkillAttack)
-		{
-			//地上だったら弱攻撃1に移行する//空中だったら空中弱攻撃に移行する
-			if (player->IsFloor())
-			{
-				m_nextComboIndex = ComboIndex::LightAttack1;//弱攻撃1に移行する
-				m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
-			}
-			else
-			{
-				//初めての弱攻撃ならする
-				if (!player->m_comboInfo.isAirAttack)
-				{
-					m_nextComboIndex = ComboIndex::AirAttack1;//空中弱攻撃に移行する
-					m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
-				}
-			}
-
-		}
-
-		if (isSkillAttack)return;
 		if (!currentNode.nextWeakAttack.empty())//空じゃなかったら
 		{
 			m_nextComboIndex = currentNode.nextWeakAttack[0];//次のコンボ番号をセットする//今回は1つしかないので、0番目をセットする
@@ -834,17 +435,6 @@ void PlayerStateAttack::StartCombo(int comboIndex)
 	//現在のコンボの段数を更新
 	player->m_comboInfo.currentComboIndex = comboIndex;
 	m_isComboInputReserved = false;//コンボ入力の予約を解除する
-
-	//Skill攻撃2,3だったらスキルゲージを減らす
-	int currentComboIndex = player->m_comboInfo.currentComboIndex;
-	bool isSkillAttack2or3 =
-		currentComboIndex == ComboIndex::SkillAttack2 ||
-		currentComboIndex == ComboIndex::SkillAttack3;
-
-	if (isSkillAttack2or3)
-	{
-		player->AddSkillGauge(-kSkillAttackGaugeCost);
-	}
 }
 
 void PlayerStateAttack::AttackFinishProcess()
@@ -898,18 +488,8 @@ int PlayerStateAttack::SelectAnimInit()
 				currentComboIndex = ComboIndex::AirHeavyAttack1;//空中強攻撃1
 			}
 		}
-		else if (m_attackType == AttackType::SkillAttack)
-		{
-			currentComboIndex = ComboIndex::SkillAttack1;
-			if (!player->IsFloor())player->m_comboInfo.isAirSkillAttack = true;//空中攻撃のフラグを立てる
-
-		}
-		//スキルアタックだったら鴉状態にする
-		bool isSkillAttack = currentComboIndex == ComboIndex::SkillAttack1 ||
-			currentComboIndex == ComboIndex::SkillAttack2 ||
-			currentComboIndex == ComboIndex::SkillAttack3;
-		if (isSkillAttack)player->m_isRaven = true;//鴉状態にする
-		else player->m_isRaven = false;//鴉状態を解除する
+		//スキル攻撃はPlayerStateSkillAttackで行うので、通常攻撃では鴉状態を解除する
+		player->m_isRaven = false;//鴉状態を解除する
 		//現在のコンボの段数を更新する
 		player->m_comboInfo.currentComboIndex = currentComboIndex;
 	}
@@ -920,12 +500,7 @@ int PlayerStateAttack::SelectAnimInit()
 		{
 			player->m_comboInfo.isAirAttack = true;
 		}
-		//スキルアタックだったら鴉状態にする
-		bool isSkillAttack = currentComboIndex == ComboIndex::SkillAttack1 ||
-			currentComboIndex == ComboIndex::SkillAttack2 ||
-			currentComboIndex == ComboIndex::SkillAttack3;
-		if (isSkillAttack)player->m_isRaven = true;//鴉状態にする
-		else player->m_isRaven = false;//鴉状態を解除する
+		player->m_isRaven = false;//鴉状態を解除する
 
 		//コンボの段数が-1でないときは、次のコンボを再生する
 		//currentComboIndex = m_nextComboIndex;//次のコンボの段数を取得する
@@ -997,65 +572,6 @@ void PlayerStateAttack::InpuctAttackSetUp()
 	}
 }
 
-void PlayerStateAttack::EffectCheck()
-{
-	//auto player = m_owner.lock();
-	//if (!player)return;
-	//int currentComboIndex = player->m_comboInfo.currentComboIndex;
-	//const ComboNode& node = player->m_comboChain[currentComboIndex];
-	//float rate = player->m_anim.GetAnimRate();//アニメーションの進行率を取得
-	//if (currentComboIndex == ComboIndex::SkillAttack1)
-	//{
-	//	if (rate >= kEffectTriggerTime)
-	//	{
-	//		/*player->m_efPlayingHandle = PlayEffekseer3DEffect(player->m_efHandle);
-	//		SetPosPlayingEffekseer3DEffect(player->m_efPlayingHandle, player->m_rb.m_pos.x, player->m_rb.m_pos.y+100, player->m_rb.m_pos.z);
-	//		SetRotationPlayingEffekseer3DEffect(player->m_efPlayingHandle, 0.0f, player->m_rotAngleY + DX_PI_F, 0.0f);*/
-	//		player->m_efPlayingHandle = EffectManager::GetInstance().Play(AsyncData::PlayerEffectSkill, 
-	//			player->m_rb.m_pos + kSkillEffectOffset, player->m_rotAngleY + DX_PI_F);
-	//	}
-	//	//エフェクトが出ているとき
-	//	else
-	//	{
-	//		//座標の更新
-	//		EffectManager::GetInstance().SetPos(player->m_efPlayingHandle, player->m_rb.m_pos + kSkillEffectOffset);
-	//		EffectManager::GetInstance().SetRot(player->m_efPlayingHandle, player->m_rotAngleY + DX_PI_F);
-	//	}
-	//}
-	//if (currentComboIndex == ComboIndex::SkillAttack2)
-	//{
-	//	if (rate >= kEffect2TriggerTime)
-	//	{
-	//	
-	//		player->m_efPlayingHandle = EffectManager::GetInstance().Play(AsyncData::PlayerEffectSkill2, 
-	//			player->m_rb.m_pos + kSkillEffectOffset, player->m_rotAngleY + DX_PI_F);
-	//	}
-	//	//エフェクトが出ているとき
-	//	else
-	//	{
-	//		//座標の更新
-	//		EffectManager::GetInstance().SetPos(player->m_efPlayingHandle, player->m_rb.m_pos + kSkillEffectOffset);
-	//		EffectManager::GetInstance().SetRot(player->m_efPlayingHandle, player->m_rotAngleY + DX_PI_F);
-	//	}
-	//}
-	//if (currentComboIndex == ComboIndex::SkillAttack3)
-	//{
-	//	if (rate >= kEffect2TriggerTime)
-	//	{
-	//	
-	//		player->m_efPlayingHandle = EffectManager::GetInstance().Play(AsyncData::PlayerEffectSkill3, 
-	//			player->m_rb.m_pos + kSkillEffectOffset, player->m_rotAngleY + DX_PI_F);
-	//	}
-	//	//エフェクトが出ているとき
-	//	else
-	//	{
-	//		//座標の更新
-	//		EffectManager::GetInstance().SetPos(player->m_efPlayingHandle, player->m_rb.m_pos + kSkillEffectOffset);
-	//		EffectManager::GetInstance().SetRot(player->m_efPlayingHandle, player->m_rotAngleY + DX_PI_F);
-	//	}
-	//}
-}
-
 void PlayerStateAttack::SwingSeCheck()
 {
 	//auto player = m_owner.lock();
@@ -1072,14 +588,4 @@ void PlayerStateAttack::SwingSeCheck()
 
 	//System::GetInstance().GetSoundManager().PlaySE(node.seName);
 	//m_isSwingSePlayed = true;
-}
-
-float PlayerStateAttack::ResolveTransitionFrame(float csvFrame, float defaultRate)
-{
-	auto player = m_owner.lock();
-	if (!player) return 0.0f;
-	//CSVで指定されていたらそのフレームを使う
-	if (csvFrame >= 0.0f) return csvFrame;
-	//負の値なら、デフォルトの進行率をフレームに変換する
-	return player->m_anim.GetAnimEndFrame() * defaultRate;
 }

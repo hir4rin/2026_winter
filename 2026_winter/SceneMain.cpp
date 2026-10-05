@@ -54,6 +54,10 @@ namespace
 
 	//スクリーンショットの保存先
 	const char* const kScreenshotPath = "data/SaveData/screenShot.png";
+
+	//スキルエフェクト確認用
+	constexpr float kDebugSkillEffectScale = 20.0f;//分身モデルは1/20で作っているので20倍して元の大きさに戻す
+	constexpr float kDebugSkillEffectDistance = 300.0f;//プレイヤーの正面のどこを中心にするか
 }
 
 SceneMain::SceneMain(SceneController& controller, StageType stageType) :
@@ -246,8 +250,35 @@ void SceneMain::NormalUpdate()
 
 	m_cameraManager->Update();
 
+	//F5/F6キーでスキルエフェクトを再生する(エフェクト確認用)
+	const bool isF5Pressed = CheckHitKey(KEY_INPUT_F5) != 0;
+	const bool isF6Pressed = CheckHitKey(KEY_INPUT_F6) != 0;
+	if (isF5Pressed && !m_wasF5Pressed)
+	{
+		PlayDebugSkillEffect(System::GetInstance().GetHandle(AsyncData::DebugGhostDashEffect));
+	}
+	if (isF6Pressed && !m_wasF6Pressed)
+	{
+		PlayDebugSkillEffect(System::GetInstance().GetHandle(AsyncData::DebugGhostDash3DEffect));
+	}
+	m_wasF5Pressed = isF5Pressed;
+	m_wasF6Pressed = isF6Pressed;
+
 	//再生中のエフェクトを進める
 	UpdateEffekseer3D();
+}
+
+void SceneMain::PlayDebugSkillEffect(int effectHandle)
+{
+	const Vector3 playerPos = m_player->GetRigidBody().GetPos();
+	const Vector3 forward = m_player->GetTargetVec();
+	const Vector3 center = playerPos + forward * kDebugSkillEffectDistance;
+
+	const int playingHandle = PlayEffekseer3DEffect(effectHandle);
+	SetPosPlayingEffekseer3DEffect(playingHandle, center.x, center.y, center.z);
+	//プレイヤーと同じ向きにする
+	SetRotationPlayingEffekseer3DEffect(playingHandle, 0.0f, atan2f(forward.x, forward.z), 0.0f);
+	SetScalePlayingEffekseer3DEffect(playingHandle, kDebugSkillEffectScale, kDebugSkillEffectScale, kDebugSkillEffectScale);
 }
 
 void SceneMain::FadeOutUpdate()
