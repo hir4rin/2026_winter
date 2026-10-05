@@ -49,13 +49,13 @@ void PlayerStateDodge::Enter()
 	if (hasInput == 0)
 	{
 		//入力がなかった場合
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeBackward"), true, 0.4f);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeBackward"), true, 0.8f);
 		m_avoidState = AvoidState::Backward;
 	}
 	else
 	{
 		//入力があった場合
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeForward"), true, 0.4f);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeForward"), true, 0.8f);
 		m_avoidState = AvoidState::Forward;
 
 	}
