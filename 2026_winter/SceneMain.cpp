@@ -245,6 +245,9 @@ void SceneMain::NormalUpdate()
 	System::GetInstance().Update();
 
 	m_cameraManager->Update();
+
+	//再生中のエフェクトを進める
+	UpdateEffekseer3D();
 }
 
 void SceneMain::FadeOutUpdate()
@@ -271,6 +274,10 @@ void SceneMain::NormalDraw()
 	m_player->Draw();
 	m_enemyManager->Draw();
 	m_stage->Draw();
+
+	//DxLibのカメラ設定をEffekseerに反映してからエフェクトを描画する
+	Effekseer_Sync3DSetting();
+	DrawEffekseer3D();
 #ifdef _DEBUG
 	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);

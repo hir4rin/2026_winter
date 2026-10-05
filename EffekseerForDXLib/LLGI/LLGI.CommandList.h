@@ -73,9 +73,10 @@ private:
 	bool isVertexBufferDirtied = true;
 	bool isCurrentIndexBufferDirtied = true;
 	bool isPipelineDirtied = true;
-	bool doesBeginWithPlatform_ = false;
 
 protected:
+	//! whether the command list wraps an external one whose render pass state is managed outside of LLGI
+	bool doesBeginWithPlatform_ = false;
 	bool isInRenderPass_ = false;
 	bool isInBegin_ = false;
 
@@ -89,6 +90,24 @@ protected:
 	void GetCurrentPipelineState(PipelineState*& pipelineState, bool& isDirtied);
 	void GetCurrentStorageBuffer(int32_t unit, BindingStorageBuffer& buffer);
 	void RegisterReferencedObject(ReferenceObject* referencedObject);
+	bool ValidateDrawState(const char* backendName,
+						   int32_t primitiveCount,
+						   int32_t instanceCount,
+						   BindingVertexBuffer& vertexBuffer,
+						   BindingIndexBuffer& indexBuffer,
+						   PipelineState*& pipelineState,
+						   bool& outIsVertexBufferDirtied,
+						   bool& outIsIndexBufferDirtied,
+						   bool& outIsPipelineDirtied);
+	bool ValidateDispatchState(const char* backendName,
+							   int32_t groupX,
+							   int32_t groupY,
+							   int32_t groupZ,
+							   int32_t threadX,
+							   int32_t threadY,
+							   int32_t threadZ,
+							   PipelineState*& pipelineState,
+							   bool& outIsPipelineDirtied);
 
 public:
 	CommandList(int32_t swapCount = 3);
