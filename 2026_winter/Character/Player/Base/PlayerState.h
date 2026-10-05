@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <memory>
 #include "../../../Collider/Collider.h"
+#include "../../CharacterBase.h"
 
 class Player;
 class Vector3;
@@ -18,6 +19,11 @@ public:
 	virtual void Exit() = 0;//状態から出るときの処理
 
 	virtual void DebugDraw() {};//デバッグ描画//必要な状態でオーバーライドする
+
+	//ジャスト回避判定に敵の攻撃が当たった時の処理//回避状態でオーバーライドする
+	virtual void OnJustDodge(Collider& other, const CharacterBase::AttackData& data) {};
+	//無敵かどうか//trueの間はダメージを受けない//必要な状態でオーバーライドする
+	virtual bool IsInvincible()const { return false; }
 
 	//壁判定のレイ(kWallCheckDistance)のデバッグ描画//当たっていたら緑、当たっていなかったら赤
 	void DebugDrawWallCheck();

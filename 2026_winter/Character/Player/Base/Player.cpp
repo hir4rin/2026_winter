@@ -281,6 +281,8 @@ void Player::OnDamage(Collider& other, AttackData& data)
 	//ダメージを受けたときの処理
 	//敵の攻撃データをもらい、ダメージを減らし、体力を減らす、場合によってはプレイヤーを吹き飛ばす
 	//DrawFormatString(0, 0, GetColor(255, 0, 0), "Player: OnDamage");
+	//状態による無敵(ジャスト回避の受付中など)はダメージを受けない
+	if (m_currentState && m_currentState->IsInvincible())return;
 	//ダメージを受けたときの処理
 	if (m_damageInfo.damageTimer <= 0.0f)//無敵時間が終わっている場合のみダメージを受ける
 	{
@@ -317,6 +319,13 @@ void Player::OnDamage(Collider& other, AttackData& data)
 
 	//stateをhitStateにする
 	ChangeState(std::make_shared<PlayerStateHit>(GetWeakPtr(), data));
+}
+
+void Player::OnJustDodge(Collider& other, AttackData& data)
+{
+	//現在の状態に通知する//回避状態以外は何もしない
+	if (!m_currentState)return;
+	m_currentState->OnJustDodge(other, data);
 }
 
 void Player::ForceIdleState()

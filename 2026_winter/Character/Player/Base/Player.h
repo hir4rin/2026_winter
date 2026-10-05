@@ -176,6 +176,7 @@ public:
 
 	void OnCollision(Collider& other) override;
 	void OnDamage(Collider& other, AttackData& data) override;
+	void OnJustDodge(Collider& other, AttackData& data);//ジャスト回避判定に敵の攻撃が当たった時の処理//現在の状態に通知する
 
 	void OnAttackHit(int otherId);//攻撃が当たった時の処理
 

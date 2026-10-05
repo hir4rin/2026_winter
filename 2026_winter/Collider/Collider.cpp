@@ -36,6 +36,10 @@ void Collider::DebugDraw() const
 	{
 		color = GetColor(0, 200, 255);//壁走りゾーンは水色
 	}
+	else if (m_tag.role == ColRole::JustDodge)
+	{
+		color = GetColor(255, 0, 255);//ジャスト回避判定はマゼンタ
+	}
 
 	m_shape->DebugDraw(GetWorldPos(), color); // switch(m_type)が丸ごと消える
 }

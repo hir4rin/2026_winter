@@ -8,6 +8,7 @@
 #include "Enemy/EnemyBase.h"
 #include "CharacterBase.h"
 #include "HitCol.h"
+#include "JustDodgeCol.h"
 //#include "../Effect/EffectManager.h"
 #include "EffekseerForDXLib.h"
 
@@ -251,6 +252,22 @@ void AttackCol::EnemyAttackOnCollision(Collider& other)
 			if (hitCol)
 			{
 				hitCol->OnDamageInterFace(*this, *m_attackData);
+			}
+		}
+	}
+	//プレイヤーのジャスト回避判定に当たったとき
+	else if (other.GetTag().role == Collider::ColRole::JustDodge)
+	{
+		int otherId = other.GetId();
+		auto it = std::find(m_hitIds.begin(), m_hitIds.end(), otherId);
+		if (it == m_hitIds.end())
+		{
+			m_hitIds.push_back(otherId);//当たったidのリストにotherのidを追加する
+			//JustDodgeColのOnJustDodgeInterFaceを呼ぶ
+			auto justDodgeCol = dynamic_cast<JustDodgeCol*>(&other);
+			if (justDodgeCol)
+			{
+				justDodgeCol->OnJustDodgeInterFace(*this, *m_attackData);
 			}
 		}
 	}

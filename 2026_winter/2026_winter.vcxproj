@@ -166,6 +166,7 @@
     <ClCompile Include="Character\CharacterBase.cpp" />
     <ClCompile Include="Character\Enemy\EnemyBase.cpp" />
     <ClCompile Include="Character\HitCol.cpp" />
+    <ClCompile Include="Character\JustDodgeCol.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateAttack.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateDashAttack.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateAttackLanding.cpp" />
@@ -276,6 +277,7 @@
     <ClInclude Include="Character\CharacterBase.h" />
     <ClInclude Include="Character\Enemy\EnemyBase.h" />
     <ClInclude Include="Character\HitCol.h" />
+    <ClInclude Include="Character\JustDodgeCol.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateAttack.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateDashAttack.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateAttackLanding.h" />
