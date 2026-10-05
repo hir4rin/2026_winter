@@ -578,6 +578,9 @@
     <ClInclude Include="Character\AttackCol.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\SkillAttackCol.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Character\HitCol.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>

@@ -4,8 +4,9 @@
 
 class Input;
 class AttackCol;
+class SkillAttackCol;
 //スキル攻撃(スキル攻撃0〜3)
-//地上:スキル0(打ち上げ)→自動でスキル攻撃1  空中:そのままスキル攻撃1
+//地上:スキル0(打ち上げ)→自動でスキル攻撃1  空中:空中版スキル攻撃1(y軸の移動なし)→スキル攻撃2へ
 //通常攻撃(PlayerStateAttack)との共通処理はPlayerStateAttackBaseにある
 //入口:Idle/Move/Jump/Fallから直接、またはPlayerStateAttackのコンボ中にスキル入力したとき
 //出口:スキル攻撃の次の段(同じクラス)、弱・強攻撃(PlayerStateAttack)、回避・ジャンプ・確殺、Idle/Move/Fall
@@ -27,10 +28,19 @@ private:
 	void PlayGhostEffect(int comboIndex);//スキル1,2のときモデルを消して分身エフェクトを出す
 	void UpdateGhostEffect();//分身エフェクトをプレイヤーの位置・向きに合わせる
 	void StopGhostEffect();//分身エフェクトを止めてモデルを表示に戻す
+	void LandFallSkill();//落下攻撃(スキル3)が着地したとき//着地の分身エフェクトを出して着地硬直(PlayerStateAttackLanding)へ
 	Vector3 GetSkillEffectBasePos();//スキルのエフェクトを出す基準の位置//スキル0,1は打ち上げた敵→攻撃の対象→プレイヤーの順//それ以外はプレイヤー
 	void InitLaunchCamera(int comboIndex);//打ち上げから続くスキル1以外は、カメラの注視点を通常に戻す
 	void UpdateLaunchCamera();//スキル0が当たったら、カメラの注視点のYを打ち上げた敵に合わせる(スキル1が終わるまで)
-private:
+	bool IsSkillComboIndex(int comboIndex);//スキル攻撃のコンボ番号かどうか
+	bool IsSkillAttack1(int comboIndex);//スキル攻撃1(地上版・空中版)かどうか
+
+	//地上スキル1用の攻撃判定//分身(敵の位置)に置く//プレイヤー側のm_attackColは使わない
+	void CreateSkillAttackCol();//地上スキル1のときだけ作る//攻撃データはCreateAttackColで作ったやつを使う
+	void UpdateSkillAttackCol();//位置を分身に合わせて、CSVのフレームでON/OFF//AttackMoveMentの後に呼ぶ
+	void ReleaseSkillAttackCol();//スキル用の攻撃判定を消す
+
+	std::shared_ptr<SkillAttackCol> m_skillAttackCol;//地上スキル1用の攻撃判定//地上スキル1以外はnullptr
 	int m_ghostEffectHandle = -1;//再生中の分身エフェクトのハンドル//-1なら再生していない
 	int m_nextComboIndex = -1;//次のスキル攻撃の段数//m_nextAttackTypeがSkillAttackのときだけ使う
 	AttackType m_nextAttackType = AttackType::None;//予約された次の攻撃の種類//SkillAttackなら次の段、弱・強ならPlayerStateAttackへ

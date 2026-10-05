@@ -470,8 +470,8 @@ std::shared_ptr<EnemyBase> Player::GetSoftTarget() const
 
 Vector3 Player::GetCameraFocusPos() const
 {
+	//☆注意事項
 	//これはスキル0->1の時のカメラをカッコいい角度にするようなので、汎用性はない
-
 
 	Vector3 pos = m_rb.m_pos;
 	if (!m_isCameraFocusOverride)return pos;
@@ -578,8 +578,22 @@ void Player::InitializeComboChain()
 		node.isKirimomi = tokens[ComboNodeType::IsKirimomi] == "1" ? true : false;//CSVの値が1ならtrue、0ならfalse
 		node.seFrameRate = std::stof(tokens[ComboNodeType::SeFrameRate]);
 		node.seName = tokens[ComboNodeType::SeName];
-		node.attackColStartFrame = std::stof(tokens[ComboNodeType::AttackColStartFrame]);
-		node.attackColEndFrame = std::stof(tokens[ComboNodeType::AttackColEndFrame]);
+		//当たり判定のフレーム//;で区切って複数書いたら多段ヒット
+		{
+			std::istringstream startSS(tokens[ComboNodeType::AttackColStartFrame]);
+			std::string frame;
+			while (std::getline(startSS, frame, ';'))
+			{
+				node.attackColStartFrames.push_back(std::stof(frame));
+			}
+			std::istringstream endSS(tokens[ComboNodeType::AttackColEndFrame]);
+			while (std::getline(endSS, frame, ';'))
+			{
+				node.attackColEndFrames.push_back(std::stof(frame));
+			}
+			//StartとEndの数がずれてたらCSVの書き間違い
+			assert(node.attackColStartFrames.size() == node.attackColEndFrames.size() && "attackColStartとattackColEndの数が合ってない");
+		}
 		//空欄なら-1(総フレーム数を使う)
 		node.endFrame = tokens[ComboNodeType::EndFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::EndFrame]);
 		//遷移フレーム//空欄なら-1(進行率のデフォルト値を使う)

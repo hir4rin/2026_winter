@@ -52,8 +52,10 @@ struct ComboNode
 	bool isKirimomi = false;//吹っ飛ぶかどうか//吹っ飛ばない攻撃は、相手を引き寄せるような攻撃にする<-かなりあり！！！！！！！！
 	float seFrameRate = -1;//攻撃のSEを鳴らすフレームの割合//アニメーションの再生時間に対する割合で指定
 	std::string seName;//攻撃のSEの名前
-	float attackColStartFrame = 0.0f;//攻撃の当たり判定を有効にするアニメーションのフレーム
-	float attackColEndFrame = 0.0f;//攻撃の当たり判定を無効にするアニメーションのフレーム
+	//当たり判定のON/OFFフレーム//StartとEndは同じ番号どうしでペア
+	//複数入れたら多段ヒットになる//CSVはnextAttackと同じで;区切り
+	std::vector<float> attackColStartFrames;//攻撃の当たり判定を有効にするアニメーションのフレーム
+	std::vector<float> attackColEndFrames;//攻撃の当たり判定を無効にするアニメーションのフレーム
 	float endFrame = -1.0f;//アニメーションの最終フレーム//負の値なら総フレーム数//コンボが途切れるフレームも兼ねる
 	float comboInputStartFrame = -1.0f;//コンボの先行入力の受付開始フレーム//負の値なら進行率のデフォルト値を使う
 	float comboInputEndFrame = -1.0f;//コンボの入力の受付終了フレーム//負の値なら進行率のデフォルト値を使う
@@ -132,6 +134,7 @@ namespace ComboIndex
 	constexpr int SkillAttack1 = 17;
 	constexpr int SkillAttack2 = 18;
 	constexpr int SkillAttack3 = 19;
+	constexpr int AirSkillAttack1 = 20;//空中から直接出すスキル攻撃1//y軸の移動なし//次はスキル攻撃2へ
 
 };
 

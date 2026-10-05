@@ -20,6 +20,12 @@ public:
 	std::weak_ptr<CharacterBase> GetOwner() { return m_owner; }
 
 	void ClearHitIds() { m_hitIds.clear(); }//当たったIDのリストをクリアする//攻撃が終わったら呼ぶ
+	//ノックバックだけあとから変える//多段ヒットで途中は吹っ飛ばさない、最後だけ吹っ飛ばすのに使う
+	void SetKnockBack(const Vector3& power, bool isKirimomi)
+	{
+		m_attackData->knockBackPower = power;
+		m_attackData->isKirimomi = isKirimomi;
+	}
 protected:
 	void PlayerAttackOnCollision(Collider& other);//Playerの攻撃が当たった時の処理
 	void EnemyAttackOnCollision(Collider& other);//Enemyの攻撃が当たった時の処理

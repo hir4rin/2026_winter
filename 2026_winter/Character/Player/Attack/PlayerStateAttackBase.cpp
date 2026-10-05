@@ -22,6 +22,10 @@ namespace
 	constexpr float kAttackColOffset = 30.0f;//攻撃の当たり判定を前に出す距離
 	constexpr float kAttackColRadius = 150.0f;//攻撃の当たり判定の半径
 
+	const Vector3 kDropAttackKnockBack = Vector3(20.0f, 20.0f, 0.0f);//ドロップ攻撃着地時のノックバック量
+	const Vector3 kDropAttackColOffset = Vector3(0.0f, 50.0f, 0.0f);//ドロップ攻撃着地時の当たり判定オフセット
+	constexpr float kDropAttackColLifeTime = 10.0f;//ドロップ攻撃着地時の当たり判定の生存時間
+
 	constexpr float kEnemyTargetConeAngle = DX_PI_F / 3.0f;//入力方向にいる敵をターゲットにする角度範囲(60度)
 	constexpr float kNearbyEnemyRangeMultiplier = 2.0f;//近くの敵を集める範囲(ロックオン範囲の倍率)
 }
@@ -227,6 +231,7 @@ void PlayerStateAttackBase::AttackMoveMent()
 	if (System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
 	{
 		m_attackCol->SetIsActive(false);
+		if (m_dropAttackCol)m_dropAttackCol->SetIsActive(false);//下降攻撃の追加ヒットも止める
 		return;
 	}
 
@@ -237,15 +242,9 @@ void PlayerStateAttackBase::AttackMoveMent()
 	//上下差がない攻撃とある攻撃で処理を分ける//moveSpeedYが0のときは、上下差がない攻撃とする
 	if (node.moveSpeedY == 0.0f)
 	{
-		//攻撃判定//いったん
-		if (player->m_anim.IsAnimFrameBetween(node.attackColStartFrame, node.attackColEndFrame))
-		{
-			m_attackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
-		}
-		else
-		{
-			m_attackCol->SetIsActive(false);//攻撃の当たり判定を無効にする
-		}
+		//攻撃判定//多段ヒットの処理はUpdateAttackWindowにまとめた
+		bool isInWindow = UpdateAttackWindow(*m_attackCol, node);
+		m_attackCol->SetIsActive(isInWindow);//どこかの区間に入ってたら判定ON
 
 		//ラストヒットの演出用//当たり判定を消す(下のisHitのreturnより前で必ず通しておく)
 		if (System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
@@ -313,13 +312,90 @@ void PlayerStateAttackBase::AttackMoveMent()
 		}
 		else//下向き//常に下方向の速度を与える
 		{
-			//判定を有効
+			//判定を有効//こっちは今まで通り着地までずっとON//1ヒット目で敵をEnemyHitDropに入れる役
 			m_attackCol->SetIsActive(true);//攻撃の当たり判定
+
+			//追加のヒットはm_dropAttackColでCSVの区間ごとに出す//ノックバック0なのでダメージだけ
+			if (m_dropAttackCol)
+			{
+				bool isInWindow = UpdateDropAttackWindow(*m_dropAttackCol, node);
+				m_dropAttackCol->SetIsActive(isInWindow);
+			}
 		}
 
 
 	}
 
+}
+
+bool PlayerStateAttackBase::UpdateAttackWindow(AttackCol& col, const ComboNode& node)
+{
+	auto player = m_owner.lock();
+	if (!player) return false;
+
+	//今どの区間にいるか探す//どこにも入ってなければ-1
+	int activeWindow = -1;
+	for (int i = 0; i < static_cast<int>(node.attackColStartFrames.size()); ++i)
+	{
+		if (player->m_anim.IsAnimFrameBetween(node.attackColStartFrames[i], node.attackColEndFrames[i]))
+		{
+			activeWindow = i;
+			break;
+		}
+	}
+
+	//新しい区間に入った1フレームだけ通る
+	if (activeWindow != -1 && activeWindow != m_lastAttackWindow)
+	{
+		//前の区間で当てた敵にもう一回当たるようにする//これしないと2ヒット目以降すり抜ける
+		col.ClearHitIds();
+
+		//ノックバックは最後の一撃だけ//途中で吹っ飛ばすと残りが当たらないので
+		bool isLastHit = (activeWindow == static_cast<int>(node.attackColStartFrames.size()) - 1);
+		if (isLastHit)
+		{
+			//CSVの値そのまま//単発の攻撃はここしか通らないので今まで通り
+			col.SetKnockBack(Vector3(node.knockBackXZ, node.knockBackY, 0), node.isKirimomi);
+		}
+		else
+		{
+			//途中はその場で削るだけ
+			col.SetKnockBack(Vector3(0, 0, 0), false);
+		}
+	}
+	m_lastAttackWindow = activeWindow;//次のフレーム用に覚えとく
+
+	//ON/OFFは呼ぶ側でやる//ラストヒット演出とかで消したいときがあるので
+	return activeWindow != -1;
+}
+
+bool PlayerStateAttackBase::UpdateDropAttackWindow(AttackCol& col, const ComboNode& node)
+{
+	auto player = m_owner.lock();
+	if (!player) return false;
+
+	//今どの区間にいるか探す//ここはUpdateAttackWindowと一緒
+	int activeWindow = -1;
+	for (int i = 0; i < static_cast<int>(node.attackColStartFrames.size()); ++i)
+	{
+		if (player->m_anim.IsAnimFrameBetween(node.attackColStartFrames[i], node.attackColEndFrames[i]))
+		{
+			activeWindow = i;
+			break;
+		}
+	}
+
+	//新しい区間に入った1フレームだけ通る
+	//ノックバックはm_dropAttackColを作るときに0にしてるのでここでは触らない
+	//(敵をEnemyHitDropに入れるのはm_attackColの仕事//ここで入れるとHitDropに入り直して重力がリセットされる)
+	if (activeWindow != -1 && activeWindow != m_lastAttackWindow)
+	{
+		//前の区間で当てた敵にもう一回当たるようにする
+		col.ClearHitIds();
+	}
+	m_lastAttackWindow = activeWindow;//次のフレーム用に覚えとく
+
+	return activeWindow != -1;
 }
 
 void PlayerStateAttackBase::InitVerticalMove(const ComboNode& node)
@@ -333,6 +409,38 @@ void PlayerStateAttackBase::InitVerticalMove(const ComboNode& node)
 		m_InitVel = player->m_targetVec * node.moveSpeedX + Vector3(0, node.moveSpeedY, 0);
 		m_gravity = 0.0f;
 		player->m_rb.m_vel = Vector3(0, 0, 0);
+	}
+}
+
+void PlayerStateAttackBase::InpuctAttackSetUp()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+	const ComboNode& node = player->m_comboChain[player->m_comboInfo.currentComboIndex];
+	float totalAnimFrame = player->m_anim.GetAnimTotalFrame(node.animName);
+	//ドロップ攻撃の時は当たり判定を生成
+	if (node.moveSpeedY < 0)
+	{
+		CharacterBase::AttackData dropAttackData = {
+			.attackPower = 0.0f,
+			.knockBackPower = kDropAttackKnockBack,
+			.knockBackFrame = totalAnimFrame,
+			.hitStopTime = kHitStopTime,
+			.kAttackColOffset = kAttackColOffset,
+			.isKirimomi = true
+		};
+		//AttackColを生成
+		player->m_burstAttackCol = std::make_shared<AttackCol>(m_owner, dropAttackData);
+		player->m_burstAttackCol->ColInit({
+			.pos = player->m_rb.m_pos,
+			.offset = kDropAttackColOffset,
+			.shape = std::make_unique<SphereShape>(kAttackColRadius),
+			.tag = {Collider::Faction::Player, Collider::ColRole::Attack},
+			.isActive = true,
+			.isTrigger = true,
+			.lifeTime = kDropAttackColLifeTime
+			});//攻撃の当たり判定を初期化する//最初は無効にしておく
+		player->m_burstAttackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
 	}
 }
 
@@ -367,6 +475,23 @@ void PlayerStateAttackBase::CreateAttackCol(const ComboNode& node)
 		.isTrigger = true
 		});//攻撃の当たり判定を初期化する//最初は無効にしておく
 	m_attackCol->SetIsActive(false);//最初は当たり判定を無効にしておく
+	m_lastAttackWindow = -1;//前の段の区間番号が残ってると1ヒット目のクリアが飛ばされるのでリセット
+
+	//下降攻撃のときだけ、追加ヒット用の判定も作る//それ以外はnullptrのまま
+	if (node.moveSpeedY < 0)
+	{
+		m_dropAttackCol = std::make_shared<AttackCol>(m_owner, player->m_attackData);
+		m_dropAttackCol->ColInit({
+			.pos = player->m_rb.m_pos,
+			.offset = offset,
+			.shape = std::make_unique<SphereShape>(kAttackColRadius),
+			.tag = {Collider::Faction::Player, Collider::ColRole::Attack},
+			.isActive = false,
+			.isTrigger = true
+			});//m_attackColと同じ位置・大きさ//最初は無効
+		//追加のヒットはダメージだけ//敵をEnemyHitDropに入れるのはm_attackColの仕事
+		m_dropAttackCol->SetKnockBack(Vector3(0, 0, 0), false);
+	}
 }
 
 void PlayerStateAttackBase::ReleaseAttackCol()
@@ -378,6 +503,14 @@ void PlayerStateAttackBase::ReleaseAttackCol()
 		m_attackCol->SetIsActive(false);
 		m_attackCol->SetLifeTimeLimited();
 		m_attackCol.reset();
+	}
+	//下降攻撃の追加ヒット用も同じ消し方
+	if (m_dropAttackCol)
+	{
+		CollisionManager::GetInstance().ReleaseCollider(m_dropAttackCol);
+		m_dropAttackCol->SetIsActive(false);
+		m_dropAttackCol->SetLifeTimeLimited();
+		m_dropAttackCol.reset();
 	}
 }
 

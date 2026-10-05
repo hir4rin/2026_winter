@@ -23,6 +23,8 @@ namespace
 	//スキルエフェクト確認用(モデル・テクスチャは同じ場所を参照する)
 	const std::string kDebugGhostDashEffectPath = "data/Effect/Skill/GhostDash.efk";
 	const std::string kDebugGhostDash3DEffectPath = "data/Effect/Skill/GhostDash3D.efk";
+	const std::string kGhostSkill3FallEffectPath = "data/Effect/Skill/GhostSkill3_Fall.efk";
+	const std::string kGhostSkill3ImpactEffectPath = "data/Effect/Skill/GhostSkill3_Impact.efk";
 }
 
 void System::LoadAll()
@@ -47,6 +49,8 @@ void System::LoadAll()
 	//エフェクトは同期で読み込む
 	m_asyncHandles[AsyncData::DebugGhostDashEffect] = LoadEffekseerEffect(kDebugGhostDashEffectPath.c_str());
 	m_asyncHandles[AsyncData::DebugGhostDash3DEffect] = LoadEffekseerEffect(kDebugGhostDash3DEffectPath.c_str());
+	m_asyncHandles[AsyncData::GhostSkill3FallEffect] = LoadEffekseerEffect(kGhostSkill3FallEffectPath.c_str());
+	m_asyncHandles[AsyncData::GhostSkill3ImpactEffect] = LoadEffekseerEffect(kGhostSkill3ImpactEffectPath.c_str());
 }
 
 void System::Terminate()
@@ -83,6 +87,8 @@ void System::Terminate()
 	//デバッグ
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGhostDashEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGhostDash3DEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3FallEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3ImpactEffect]);
 
 }
 

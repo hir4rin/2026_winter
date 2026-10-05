@@ -26,7 +26,6 @@ private:
 	void StartCombo(int comboIndex);//コンボを開始する関数//comboIndexは、次のコンボの段数
 	void AttackFinishProcess();//攻撃が終了したときの処理//コンボの段数を初期化するなど
 	int  SelectAnimInit();//アニメーションの初期化//コンボの段数によってアニメーションを変える
-	void InpuctAttackSetUp();//ドロップ攻撃後の吹き飛ばし用
 
 	void SwingSeCheck();//振りのSEを出すタイミング(ComboNodeのseFrameRate/seNameを使う)
 private:

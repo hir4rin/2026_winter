@@ -3,6 +3,10 @@
 #include "../../../Game.h"
 #include "../../../Input.h"
 #include "../../AttackCol.h"
+#include "../../SkillAttackCol.h"
+#include "../../../Collider/SphereShape.h"
+#include "../../../Managers/CollisionManager.h"
+#include "../../../BattleManager.h"
 #include "../System.h"
 #include "EffekseerForDXLib.h"
 #include "../../Enemy/EnemyBase.h"
@@ -23,20 +27,9 @@ namespace
 	constexpr float kGhostDashScale = 30.0f;//分身モデルは1/20で作っているので20倍して元の大きさに戻す
 	constexpr float kGhostDashForwardDistance = 0.0f;//プレイヤーの正面にずらす距離//SceneMainの確認用(F5/F6)では300
 
-	//スキル攻撃のコンボ番号かどうか
-	bool IsSkillComboIndex(int comboIndex)
-	{
-		return comboIndex == ComboIndex::SkillAttack0 ||
-			comboIndex == ComboIndex::SkillAttack1 ||
-			comboIndex == ComboIndex::SkillAttack2 ||
-			comboIndex == ComboIndex::SkillAttack3;
-	}
-
-	//打ち上げ(スキル0)の次に自動で出す段//CSVのnextLightAttack//空欄ならスキル攻撃1
-	int GetLaunchNextComboIndex(const ComboNode& launchNode)
-	{
-		return launchNode.nextWeakAttack.empty() ? ComboIndex::SkillAttack1 : launchNode.nextWeakAttack[0];
-	}
+	//スキル1用の攻撃判定
+	constexpr float kSkillAttackColRadius = 150.0f;//半径//とりあえず通常攻撃と同じ
+	const Vector3 kSkillAttackColOffset = Vector3(0.0f, 100.0f, 0.0f);//敵の足元だと低いので上にずらす
 }
 
 PlayerStateSkillAttack::PlayerStateSkillAttack(std::weak_ptr<Player> player):
@@ -78,6 +71,9 @@ void PlayerStateSkillAttack::Enter()
 	InitVerticalMove(node);
 	//攻撃データと当たり判定を生成する//最初は無効
 	CreateAttackCol(node);
+	//地上スキル1だけ分身のところに判定を出す//m_attackDataを使うのでCreateAttackColの後
+	//空中版は上昇しないので普通のm_attackColでいい(多段ヒットもAttackMoveMentのほうでやってる)
+	if (currentComboIndex == ComboIndex::SkillAttack1)CreateSkillAttackCol();
 }
 
 void PlayerStateSkillAttack::Update()
@@ -88,6 +84,8 @@ void PlayerStateSkillAttack::Update()
 
 	//攻撃中の移動処理
 	AttackMoveMent();
+	//スキル1の判定//AttackMoveMentがm_attackColをONにしてくるので、その後で消す(スキル1のみ
+	UpdateSkillAttackCol();
 	//エフェクトを出す
 	EffectCheck();
 	//分身エフェクトをプレイヤーに追従させる
@@ -105,9 +103,21 @@ void PlayerStateSkillAttack::Update()
 		UpdateLaunchCamera();
 		if (nowFrame >= cancelFrame)
 		{
-			int nextIndex = GetLaunchNextComboIndex(currentNode);
 			//ゲージは打ち上げに入るときに減らしているので、ここでは減らさない
-			StartNextSkill(nextIndex);
+			StartNextSkill(ComboIndex::SkillAttack1);
+			return;
+		}
+		//アニメーションの更新
+		player->m_anim.Update();
+		return;
+	}
+
+	//落下攻撃(スキル3)は、アニメーションやコンボ入力に関係なく地面に着くまで続ける
+	if (currentNode.moveSpeedY < 0)
+	{
+		if (player->IsFloor())
+		{
+			LandFallSkill();
 			return;
 		}
 		//アニメーションの更新
@@ -207,6 +217,7 @@ void PlayerStateSkillAttack::Exit()
 
 	//攻撃の当たり判定を削除する
 	ReleaseAttackCol();
+	ReleaseSkillAttackCol();
 }
 
 void PlayerStateSkillAttack::DebugDraw()
@@ -217,6 +228,7 @@ void PlayerStateSkillAttack::DebugDraw()
 	DrawFormatString(10, 30, GetColor(255, 255, 255), "ComboIndex:%d", player->m_comboInfo.currentComboIndex);
 	if (m_attackCol)DrawFormatString(10, 50, GetColor(255, 255, 255), "m_attackCol Active:%d", m_attackCol->GetIsActive());
 	DrawFormatString(10, 70, GetColor(255, 255, 255), "isHit:%d", player->m_comboInfo.isHit);
+	if (m_skillAttackCol)DrawFormatString(10, 90, GetColor(255, 255, 255), "m_skillAttackCol Active:%d", m_skillAttackCol->GetIsActive());
 }
 
 void PlayerStateSkillAttack::AttackInputCheck()
@@ -273,10 +285,12 @@ int PlayerStateSkillAttack::SelectAnimInit()
 	//スキル攻撃の次の段から来たとき以外(None、または他のステートの段数が残っていたとき)は、最初から始める
 	if (!IsSkillComboIndex(currentComboIndex))
 	{
-		//地上なら打ち上げ(スキル0)から、空中ならそのままスキル攻撃1から
-		currentComboIndex = player->IsFloor() ? ComboIndex::SkillAttack0 : ComboIndex::SkillAttack1;
+		//地上なら打ち上げ(スキル0)から、空中なら空中版のスキル攻撃1(y軸の移動なし)から
+		currentComboIndex = player->IsFloor() ? ComboIndex::SkillAttack0 : ComboIndex::AirSkillAttack1;
 		//現在のコンボの段数を更新する
 		player->m_comboInfo.currentComboIndex = currentComboIndex;
+		//前の攻撃(着地の衝撃など)で当たったフラグが残っていることがあるので戻す//残っていると突進しない
+		player->m_comboInfo.isHit = false;
 	}
 	//空中でスキル攻撃をしたフラグを立てる(着地するまでもう一度スキルは出せない)
 	//地上にいる間はPlayer::Updateで毎フレームfalseに戻るので、打ち上げ後のスキル攻撃1に入ったときに立つ
@@ -301,10 +315,11 @@ void PlayerStateSkillAttack::PlayGhostEffect(int comboIndex)
 	auto player = m_owner.lock();
 	if (!player) return;
 
-	//スキル1はGhostDash、スキル2はGhostDash3D//それ以外は分身を出さない
+	//スキル1はGhostDash、スキル2はGhostDash3D、スキル3は落下中の分身//それ以外は分身を出さない
 	AsyncData effectKey;
-	if (comboIndex == ComboIndex::SkillAttack1)effectKey = AsyncData::DebugGhostDashEffect;
+	if (IsSkillAttack1(comboIndex))effectKey = AsyncData::DebugGhostDashEffect;
 	else if (comboIndex == ComboIndex::SkillAttack2)effectKey = AsyncData::DebugGhostDash3DEffect;
+	else if (comboIndex == ComboIndex::SkillAttack3)effectKey = AsyncData::GhostSkill3FallEffect;
 	else return;
 
 	//分身エフェクトが出ている間はモデルを描画しない
@@ -323,8 +338,40 @@ void PlayerStateSkillAttack::UpdateGhostEffect()
 	const Vector3 forward = player->m_targetVec;
 	const Vector3 pos = GetSkillEffectBasePos() + forward * kGhostDashForwardDistance;
 	SetPosPlayingEffekseer3DEffect(m_ghostEffectHandle, pos.x, pos.y, pos.z);
+	//スキル3の分身はプレイヤーのモデルの代わりなので、モデルと同じ向きにする
+	//分身はゲーム内ではモデルと逆を向くので、180度ずらす
+	if (player->m_comboInfo.currentComboIndex == ComboIndex::SkillAttack3)
+	{
+		SetRotationPlayingEffekseer3DEffect(m_ghostEffectHandle, 0.0f, player->m_rotAngleY + DX_PI_F, 0.0f);
+		return;
+	}
 	//プレイヤーと同じ向きにする
 	SetRotationPlayingEffekseer3DEffect(m_ghostEffectHandle, 0.0f, atan2f(forward.x, forward.z), 0.0f);
+}
+
+void PlayerStateSkillAttack::LandFallSkill()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+
+	player->m_isGround = true;//地面にいる状態にする
+	player->m_rb.m_vel = Vector3(0, 0, 0);
+	m_attackCol->SetIsActive(false);//攻撃の当たり判定を無効にする
+	if (m_dropAttackCol)m_dropAttackCol->SetIsActive(false);//追加ヒットも着地で終わり//消すのはExitのReleaseAttackCol
+	//着地の衝撃の当たり判定を置く(空中強攻撃の着地と同じ)
+	InpuctAttackSetUp();
+
+	//落下中の分身を止める
+	StopGhostEffect();
+	//着地した位置に、着地の分身と閃光を出す
+	const Vector3 pos = player->m_rb.m_pos;
+	int impactHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(AsyncData::GhostSkill3ImpactEffect));
+	SetPosPlayingEffekseer3DEffect(impactHandle, pos.x, pos.y, pos.z);
+	SetRotationPlayingEffekseer3DEffect(impactHandle, 0.0f, player->m_rotAngleY + DX_PI_F, 0.0f);//落下中の分身と同じく180度ずらす
+	SetScalePlayingEffekseer3DEffect(impactHandle, kGhostDashScale, kGhostDashScale, kGhostDashScale);
+
+	//空中強攻撃と同じ着地モーション・硬直にする
+	player->ChangeState(std::make_shared<PlayerStateAttackLanding>(m_owner, AttackType::heavyAttack));
 }
 
 Vector3 PlayerStateSkillAttack::GetSkillEffectBasePos()
@@ -334,7 +381,7 @@ Vector3 PlayerStateSkillAttack::GetSkillEffectBasePos()
 
 	//敵に合わせるのはスキル0,1だけ//それ以外はプレイヤーの位置
 	int comboIndex = player->m_comboInfo.currentComboIndex;
-	if (comboIndex != ComboIndex::SkillAttack0 && comboIndex != ComboIndex::SkillAttack1)return player->m_rb.m_pos;
+	if (comboIndex != ComboIndex::SkillAttack0 && !IsSkillAttack1(comboIndex))return player->m_rb.m_pos;
 
 	//打ち上げ(スキル0)で当てた敵//いなければ攻撃の対象(ロックオン対象 or 内部ターゲット)
 	auto enemy = player->m_cameraFocusEnemy.lock();
@@ -350,7 +397,15 @@ void PlayerStateSkillAttack::StopGhostEffect()
 	if (player)player->m_isSkillInvisible = false;//モデルを表示に戻す
 
 	if (m_ghostEffectHandle == -1)return;
-	StopEffekseer3DEffect(m_ghostEffectHandle);
+	if (player && player->m_comboInfo.currentComboIndex == ComboIndex::SkillAttack3)
+	{
+		//スキル3は落下中の分身だけ消して、出し終えた残像はその場で消えるまで残す
+		GetEffekseer3DManager()->StopRoot(m_ghostEffectHandle);
+	}
+	else
+	{
+		StopEffekseer3DEffect(m_ghostEffectHandle);
+	}
 	m_ghostEffectHandle = -1;
 }
 
@@ -360,8 +415,8 @@ void PlayerStateSkillAttack::InitLaunchCamera(int comboIndex)
 	if (!player) return;
 
 	//打ち上げから続くスキル1:スキル0が当たっていれば、敵に合わせた注視点をそのまま続ける
-	const int launchNextIndex = GetLaunchNextComboIndex(player->m_comboChain[ComboIndex::SkillAttack0]);
-	if (comboIndex == launchNextIndex && player->m_isCameraFocusOverride)return;
+	//続ける場合は何もせずリターン
+	if (comboIndex == ComboIndex::SkillAttack1 && player->m_isCameraFocusOverride)return;
 	//それ以外(スキル0の開始、空中から直接スキル1、スキル2以降)は通常の注視点//スキル0は当たったらUpdateLaunchCameraで上書きする
 	player->m_isCameraFocusOverride = false;
 	player->m_cameraFocusEnemy.reset();
@@ -434,4 +489,78 @@ void PlayerStateSkillAttack::EffectCheck()
 	//		EffectManager::GetInstance().SetRot(player->m_efPlayingHandle, player->m_rotAngleY + DX_PI_F);
 	//	}
 	//}
+}
+
+bool PlayerStateSkillAttack::IsSkillComboIndex(int comboIndex)
+{
+	return comboIndex == ComboIndex::SkillAttack0 ||
+		comboIndex == ComboIndex::SkillAttack1 ||
+		comboIndex == ComboIndex::SkillAttack2 ||
+		comboIndex == ComboIndex::SkillAttack3 ||
+		comboIndex == ComboIndex::AirSkillAttack1;
+}
+
+bool PlayerStateSkillAttack::IsSkillAttack1(int comboIndex)
+{
+	//打ち上げから続く地上版と、空中から直接出す空中版(y軸の移動なし)
+	return comboIndex == ComboIndex::SkillAttack1 ||
+		comboIndex == ComboIndex::AirSkillAttack1;
+}
+
+void PlayerStateSkillAttack::CreateSkillAttackCol()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+
+	//攻撃データはCreateAttackColで作ったやつをそのまま使う//攻撃力とかはCSVのスキル1の値
+	m_skillAttackCol = std::make_shared<SkillAttackCol>(m_owner, player->m_attackData);
+	m_skillAttackCol->SetPos(GetSkillEffectBasePos());//最初のフレームから分身の位置に置いとく
+	m_skillAttackCol->ColInit({
+		.pos = GetSkillEffectBasePos(),
+		.offset = kSkillAttackColOffset,
+		.shape = std::make_unique<SphereShape>(kSkillAttackColRadius),
+		.tag = {Collider::Faction::Player, Collider::ColRole::Attack},
+		.isActive = false,
+		.isTrigger = true
+		});//最初は無効//UpdateSkillAttackColでフレームを見てONにする
+}
+
+void PlayerStateSkillAttack::UpdateSkillAttackCol()
+{
+	//スキル1以外は持ってないので何もしない
+	if (!m_skillAttackCol) return;
+	auto player = m_owner.lock();
+	if (!player) return;
+
+	//プレイヤー側の判定は使わない//上昇中ずっとONになるのでここで消す
+	m_attackCol->SetIsActive(false);
+
+	//ラストヒットの演出中は判定を出さない(AttackMoveMentと同じ)
+	if (System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
+	{
+		m_skillAttackCol->SetIsActive(false);
+		return;
+	}
+
+	//分身と同じ位置に置く//スキル1は打ち上げた敵の位置
+	m_skillAttackCol->SetPos(GetSkillEffectBasePos());
+
+	//タイミングは上昇とは関係なくCSVのフレームで決める//空中版と同じタイミングになる
+	//多段ヒットもm_attackColと同じ処理を通す
+	//m_lastAttackWindowは共有だけど、地上スキル1はm_attackCol側で区間を見てないのでかぶらない
+	const ComboNode& node = player->m_comboChain[player->m_comboInfo.currentComboIndex];
+	bool isInWindow = UpdateAttackWindow(*m_skillAttackCol, node);
+	m_skillAttackCol->SetIsActive(isInWindow);
+}
+
+void PlayerStateSkillAttack::ReleaseSkillAttackCol()
+{
+	//ReleaseAttackColと同じ消し方
+	if (m_skillAttackCol)
+	{
+		CollisionManager::GetInstance().ReleaseCollider(m_skillAttackCol);
+		m_skillAttackCol->SetIsActive(false);
+		m_skillAttackCol->SetLifeTimeLimited();
+		m_skillAttackCol.reset();
+	}
 }

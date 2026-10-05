@@ -23,14 +23,6 @@ namespace
 	constexpr float kDefaultCancelRate = 0.5f;//予約済みの次のコンボに移行する
 	constexpr float kDefaultActionCancelRate = 0.5f;//回避・ジャンプ・確殺でキャンセルできる
 
-	constexpr float kHitStopTime = 0.1f;//攻撃ヒット時のヒットストップ時間
-	constexpr float kAttackColOffset = 30.0f;//攻撃の当たり判定を前に出す距離
-	constexpr float kAttackColRadius = 150.0f;//攻撃の当たり判定の半径
-
-	const Vector3 kDropAttackKnockBack = Vector3(20.0f, 20.0f, 0.0f);//ドロップ攻撃着地時のノックバック量
-	const Vector3 kDropAttackColOffset = Vector3(0.0f, 50.0f, 0.0f);//ドロップ攻撃着地時の当たり判定オフセット
-	constexpr float kDropAttackColLifeTime = 10.0f;//ドロップ攻撃着地時の当たり判定の生存時間
-
 	constexpr float kEnemyTargetConeAngle = DX_PI_F / 3.0f;//入力方向にいる敵をターゲットにする角度範囲(60度)
 	constexpr float kNearbyEnemyRangeMultiplier = 2.0f;//近くの敵を集める範囲(ロックオン範囲の倍率)
 
@@ -202,6 +194,7 @@ void PlayerStateAttack::Update()
 		{
 			player->m_isGround = true;//地面にいる状態にする
 			m_attackCol->SetIsActive(false);//攻撃の当たり判定を無効にする
+			if (m_dropAttackCol)m_dropAttackCol->SetIsActive(false);//追加ヒットも着地で終わり//消すのはExitのReleaseAttackCol
 			player->m_rb.m_vel = Vector3(0, 0, 0);//突進が終わったら、速度を0にする
 			//player->m_hitCol
 			//攻撃判定を生成
@@ -538,38 +531,6 @@ int PlayerStateAttack::SelectAnimInit()
 
 
 	return currentComboIndex;
-}
-
-void PlayerStateAttack::InpuctAttackSetUp()
-{
-	auto player = m_owner.lock();
-	if (!player) return;
-	const ComboNode& node = player->m_comboChain[player->m_comboInfo.currentComboIndex];
-	float totalAnimFrame = player->m_anim.GetAnimTotalFrame(node.animName);
-	//ドロップ攻撃の時は当たり判定を生成
-	if (node.moveSpeedY < 0)
-	{
-		CharacterBase::AttackData dropAttackData = {
-			.attackPower = 0.0f,
-			.knockBackPower = kDropAttackKnockBack,
-			.knockBackFrame = totalAnimFrame,
-			.hitStopTime = kHitStopTime,
-			.kAttackColOffset = kAttackColOffset,
-			.isKirimomi = true
-		};
-		//AttackColを生成
-		player->m_burstAttackCol = std::make_shared<AttackCol>(m_owner, dropAttackData);
-		player->m_burstAttackCol->ColInit({
-			.pos = player->m_rb.m_pos,
-			.offset = kDropAttackColOffset,
-			.shape = std::make_unique<SphereShape>(kAttackColRadius),
-			.tag = {Collider::Faction::Player, Collider::ColRole::Attack},
-			.isActive = true,
-			.isTrigger = true,
-			.lifeTime = kDropAttackColLifeTime
-			});//攻撃の当たり判定を初期化する//最初は無効にしておく
-		player->m_burstAttackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
-	}
 }
 
 void PlayerStateAttack::SwingSeCheck()

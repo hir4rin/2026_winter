@@ -276,6 +276,7 @@
     <ClInclude Include="Camera\CameraState\UltCameraState.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Character\AttackCol.h" />
+    <ClInclude Include="Character\SkillAttackCol.h" />
     <ClInclude Include="Character\CharacterBase.h" />
     <ClInclude Include="Character\Enemy\EnemyBase.h" />
     <ClInclude Include="Character\HitCol.h" />
