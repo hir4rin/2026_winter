@@ -78,12 +78,14 @@ void Collider::SetID()
 
 void Collider::ColUpdate()
 {
-	//自身のタイムスケールの計算
-	if (m_ownTimeScale != 1.0f)
+	//自身のタイムスケールの計算//時間指定があるときだけカウントダウンして、0になったら1.0に戻す
+	//時間指定がない(m_timeCounter <= 0)ときは、自分で1.0に戻すまでそのまま
+	if (m_timeCounter > 0.0f)
 	{
 		m_timeCounter -= 1.0f * System::GetInstance().GetTimeScale();
 		if (m_timeCounter <= 0.0f)
 		{
+			m_timeCounter = 0.0f;
 			m_ownTimeScale = 1.0f;
 		}
 	}

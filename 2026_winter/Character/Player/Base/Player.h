@@ -15,6 +15,7 @@
 #include "PlayerStateDashAttack.h"//以下同文
 #include "PlayerStateAttackLanding.h"//以下同文
 #include "PlayerStateDodge.h"//以下同文
+#include "PlayerStateJustDodge.h"//以下同文
 #include "PlayerStateResultMove.h"//以下同文
 #include "PlayerStateWallRun.h"//以下同文
 #include "PlayerStateWallKick.h"//以下同文
@@ -355,6 +356,7 @@ private:
 	friend class PlayerStateDashAttack;
 	friend class PlayerStateAttackLanding;
 	friend class PlayerStateDodge;
+	friend class PlayerStateJustDodge;
 	friend class PlayerStateResultMove;
 	friend class PlayerStateWallRun;
 	friend class PlayerStateWallKick;

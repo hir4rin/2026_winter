@@ -11,10 +11,10 @@ namespace
 {
 	constexpr float kPlayerCenter = 100.0f;//プレイヤーの当たり判定の中心点までのy軸の距離
 	constexpr float kJustDodgeColRadius = 120.0f;//ジャスト回避判定の半径//やられ判定(50)より大きくして、かすった攻撃も拾う
-	constexpr float kJustDodgeFrame = 10.0f;//ジャスト回避の受付フレーム数//回避開始からこのフレームまで受け付ける
+	constexpr float kJustDodgeFrame = 15.0f;//ジャスト回避の受付フレーム数//回避開始からこのフレームまで受け付ける
 
 	constexpr float kJustDodgeTimeScale = 0.2f;//ジャスト回避成功時の時間スケール
-	constexpr int kJustDodgeSlowFrame = 30;//ジャスト回避成功時にスローにするフレーム数
+	constexpr int kJustDodgeSlowFrame = 60;//ジャスト回避成功時にスローにするフレーム数
 }
 
 PlayerStateDodge::PlayerStateDodge(std::weak_ptr<Player> player):PlayerState(player)
@@ -94,6 +94,14 @@ void PlayerStateDodge::Update()
 	if (!player) return;
 	auto& input = Input::GetInstance();
 
+	//ジャスト回避が成功していたら、ジャスト回避の状態に遷移する
+	//OnJustDodgeは当たり判定の処理中に呼ばれるので、そこではフラグだけ立てて、ここで遷移する
+	if (m_isJustDodged)
+	{
+		player->ChangeState(std::make_shared<PlayerStateJustDodge>(m_owner, m_avoidState));//前回避か後ろ回避かを渡す
+		return;
+	}
+
 	//ジャスト回避の受付時間の管理//受付時間が過ぎたら判定を無効にする
 	m_justDodgeTimer += 1.0f * System::GetInstance().GetTimeScale();
 	if (m_justDodgeCol && m_justDodgeTimer > kJustDodgeFrame)
@@ -143,13 +151,19 @@ void PlayerStateDodge::DebugDraw()
 
 void PlayerStateDodge::OnJustDodge(Collider& other, const CharacterBase::AttackData& data)
 {
+	auto player = m_owner.lock();
+	if (!player) return;
+
 	//受付時間外、または既に成功していたら何もしない//1回の回避で1回だけ
 	if (m_justDodgeTimer > kJustDodgeFrame)return;
 	if (m_isJustDodged)return;
 	m_isJustDodged = true;
 
-	//スロー演出//反撃への移行などはここに追加する
-	System::GetInstance().SetTimeScaleForFrames(kJustDodgeTimeScale, kJustDodgeSlowFrame);
+	//スロー演出//状態の遷移はUpdateで行う
+	System::GetInstance().SetTimeScale(kJustDodgeTimeScale);
+	//プレイヤーのタイムスケールを調整する
+	//時間指定なしでセットする//PlayerStateJustDodgeのExitで1.0に戻す
+	player->SetOwnTimeScale(1.0f / kJustDodgeTimeScale);
 }
 
 bool PlayerStateDodge::IsInvincible() const

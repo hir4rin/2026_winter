@@ -225,6 +225,7 @@
     <ClCompile Include="Math\Vector3.cpp" />
     <ClCompile Include="Collider\RigidBody.cpp" />
     <ClCompile Include="Character\Player\Defence\PlayerStateDodge.cpp" />
+    <ClCompile Include="Character\Player\Defence\PlayerStateJustDodge.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStateAssasin.cpp" />
     <ClCompile Include="Character\Player\Attack\PlayerStatePartBrokenKill.cpp" />
     <ClCompile Include="Camera\CameraState\PartBroken\PartBrokenACamera.cpp" />
@@ -337,6 +338,7 @@
     <ClInclude Include="Math\Vector3.h" />
     <ClInclude Include="Collider\RigidBody.h" />
     <ClInclude Include="Character\Player\Defence\PlayerStateDodge.h" />
+    <ClInclude Include="Character\Player\Defence\PlayerStateJustDodge.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStateAssasin.h" />
     <ClInclude Include="Character\Player\Attack\PlayerStatePartBrokenKill.h" />
     <ClInclude Include="Camera\CameraState\PartBroken\PartBrokenACamera.h" />

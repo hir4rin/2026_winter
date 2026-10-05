@@ -311,8 +311,9 @@ void CollisionManager::AddVelocity()
 		if (!colliderA)continue;
 		if (!colliderA->GetIsActive())continue;
 		float timescale = System::GetInstance().GetTimeScale();
+		float ownScale = colliderA->m_ownTimeScale;
 		//ここですべてのコライダーに速度、timescaleをかける
-		colliderA->GetRigidBody().m_vel *= timescale * colliderA->GetTimeScale();
+		colliderA->GetRigidBody().m_vel *= timescale * ownScale;
 	}
 }
 

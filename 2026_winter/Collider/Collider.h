@@ -128,7 +128,9 @@ public:
 	bool GetIsLifeTimeLimited() const { return m_isLifeTimeLimited; }
 
 	//タイムスケール
-	void SetOwnTimeScale(float timeScale, float time) { m_ownTimeScale = timeScale; m_timeCounter = time; }
+	//time > 0 : timeフレーム後に自動で1.0に戻る(ヒットストップ用)
+	//time <= 0 : 自動では戻らない//自分で1.0に戻す(ジャスト回避など)
+	void SetOwnTimeScale(float timeScale, float time = 0.0f) { m_ownTimeScale = timeScale; m_timeCounter = time; }
 	float GetTimeScale() const { return m_ownTimeScale; }
 
 

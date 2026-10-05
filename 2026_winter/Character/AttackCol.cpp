@@ -238,6 +238,9 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 
 void AttackCol::EnemyAttackOnCollision(Collider& other)
 {
+	//プレイヤー以外(自分自身や他の敵)には当てない
+	if (other.GetTag().faction != Collider::Faction::Player)return;
+
 	if (other.GetTag().role == Collider::ColRole::Hit)
 	{
 		int otherId = other.GetId();

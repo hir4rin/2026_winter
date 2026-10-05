@@ -318,6 +318,9 @@
     <ClCompile Include="Character\Enemy\EnemyManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Player\Defence\PlayerStateJustDodge.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Player\Defence\PlayerStateDodge.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -648,6 +651,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\EnemyManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Player\Defence\PlayerStateJustDodge.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\Defence\PlayerStateDodge.h">
