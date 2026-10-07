@@ -53,6 +53,7 @@ enum class AsyncData : int
 	BloodSplashEffectA,//横(+Z)に噴き出す
 	BloodSplashEffectB,//真上に噴き上がる
 	BloodSplashEffectC,//横に低く扇状に広がる(液体多め)
+	BloodSplashEffectWhite,//必殺技中の白い血しぶき(パターンBの白い版//奥側に多く飛び散る)
 	Goal,
 };
 

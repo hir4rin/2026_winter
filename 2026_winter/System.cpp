@@ -34,6 +34,7 @@ namespace
 	const std::string kBloodSplashAEffectPath = "data/Effect/Blood/BloodSplash.efk";
 	const std::string kBloodSplashBEffectPath = "data/Effect/Blood/BloodSplash_B.efk";
 	const std::string kBloodSplashCEffectPath = "data/Effect/Blood/BloodSplash_C.efk";
+	const std::string kBloodSplashWhiteEffectPath = "data/Effect/Blood/BloodSplash_B_White.efk";//必殺技中
 }
 
 void System::LoadAll()
@@ -66,6 +67,7 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::BloodSplashEffectA] = LoadEffekseerEffect(kBloodSplashAEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodSplashEffectB] = LoadEffekseerEffect(kBloodSplashBEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodSplashEffectC] = LoadEffekseerEffect(kBloodSplashCEffectPath.c_str());
+	m_asyncHandles[AsyncData::BloodSplashEffectWhite] = LoadEffekseerEffect(kBloodSplashWhiteEffectPath.c_str());
 }
 
 void System::Terminate()
@@ -109,6 +111,7 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodSplashEffectA]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodSplashEffectB]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodSplashEffectC]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodSplashEffectWhite]);
 
 }
 

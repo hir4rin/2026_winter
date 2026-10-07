@@ -221,6 +221,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Managers\CollisionChecker.cpp" />
     <ClCompile Include="Managers\CollisionManager.cpp" />
+    <ClCompile Include="Managers\EffectManager.cpp" />
     <ClCompile Include="Managers\FixNextPosition.cpp" />
     <ClCompile Include="Math\Matrix4x4.cpp" />
     <ClCompile Include="Math\Quaternion.cpp" />
@@ -338,6 +339,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="Managers\CollisionChecker.h" />
     <ClInclude Include="Managers\CollisionManager.h" />
+    <ClInclude Include="Managers\EffectManager.h" />
     <ClInclude Include="Managers\FixNextPosition.h" />
     <ClInclude Include="Math\Matrix4x4.h" />
     <ClInclude Include="Math\Quaternion.h" />

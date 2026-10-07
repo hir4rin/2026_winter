@@ -11,6 +11,7 @@
 #include "Camera/LockOnManager.h"
 #include "DataLoader/DataManager.h"
 #include "Managers/CollisionManager.h"
+#include "Managers/EffectManager.h"
 #include "Stage/Stage.h"
 #include "Input.h"
 #include "System.h"
@@ -267,8 +268,8 @@ void SceneMain::NormalUpdate()
 	m_wasF5Pressed = isF5Pressed;
 	m_wasF6Pressed = isF6Pressed;
 
-	//再生中のエフェクトを進める
-	UpdateEffekseer3D();
+	//再生中のエフェクトを、このフレームのタイムスケールに合わせて進める(自分の速さを持つエフェクトの設定し直しもここで行う)
+	EffectManager::GetInstance().Update();
 }
 
 void SceneMain::PlayDebugSkillEffect(int effectHandle)

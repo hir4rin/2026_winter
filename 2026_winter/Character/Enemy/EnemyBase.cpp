@@ -5,7 +5,8 @@
 #include "../../Game.h"
 #include "../System.h"
 #include "../../DataLoader/DataManager.h"
-#include "EffekseerForDXLib.h"
+#include "../../BattleManager.h"
+#include "../../Managers/EffectManager.h"
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -41,7 +42,7 @@ namespace
 	constexpr int kBloodSplashPatternNum = 3;//パターン数(AsyncData::BloodSplashEffectA〜C)
 	constexpr float kBloodSplashHeight = 100.0f;//足元からの高さ(やられ判定の高さに合わせる)
 	constexpr float kBloodSplashScale = 20.0f;//エフェクトは1/20で作っているので20倍して元の大きさに戻す
-
+	constexpr float kBloodSplashUltSpeed = 0.45f;//必殺技中の血しぶきの再生速度(タイムスケールに関係なくこの速さになる)
 }
 
 EnemyBase::EnemyBase(std::weak_ptr<Player> player)
@@ -156,14 +157,18 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	//被ダメをしたらplayerを見つけた判定にする
 	m_isPlayerFound = true;
 
-	//血しぶきを3パターンからランダムで再生する//GetRand(2)は0〜2を返す
+	//血しぶきを再生する//必殺技中は白い血、それ以外は3パターンからランダム(GetRand(2)は0〜2を返す)
 	{
-		const int pattern = GetRand(kBloodSplashPatternNum - 1);
-		const AsyncData effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodSplashEffectA) + pattern);
-		const int playingHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(effect));
-		SetPosPlayingEffekseer3DEffect(playingHandle, m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
-		SetScalePlayingEffekseer3DEffect(playingHandle, kBloodSplashScale, kBloodSplashScale, kBloodSplashScale);
-
+		//必殺技の攻撃が当たった瞬間は、AttackColがこの後にSetUltStartするのでGetIsUltimatingはまだfalse
+		//そのため、当たった攻撃が必殺技の判定かどうかも見る
+		const bool isUltimating = System::GetInstance().GetBattleMgr()->GetIsUltimating() ||
+			other.GetTag().role == Collider::ColRole::UltAttack;
+		AsyncData effect = AsyncData::BloodSplashEffectWhite;
+		if (!isUltimating)
+		{
+			const int pattern = GetRand(kBloodSplashPatternNum - 1);
+			effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodSplashEffectA) + pattern);
+		}
 		//エフェクトの+Zを、プレイヤーから敵へ向かう方向(斬られて血が飛ぶ方向)に向ける
 		Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
 		toEnemy.y = 0.0f;
@@ -171,7 +176,15 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 		{
 			toEnemy = player->GetTargetVec();//重なっているときはプレイヤーの正面に飛ばす
 		}
-		SetRotationPlayingEffekseer3DEffect(playingHandle, 0.0f, atan2f(toEnemy.x, toEnemy.z), 0.0f);
+		const Vector3 bloodPos(m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
+		const int playingHandle = EffectManager::GetInstance().Play(effect, bloodPos, atan2f(toEnemy.x, toEnemy.z), kBloodSplashScale);
+
+		//必殺技中の血は、タイムスケールに関係なくkBloodSplashUltSpeedの速さで飛ばす
+		//(当たった直後にスローがかかるので、EffectManagerが毎フレーム速さを設定し直す)
+		if (isUltimating)
+		{
+			EffectManager::GetInstance().SetOwnSpeed(playingHandle, kBloodSplashUltSpeed);
+		}
 	}
 
 

@@ -442,7 +442,6 @@ void Player::OnAttackHit(int otherId)
 	//	//内部ターゲットにセットする
 	//	lockOnManager->SetTargetEnemy(otherId);
 	//}
-
 }
 
 void Player::SetResultUp()
