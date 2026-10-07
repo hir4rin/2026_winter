@@ -20,6 +20,7 @@ public:
 	void Draw()const;
 	void OnCollision(Collider& other)override;
 	int GetStageModelHandle()const { return m_stageModelHandle;}
+	int GetStageViewHandle()const { return m_stageViewHandle; }//[BloodKillFog]
 
 	/// <summary>
 	/// ステージ制作モード(StageEditScene)で作ったCSVから、ステージ番号を指定してBOX配置を読み込む

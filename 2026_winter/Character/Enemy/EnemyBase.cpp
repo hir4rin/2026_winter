@@ -5,8 +5,10 @@
 #include "../../Game.h"
 #include "../System.h"
 #include "../../DataLoader/DataManager.h"
+#include "EffekseerForDXLib.h"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 namespace
 {
@@ -34,6 +36,11 @@ namespace
 
 
 	constexpr float kEnemyDistance = 50.0f;
+
+	//血しぶきエフェクト
+	constexpr int kBloodSplashPatternNum = 3;//パターン数(AsyncData::BloodSplashEffectA〜C)
+	constexpr float kBloodSplashHeight = 100.0f;//足元からの高さ(やられ判定の高さに合わせる)
+	constexpr float kBloodSplashScale = 20.0f;//エフェクトは1/20で作っているので20倍して元の大きさに戻す
 
 }
 
@@ -148,6 +155,24 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	
 	//被ダメをしたらplayerを見つけた判定にする
 	m_isPlayerFound = true;
+
+	//血しぶきを3パターンからランダムで再生する//GetRand(2)は0〜2を返す
+	{
+		const int pattern = GetRand(kBloodSplashPatternNum - 1);
+		const AsyncData effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodSplashEffectA) + pattern);
+		const int playingHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(effect));
+		SetPosPlayingEffekseer3DEffect(playingHandle, m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
+		SetScalePlayingEffekseer3DEffect(playingHandle, kBloodSplashScale, kBloodSplashScale, kBloodSplashScale);
+
+		//エフェクトの+Zを、プレイヤーから敵へ向かう方向(斬られて血が飛ぶ方向)に向ける
+		Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
+		toEnemy.y = 0.0f;
+		if (toEnemy.Magnitude() <= 0.0f)
+		{
+			toEnemy = player->GetTargetVec();//重なっているときはプレイヤーの正面に飛ばす
+		}
+		SetRotationPlayingEffekseer3DEffect(playingHandle, 0.0f, atan2f(toEnemy.x, toEnemy.z), 0.0f);
+	}
 
 
 	//部位破壊率の確率で部位破壊する//GetRand(99)は0〜99を返す

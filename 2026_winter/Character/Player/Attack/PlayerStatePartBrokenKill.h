@@ -43,6 +43,7 @@ public:
     void Exit() override;
 
     void DebugDraw() override;
+    bool IsInvincible()const override { return true; }//無敵
 private:
     void SelectedPattern();
 

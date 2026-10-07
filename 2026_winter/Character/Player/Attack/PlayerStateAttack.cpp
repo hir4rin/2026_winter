@@ -225,11 +225,15 @@ void PlayerStateAttack::Exit()
 	//次のコンボ段への遷移以外(回避・確殺・被弾・落下など)で抜けたときは、コンボ段数をリセットする
 	//リセットしないと、次の攻撃でSelectAnimInitが前の段の続きとして再生してしまう
 	auto player = m_owner.lock();
-	if (player && !m_isComboTransition)
+	if (player)
 	{
-		player->m_comboInfo.currentComboIndex = ComboIndex::None;//攻撃していない状態に戻す
 		player->m_comboInfo.isHit = false;
-		player->m_isRaven = false;//鴉状態を解除する
+		if (!m_isComboTransition)
+		{
+			player->m_comboInfo.currentComboIndex = ComboIndex::None;//攻撃していない状態に戻す
+			player->m_isRaven = false;//鴉状態を解除する
+		}
+		
 	}
 
 	//攻撃の当たり判定を削除する
@@ -483,6 +487,8 @@ int PlayerStateAttack::SelectAnimInit()
 		}
 		//スキル攻撃はPlayerStateSkillAttackで行うので、通常攻撃では鴉状態を解除する
 		player->m_isRaven = false;//鴉状態を解除する
+		//前の攻撃(着地の衝撃など)で当たったフラグが残っていることがあるので戻す//残っていると突進しない
+		player->m_comboInfo.isHit = false;
 		//現在のコンボの段数を更新する
 		player->m_comboInfo.currentComboIndex = currentComboIndex;
 	}

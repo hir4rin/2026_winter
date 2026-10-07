@@ -1,6 +1,7 @@
 ﻿#include "CollisionChecker.h"
 #include "../Collider/Collider.h"
 #include "../Collider/CapsuleShape.h"
+#include "../Collider/BoxShape.h"
 #include "../Collider/PolygonShape.h"
 #include "../Stage/Stage.h"
 #include <algorithm>
@@ -62,6 +63,10 @@ bool CollisionChecker::IsCollide(Collider& colA, Collider& colB)
 		{
 			isHit = CheckCollCP(colA, colB);
 		}
+		else if (typeB == ColliderType::Box)
+		{
+			isHit = CheckColCB(colA, colB);
+		}
 	}
 	//ポリゴンと
 	else if (typeA == ColliderType::Polygon)
@@ -104,17 +109,58 @@ bool CollisionChecker::CheckCollSS(Collider& colA, Collider& colB)
 
 	return true;
 }
+bool CollisionChecker::CheckColCB(Collider& colA, Collider& colB)
+{
+	auto capsule = dynamic_cast<CapsuleShape*>(&colA.GetShape());
+	if (!capsule)return false;
+
+	//最近点を求めて、そこからカプセルの中心までどれくらい離れているので判定をする
+
+
+	Vector3 capStart = colA.GetNextPos();
+	Vector3 capEnd = capStart + capsule->GetEndPos();
+
+	//BOXの中心座標
+	Vector3 boxCenter = colB.GetNextPos();
+
+	//カプセルの線分上で、BOXの中心に一番近い点を求める(CheckCollCSと同じ求め方)//射影
+	Vector3 startToEnd = capEnd - capStart;
+	float t = (boxCenter - capStart).Dot(startToEnd) / startToEnd.sqMagnitude();
+	t = std::clamp(t, 0.0f, 1.0f);
+	Vector3 sphereCenter = capStart + startToEnd * t;
+
+	//ここから先はCheckColSBと同じ//sphereCenterを球の中心とみなす
+	//BOXの半分のサイズ
+	Vector3 boxHalfExtents = colB.GetHalfExtents();
+	//球の中心座標をBOXのローカル座標に変換
+	Vector3 localSphereCenter = sphereCenter - boxCenter;
+	//球の中心座標をBOXの境界内に制限
+	Vector3 closestPoint;
+	closestPoint.x = (std::max)(-boxHalfExtents.x, (std::min)(localSphereCenter.x, boxHalfExtents.x));
+	closestPoint.y = (std::max)(-boxHalfExtents.y, (std::min)(localSphereCenter.y, boxHalfExtents.y));
+	closestPoint.z = (std::max)(-boxHalfExtents.z, (std::min)(localSphereCenter.z, boxHalfExtents.z));
+	//最も近い点と球の中心との距離を計算
+	Vector3 distanceVector = localSphereCenter - closestPoint;
+	float distanceSquared = distanceVector.sqMagnitude();
+	//距離が半径の2乗より小さい場合は当たっている
+	if (distanceSquared >= capsule->GetRadius() * capsule->GetRadius()) return false;
+
+	capsule->SetNearPos(sphereCenter);
+	return true;
+}
 bool CollisionChecker::CheckColSB(Collider& colA, Collider& colB)
 {
 	//球とBOXの当たり判定
+	auto box = dynamic_cast<BoxShape*>(&colB.GetShape());
+	if (!box)return false;
 	//球の中心座標
 	Vector3 sphereCenter = colA.GetNextPos();
 	//BOXの中心座標
 	Vector3 boxCenter = colB.GetNextPos();
 	//BOXの半分のサイズ
 	Vector3 boxHalfExtents = colB.GetHalfExtents();
-	//球の中心座標をBOXのローカル座標に変換
-	Vector3 localSphereCenter = sphereCenter - boxCenter;
+	//球の中心座標をBOXのローカル座標に変換(Y軸回転も戻す)
+	Vector3 localSphereCenter = box->WorldToLocalDir(sphereCenter - boxCenter);
 	//球の中心座標をBOXの境界内に制限
 	Vector3 closestPoint;
 	closestPoint.x = (std::max)(-boxHalfExtents.x, (std::min)(localSphereCenter.x, boxHalfExtents.x));

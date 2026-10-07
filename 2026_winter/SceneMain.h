@@ -3,6 +3,7 @@
 #include <memory>
 #include "Scene/Scene.h"
 #include "Stage/StageInfo.h"
+#include "Stage/BloodKillFog.h"//[BloodKillFog]
 
 class Player;
 class EnemySwordman;
@@ -55,6 +56,7 @@ private:
 	std::unique_ptr<Camera> m_camera;//Player::Updateに渡すだけ(実際のカメラはCameraManagerが制御する)
 	std::shared_ptr<Stage> m_stage;
 	std::unique_ptr<WallZoneEditor> m_wallZoneEditor;//ステージ編集モードで壁ゾーンを設置・編集するImGuiウィンドウ
+	BloodKillFog m_bloodKillFog;//[BloodKillFog]血殺中に背景とステージを赤くする(お試し)
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか
 	bool m_wasF5Pressed = false;//前フレームにF5キーが押されていたか(スキルエフェクト確認用)

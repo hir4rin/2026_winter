@@ -161,6 +161,7 @@
     <ClCompile Include="Camera\CameraState\Stage2FazeCamera.cpp" />
     <ClCompile Include="Camera\CameraState\TitleCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\UltCameraState.cpp" />
+    <ClCompile Include="Camera\CameraState\UltStartCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Character\AttackCol.cpp" />
     <ClCompile Include="Character\CharacterBase.cpp" />
@@ -187,7 +188,7 @@
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallStay.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallRunKick.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateRun.cpp" />
-    <ClCompile Include="Character\Player\Weapon.cpp" />
+    <ClCompile Include="Character\Player\PlayerWeapon.cpp" />
     <ClCompile Include="Collider\CapsuleShape.cpp" />
     <ClCompile Include="Collider\BoxShape.cpp" />
     <ClCompile Include="Collider\Collider.cpp" />
@@ -247,6 +248,7 @@
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\SceneController.cpp" />
     <ClCompile Include="Collider\SphereShape.cpp" />
+    <ClCompile Include="Stage\BloodKillFog.cpp" />
     <ClCompile Include="Stage\SkyBox.cpp" />
     <ClCompile Include="Stage\Stage.cpp" />
     <ClCompile Include="Stage\StageCsvIO.cpp" />
@@ -274,6 +276,7 @@
     <ClInclude Include="Camera\CameraState\Stage2FazeCamera.h" />
     <ClInclude Include="Camera\CameraState\TitleCameraState.h" />
     <ClInclude Include="Camera\CameraState\UltCameraState.h" />
+    <ClInclude Include="Camera\CameraState\UltStartCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Character\AttackCol.h" />
     <ClInclude Include="Character\SkillAttackCol.h" />
@@ -301,7 +304,7 @@
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallKick.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallStay.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallRunKick.h" />
-    <ClInclude Include="Character\Player\Weapon.h" />
+    <ClInclude Include="Character\Player\PlayerWeapon.h" />
     <ClInclude Include="Collider\CapsuleShape.h" />
     <ClInclude Include="Collider\BoxShape.h" />
     <ClInclude Include="Collider\Collider.h" />
@@ -365,6 +368,7 @@
     <ClInclude Include="Scene\SceneController.h" />
     <ClInclude Include="Collider\SphereShape.h" />
     <ClInclude Include="Collider\PolygonShape.h" />
+    <ClInclude Include="Stage\BloodKillFog.h" />
     <ClInclude Include="Stage\SkyBox.h" />
     <ClInclude Include="Stage\Stage.h" />
     <ClInclude Include="Stage\StageCsvIO.h" />

@@ -13,22 +13,22 @@
 
 namespace
 {
-	constexpr float kToPlayerLength = 700.0f;//プレイヤーからカメラまでの距離
-	constexpr float kCameraHeightFloat = 300.0f;//カメラの高さ
-	const Vector3 kCameraHeight = Vector3(0.0f, 150.0f, 0.0f);//カメラの高さ(Vector3)
+	const Vector3 kCameraHeight = Vector3(0.0f, 100.0f, 0.0f);//カメラの高さ(Vector3)
 
-	const float kUltDistance = kToPlayerLength / 2.0f;
-	//const float kUltDistance = kToPlayerLength   * 2.0f;
 	constexpr float kRatioCheckDistance = 800.0f;//プレイヤーの最高到達点//カメラのターゲットの割合注視点//XZ軸
 
 	constexpr float kTargetRatioMin = 0.5f;//注視点の割合の最小値
 	constexpr float kTargetRatioMax = 0.6f;//注視点の割合の最大値
 
-	constexpr float kEtoPVecLength = 300.0f;//敵→プレイヤーベクトルの長さ
-	constexpr float kRotateAngle = DX_PI_F / 2.0f;//カメラを回転させる角度
+	constexpr float kEtoPVecLength = 150.0f;//敵→プレイヤーベクトルの長さ
+	constexpr float kRotateAngle = DX_PI_F / 3.0f;//カメラを回転させる角度
 
-	constexpr float kBlendDuration = 15.0f;//ブレンドにかけるフレーム数
+	constexpr float kBlendDuration = 45.0f;//ブレンドにかけるフレーム数
 	constexpr float kBlendEasingPower = 0.5f;//ブレンドのイージング指数
+
+	constexpr float kCameraViewAngle = DX_PI_F / 3.0f;
+	constexpr float kCameraNear = 10.0f;//ニアクリップ(0だとDxLibの深度計算が壊れて何も映らなくなる)
+	constexpr float kCameraFar = 5000.0f;//ファークリップ(SceneMainと同じ値)
 }
 
 UltCameraState::UltCameraState(std::weak_ptr<CameraManager> owner):CameraStateBase(owner)
@@ -44,6 +44,9 @@ void UltCameraState::Enter(CameraData data)
 	m_angleH = data.angleH;
 	m_angleV = data.angleV;
 	ResetBlend(data.pos, data.target);
+
+	SetupCamera_Perspective(kCameraViewAngle);
+	SetCameraNearFar(kCameraNear, kCameraFar);
 }
 
 void UltCameraState::Update()
@@ -53,8 +56,6 @@ void UltCameraState::Update()
 	auto enemy = cameraManager->GetAttackTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
 	if (!enemy)
-
-
 	{
 		//敵がいない場合は、PlayerCameraに切り替える//このカメラが一番優先度高いとき
 		cameraManager->ChangeState(std::make_shared<PlayerFollowCamera>(m_owner));
@@ -72,12 +73,17 @@ void UltCameraState::Update()
 	//注視点
 	m_goalTarget = (playerPos + enemyPos) / 2 + kCameraHeight;
 	//注視点の割合を決める//あんまり気に入ってない//なんか変だから値を小さくしている
-	enemyPos.y = playerPos.y = 0.0f;
+	enemyPos.y = playerPos.y;
 	float dis = (enemyPos - playerPos).Magnitude();
 	//割合を決める
-	float ratio = (dis - kRatioCheckDistance) / kRatioCheckDistance;
+	/*float ratio = (dis - kRatioCheckDistance) / kRatioCheckDistance;
 	ratio = std::clamp(ratio, kTargetRatioMin, kTargetRatioMax);
-	m_goalTarget = playerPos + (enemyPos - playerPos) * ratio + kCameraHeight;
+	m_goalTarget = (playerPos + (enemyPos - playerPos) * ratio) + kCameraHeight;*/
+
+	//固定にする
+	Vector3 pToEVec = (enemyPos - playerPos).Normalize() * 100.0f;
+
+	m_goalTarget = (playerPos + pToEVec)+kCameraHeight;
 
 	//Blend中はBlendのほうのlerp
 	if (IsBlending())
@@ -164,7 +170,7 @@ void UltCameraState::FixCameraPos()
 	auto rotY = Matrix4x4::MakeRotationY(angle);
 
 	
-	//敵の距離によって血殺の距離が変わるのが渋いかもしれない
+	//敵の距離によって血殺の距離が変わるのが渋いかもしれない//今回は渋い//原作も意外とplayerしかここは見ていない可能性大
 
 	//DxLibに変換
 	auto EtoPVecDx = EtoPVec.ToDxLibVector();
@@ -175,9 +181,6 @@ void UltCameraState::FixCameraPos()
 	auto RotPtoC = VTransform(EtoPVecDx, rotYMat);//回転させる
 	//RotPtoC = VTransform(RotPtoC, rotXMat);//回転させる
 	RotPtoC = VAdd(RotPtoC, kCameraHeight.ToDxLibVector());
-	//水平方向はその向き、垂直は初期化
-	m_angleH = atan2f(RotPtoC.x, RotPtoC.z) + DX_PI_F;
-	//m_angleV;
 
 
 	auto pos = VAdd(RotPtoC, player->GetRigidBody().GetPos().ToDxLibVector());//プレイヤーの座標に足す
@@ -199,7 +202,8 @@ BlendSetting UltCameraState::GetBlendSetting() const
 	return BlendSetting{
 		.mode = BlendSetting::Mode::Slerp,
 		.duration = kBlendDuration,
+		.easingMode = EasingMode::EaseIn,
 		.easingPower = kBlendEasingPower,
-		.pivot = (enemy) ? enemy->GetRigidBody().GetPos() : Vector3()
+		.pivot = (enemy) ? enemy->GetRigidBody().GetPos() : Vector3(),
 	};
 }

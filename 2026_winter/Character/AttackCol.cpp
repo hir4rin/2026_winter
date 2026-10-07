@@ -135,8 +135,11 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				/// そこでカメラを揺らしたり、ターゲットを保存したりする
 				///---------
 
-				//最初にあたった攻撃だったらカメラを揺らす
-				if (m_hitIds.empty())cameraManager->StartCameraShake(kCameraShakePower, kCameraShakeTime);//カメラを揺らす
+				//最初にあたった攻撃だったらカメラを揺らす//必殺技中は揺らさない
+				if (m_hitIds.empty() && GetTag().role != Collider::ColRole::UltAttack)
+				{
+					cameraManager->StartCameraShake(kCameraShakePower, kCameraShakeTime);//カメラを揺らす
+				}
 
 				//attackDataの変更//現在経過時間を引いて、敵の移動距離、時間を決める
 				float nowAnimFrame = player->GetAnimation().GetNowAnimFrame();

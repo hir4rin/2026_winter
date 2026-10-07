@@ -37,7 +37,8 @@ public:
 		PartBrokenACameraStart,
 		PartBrokenACameraEnd,
 		PartBrokenBCamera,
-		PartBrokenBCameraStart
+		PartBrokenBCameraStart,
+		UltStartCamera
 
 	};
 

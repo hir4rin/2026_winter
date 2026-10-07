@@ -1,11 +1,11 @@
 #key,animName
 Idle,Ninja_Idle_Standing
-Walk,Ninja_Shuffle_Sprint_Forward
+Walk,Run_Fast_Combat_Loop_RM
 Walking,Walk_Loop_F_0_RM
 Run,Ninja_Shuffle_Sprint_Forward
 ChangeDirection,Jump_Combat_Start_B_180
-DodgeForward,Dodge_Combat_F
-DodgeBackward,Dodge_Combat_B
+DodgeForward,Roll_Combat_F_0
+DodgeBackward,Roll_B_180
 DodgeLeft,Dodge_Combat_F
 DodgeRight,Dodge_Combat_F
 AttackPose,Ninja_Idle_Standing_SwordDrawn
@@ -13,7 +13,7 @@ wallKick,Ninja_Acrobatic_Frontflip
 DashAttack,Dash_Air_Attack
 JumpUp,Jump_Combat_Start_F_0
 JumpDown,Jump_Combat_Loop_0
-UltAttack,Execution_01
+UltAttack,Parry_Counter_Attack
 Hit,Hit_Combat_F
 Death,Hit_Death
 Idle01,Ninja_Idle_LoosenUp01

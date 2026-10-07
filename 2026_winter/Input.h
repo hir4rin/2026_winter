@@ -10,7 +10,9 @@
 /// </summary>
 enum class PeripheralType {
 	keyboard,
-	pad1
+	pad1,
+	xinputButton,//(L3,R3など
+	xinputTrigger//LT,RT
 };
 
 /// <summary>

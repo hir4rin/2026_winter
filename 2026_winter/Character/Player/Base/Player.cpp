@@ -2,7 +2,7 @@
 #include "PlayerState.h"
 #include "PlayerStateIdle.h"
 #include "PlayerStateMove.h"
-#include "../Weapon.h"
+#include "../PlayerWeapon.h"
 #include "HitCol.h"
 #include "../../../Camera/CameraManager.h"
 #include "../../../Camera/LockOnManager.h"
@@ -18,6 +18,7 @@
 #include "EffekseerForDXLib.h"
 //#include "../Effect/EffectManager.h"
 #include <cmath>
+#include <algorithm>
 #include <cassert>
 #include <string>
 #include <fstream>
@@ -41,6 +42,48 @@ namespace
 
 	constexpr float kWingScale = 0.35f;//鴉の羽モデルのスケール
 	const Vector3 kWingOffset = Vector3(0.0f, -10.0f, -40.0f);//鴉の羽モデルのオフセット
+
+	constexpr float kBloodWingScale = 14.0f;//必殺技状態の翼エフェクトのスケール//エフェクトは長さ10ほどで作っている
+	const char* const kBloodWingFrameName = "spine_05";//翼の付け根にするボーン//背骨の一番上(肩甲骨の高さ)
+	constexpr float kBloodWingBackOffset = 15.0f;//翼の付け根をボーンから背中側にずらす距離
+	constexpr float kBloodWingDownOffset = 0.0f;//翼の付け根をボーンから下にずらす距離
+	constexpr float kBloodWingTiltFollowRate = 0.5f;//体の傾きに翼を追従させる割合(0で向きだけ、1でボーンと同じだけ傾く)
+	constexpr float kBloodWingBackLean = -15.0f * DX_PI_F / 180.0f;//翼を背中側(カメラ側)に倒す角度//マイナスで後ろに倒れる
+
+	//回転行列の回転量だけを割合で弱める(回転軸はそのまま)
+	MATRIX ScaleRotation(const MATRIX& rot, float rate)
+	{
+		float cosAngle = std::clamp((rot.m[0][0] + rot.m[1][1] + rot.m[2][2] - 1.0f) * 0.5f, -1.0f, 1.0f);
+		float angle = acosf(cosAngle);
+		VECTOR axis = VGet(rot.m[1][2] - rot.m[2][1], rot.m[2][0] - rot.m[0][2], rot.m[0][1] - rot.m[1][0]);
+		if (angle < 0.0001f || VSize(axis) < 0.0001f) return MGetIdent();//ほぼ回転していない
+		return MGetRotAxis(VNorm(axis), angle * rate);
+	}
+
+	//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
+	MATRIX GetRotationOnly(const MATRIX& mat)
+	{
+		MATRIX rot = MGetIdent();
+		for (int i = 0; i < 3; ++i)
+		{
+			VECTOR axis = VNorm(VGet(mat.m[i][0], mat.m[i][1], mat.m[i][2]));
+			rot.m[i][0] = axis.x;
+			rot.m[i][1] = axis.y;
+			rot.m[i][2] = axis.z;
+		}
+		return rot;
+	}
+
+	//アニメーションが付いていない初期姿勢での、フレームのモデル空間の行列
+	MATRIX GetFrameBaseModelMatrix(int modelHandle, int frameIndex)
+	{
+		MATRIX mat = MGetIdent();
+		for (int frame = frameIndex; frame >= 0; frame = MV1GetFrameParent(modelHandle, frame))
+		{
+			mat = MMult(mat, MV1GetFrameBaseLocalMatrix(modelHandle, frame));//子→親の順に掛ける
+		}
+		return mat;
+	}
 
 	constexpr float kRotationLerpFactor = 0.1f;//モデルの向きを目標角度に近づける割合(ほぼlerp)
 
@@ -86,6 +129,10 @@ Player::Player()
 	//鴉の羽のモデルの読み込み
 	m_wingModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::PlayerWingModel));
 	WingUpdate();//鴉状態の羽の更新
+
+	//必殺技状態の翼の付け根のボーン
+	m_bloodWingFrame = MV1SearchFrame(m_modelHandle, kBloodWingFrameName);
+	m_bloodWingAttackFrame = MV1SearchFrame(m_attackModelHandle, kBloodWingFrameName);
 }
 
 Player::~Player()
@@ -94,6 +141,7 @@ Player::~Player()
 	{
 		m_currentState->Exit();//状態を抜ける
 	}
+	if (m_bloodWingPlayingHandle != -1)StopEffekseer3DEffect(m_bloodWingPlayingHandle);
 	MV1DeleteModel(m_modelHandle);
 	MV1DeleteModel(m_attackModelHandle);
 	MV1DeleteModel(m_wingModelHandle);
@@ -141,7 +189,7 @@ void Player::Init()
 	ChangeState(m_currentState);//初期化
 
 	//武器の生成
-	m_weapon = std::make_shared<Weapon>(GetWeakPtr());//武器の生成//Playerクラスのインスタンスから、Playerクラスのshared_ptrを取得できるようになる
+	m_weapon = std::make_shared<PlayerWeapon>(GetWeakPtr());//武器の生成//Playerクラスのインスタンスから、Playerクラスのshared_ptrを取得できるようになる
 	//effectの生成
 	m_efHandle = System::GetInstance().GetHandle(AsyncData::PlayerEffectSkill);
 	for (auto& handle : m_efAreaMaxHandle)
@@ -174,7 +222,11 @@ void Player::Update(Camera& camera)
 			AddSkillGauge(20);
 			AddUltGauge(20);
 		}
-		
+		//デバック用
+		if (input.IsTriggered("RT") && m_isUltimating)
+		{
+			m_isUltimating = false;
+		}
 	}
 #endif
 
@@ -188,13 +240,32 @@ void Player::Update(Camera& camera)
 	m_wasQPressed = isQPressed;
 
 
+	//LTを押したとき
+	if (input.IsTriggered("LT"))
+	{
+		//必殺技状態中にもう一度押したら専用必殺技
+		if (m_isUltimating)
+		{
+			if (CanUltFinish())ChangeState(std::make_shared<PlayerStateUlt>(GetWeakPtr()));
+		}
+		//必殺技状態に移行
+		else
+		{
+			m_isUltimating = true;
+		}
+	}
+
+	
+
+
+
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(Jump,Fall,Attack)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
 
 	//ロックオンと内部ターゲットの更新
 	m_lockOnManager->Update();
 	UpdateSoftTarget();
-	
+
 
 
 	if (m_currentState)
@@ -205,6 +276,7 @@ void Player::Update(Camera& camera)
 
 	//これらは押し戻しの時に呼ばれないのでずれる→そこでも呼ぶ必要あり
 	WingUpdate();
+	BloodWingUpdate();
 	m_weapon->Update();//武器の更新
 
 	//回転処理//座標も行列で更新
@@ -369,8 +441,8 @@ void Player::OnAttackHit(int otherId)
 	//{
 	//	//内部ターゲットにセットする
 	//	lockOnManager->SetTargetEnemy(otherId);
-
 	//}
+
 }
 
 void Player::SetResultUp()
@@ -674,6 +746,65 @@ void Player::WingUpdate()
 	//モデルにマトリクスをセット
 	MV1SetMatrix(m_wingModelHandle, mat);
 }
+
+void Player::BloodWingUpdate()
+{
+	//必殺技状態の間だけ出す//スキル攻撃でモデルを消している間は翼も消す
+	bool isShow = m_isUltimating && !m_isSkillInvisible;
+	if (!isShow)
+	{
+		if (m_bloodWingPlayingHandle != -1)
+		{
+			StopEffekseer3DEffect(m_bloodWingPlayingHandle);
+			m_bloodWingPlayingHandle = -1;
+		}
+		return;
+	}
+	//出始めは翼が広がるアニメーションから再生する//エフェクト側で消えずにループし続ける
+	if (m_bloodWingPlayingHandle == -1)
+	{
+		m_bloodWingPlayingHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(AsyncData::BloodWingEffect));
+		SetScalePlayingEffekseer3DEffect(m_bloodWingPlayingHandle, kBloodWingScale, kBloodWingScale, kBloodWingScale);
+	}
+
+	//今描画しているモデルの背中(肩甲骨の高さ)のボーンに付ける//アニメーションで体が動いても背中についてくる
+	bool isNormalModel = m_anim.GetModelHandleForCheck() == m_modelHandle;
+	int modelHandle = isNormalModel ? m_modelHandle : m_attackModelHandle;
+	int frame = isNormalModel ? m_bloodWingFrame : m_bloodWingAttackFrame;
+	//ボーンが見つからなかったときはカプセルの頭の高さにする
+	Vector3 rootPos = (frame >= 0) ? Vector3(MV1GetFramePosition(modelHandle, frame)) : m_rb.m_pos + Vector3(0.0f, kPlayerHead, 0.0f);
+
+	//モデルの向き//モデルは180度ずれているのでπ足す(スキル3の分身と同じ)
+	float yaw = m_rotAngleY + DX_PI_F;
+	//エフェクトの回転//エフェクトの+Zを前に向ける//翼はエフェクトの-X側に広がり、-Z側(背中側)に反る
+	MATRIX effectRot = MGetRotY(yaw);
+	if (frame >= 0)
+	{
+		//ボーンが初期姿勢からどれだけ傾いたかを、モデルの向きの回転に足す//前かがみやのけぞりにも翼がついてくる
+		//tilt = 初期姿勢のボーンの回転の逆 * 今のボーンの回転 * モデルの回転の逆//モデル空間での傾き(初期姿勢なら単位行列)
+		MATRIX baseBoneRot = GetRotationOnly(GetFrameBaseModelMatrix(modelHandle, frame));
+		MATRIX boneRot = GetRotationOnly(MV1GetFrameLocalWorldMatrix(modelHandle, frame));
+		MATRIX modelRot = GetRotationOnly(MV1GetMatrix(modelHandle));
+		MATRIX tilt = MMult(MMult(MTranspose(baseBoneRot), boneRot), MTranspose(modelRot));
+		tilt = ScaleRotation(tilt, kBloodWingTiltFollowRate);//傾きすぎないように弱める
+		//effectRot = 向き * モデルの回転の逆 * 傾き * モデルの回転
+		effectRot = MMult(MMult(MMult(effectRot, MTranspose(modelRot)), tilt), modelRot);
+	}
+
+	//付け根をボーンから背中側・下にずらす//体の傾きに合わせてずらす向きも回す
+	Vector3 offset = VTransformSR(VGet(0.0f, -kBloodWingDownOffset, -kBloodWingBackOffset), effectRot);
+	Vector3 pos = rootPos + offset;
+	SetPosPlayingEffekseer3DEffect(m_bloodWingPlayingHandle, pos.x, pos.y, pos.z);
+
+	//翼を背中側(カメラ側)に倒す//エフェクトのローカルのX軸回り
+	effectRot = MMult(MGetRotX(kBloodWingBackLean), effectRot);
+
+	//Effekseerの回転はZ→X→Yの順に掛かるので、その順のオイラー角に分解して渡す
+	float rotX = asinf(std::clamp(-effectRot.m[2][1], -1.0f, 1.0f));
+	float rotY = atan2f(effectRot.m[2][0], effectRot.m[2][2]);
+	float rotZ = atan2f(effectRot.m[0][1], effectRot.m[1][1]);
+	SetRotationPlayingEffekseer3DEffect(m_bloodWingPlayingHandle, rotX, rotY, rotZ);
+}
 void Player::ApplyPos()
 {
 	//モデルの座標を更新する
@@ -839,6 +970,7 @@ void Player::ApplyPos()
 	}
 
 	WingUpdate();
+	BloodWingUpdate();
 	m_weapon->Update();//武器の更新
 }
 
@@ -895,6 +1027,20 @@ bool Player::CanUltAttack()
 	}
 
 	return false;
+}
+
+bool Player::CanUltFinish()const
+{
+	//地上のみ
+	if (!IsFloor())return false;
+	//キャンセルして出せるステート//被弾・死亡・演出中などからは出せない
+	return std::dynamic_pointer_cast<PlayerStateIdle>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateMove>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateAttack>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateSkillAttack>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateDashAttack>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateAttackLanding>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateDodge>(m_currentState);
 }
 
 void Player::UpdateSoftTarget()

@@ -6,6 +6,8 @@ namespace
 {
 	constexpr int kRightStickDeadZone = 8000;//スティックの傾きがこの値以下の場合は、傾いていないとみなす
 	constexpr float kRightStickMaxValue = 32767.0f;//右スティックの入力値の最大値(-1.0〜1.0の割合に変換するのに使う)
+
+	constexpr float kTriggerThreshold = 128;
 }
 
 Input::Input()
@@ -33,14 +35,20 @@ void Input::Init()
 	m_inputTable["RB"] = { { PeripheralType::keyboard,KEY_INPUT_E },//Eキー
 						  { PeripheralType::pad1,PAD_INPUT_6 } };//PADのRBボタン
 
-	// m_inputTable["RT"] = { { PeripheralType::keyboard,KEY_INPUT_R },//Rキー
-	  //                     { PeripheralType::pad1,PAD_INPUT_8 } };//PADのRTボタン
+	m_inputTable["RT"] = { { PeripheralType::keyboard,KEY_INPUT_R },
+						 { PeripheralType::xinputTrigger,1 } };//PADのRT
 
 	m_inputTable["LB"] = { { PeripheralType::keyboard,KEY_INPUT_W },//Wキー
 						  { PeripheralType::pad1,PAD_INPUT_5 } };//PADのLBボタン
 
-	//m_inputTable["LT"] = { { PeripheralType::keyboard,KEY_INPUT_Q },//Qキー
-	  //                    { PeripheralType::pad1,PAD_INPUT_7 } };//PADのLTボタン
+	m_inputTable["LT"] = { { PeripheralType::keyboard,KEY_INPUT_Q },
+					   { PeripheralType::xinputTrigger,0 } };//PADのLT
+
+	m_inputTable["L3"] = { { PeripheralType::keyboard,KEY_INPUT_T },
+							{ PeripheralType::xinputButton,XINPUT_BUTTON_LEFT_THUMB } };//左スティック押し込み
+
+	m_inputTable["R3"] = { { PeripheralType::keyboard,KEY_INPUT_Y },
+							{ PeripheralType::xinputButton,XINPUT_BUTTON_RIGHT_THUMB } };//右スティック押し込み
 
 
 	m_inputTable["="] = { { PeripheralType::keyboard,KEY_INPUT_V },
@@ -109,6 +117,9 @@ void Input::Update()
 	m_lastInputData = m_inputData;//直前のフレームを更新(前のフレーム情報をコピー)
 	m_lastRawInputData = m_rawInputData;
 
+	//右スティックの入力を保存//Xinputを更新
+	InputRightStick();
+
 	// まず現在の入力情報を取得
 	char keyState[256];
 	GetHitKeyStateAll(keyState);//生のキーボード情報//この関数が入力を全部とってくる(keyStateに入れてる)
@@ -139,17 +150,20 @@ void Input::Update()
 				//登録されているビット情報と&をとり、そのビットが立っているかどうかをチェック
 				inputRaw = (padState & state.id);
 				break;
+			case PeripheralType::xinputButton:
+				inputRaw = m_xi.Buttons[state.id] != 0;
+				break;
+			case PeripheralType::xinputTrigger:
+				inputRaw = (state.id == 0 ? m_xi.LeftTrigger : m_xi.RightTrigger) > kTriggerThreshold;
+				break;
 			}
 			if (inputRaw) {//必須!
 				break;//ここでbreakしないと、最後のチェックで押されていないとfalseになる
-
-
 			}
 		}
 	}
 
-	//右スティックの入力を保存
-	InputRightStick();
+	
 
 	//Record時
 	if (m_isRecording)
@@ -194,7 +208,11 @@ void Input::InputRightStick()
 
 	//右スティックの入力を取得する
 	//0が返ってきたら成功、-1が返ってきたら失敗
-	if (GetJoypadXInputState(DX_INPUT_PAD1, &m_xi) != 0)return;
+	if (GetJoypadXInputState(DX_INPUT_PAD1, &m_xi) != 0)
+	{
+		m_xi = {};//失敗時は全部離している扱いにする
+		return;
+	}
 
 	//右スティックの範囲は-32768~35767
 	short rawX = m_xi.ThumbRX;

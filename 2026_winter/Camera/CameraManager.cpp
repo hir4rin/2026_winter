@@ -6,6 +6,7 @@
 #include "CameraState/PlayerFollowCamera.h"
 #include "CameraState/LockOnCameraState.h"
 #include "CameraState/UltCameraState.h"
+#include "CameraState/UltStartCamera.h"
 #include "CameraState/TitleCameraState.h"
 #include "CameraState/FinishingFirstCamera.h"
 #include "CameraState/FinishingSecondCamera.h"
@@ -314,6 +315,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::UltCamera:
 		newState = std::make_shared<UltCameraState>(shared_from_this());
+		break;
+	case CameraStateName::UltStartCamera:
+		newState = std::make_shared<UltStartCamera>(shared_from_this());
 		break;
 	case CameraStateName::TitleCamera:
 		newState = std::make_shared<TitleCameraState>(shared_from_this());

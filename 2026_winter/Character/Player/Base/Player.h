@@ -26,7 +26,7 @@
 
 class PlayerState;
 class Camera;
-class Weapon;
+class PlayerWeapon;
 class AttackCol;
 class CameraManager;
 class EnemyBase;
@@ -268,11 +268,13 @@ private:
 	void InitializeComboChain();//CSVからコンボデータの読み込みをする
 	void UpdateAngle();//回転処理
 	void WingUpdate();//鴉状態の羽の更新
+	void BloodWingUpdate();//必殺技状態の翼エフェクトの再生・停止と、背中への追従
 	void ApplyPos()override;//座標の適用//Playerクラスでは、座標に加えて、首のボーンの回転も適用する
 	void ApplyPosWithAttackModel();//アタックモデルにも適用
 
 	bool CanSkillAttack(bool changeGauge = true);//スキル攻撃ができるかどうか//trueならゲージを減らす
 	bool CanUltAttack();//必殺技攻撃ができるかどうか//trueならゲージを減らす
+	bool CanUltFinish()const;//専用必殺技(PlayerStateUlt)を出せるかどうか//必殺技状態中に地上の特定のステートからだけ
 
 	void UpdateSoftTarget();//内部ターゲットの消去条件をチェック
 
@@ -300,13 +302,17 @@ private:
 	std::shared_ptr<PlayerState> m_prevState;//前の状態
 
 	bool m_isRaven = false;//鴉状態かどうか//攻撃が変化する
+	bool m_isUltimating = false;//必殺技状態かどうか
 	bool m_isSkillInvisible = false;//スキル攻撃中にモデル(本体・羽・武器)を描画しないか//代わりにエフェクトを出す
 	bool m_isCameraFocusOverride = false;//カメラの注視点のYを敵の高さで上書きするか//打ち上げ(スキル0)が当たってからスキル1の間だけtrue
 	std::weak_ptr<EnemyBase> m_cameraFocusEnemy;//上書き中にカメラが高さを合わせる敵(打ち上げた敵)
 	bool m_isTitleMode = false;//タイトル画面かどうか//trueの場合、移動方向をカメラ基準ではなく固定軸にする
 	const int kPlayerNeckBoneIndex = 25;//首のボーンのインデックス
 	int m_wingModelHandle = -1;//鴉の羽のモデルのハンドル//鴉状態の時に表示する
-	std::shared_ptr<Weapon> m_weapon;//武器
+	int m_bloodWingPlayingHandle = -1;//必殺技状態の翼エフェクト(再生中)のハンドル//再生していなければ-1
+	int m_bloodWingFrame = -1;//翼の付け根にする背中(肩甲骨の高さ)のボーン//通常のモデル用
+	int m_bloodWingAttackFrame = -1;//同じボーンの攻撃のモデル用
+	std::shared_ptr<PlayerWeapon> m_weapon;//武器
 
 	int m_attackModelHandle = -1;//攻撃のモデルのハンドル
 	int m_whiteHandle;
@@ -374,7 +380,7 @@ private:
 	friend class PlayerStateWallStay;
 	friend class PlayerStateWallRunKick;
 	//武器
-	friend class Weapon;
+	friend class PlayerWeapon;
 
 };
 

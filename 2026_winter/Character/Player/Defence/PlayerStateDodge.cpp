@@ -63,13 +63,13 @@ void PlayerStateDodge::Enter()
 	if (hasInput == 0)
 	{
 		//入力がなかった場合
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeBackward"), true, 0.4f);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeBackward"), false, 0.95f);
 		m_avoidState = AvoidState::Backward;
 	}
 	else
 	{
 		//入力があった場合
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeForward"), true, 0.4f);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("DodgeForward"), false, 0.90f);
 		m_avoidState = AvoidState::Forward;
 
 	}
@@ -118,7 +118,8 @@ void PlayerStateDodge::Update()
 		player->m_rb.m_vel = player->m_targetVec.Normalize() * Game::kDodgeSpeed;
 	}
 
-	if (player->m_anim.GetAnimRate() > 0.3f)
+	//if (player->m_anim.GetAnimRate() > 0.3f)
+	if (player->m_anim.GetAnimRate() > 0.9f)
 	{
 		if (input.IsLeftStickInput())
 		{

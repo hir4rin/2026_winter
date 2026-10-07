@@ -250,6 +250,9 @@ void SceneMain::NormalUpdate()
 
 	m_cameraManager->Update();
 
+	//[BloodKillFog]必殺技中かどうかで赤いフォグのかかり具合を進める
+	m_bloodKillFog.Update(battleMgr->GetIsUltimating());
+
 	//F5/F6キーでスキルエフェクトを再生する(エフェクト確認用)
 	const bool isF5Pressed = CheckHitKey(KEY_INPUT_F5) != 0;
 	const bool isF6Pressed = CheckHitKey(KEY_INPUT_F6) != 0;
@@ -300,11 +303,15 @@ void SceneMain::FadeInDraw()
 
 void SceneMain::NormalDraw()
 {
+	m_bloodKillFog.DrawBackground();//[BloodKillFog]
+
 	DrawGrid();
 
 	m_player->Draw();
 	m_enemyManager->Draw();
+	m_bloodKillFog.BeginStage(m_stage->GetStageViewHandle());//[BloodKillFog]
 	m_stage->Draw();
+	m_bloodKillFog.EndStage(m_stage->GetStageViewHandle());//[BloodKillFog]
 
 	//DxLibのカメラ設定をEffekseerに反映してからエフェクトを描画する
 	Effekseer_Sync3DSetting();

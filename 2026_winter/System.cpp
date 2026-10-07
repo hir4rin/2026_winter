@@ -8,7 +8,10 @@ namespace
 {
 	//プレイヤーのモデル
 	//const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
-	const std::string kPlayerModelPath = "data/Player01.mv1";
+	const std::string kPlayerModelPath = "data/Player02.mv1";
+	const std::string kPlayerWeaponModelPath = "data/Player_Weapon/katana_blend.mv1";//プレイヤーの刀
+	//必殺技中の刀身の長い刀//katana_blendと同じ向き・原点・柄の大きさに合わせてある
+	const std::string kPlayerUltWeaponModelPath = "data/Player_Weapon/red_katana_ult.mv1";
 
 	const std::string kEnemyModelpath = "data/Enemy/Enemy.mv1";
 
@@ -25,6 +28,12 @@ namespace
 	const std::string kDebugGhostDash3DEffectPath = "data/Effect/Skill/GhostDash3D.efk";
 	const std::string kGhostSkill3FallEffectPath = "data/Effect/Skill/GhostSkill3_Fall.efk";
 	const std::string kGhostSkill3ImpactEffectPath = "data/Effect/Skill/GhostSkill3_Impact.efk";
+	const std::string kBloodWingEffectPath = "data/Effect/Skill/BloodWing.efk";//必殺技状態の翼//アルセーヌ風にするなら ArseneWing.efk
+
+	//敵が斬られたときの血しぶき
+	const std::string kBloodSplashAEffectPath = "data/Effect/Blood/BloodSplash.efk";
+	const std::string kBloodSplashBEffectPath = "data/Effect/Blood/BloodSplash_B.efk";
+	const std::string kBloodSplashCEffectPath = "data/Effect/Blood/BloodSplash_C.efk";
 }
 
 void System::LoadAll()
@@ -38,6 +47,8 @@ void System::LoadAll()
 	SetUseASyncLoadFlag(TRUE);//ここから下の読み込みは非同期になる
 
 	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath.c_str());
+	m_asyncHandles[AsyncData::PlayerWeaponModel] = MV1LoadModel(kPlayerWeaponModelPath.c_str());
+	m_asyncHandles[AsyncData::PlayerUltWeaponModel] = MV1LoadModel(kPlayerUltWeaponModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyModel] = MV1LoadModel(kEnemyModelpath.c_str());
 	m_asyncHandles[AsyncData::EnemyPartLeftArmModel] = MV1LoadModel(kEnemyPartLeftArmModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyPartHeadModel] = MV1LoadModel(kEnemyPartHeadModelPath.c_str());
@@ -51,6 +62,10 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::DebugGhostDash3DEffect] = LoadEffekseerEffect(kDebugGhostDash3DEffectPath.c_str());
 	m_asyncHandles[AsyncData::GhostSkill3FallEffect] = LoadEffekseerEffect(kGhostSkill3FallEffectPath.c_str());
 	m_asyncHandles[AsyncData::GhostSkill3ImpactEffect] = LoadEffekseerEffect(kGhostSkill3ImpactEffectPath.c_str());
+	m_asyncHandles[AsyncData::BloodWingEffect] = LoadEffekseerEffect(kBloodWingEffectPath.c_str());
+	m_asyncHandles[AsyncData::BloodSplashEffectA] = LoadEffekseerEffect(kBloodSplashAEffectPath.c_str());
+	m_asyncHandles[AsyncData::BloodSplashEffectB] = LoadEffekseerEffect(kBloodSplashBEffectPath.c_str());
+	m_asyncHandles[AsyncData::BloodSplashEffectC] = LoadEffekseerEffect(kBloodSplashCEffectPath.c_str());
 }
 
 void System::Terminate()
@@ -58,6 +73,7 @@ void System::Terminate()
 
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerWeaponModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerUltWeaponModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerWingModel]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::PlayerEffectSkill]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::PlayerEffectSkill2]);
@@ -89,6 +105,10 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGhostDash3DEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3FallEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3ImpactEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodWingEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodSplashEffectA]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodSplashEffectB]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodSplashEffectC]);
 
 }
 

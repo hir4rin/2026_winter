@@ -47,6 +47,12 @@ enum class AsyncData : int
 	DebugGhostDash3DEffect,//スキルエフェクト確認用(F6キーで再生)
 	GhostSkill3FallEffect,//スキル3の落下中の分身と残像//プレイヤーに追従させる
 	GhostSkill3ImpactEffect,//スキル3の着地の分身と閃光
+	BloodWingEffect,//必殺技状態の黒い片翼//必殺技状態の間プレイヤーの背中に追従させる
+	PlayerUltWeaponModel,//必殺技(PlayerStateUlt)中だけ持たせる刀身の長い刀
+	//敵が斬られたときの血しぶき(3パターンからランダムで再生する)
+	BloodSplashEffectA,//横(+Z)に噴き出す
+	BloodSplashEffectB,//真上に噴き上がる
+	BloodSplashEffectC,//横に低く扇状に広がる(液体多め)
 	Goal,
 };
 

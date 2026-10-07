@@ -7,8 +7,6 @@ namespace
 {
 	constexpr int kAnimChangeFrame = 20;//アニメーションを切り替えるフレーム数//ブレンドのフレームもアニメーションごとに変えたい
 
-	
-	
 }
 
 Animation::Animation() :

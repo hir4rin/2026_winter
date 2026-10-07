@@ -120,6 +120,10 @@ void PlayerStateAttackLanding::Update()
 
 void PlayerStateAttackLanding::Exit()
 {
+	//おそらく落下攻撃の後の吹き飛ばしがtrueになり、isHitがtrueになって次の初段ガ動かないので、falseにする
+	auto player = m_owner.lock();
+	if (!player)return;
+	player->m_comboInfo.isHit = false;
 }
 
 void PlayerStateAttackLanding::DebugDraw()

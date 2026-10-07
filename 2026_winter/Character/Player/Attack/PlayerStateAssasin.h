@@ -20,6 +20,7 @@ public:
     void Exit() override;
 
     void DebugDraw() override;
+    bool IsInvincible()const override { return true; }//無敵
 private:
     AssasinState m_state;
     float m_startTimer = 0.0f;

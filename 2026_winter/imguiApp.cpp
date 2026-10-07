@@ -31,7 +31,7 @@ namespace
 	constexpr float kMinDistanceEpsilon = 0.0001f;//距離がこれ以下だと0割りに近くなり不安定になるため計算を中断する閾値
 
 	using BlendMode = CameraStateBase::BlendSetting::Mode;
-	const char* const kBlendModeItems[] = { "None", "Lerp", "Slerp", "Chase" };//Combo表示用。BlendMode enumの並び順と一致させること
+	const char* const kBlendModeItems[] = { "None", "Lerp", "Slerp" };//Combo表示用。BlendMode enumの並び順と一致させること
 	constexpr int kBlendModeItemCount = sizeof(kBlendModeItems) / sizeof(kBlendModeItems[0]);
 
 	const char* const kOrbitDirectionItems[] = { "Shortest", "Clockwise", "CounterClockwise" };//Combo表示用。OrbitDirection enumの並び順と一致させること
@@ -51,6 +51,9 @@ namespace
 	constexpr float kEasingPowerDragSpeed = 0.02f;//イージング係数のドラッグ感度
 	constexpr float kEasingPowerMin = 0.1f;//イージング係数の最小値
 	constexpr float kEasingPowerMax = 10.0f;//イージング係数の最大値
+
+	constexpr float kChaseRateMin = 0.01f;//追いかけ率の最小値
+	constexpr float kChaseRateMax = 1.0f;//追いかけ率の最大値(1.0だと追いかけずにイージングの点そのまま)
 }
 
 //ImGuiを使えるようにする初期化処理。ここで「ImGuiの入れ物を作る」→「入力と描画の係(バックエンド)を登録する」→
@@ -323,6 +326,12 @@ void imguiApp::DrawCameraKeyframeEditorWindow()
 		keyframe.blendSetting.easingMode = static_cast<EasingMode>(easingIndex);
 	}
 	ImGui::DragFloat("Easing Power", &keyframe.blendSetting.easingPower, kEasingPowerDragSpeed, kEasingPowerMin, kEasingPowerMax);
+	//Chase:イージングの点を追いかけて、最後はたどり着かずに追い続ける
+	ImGui::Checkbox("Chase", &keyframe.blendSetting.isChase);
+	if (keyframe.blendSetting.isChase)
+	{
+		ImGui::SliderFloat("Chase Rate", &keyframe.blendSetting.chaseRate, kChaseRateMin, kChaseRateMax);
+	}
 	//Pivot(回転の中心)はSlerpのときだけ意味を持つので、Slerpを選んだときだけ表示する
 	if (keyframe.blendSetting.mode == BlendMode::Slerp)
 	{
@@ -384,11 +393,15 @@ void imguiApp::UpdateCameraAnimatorPlayback()
 	//イージング。CameraStateBase::UpdateBlendと同じ関数を使う
 	float tEased = Easing::Apply(blend.easingMode, t, blend.easingPower);
 
+	//このフレームのイージング上の点(isChaseならこれを追いかける。CameraStateBase::UpdateBlendと同じ)
+	Vector3 easedPos = to.pos;
+	Vector3 easedTarget = to.target;
+
 	switch (blend.mode)
 	{
 	case BlendMode::None:
-		m_animatorCamPos = to.pos;
-		m_animatorCamTarget = to.target;
+		easedPos = to.pos;
+		easedTarget = to.target;
 		break;
 
 	case BlendMode::Slerp:
@@ -402,18 +415,28 @@ void imguiApp::UpdateCameraAnimatorPlayback()
 
 		//距離をLerp、方向を水平回転で補間してから合成して座標を求める
 		float dist = std::lerp(distFrom, distTo, tEased);
-		m_animatorCamPos = Vector3::EaseOrbitLerp(dirFrom, dirTo, t, blend.easingMode, blend.easingPower, blend.orbitDirection) * dist + pivot;
+		easedPos = Vector3::EaseOrbitLerp(dirFrom, dirTo, t, blend.easingMode, blend.easingPower, blend.orbitDirection) * dist + pivot;
 
 		//注視点はLerp
-		m_animatorCamTarget = Vector3::EaseLerp(from.target, to.target, t, blend.easingMode, blend.easingPower);
+		easedTarget = Vector3::EaseLerp(from.target, to.target, t, blend.easingMode, blend.easingPower);
 		break;
 	}
 
 	case BlendMode::Lerp:
 	default:
-		m_animatorCamPos = Vector3::EaseLerp(from.pos, to.pos, t, blend.easingMode, blend.easingPower);
-		m_animatorCamTarget = Vector3::EaseLerp(from.target, to.target, t, blend.easingMode, blend.easingPower);
+		easedPos = Vector3::EaseLerp(from.pos, to.pos, t, blend.easingMode, blend.easingPower);
+		easedTarget = Vector3::EaseLerp(from.target, to.target, t, blend.easingMode, blend.easingPower);
 		break;
+	}
+
+	if (blend.isChase)
+	{
+		CameraStateBase::ChaseStep(m_animatorCamPos, m_animatorCamTarget, easedPos, easedTarget, blend);
+	}
+	else
+	{
+		m_animatorCamPos = easedPos;
+		m_animatorCamTarget = easedTarget;
 	}
 }
 

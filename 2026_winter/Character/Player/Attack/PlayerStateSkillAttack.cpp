@@ -57,6 +57,10 @@ void PlayerStateSkillAttack::Enter()
 	{
 		//player->m_anim.SetRootMotionEnable(RootMotionCancel::Up);
 	}
+	if (currentComboIndex == ComboIndex::AirSkillAttack1)
+	{
+		//内部ターゲットの敵が地上にいるなら
+	}
 
 	//スキル攻撃中は鴉状態にする
 	player->m_isRaven = true;
@@ -101,12 +105,28 @@ void PlayerStateSkillAttack::Update()
 	{
 		//打ち上げが当たったら、カメラの注視点のYを打ち上げた敵に合わせる
 		UpdateLaunchCamera();
-		if (nowFrame >= cancelFrame)
+		if (nowFrame >= cancelFrame && player->m_comboInfo.isHit)
 		{
 			//ゲージは打ち上げに入るときに減らしているので、ここでは減らさない
 			StartNextSkill(ComboIndex::SkillAttack1);
 			return;
 		}
+		else if (nowFrame >= cancelFrame && !player->m_comboInfo.isHit)
+		{
+			//Idleに戻す
+			if (input.IsLeftStickInput())
+			{
+				//入力があればMove状態に遷移する
+				player->ChangeState(std::make_shared<PlayerStateMove>(m_owner));
+				return;
+			}
+			else
+			{
+				player->ChangeState(std::make_shared<PlayerStateIdle>(m_owner));
+				return;
+			}
+		}
+			
 		//アニメーションの更新
 		player->m_anim.Update();
 		return;
@@ -204,12 +224,17 @@ void PlayerStateSkillAttack::Exit()
 	//スキル攻撃の次の段への遷移以外で抜けたときは、コンボ段数をリセットする
 	//PlayerStateAttackへ移るときもここでNoneに戻すので、通常攻撃は1段目から始まる
 	auto player = m_owner.lock();
-	if (player && !m_isComboTransition)
+	if (player)
 	{
-		player->m_comboInfo.currentComboIndex = ComboIndex::None;//攻撃していない状態に戻す
 		player->m_comboInfo.isHit = false;
-		player->m_isRaven = false;//鴉状態を解除する
-		player->m_isCameraFocusOverride = false;//カメラの注視点を通常に戻す
+
+		if (!m_isComboTransition)
+		{
+			player->m_comboInfo.currentComboIndex = ComboIndex::None;//攻撃していない状態に戻す
+			player->m_isRaven = false;//鴉状態を解除する
+			player->m_isCameraFocusOverride = false;//カメラの注視点を通常に戻す
+		}
+		
 	}
 
 	//分身エフェクトを止めて、モデルを表示に戻す//次の段で必要ならEnterでまた消す

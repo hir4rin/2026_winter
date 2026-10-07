@@ -18,7 +18,7 @@ public:
 	//自分で設定するもの
 	struct BlendSetting
 	{
-		enum class Mode { None, Lerp, Slerp, Chase };
+		enum class Mode { None, Lerp, Slerp };
 		//イージングの種類(実体はMath/Easing.h。Vector3のEaseLerp等からも使うため、あちらに定義している)
 		using EasingMode = ::EasingMode;
 		Mode mode = Mode::None;
@@ -27,7 +27,13 @@ public:
 		float easingPower = 1.0f;//EaseIn/EaseOut/EaseInOutの指数
 		Vector3 pivot = Vector3();//Slerp時の基軸(回転の中心)
 		OrbitDirection orbitDirection = OrbitDirection::Shortest;//Slerp時に水平にどちら向きに回すか(基本は最短)
+		bool isChase = false;//trueだとイージングの点を毎フレームchaseRateずつ追いかける(最後はたどり着かず追い続ける)。どのEasingModeでも使える
+		float chaseRate = 0.15f;//isChase時、1フレームで残り距離の何割詰めるか(0~1。小さいほど遅れて追いかける)
 	};
+
+	//isChase用:pos/targetを、goalPos/goalTargetに向けてchaseRate分だけ近づける(Slerpならpivot中心に回り込みながら)
+	//imguiAppのカメラアニメーターからも使うためstatic
+	static void ChaseStep(Vector3& pos, Vector3& target, const Vector3& goalPos, const Vector3& goalTarget, const BlendSetting& setting);
 
 	//受け渡し用
 	struct CameraData
@@ -62,6 +68,7 @@ public:
 		PartBrokenCameraB = 15,
 		PartBrokenCameraBStart = 16,
 		PartBrokenCameraAEnd = 17,
+		UltStartCamera = 18,
 
 		
 
@@ -117,7 +124,8 @@ protected:
 	void UpdateBlend(const Vector3& rawPos, const Vector3& rawTarget);//毎フレーム呼ぶ
 	void ResetBlend(const Vector3& startPos, const Vector3& startTarget);//Enterの最初に呼ぶ
 	// 現在blend中かどうか
-	bool IsBlending()const { return m_blendElapsed < m_activeBlend.duration; }
+	//isChase時はduration経過後も、追いつく(ほぼ重なる)まではblend中扱い
+	bool IsBlending()const { return m_blendElapsed < m_activeBlend.duration || (m_activeBlend.isChase && !m_isChaseArrived); }
 protected:
 	//ステートの親
 	std::weak_ptr<CameraManager> m_owner;
@@ -137,6 +145,7 @@ protected:
 
 	float m_blendElapsed = 0.0f;//経過フレーム数
 	BlendSetting m_activeBlend;//Enter時に確定させた、この遷移用のブレンド設定
+	bool m_isChaseArrived = false;//isChase時、目標にほぼ追いついたらtrue(ここでblend終了)
 
 	//カメラ揺れ用
 	float m_shakePower = 0.0f;
