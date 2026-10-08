@@ -3,6 +3,12 @@
 #include "../../../System.h"
 #include "../Game.h"
 
+
+namespace
+{
+	constexpr float kAnimEndFrame = 51.53f;
+}
+
 EnemyHitDrop::EnemyHitDrop(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
 	EnemyStateBase(owner),
 	m_info(info)
@@ -17,7 +23,7 @@ void EnemyHitDrop::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Kirimomi"), false,0.5f, kAnimEndFrame);
 	//縦の速度は初速(m_info.knockBackVel.y)と重力の累積(m_gravity)から作る
 	m_gravity = 0.0f;
 }

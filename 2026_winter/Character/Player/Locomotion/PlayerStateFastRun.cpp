@@ -34,7 +34,7 @@ void PlayerStateFastRun::Enter()
 	}
 	else
 	{
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Run"), true, 0.55f);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Run"), true, 0.45f);
 	}
 	//切り替わったフレームも止まらないように、今の速度を入れておく(前のステートで0にされているため)
 	player->m_rb.m_vel = player->m_rb.m_moveVel;
