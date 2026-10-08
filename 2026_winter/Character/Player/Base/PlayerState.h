@@ -39,6 +39,9 @@ protected:
 	void HandlerInput();
 	//XZ平面の速度制限
 	void ClampSpeed();
+	//歩く・走るときの速度(m_rb.m_moveVel)を、なりたい速度(targetVel)へ1フレームにaccelだけ近づけて、m_rb.m_velに入れる
+	//入力がないときはtargetVelを0にすると減速する
+	void UpdateMoveVel(const Vector3& targetVel, float accel);
 
 	//壁と当たったかどうかの判定
 	bool CheckWall();

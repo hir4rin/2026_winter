@@ -3,6 +3,7 @@
 #include "PlayerEnums.h"
 #include "PlayerStateIdle.h"//他のStateから他のStateに遷移するため(便利)
 #include "PlayerStateMove.h"//以下同文
+#include "PlayerStateFastRun.h"//以下同文
 #include "PlayerStateJump.h"//以下同文
 #include "PlayerStateFall.h"//以下同文
 #include "PlayerStateHit.h"//以下同文
@@ -360,6 +361,7 @@ private:
 	friend class PlayerState;//PlayerStateクラスから、Playerクラスのprivateメンバにアクセスできるようにする
 	friend class PlayerStateIdle;
 	friend class PlayerStateMove;
+	friend class PlayerStateFastRun;
 	friend class PlayerStateJump;
 	friend class PlayerStateFall;
 	friend class PlayerStateHit;

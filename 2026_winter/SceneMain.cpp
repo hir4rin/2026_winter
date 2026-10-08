@@ -12,6 +12,7 @@
 #include "DataLoader/DataManager.h"
 #include "Managers/CollisionManager.h"
 #include "Managers/EffectManager.h"
+#include "Managers/ModelShaderManager.h"
 #include "Stage/Stage.h"
 #include "Input.h"
 #include "System.h"
@@ -20,6 +21,7 @@
 #include "imguiApp.h"
 #include "Scene/PauseScene.h"
 #include "Stage/WallZoneEditor.h"
+#include "UI/UIManager.h"
 #include "imgui.h"
 
 namespace
@@ -78,6 +80,7 @@ SceneMain::~SceneMain()
 	CollisionManager::GetInstance().Terminate();
 	m_player.reset();
 	m_stage.reset();
+	ModelShaderManager::GetInstance().Terminate();
 	if (m_lightHandle != -1)
 	{
 		DeleteLightHandle(m_lightHandle);
@@ -103,6 +106,8 @@ void SceneMain::Init()
 	Input::GetInstance().Init();
 
 	CollisionManager::GetInstance().Init();
+	//モデル用のシェーダー(頂点タイプごとの頂点シェーダー・敵を黒くするピクセルシェーダー)
+	ModelShaderManager::GetInstance().Init();
 
 	//エネミーマネージャー
 	m_enemyManager = std::make_shared<EnemyManager>();
@@ -139,7 +144,6 @@ void SceneMain::Init()
 	else
 	{
 		//配置データが無いステージは、今まで通りテスト用の敵を1体出す
-		//EnemyManagerだけが所有する(ここで持ち続けると、死体を消しても実体が残ってしまう)
 		auto enemy = std::make_shared<EnemySwordman>(m_player, kEnemyStartPos);
 		enemy->Init();
 		m_enemyManager->AddEnemy(enemy);//追加
@@ -151,6 +155,10 @@ void SceneMain::Init()
 
 	//プレイヤー追従カメラ
 	m_cameraManager->Init(m_player, m_stage);
+
+	//インゲーム用のUIを生成する(プレイヤーなどを参照するUIがあるので最後に行う)
+	m_uiManager = std::make_unique<UIManager>();
+	m_uiManager->InGameInit(m_cameraManager);
 }
 
 void SceneMain::Update()
@@ -203,7 +211,7 @@ void SceneMain::NormalUpdate()
 		return;
 	}
 
-	//Wキーを押したらタイムスケールを0.1にする
+	//タイムスケールを0.1にする
 	if (CheckHitKey(KEY_INPUT_W))
 	{
 		if (System::GetInstance().GetTimeScale() != 0.1f)
@@ -250,6 +258,8 @@ void SceneMain::NormalUpdate()
 	System::GetInstance().Update();
 
 	m_cameraManager->Update();
+
+	m_uiManager->Update(input);
 
 	//[BloodKillFog]必殺技中かどうかで赤いフォグのかかり具合を進める
 	m_bloodKillFog.Update(battleMgr->GetIsUltimating());
@@ -308,15 +318,25 @@ void SceneMain::NormalDraw()
 
 	DrawGrid();
 
-	m_player->Draw();
+	//血殺中は敵を真っ黒にする
+	ModelShaderManager::GetInstance().SetBlackMode(System::GetInstance().GetBattleMgr()->GetIsUltimating());
 	m_enemyManager->Draw();
+	ModelShaderManager::GetInstance().SetBlackMode(false);
 	m_bloodKillFog.BeginStage(m_stage->GetStageViewHandle());//[BloodKillFog]
 	m_stage->Draw();
 	m_bloodKillFog.EndStage(m_stage->GetStageViewHandle());//[BloodKillFog]
 
+	//2DのUIは深度を書かないので、後から描いた3Dに上書きされる
+	//プレイヤーより後ろに出したいUI(血殺
+	m_uiManager->DrawBack();
+	m_player->Draw();
+
 	//DxLibのカメラ設定をEffekseerに反映してからエフェクトを描画する
 	Effekseer_Sync3DSetting();
 	DrawEffekseer3D();
+
+	
+	m_uiManager->Draw();
 #ifdef _DEBUG
 	CollisionManager::GetInstance().DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);

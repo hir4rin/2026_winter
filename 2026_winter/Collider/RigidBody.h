@@ -30,7 +30,8 @@ public:
 	Vector3 m_pos = Vector3();//座標
 
 	Vector3 m_vel = Vector3();//速度
-	Vector3 m_accel = Vector3();//加速度
+	Vector3 m_moveVel = Vector3();//歩く・走るときの速度(慣性つき)、保存用
+	Vector3 m_accel = Vector3();//加速度//内側でなく、外側から与えられる力に使いそう（風とか吹き飛ばしとか)
 
 
 };

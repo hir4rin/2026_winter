@@ -13,6 +13,7 @@ class BattleManager;
 class Camera;
 class Stage;
 class WallZoneEditor;
+class UIManager;
 
 class SceneMain : public Scene
 {
@@ -56,6 +57,7 @@ private:
 	std::unique_ptr<Camera> m_camera;//Player::Updateに渡すだけ(実際のカメラはCameraManagerが制御する)
 	std::shared_ptr<Stage> m_stage;
 	std::unique_ptr<WallZoneEditor> m_wallZoneEditor;//ステージ編集モードで壁ゾーンを設置・編集するImGuiウィンドウ
+	std::unique_ptr<UIManager> m_uiManager;//このシーンで表示するUIをまとめて管理する
 	BloodKillFog m_bloodKillFog;//[BloodKillFog]血殺中に背景とステージを赤くする(お試し)
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか

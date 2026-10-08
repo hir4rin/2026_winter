@@ -1,11 +1,11 @@
 #名前,#animname,animTimeScale,index,攻撃力,部位破壊率,moveTimeStart,moveTimeEnd,moveSpeedXZ,moveSpeedY,nextLightAttack,nextHeavyAttack,ノックバックするXZ,ノックバックするY,きりもみ吹っ飛びか,seFrameRate,seName,attackColStart,attackColEnd,endFrame,comboInputStart,comboInputEnd,cancelFrame,actionCancelFrame
 #備考,#,アニメーションの再生速度(空欄なら1.0),,,%表示,突進開始(フレーム)空欄なら0,突進終了(フレーム)-1なら進行率0.2//上下差のある攻撃はずっと,,,nextAttack:,セミコロン区切り(;),#空中の上下差のある攻撃は,当たった瞬間の移動量で,、ふっとびではない,なければ空欄,,当たり判定ON開始(フレーム),当たり判定ON終了(フレーム),,先行入力の受付開始(フレーム)-1なら進行率0.2,入力の受付終了(フレーム)-1なら進行率0.8,次のコンボに移行(フレーム)-1なら進行率0.5,回避・ジャンプ・確殺でキャンセル可(フレーム)-1なら進行率0.5
-地上弱攻撃1,Combo_Attack_03_01,0.8,0,50,6,0,4.8,40,0,1,8,0,0,0,0.06,AttackSwordAirSE,1.8,23,-1,1.8,-1,23,23
+地上弱攻撃1,Combo_Attack_03_01,1,0,50,6,0,4.8,40,0,1,8,0,0,0,0.06,AttackSwordAirSE,1.8,23,-1,1.8,-1,12,12
 地上弱攻撃2,Combo_Attack_03_02,0.8,1,50,10,0,6.15,20,0,2,,0,0,0,0.06,AttackSwordAirSE,2.6,19,41,2.6,-1,19,19
 地上弱攻撃3,Combo_Attack_03_03,0.8,2,50,16,0,8.7,5,0,3,,0,0,0,0.16,AttackSwordAirSE,20,40,-1,20,-1,40,40
 地上弱攻撃4,Combo_Attack_03_04,0.8,3,50,30,6,9.3,50,0,,,16,15,1,0.13,AttackSwordAirSE,22,39,-1,22,-1,39,39
 #強攻撃,,,,,,,,,,,,,,,,,,,,,,,
-地上強攻撃1,Combo_Attack_02_01,0.6,4,50,10,0,11,10,0,,5,0,0,0,0.2,KickAirSE,4,14,-1,4,-1,14,12
+地上強攻撃1,Combo_Attack_02_01,0.6,4,50,10,0,11,10,0,,5,0,0,0,0.2,KickAirSE,4,14,-1,4,-1,25,25
 地上強攻撃2,Combo_Attack_02_02,0.8,5,50,20,0,10.2,25,0,,6,0,0,0,0.35,AttackSwordAirSE,16,30,51,16,-1,30,27
 地上強攻撃3,Combo_Attack_02_03,0.8,6,50,40,0,10,-20,0,,7,-20,0,0,0.35,AttackSwordAirSE,6,15,-1,6,-1,15,13
 地上強攻撃4,Combo_Attack_02_04,0.8,7,50,50,0,11.6,35,0,,,20,20,1,0.35,AttackSwordAirSE,4,22,-1,4,-1,22,20

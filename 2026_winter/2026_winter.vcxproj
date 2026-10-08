@@ -182,12 +182,12 @@
     <ClCompile Include="Character\Player\Locomotion\PlayerStateIdle.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateJump.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateMove.cpp" />
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateFastRun.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateResultMove.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallRun.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallKick.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallStay.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallRunKick.cpp" />
-    <ClCompile Include="Character\Player\Locomotion\PlayerStateRun.cpp" />
     <ClCompile Include="Character\Player\PlayerWeapon.cpp" />
     <ClCompile Include="Collider\CapsuleShape.cpp" />
     <ClCompile Include="Collider\BoxShape.cpp" />
@@ -222,6 +222,7 @@
     <ClCompile Include="Managers\CollisionChecker.cpp" />
     <ClCompile Include="Managers\CollisionManager.cpp" />
     <ClCompile Include="Managers\EffectManager.cpp" />
+    <ClCompile Include="Managers\ModelShaderManager.cpp" />
     <ClCompile Include="Managers\FixNextPosition.cpp" />
     <ClCompile Include="Math\Matrix4x4.cpp" />
     <ClCompile Include="Math\Quaternion.cpp" />
@@ -257,6 +258,10 @@
     <ClCompile Include="Stage\WallZoneEditor.cpp" />
     <ClCompile Include="Stage\StageObject.cpp" />
     <ClCompile Include="System.cpp" />
+    <ClCompile Include="UI\FontManager.cpp" />
+    <ClCompile Include="UI\UIBase.cpp" />
+    <ClCompile Include="UI\UIManager.cpp" />
+    <ClCompile Include="UI\KessatsuUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
@@ -300,6 +305,7 @@
     <ClInclude Include="Character\Player\Locomotion\PlayerStateIdle.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateJump.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateMove.h" />
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateFastRun.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateResultMove.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallRun.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateWallKick.h" />
@@ -340,6 +346,7 @@
     <ClInclude Include="Managers\CollisionChecker.h" />
     <ClInclude Include="Managers\CollisionManager.h" />
     <ClInclude Include="Managers\EffectManager.h" />
+    <ClInclude Include="Managers\ModelShaderManager.h" />
     <ClInclude Include="Managers\FixNextPosition.h" />
     <ClInclude Include="Math\Matrix4x4.h" />
     <ClInclude Include="Math\Quaternion.h" />
@@ -382,6 +389,19 @@
     <ClInclude Include="Stage\StageObject.h" />
     <ClInclude Include="Stage\StageObjectData.h" />
     <ClInclude Include="System.h" />
+    <ClInclude Include="UI\FontManager.h" />
+    <ClInclude Include="UI\UIBase.h" />
+    <ClInclude Include="UI\UIManager.h" />
+    <ClInclude Include="UI\KessatsuUI.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- 実行時にD3DCompileFromFileでコンパイルするので、ビルドではコンパイルしない(Noneにしておく) -->
+    <None Include="Shader\MV1VertexShader.hlsl" />
+    <None Include="Shader\EnemyBlackPS.hlsl" />
+    <None Include="Shader\VertexShader.h" />
+    <None Include="Shader\DataType.h" />
+    <None Include="Shader\DxShader_Common_D3D11.h" />
+    <None Include="Shader\DxShader_VS_D3D11.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

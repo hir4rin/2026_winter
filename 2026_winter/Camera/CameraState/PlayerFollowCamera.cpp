@@ -40,6 +40,9 @@ namespace
 	constexpr float kWallMargin = 20.0f;//カメラを壁の手前に押し戻す時の余白
 
 	constexpr float kAngleH = DX_PI_F / 10;//見やすい垂直アングル
+
+	constexpr float kDragRate = 0.4f;//割合の強さ(1.0でカメラがその場に残る
+	constexpr float kDragMaxMove = 200.0f;//1フレームの移動量が超えたらそれはワープしている判定にして、引きづらない
 }
 
 PlayerFollowCamera::PlayerFollowCamera(std::weak_ptr<CameraManager> owner):CameraStateBase(owner)
@@ -55,6 +58,9 @@ void PlayerFollowCamera::Enter(CameraData data)
 	auto player = m_owner.lock()->GetContext()->m_player.lock();
 
 	Vector3 playerPos = Vector3(player->GetRigidBody().GetPos().x, 0.0f, player->GetRigidBody().GetPos().z);
+
+	//引きずり計算の基準を今の位置にしておく//最初のフレームで大きく回らない用
+	m_prevGoalTarget = player->GetCameraFocusPos() + kCameraHeight;
 
 	//カメラの位置を調整する
 	FixCameraPos();
@@ -133,6 +139,9 @@ void PlayerFollowCamera::Update()
 	//playerPos.y = 0.0f;//プレイヤーのy座標は0にする
 	m_goalTarget = playerPos + kCameraHeight;
 	m_target = Vector3::Lerp(m_target, m_goalTarget, kCameraLerpFactor);
+
+	//プレイヤーの移動でカメラを引きづる(スプリングアーム
+	DragCameraByPlayerMove();
 
 	//カメラの位置を調整する
 	FixCameraPos();
@@ -286,4 +295,32 @@ void PlayerFollowCamera::InputRightStick()
 		}
 
 	}
+}
+
+void PlayerFollowCamera::DragCameraByPlayerMove()
+{
+	//注視点が1フレームで動いた量(水平成分だけ)
+	Vector3 move = m_goalTarget - m_prevGoalTarget;
+	move.y = 0.0f;
+	m_prevGoalTarget = m_goalTarget;
+
+	//ワープなどで大きく動いたとき(カメラ反転を防ぐ)
+	if (move.Magnitude() > kDragMaxMove) return;
+
+	//注視点→カメラの水平距離(紐の長さ)
+	float armLength = kToPlayerLength * kToPlayerLengthScale * cosf(m_angleV);
+
+	//前フレームのカメラの水平位置(注視点から見た位置)
+	Vector3 prevArmPos = Vector3(-sinf(m_angleH), 0.0f, -cosf(m_angleH)) * armLength;
+
+	//カメラはその場に残り、注視点だけmove分動いたときの、注視点から見たカメラの位置
+	Vector3 toCam = prevArmPos - move;
+
+	//その向きから角度を逆算する(Exitと同じく、angleHはカメラ→注視点の向き)
+	float dragAngleH = atan2f(-toCam.x, -toCam.z);
+
+	//角度の差を-180から180にそろえてから、kDragRateの割合だけ回す
+	float diff = dragAngleH - m_angleH;
+	diff = atan2f(sinf(diff), cosf(diff));
+	m_angleH += diff * kDragRate;
 }

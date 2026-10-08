@@ -404,6 +404,8 @@ void Player::OnJustDodge(Collider& other, AttackData& data)
 
 void Player::ForceIdleState()
 {
+	//強制的に止めるので、移動の慣性も消す(Idleで滑らないように)
+	m_rb.m_moveVel = Vector3(0, 0, 0);
 	ChangeState(std::make_shared<PlayerStateIdle>(GetWeakPtr()));
 
 
@@ -493,6 +495,15 @@ void Player::ChangeState(std::shared_ptr<PlayerState> newState)
 	//newStateに更新
 	m_prevState = m_currentState;
 	m_currentState = newState;
+	//歩く・走る・止まる以外のステートに移ったら、移動の慣性を消す
+	//(攻撃や回避が終わってIdleに戻ったとき、前に走っていた向きに滑らないように)
+	bool isLocomotion = std::dynamic_pointer_cast<PlayerStateIdle>(newState) ||
+		std::dynamic_pointer_cast<PlayerStateMove>(newState) ||
+		std::dynamic_pointer_cast<PlayerStateFastRun>(newState);
+	if (!isLocomotion)
+	{
+		m_rb.m_moveVel = Vector3(0, 0, 0);
+	}
 	//newStateの初期化
 	if (m_currentState)
 	{

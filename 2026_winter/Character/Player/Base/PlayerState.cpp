@@ -5,6 +5,7 @@
 #include "../../../Camera/CameraManager.h"
 #include "../../../Camera/CameraState/CameraStateBase.h"
 #include "../../../Game.h"
+#include "../../../System.h"
 #include "../Stage/Stage.h"
 //#include "../Character/CharacterBase.h"
 
@@ -68,6 +69,34 @@ void PlayerState::ClampSpeed()
 		player->m_rb.m_vel.x = velXZ.x;
 		player->m_rb.m_vel.z = velXZ.z;
 	}
+}
+
+void PlayerState::UpdateMoveVel(const Vector3& targetVel, float accel)
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+
+	//スロー中は変わる量も小さくする
+	float timeScale = System::GetInstance().GetTimeScale() * player->m_ownTimeScale;
+
+	//なりたい速度 - 今の速度//向きは「どっちに変えればいいか」、長さは「あとどれだけ変えればいいか」
+	Vector3 diff = targetVel - player->m_rb.m_moveVel;
+	//1フレームに変えていい量
+	float maxDelta = accel * timeScale;
+
+	if (diff.Magnitude() <= maxDelta)
+	{
+		//あと少しで届くなら、ぴったり合わせる(行き過ぎないように)
+		player->m_rb.m_moveVel = targetVel;
+	}
+	else
+	{
+		//まだ遠いなら、差の向きにmaxDeltaだけ近づける
+		player->m_rb.m_moveVel += diff.Normalize() * maxDelta;
+	}
+
+	//m_rb.m_velは毎フレーム0にされるので、覚えておいた速度を写す
+	player->m_rb.m_vel = player->m_rb.m_moveVel;
 }
 
 bool PlayerState::CheckWall()

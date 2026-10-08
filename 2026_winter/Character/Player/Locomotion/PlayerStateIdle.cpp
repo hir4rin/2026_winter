@@ -1,6 +1,14 @@
 ﻿#include "PlayerStateIdle.h"
 #include "Player.h"
 #include "../../../Input.h"
+#include "../../../Game.h"
+#include "../../../System.h"
+
+namespace
+{
+	constexpr float kDecelFrame = 8.0f;//最高速から止まるまでのフレーム数
+	constexpr float kDecel = Game::kMoveSpeed / kDecelFrame;//1フレームに減る速さ
+}
 
 PlayerStateIdle::PlayerStateIdle(std::weak_ptr<Player> player) :
 	PlayerState(player)
@@ -18,9 +26,10 @@ void PlayerStateIdle::Enter()
 	if (!player) return;
 	//animationの初期化
 	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle,player->GetAnimName("Idle"), true);
-	//移動速度を0にする//だんだん遅くするにする予定
+	//移動速度はUpdateでだんだん遅くする
 	//Runの後だったら専用の切り返しモーションとかやりたい
-	player->m_rb.m_vel = Vector3(0, 0, 0);
+	//切り替わったフレームも止まらないように、今の速度を入れておく(前のステートで0にされているため)
+	player->m_rb.m_vel = player->m_rb.m_moveVel;
 
 }
 
@@ -31,8 +40,9 @@ void PlayerStateIdle::Update()
 	if (!player) return;
 	auto& input = Input::GetInstance();
 
-	//押し戻しの処理が続かないように消す
-	player->m_rb.m_vel = Vector3(0, 0, 0);
+	//なりたい速度を0にして、だんだん減速する
+	//押し戻しはm_moveVelに入らないので、押し戻しの処理が続くことはない
+	UpdateMoveVel(Vector3(0, 0, 0), kDecel);
 
 
 

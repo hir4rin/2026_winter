@@ -153,6 +153,9 @@
     <ClCompile Include="Character\Player\Locomotion\PlayerStateJump.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Player\Locomotion\PlayerStateFastRun.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Player\Locomotion\PlayerStateMove.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -169,9 +172,6 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\Locomotion\PlayerStateWallRunKick.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Character\Player\Locomotion\PlayerStateRun.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\PlayerWeapon.cpp">
@@ -231,6 +231,18 @@
     <ClCompile Include="System.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="UI\FontManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\UIBase.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\UIManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\KessatsuUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="DataLoader\DataManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -241,6 +253,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Managers\EffectManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Managers\ModelShaderManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Managers\FixNextPosition.cpp">
@@ -503,6 +518,9 @@
     <ClInclude Include="Character\Player\Locomotion\PlayerStateJump.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\Player\Locomotion\PlayerStateFastRun.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Character\Player\Locomotion\PlayerStateMove.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -578,6 +596,18 @@
     <ClInclude Include="System.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="UI\FontManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UIBase.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UIManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\KessatsuUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="DataLoader\DataManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -585,6 +615,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Managers\CollisionManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\ModelShaderManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Managers\EffectManager.h">
@@ -692,5 +725,25 @@
     <ClInclude Include="Character\Enemy\State\Hit\EnemyAssasined.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shader\MV1VertexShader.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Shader\EnemyBlackPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Shader\VertexShader.h">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Shader\DataType.h">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Shader\DxShader_Common_D3D11.h">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Shader\DxShader_VS_D3D11.h">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
 </Project>

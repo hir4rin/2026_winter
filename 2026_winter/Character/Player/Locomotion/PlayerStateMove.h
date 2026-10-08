@@ -15,5 +15,6 @@ public:
     void DebugDraw() override;
 private:
 	void Move(Input& input);//移動処理
+	int m_frame = 0;//このステートに入ってからのフレーム数
 };
 

@@ -8,6 +8,10 @@
 namespace
 {
 	constexpr float kTitleModeWalkAnimSpeed = 1.15f;//タイトル画面での歩きアニメーションの再生速度
+	constexpr int kFastRunStartFrame = 300;//走り続けてFastRunに移るまでのフレーム数
+
+	constexpr float kAccelFrame = 8.0f;//止まった状態から最高速になるまでのフレーム数
+	constexpr float kAccel = Game::kMoveSpeed / kAccelFrame;//1フレームに増える速さ
 }
 
 PlayerStateMove::PlayerStateMove(std::weak_ptr<Player> player):
@@ -34,6 +38,8 @@ void PlayerStateMove::Enter()
 	{
 		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Walk"), true, 0.4f);
 	}
+	//切り替わったフレームも止まらないように、今の速度を入れておく(前のステートで0にされているため)
+	player->m_rb.m_vel = player->m_rb.m_moveVel;
 	//System::GetInstance().GetSoundManager().PlaySELoop("WalkSE");
 }
 
@@ -73,6 +79,7 @@ void PlayerStateMove::Update()
 	if (input.IsTriggered("B"))
 	{
 		player->ChangeState(std::make_shared<PlayerStateDodge>(m_owner));
+		return;
 	}
 
 	if (!input.IsLeftStickInput())
@@ -110,6 +117,13 @@ void PlayerStateMove::Update()
 		return;
 	}
 
+	//一定時間走り続けたか、左スティックを押し込んだらFastRunに遷移する
+	m_frame++;
+	if (m_frame >= kFastRunStartFrame || input.IsTriggered("L3"))
+	{
+		player->ChangeState(std::make_shared<PlayerStateFastRun>(m_owner));
+		return;
+	}
 
 	//アニメーションの更新
 	player->m_anim.Update();
@@ -152,26 +166,27 @@ void PlayerStateMove::Move(Input& input)
 
 	HandlerInput();
 	//移動入力をとる
+	Vector3 inputDir;
 	if (input.IsPressed("Up"))
 	{
-		player->m_rb.m_vel += player->forward;
+		inputDir += player->forward;
 	}
 	if (input.IsPressed("Down"))
 	{
-		player->m_rb.m_vel += player->down;
+		inputDir += player->down;
 	}
 	if (input.IsPressed("Right"))
 	{
-		player->m_rb.m_vel += player->right;
+		inputDir += player->right;
 	}
 	if (input.IsPressed("Left"))
 	{
-		player->m_rb.m_vel += player->left;
+		inputDir += player->left;
 	}
 
-	//移動している間は目標のベクトルを更新する
-	player->m_targetVec = player->m_rb.m_vel.Normalize();
-	//初期化
-	player->m_rb.m_vel = player->m_rb.m_vel.Normalize() * Game::kMoveSpeed;//移動速度を5にする
+	//移動している間は目標のベクトルを更新する//向きは入力にすぐ合わせる
+	player->m_targetVec = inputDir.Normalize();
+	//入力の向きに最高速で進みたい//そこへだんだん近づける(加速・切り返しの慣性)
+	UpdateMoveVel(player->m_targetVec * Game::kMoveSpeed, kAccel);
 
 }

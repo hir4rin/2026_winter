@@ -1,6 +1,7 @@
 ﻿#include "EnemyPart.h"
 #include "../System.h"
 #include "../../Game.h"
+#include "../../Managers/ModelShaderManager.h"
 
 namespace
 {
@@ -93,5 +94,5 @@ void EnemyPart::Draw()
 	mat.m[3][2] = pos.z;
 
 	MV1SetMatrix(m_modelHandle, mat);
-	MV1DrawModel(m_modelHandle);
+	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);//血殺中は黒く描く
 }

@@ -9,6 +9,7 @@
 #include "State/General/EnemyIdle.h"
 #include "State/General/EnemyPatrol.h"
 #include "../Input.h"
+#include "../../Managers/ModelShaderManager.h"
 
 namespace
 {
@@ -175,7 +176,7 @@ void EnemySwordman::Update()
 
 void EnemySwordman::Draw()
 {
-	MV1DrawModel(m_modelHandle);
+	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);//血殺中は黒く描く
 	//部位破壊したパーツの描画
 	if (m_isBreakLeftArm) m_leftArmPart->Draw();
 	if (m_isBreakHead) m_headPart->Draw();
