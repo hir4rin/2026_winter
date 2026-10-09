@@ -32,6 +32,9 @@ void EnemyChase::Enter()
 
 	//時間をリセット
 	owner->m_chasingTime = 0.0f;
+
+	//頭をプレイヤーの方に向ける
+	owner->m_isLookAtPlayer = true;
 }
 
 void EnemyChase::Update()
@@ -75,6 +78,10 @@ void EnemyChase::Update()
 
 void EnemyChase::Exit()
 {
+	auto owner = m_owner.lock();
+	if (!owner)return;
+	//頭の向きを正面に戻す
+	owner->m_isLookAtPlayer = false;
 }
 
 void EnemyChase::DebugDraw()

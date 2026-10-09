@@ -96,6 +96,14 @@ protected:
 	void UpdateAngleAndPos();//回転角度と座標の更新//
 	void ApplyPos()override;
 
+	/// <summary>
+	/// 頭をtargetPosの方に向ける//アニメーションの姿勢に回転を足すので、アニメーションの更新の後に呼ぶ
+	/// </summary>
+	/// <param name="headFrame">回す頭のボーンのフレーム番号</param>
+	/// <param name="isLook">falseなら正面に戻す</param>
+	/// <param name="targetPos">見る座標</param>
+	void UpdateHeadLook(int headFrame, bool isLook, const Vector3& targetPos);
+
 	int m_modelHandle = -1;//モデルのハンドル
 	int m_hp = -1;//体力
 	int m_waistFrame = -1;//腰のボーンのフレーム番号//継承先でモデル読み込み後にセットする
@@ -104,6 +112,7 @@ protected:
 	float m_targetAngleY = 0.0f;//目標の回転角度//回転を滑らかにするためのもの
 	float m_tiltAngle = 0.0f;//今の傾き(モデルの前後軸まわり)
 	float m_targetTiltAngle = 0.0f;//目標の傾き
+	float m_headAngle = 0.0f;//今の頭の向き(体の正面からの角度)
 
 
 	Vector3 m_targetVec = {};//移動したい方向のベクトル

@@ -27,6 +27,8 @@ void EnemyIdle::Enter()
 
 	//時間をリセット
 	owner->m_idleTime = 0.0f;
+
+	owner->m_isLookAtPlayer = true;
 }
 
 void EnemyIdle::Update()
@@ -39,7 +41,7 @@ void EnemyIdle::Update()
 	//owner->m_rb.m_vel = Vector3(0, 0, 0);//EnemyStateFallを作ったらこっちに移行
 
 	//Playerを見る
-	owner->ToPlayerLook();
+	//owner->ToPlayerLook();
 
 	owner->m_anim.Update(owner->m_ownTimeScale);
 	//m_idleTime += 1.0f * timeScale * m_ownTimeScale;
@@ -48,35 +50,21 @@ void EnemyIdle::Update()
 
 	//一定時間Idle状態でいる
 
+	//デバッグ用//Idleのままにするときは遷移しない
+	if (owner->m_isDebugIdle)return;
 
 	if (owner->m_idleTime < kEnemyIdleMaxTime)return;
 
 	//Idleの時間を超えたら次のStateに遷移する
 	owner->ChangeState(owner->NextAfterIdle());
-
-
-	////ランダムでChaseかCautionに遷移する
-	//if (owner->CanMeleeAttack(kEnemyMeleeAttackRange))
-	//{
-	//	owner->ChangeState(EnemyState::Attack);
-	//	return;
-	//}
-	////ランダム
-	//if (rand() % kStateChangeRandomMax < kStateChangeThreshold)
-	//{
-	//	owner->ChangeState(EnemyState::Chase);
-	//	return;
-	//}
-	//else if (rand() % kStateChangeRandomMax >= kStateChangeThreshold)
-	//{
-	//	owner->ChangeState(EnemyState::Caution);
-	//	return;
-	//}
-
 }
 
 void EnemyIdle::Exit()
 {
+	auto owner = m_owner.lock();
+	if (!owner)return;
+
+	owner->m_isLookAtPlayer = false;
 }
 
 void EnemyIdle::DebugDraw()

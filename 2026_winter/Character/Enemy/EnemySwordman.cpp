@@ -172,6 +172,8 @@ void EnemySwordman::Update()
 	}
 	//アニメーションの更新
 	m_anim.Update();
+	//頭をプレイヤーの方に向ける//アニメーションの姿勢に回転を足すので、アニメーションの更新の後に呼ぶ
+	UpdateLookAtPlayer(kHeadFrame);
 }
 
 void EnemySwordman::Draw()

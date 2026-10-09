@@ -9,17 +9,24 @@
 namespace
 {
 
-	constexpr float kJumpInitVel = 20.0f;//ジャンプの初速//この数値を変えることで、ジャンプの高さを調整できる
-	constexpr float kJumpMoveSpeedMultiplier = 0.5f;//ジャンプ中の移動速度倍率(通常の0.5倍)
+	constexpr float kJumpInitVel = 18.0f;//ジャンプの初速//この数値を変えることで、ジャンプの高さを調整できる
+	constexpr float kJumpMoveSpeedMultiplier = 0.8f;//ジャンプ中の移動速度倍率(通常の0.5倍)
 
 	constexpr float kJumpForWallStayFrame = 10.0f;//壁に沿って移動する状態に遷移するまでのフレーム数
+
+	constexpr float kJumpPowerRate = 1.0f;
 }
 
 
 PlayerStateJump::PlayerStateJump(std::weak_ptr<Player> player) : PlayerState(player)
 {
 	//playerが既に破棄されていたら早期リターンする
-	if (m_owner.expired())return;
+	auto owner = m_owner.lock();
+	if (!owner) return;
+	//ジャンプ開始時の移動速度を保存する
+	//ChangeStateの中でm_moveVelが0にされる(Enterより前)ので、まだ残っているコンストラクタで保存する
+	m_baseVel = owner->m_rb.m_moveVel * kJumpPowerRate;
+	m_baseVel.y = 0.0f;//y成分は移動に関係ないので、0にする
 }
 
 PlayerStateJump::~PlayerStateJump()
@@ -38,11 +45,10 @@ void PlayerStateJump::Enter()
 	//ジャンプ状態
 	player->m_isGround = false;//地面にいない状態にする
 	player->SetIsFloor(false);//地面にいない状態にする
-	//ジャンプ開始時の移動速度を保存する
-	m_baseVel = player->m_rb.m_vel;
-	m_baseVel.y = 0.0f;//y成分は移動に関係ないので、0にする
 	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("JumpUp"), false, 1.0f, Game::kPlayerAnimJumpUpEndFrame);
 	//System::GetInstance().GetSoundManager().PlaySE("JumpUpAndDown");
+	printfDx("baseVel %.2f %.2f\n", m_baseVel.x, m_baseVel.z);
+
 }
 
 void PlayerStateJump::Update()

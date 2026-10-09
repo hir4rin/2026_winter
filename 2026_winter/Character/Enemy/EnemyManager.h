@@ -51,4 +51,6 @@ private:
 	std::vector<std::weak_ptr<EnemyBase>> m_phaseEnemies;//今のフェーズで出した敵//全員倒したら次のフェーズへ
 
 	bool m_wasFPressed = false;//Fキーの押しっぱなし判定用
+	bool m_wasIPressed = false;//Iキーの押しっぱなし判定用
+	bool m_isDebugIdle = false;//デバッグ用//trueなら敵をずっとIdleにする
 };

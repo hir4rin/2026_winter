@@ -33,9 +33,19 @@ void EnemyManager::Update()
 	}
 	m_wasFPressed = isFPressed;
 
+	//デバッグ用//Iを押した瞬間に、敵をずっとIdleにするかを切り替える
+	bool isIPressed = CheckHitKey(KEY_INPUT_I) != 0;
+	if (isIPressed && !m_wasIPressed)
+	{
+		m_isDebugIdle = !m_isDebugIdle;
+	}
+	m_wasIPressed = isIPressed;
+
 
 	for (auto& enemy : m_enemies)
 	{
+		//新しく出た敵や、被弾から戻った敵にもかかるように毎フレーム設定する
+		enemy->SetDebugIdle(m_isDebugIdle);
 		enemy->Update();
 	}
 	//グループの敵がプレイヤーを見つけたら、同じグループの敵も気づく

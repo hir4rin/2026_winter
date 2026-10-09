@@ -32,6 +32,9 @@ void EnemyCaution::Enter()
 	owner->ToPlayerLook();
 
 	owner->m_cautionTime = 0.0f;
+
+	//頭をプレイヤーの方に向ける
+	owner->m_isLookAtPlayer = true;
 }
 
 void EnemyCaution::Update()
@@ -67,6 +70,10 @@ void EnemyCaution::Update()
 
 void EnemyCaution::Exit()
 {
+	auto owner = m_owner.lock();
+	if (!owner)return;
+	//頭の向きを正面に戻す
+	owner->m_isLookAtPlayer = false;
 }
 
 void EnemyCaution::DebugDraw()

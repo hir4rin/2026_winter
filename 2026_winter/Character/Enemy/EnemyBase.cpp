@@ -132,6 +132,23 @@ void EnemyBase::OnAlerted()
 	ChangeState(std::make_shared<EnemyChase>(GetWeakPtr()));
 }
 
+void EnemyBase::SetDebugIdle(bool isDebugIdle)
+{
+	m_isDebugIdle = isDebugIdle;
+	if (!m_isDebugIdle)return;
+	if (m_isLifeZero || m_isExecuted)return;
+
+	//巡回・追跡・警戒・攻撃・後退中ならIdleにする//被弾中のStateはそのまま(終わったら自分でIdleに戻る)
+	if (std::dynamic_pointer_cast<EnemyPatrol>(m_currentState) ||
+		std::dynamic_pointer_cast<EnemyChase>(m_currentState) ||
+		std::dynamic_pointer_cast<EnemyCaution>(m_currentState) ||
+		std::dynamic_pointer_cast<EnemyAttack>(m_currentState) ||
+		std::dynamic_pointer_cast<EnemyBack>(m_currentState))
+	{
+		ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
+	}
+}
+
 void EnemyBase::OnCollision(Collider& other)
 {
 }
@@ -305,6 +322,18 @@ void EnemyBase::OnPartBrokenKilled(PartBrokenPattern pattern)
 	//StateをPartBrokenKilledに変える(パターンはコンストラクタで渡す)
 	ChangeState(std::make_shared<EnemyPartBrokenKilled>(GetWeakPtr(), pattern));
 	return;
+}
+
+void EnemyBase::UpdateLookAtPlayer(int headFrame)
+{
+	//頭を破壊していたらこれを更新しない//今は部位破壊をしていたらにする
+	//if (m_isPartBroken) return;
+
+	auto player = m_player.lock();
+	if (!player)return;
+
+	//Chase,Caution,Idleのときだけプレイヤーの方を向く//回す処理はCharacterBaseと共通
+	UpdateHeadLook(headFrame, m_isLookAtPlayer, player->GetRigidBody().GetPos());
 }
 
 void EnemyBase::StartVanish()

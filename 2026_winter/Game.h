@@ -26,7 +26,7 @@ namespace Game
 	//Playerの移動スピード
 	constexpr float kMoveSpeed = 12.0f;//移動速度
 	constexpr float kRunSpeed = 18.0f;//ダッシュ状態の移動速度
-	constexpr float kAirMaxSpeed = 12.0f;//空中での最大移動速度
+	constexpr float kAirMaxSpeed = 24.0f;//空中での最大移動速度
 	constexpr float kDodgeSpeed = 10.0f;//回避速度
 	constexpr float kPlayerAnimJumpUpEndFrame = 21.6f;//ジャンプアップのエンドフレーム
 

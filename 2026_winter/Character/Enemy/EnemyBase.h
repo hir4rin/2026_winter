@@ -69,6 +69,9 @@ public:
 	//部位破壊したかどうか
 	bool GetIsPartBroken() { return m_isPartBroken; }
 
+	//頭を敵のほうに向かせる
+	void UpdateLookAtPlayer(int headFrame);
+
 	//PatrollStateに設定
 	void SetPatrolState() { ChangeState(std::make_shared<EnemyPatrol>(GetSharedPtr())); }
 
@@ -96,6 +99,9 @@ public:
 	//同じグループの敵がプレイヤーを見つけたときに呼ばれる//巡回・見張り中なら追跡を始める
 	void OnAlerted();
 	//------------------------------------------------------------------------------
+
+	//デバッグ用//trueの間はIdleのままにする//被弾のStateには遷移するが、IdleからChaseなどには遷移しない
+	void SetDebugIdle(bool isDebugIdle);
 
 
 
@@ -184,6 +190,12 @@ protected:
 	bool m_isPlayerFound = false;//プレイヤーを発見したか(一度見つけたらtrueのまま)
 	std::string m_groupId;//同じグループの敵がプレイヤーを見つけたら一緒に気づく//空ならグループ無し
 
+	
+	//頭
+	bool m_isLookAtPlayer = false;//頭をプレイヤーの方に向けるか
+
+	bool m_isDebugIdle = false;//デバッグ用//trueならIdleから他のStateに遷移しない
+
 
 
 	friend class EnemyIdle;
@@ -192,6 +204,7 @@ protected:
 	friend class EnemyBack;
 	friend class EnemyCaution;
 	friend class EnemyPatrol;
+	friend class EnemyGuard;
 	friend class EnemyKnockBack;
 	friend class EnemyKnockDown;
 	friend class EnemyAirStay;

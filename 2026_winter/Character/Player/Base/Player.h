@@ -118,24 +118,23 @@ namespace ComboIndex
 	constexpr int HeavyAttack1 = 4;
 	constexpr int HeavyAttack2 = 5;
 	constexpr int HeavyAttack3 = 6;
-	constexpr int HeavyAttack4 = 7;
 
-	constexpr int upAttack = 8;
+	constexpr int upAttack = 7;
 
-	constexpr int AirAttack1 = 9;
-	constexpr int AirAttack2 = 10;
-	constexpr int AirAttack3 = 11;
-	constexpr int AirAttack4 = 12;
-	constexpr int AirAttack5 = 13;
+	constexpr int AirAttack1 = 8;
+	constexpr int AirAttack2 = 9;
+	constexpr int AirAttack3 = 10;
+	constexpr int AirAttack4 = 11;
+	constexpr int AirAttack5 = 12;
 
-	constexpr int AirHeavyAttack1 = 14;
+	constexpr int AirHeavyAttack1 = 13;
 
-	constexpr int DashAttack = 15;
-	constexpr int SkillAttack0 = 16;//地上スキルの打ち上げ//終わったら自動でスキル攻撃1へ
-	constexpr int SkillAttack1 = 17;
-	constexpr int SkillAttack2 = 18;
-	constexpr int SkillAttack3 = 19;
-	constexpr int AirSkillAttack1 = 20;//空中から直接出すスキル攻撃1//y軸の移動なし//次はスキル攻撃2へ
+	constexpr int DashAttack = 14;
+	constexpr int SkillAttack0 = 15;//地上スキルの打ち上げ//終わったら自動でスキル攻撃1へ
+	constexpr int SkillAttack1 = 16;
+	constexpr int SkillAttack2 = 17;
+	constexpr int SkillAttack3 = 18;
+	constexpr int AirSkillAttack1 = 19;//空中から直接出すスキル攻撃1//y軸の移動なし//次はスキル攻撃2へ
 
 };
 
@@ -270,6 +269,9 @@ private:
 	void UpdateAngle();//回転処理
 	void WingUpdate();//鴉状態の羽の更新
 	void BloodWingUpdate();//必殺技状態の翼エフェクトの再生・停止と、背中への追従
+	static MATRIX ScaleRotation(const MATRIX& rot, float rate);//回転行列の回転量だけを割合で弱める(回転軸はそのまま)
+	static MATRIX GetRotationOnly(const MATRIX& mat);//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
+	static MATRIX GetFrameBaseModelMatrix(int modelHandle, int frameIndex);//アニメーションが付いていない初期姿勢での、フレームのモデル空間の行列
 	void ApplyPos()override;//座標の適用//Playerクラスでは、座標に加えて、首のボーンの回転も適用する
 	void ApplyPosWithAttackModel();//アタックモデルにも適用
 
@@ -278,6 +280,9 @@ private:
 	bool CanUltFinish()const;//専用必殺技(PlayerStateUlt)を出せるかどうか//必殺技状態中に地上の特定のステートからだけ
 
 	void UpdateSoftTarget();//内部ターゲットの消去条件をチェック
+
+	//頭を向ける
+	void UpdatePlayerHeadLook();
 
 	std::shared_ptr<Player> GetSharedPtr() {return std::dynamic_pointer_cast<Player>(shared_from_this());}
 
@@ -309,6 +314,7 @@ private:
 	std::weak_ptr<EnemyBase> m_cameraFocusEnemy;//上書き中にカメラが高さを合わせる敵(打ち上げた敵)
 	bool m_isTitleMode = false;//タイトル画面かどうか//trueの場合、移動方向をカメラ基準ではなく固定軸にする
 	const int kPlayerNeckBoneIndex = 25;//首のボーンのインデックス
+	int m_headFrame = -1;//頭のボーンのフレーム番号(通常のモデル)//見つからなければ-1で頭を向けない
 	int m_wingModelHandle = -1;//鴉の羽のモデルのハンドル//鴉状態の時に表示する
 	int m_bloodWingPlayingHandle = -1;//必殺技状態の翼エフェクト(再生中)のハンドル//再生していなければ-1
 	int m_bloodWingFrame = -1;//翼の付け根にする背中(肩甲骨の高さ)のボーン//通常のモデル用

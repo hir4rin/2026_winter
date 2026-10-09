@@ -28,13 +28,13 @@ namespace
 
 	//アニメーションの上昇(ルートモーション)を見た目から消す攻撃//ComboChain.csvのindex(切り上げ攻撃)
 	//ComboIndex::upAttackはCSVとずれているので、CSVの値を直接使う
-	constexpr int kRootMotionCancelComboIndexUp = 8;
+	constexpr int kRootMotionCancelComboIndexUp = 7;
 	//アニメーションの下降を見た目から消すときは、SetRootMotionEnable(RootMotionCancel::Down)を使う
-	constexpr int kRootMotionCancelComboIndexDown = 13;
+	constexpr int kRootMotionCancelComboIndexDown = 12;
 
 	//着地後にPlayerStateAttackLanding(着地硬直)へ遷移する攻撃//ComboChain.csvのindex
-	constexpr int kLightAttackLandingComboIndex = 13;//空中弱攻撃5(最終段)
-	constexpr int kHeavyAttackLandingComboIndex = 14;//空中強攻撃1
+	constexpr int kLightAttackLandingComboIndex = 12;//空中弱攻撃5(最終段)
+	constexpr int kHeavyAttackLandingComboIndex = 13;//空中強攻撃1
 }
 
 

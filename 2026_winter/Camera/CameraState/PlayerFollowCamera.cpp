@@ -28,7 +28,7 @@ namespace
 	constexpr float kGroundCheckDistance = 800.0f;//プレイヤーの最高到達点//カメラのターゲットの割合注視点
 
 	constexpr float kToPlayerLengthScale = 0.5f;//プレイヤーからカメラまでの距離にかける倍率
-	constexpr float kCameraLerpFactor = 0.5f;//カメラの位置・注視点のラープ係数
+	constexpr float kCameraLerpFactor = 0.1f;//カメラの位置・注視点のラープ係数
 	constexpr float kGroundCheckRayStartHeight = 250.0f;//地面判定のレイを飛ばす開始位置の高さ
 
 	constexpr float kAngleFullTurn = DX_PI_F * 2.0f;//水平角度の一周分

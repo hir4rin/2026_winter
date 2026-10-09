@@ -50,41 +50,6 @@ namespace
 	constexpr float kBloodWingTiltFollowRate = 0.5f;//体の傾きに翼を追従させる割合(0で向きだけ、1でボーンと同じだけ傾く)
 	constexpr float kBloodWingBackLean = -15.0f * DX_PI_F / 180.0f;//翼を背中側(カメラ側)に倒す角度//マイナスで後ろに倒れる
 
-	//回転行列の回転量だけを割合で弱める(回転軸はそのまま)
-	MATRIX ScaleRotation(const MATRIX& rot, float rate)
-	{
-		float cosAngle = std::clamp((rot.m[0][0] + rot.m[1][1] + rot.m[2][2] - 1.0f) * 0.5f, -1.0f, 1.0f);
-		float angle = acosf(cosAngle);
-		VECTOR axis = VGet(rot.m[1][2] - rot.m[2][1], rot.m[2][0] - rot.m[0][2], rot.m[0][1] - rot.m[1][0]);
-		if (angle < 0.0001f || VSize(axis) < 0.0001f) return MGetIdent();//ほぼ回転していない
-		return MGetRotAxis(VNorm(axis), angle * rate);
-	}
-
-	//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
-	MATRIX GetRotationOnly(const MATRIX& mat)
-	{
-		MATRIX rot = MGetIdent();
-		for (int i = 0; i < 3; ++i)
-		{
-			VECTOR axis = VNorm(VGet(mat.m[i][0], mat.m[i][1], mat.m[i][2]));
-			rot.m[i][0] = axis.x;
-			rot.m[i][1] = axis.y;
-			rot.m[i][2] = axis.z;
-		}
-		return rot;
-	}
-
-	//アニメーションが付いていない初期姿勢での、フレームのモデル空間の行列
-	MATRIX GetFrameBaseModelMatrix(int modelHandle, int frameIndex)
-	{
-		MATRIX mat = MGetIdent();
-		for (int frame = frameIndex; frame >= 0; frame = MV1GetFrameParent(modelHandle, frame))
-		{
-			mat = MMult(mat, MV1GetFrameBaseLocalMatrix(modelHandle, frame));//子→親の順に掛ける
-		}
-		return mat;
-	}
-
 	constexpr float kRotationLerpFactor = 0.1f;//モデルの向きを目標角度に近づける割合(ほぼlerp)
 
 	constexpr float kGroundCheckCapsuleTopOffset = 100.0f;//地面判定用カプセルの上端のy軸オフセット
@@ -93,6 +58,9 @@ namespace
 
 	constexpr float kSoftTargetKeepFrame = 90.0f;//攻撃をやめてから内部ターゲットを保持するフレーム数
 	constexpr float kSoftTargetRangeMult = 3.0f;//これ以上離れたら内部ターゲットを消す(ロックオン範囲に対する倍率)
+
+	const char* const kHeadFrameName = "head";//頭のボーン//敵やカメラの方に向ける
+	constexpr float kHeadLookCameraDistance = 1000.0f;//カメラの向きを見るときに、前方のどれくらい先の点を見るか
 }
 
 
@@ -104,6 +72,7 @@ Player::Player()
 	//m_modelHandle = MV1LoadModel("data/Player/Player.mv1");
 	m_modelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::PlayerModel));
 	m_waistFrame = MV1SearchFrame(m_modelHandle, "pelvis");//腰のボーン
+	m_headFrame = MV1SearchFrame(m_modelHandle, kHeadFrameName);//頭のボーン
 	//m_modelHandle = MV1LoadModel("data/Player/Player_true.mv1");
 	//m_modelHandle = MV1LoadModel("data/Player/1danme.mv1");
 
@@ -272,6 +241,8 @@ void Player::Update(Camera& camera)
 	{
 		m_currentState->Update();//状態の更新
 	}
+	//頭を敵やカメラの方に向ける//アニメーションの更新(各Stateの中)の後に呼ぶ
+	UpdatePlayerHeadLook();
 
 
 	//これらは押し戻しの時に呼ばれないのでずれる→そこでも呼ぶ必要あり
@@ -815,6 +786,42 @@ void Player::BloodWingUpdate()
 	float rotZ = atan2f(effectRot.m[0][1], effectRot.m[1][1]);
 	SetRotationPlayingEffekseer3DEffect(m_bloodWingPlayingHandle, rotX, rotY, rotZ);
 }
+
+//回転行列の回転量だけを割合で弱める(回転軸はそのまま)
+MATRIX Player::ScaleRotation(const MATRIX& rot, float rate)
+{
+	float cosAngle = std::clamp((rot.m[0][0] + rot.m[1][1] + rot.m[2][2] - 1.0f) * 0.5f, -1.0f, 1.0f);
+	float angle = acosf(cosAngle);
+	VECTOR axis = VGet(rot.m[1][2] - rot.m[2][1], rot.m[2][0] - rot.m[0][2], rot.m[0][1] - rot.m[1][0]);
+	if (angle < 0.0001f || VSize(axis) < 0.0001f) return MGetIdent();//ほぼ回転していない
+	return MGetRotAxis(VNorm(axis), angle * rate);
+}
+
+//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
+MATRIX Player::GetRotationOnly(const MATRIX& mat)
+{
+	MATRIX rot = MGetIdent();
+	for (int i = 0; i < 3; ++i)
+	{
+		VECTOR axis = VNorm(VGet(mat.m[i][0], mat.m[i][1], mat.m[i][2]));
+		rot.m[i][0] = axis.x;
+		rot.m[i][1] = axis.y;
+		rot.m[i][2] = axis.z;
+	}
+	return rot;
+}
+
+//アニメーションが付いていない初期姿勢での、フレームのモデル空間の行列
+MATRIX Player::GetFrameBaseModelMatrix(int modelHandle, int frameIndex)
+{
+	MATRIX mat = MGetIdent();
+	for (int frame = frameIndex; frame >= 0; frame = MV1GetFrameParent(modelHandle, frame))
+	{
+		mat = MMult(mat, MV1GetFrameBaseLocalMatrix(modelHandle, frame));//子→親の順に掛ける
+	}
+	return mat;
+}
+
 void Player::ApplyPos()
 {
 	//モデルの座標を更新する
@@ -1051,6 +1058,53 @@ bool Player::CanUltFinish()const
 		std::dynamic_pointer_cast<PlayerStateDashAttack>(m_currentState) ||
 		std::dynamic_pointer_cast<PlayerStateAttackLanding>(m_currentState) ||
 		std::dynamic_pointer_cast<PlayerStateDodge>(m_currentState);
+}
+
+void Player::UpdatePlayerHeadLook()
+{
+	//Idle,Moveのときだけ向ける
+	bool isLook = std::dynamic_pointer_cast<PlayerStateIdle>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateMove>(m_currentState)           ||
+		std::dynamic_pointer_cast<PlayerStateFastRun>(m_currentState);
+
+	//見る先を決める//ロックオンの敵→暗殺対象->内部ターゲットの敵→カメラの向きの順
+	Vector3 targetPos;
+	auto lockTarget = m_lockOnManager->GetLockTarget();
+	auto assasinTarget = GetAssasinTarget();
+	auto softTarget = GetSoftTarget();
+
+	//Y軸も変えたいと思ったけど実装敵に後回し
+	Vector3 offsetY = Vector3(0.0f, 150.0f, 0.0f);
+	//Vector3 offsetY = m_offset;
+
+	if (lockTarget)
+	{
+		targetPos = lockTarget->GetRigidBody().GetPos() + offsetY;
+	}
+	else if (assasinTarget)
+	{
+		targetPos = assasinTarget->GetRigidBody().GetPos() + offsetY;
+	}
+	else if (softTarget)
+	{
+		targetPos = softTarget->GetRigidBody().GetPos() + offsetY;
+	}
+	else
+	{
+		//見る相手がいないときは正面に戻す//targetPosを(0,0,0)にすると原点の方を向いてしまう
+		isLook = false;
+	}
+
+	//もし敵との距離が遠かったら頭は回さない(正面に戻す)
+	float distance = (m_rb.m_pos - targetPos).Magnitude();
+	if (distance > 500.0f)
+	{
+		isLook = false;
+	}
+
+
+	//頭のボーンを回すのは通常のモデルだけ//Idle,Moveは通常のモデルを使っている
+	UpdateHeadLook(m_headFrame, isLook, targetPos);
 }
 
 void Player::UpdateSoftTarget()
