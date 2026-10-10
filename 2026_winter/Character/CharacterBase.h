@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "../Collider/Collider.h"
 #include "../Animation.h"
+#include "Player/Base/PlayerEnums.h"
 #include <unordered_map>
 
 class HitCol;
@@ -42,6 +43,7 @@ public:
 		float hitStopTime;//攻撃が当たったときのヒットストップの時間
 		float kAttackColOffset;//攻撃判定を前に出す距離
 		bool isKirimomi;//吹っ飛ぶかどうか
+		AttackType attackType = AttackType::None;//弱攻撃か強攻撃か//プレイヤーの通常攻撃以外はNone
 	};
 
 	//被ダメ情報

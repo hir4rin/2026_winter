@@ -598,6 +598,8 @@ void Player::InitializeComboChain()
 		//アニメーションの再生速度//空欄なら1.0(等速)
 		node.animTimeScale = tokens[ComboNodeType::AnimTimeScale].empty() ? 1.0f : std::stof(tokens[ComboNodeType::AnimTimeScale]);
 		node.index = std::stoi(tokens[ComboNodeType::Index]);
+		//攻撃の種類//空欄ならNone
+		node.attackType = tokens[ComboNodeType::AttackTypeCol].empty() ? AttackType::None : static_cast<AttackType>(std::stoi(tokens[ComboNodeType::AttackTypeCol]));
 		node.attackPower = std::stof(tokens[ComboNodeType::AttackPower]);
 		node.brokenRate = std::stof(tokens[ComboNodeType::BrokenRate]);
 		//突進フレーム//開始が空欄なら0(最初から)、終了が空欄なら-1(進行率のデフォルト値を使う)

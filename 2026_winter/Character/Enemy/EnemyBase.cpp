@@ -164,6 +164,48 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	//データの保存
 	m_attackData = data;
 
+
+	//ガード
+	//一旦100移行
+	//攻撃が弱攻撃ならガード
+	if (data.attackType == AttackType::lightAttack)
+	{
+		//ここから確率
+		if (Utility::IsHitRate(100))
+		{
+			//ガードブレイクの時はガードに移行しない
+			if (!std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState))
+			{
+				//ガード中ではないなら
+				if (!std::dynamic_pointer_cast<EnemyGuard>(m_currentState))
+				{
+					ChangeState(std::make_shared<EnemyGuard>(GetWeakPtr()));
+					return;
+				}
+			}
+		}
+	}
+	
+	//ガード中なら
+	if(std::dynamic_pointer_cast<EnemyGuard>(m_currentState))
+	{
+		//もし、スキル攻撃や必殺技が当たったらそのままダメージ処理へ進む
+		if (data.attackType == AttackType::SkillAttack || data.attackType == AttackType::UltAttack)
+		{
+			//そのままダメージ処理
+		}
+		//それらと違うなら
+		else
+		{
+			auto currentState = std::dynamic_pointer_cast<EnemyGuard>(m_currentState);
+			//ガードしているときにHit
+			currentState->OnGuardHit();
+			return;
+		}
+	}
+
+
+
 	//死亡していたら処理しない
 	if (m_isDead)return;
 	//死亡吹っ飛び中は処理しない
@@ -174,35 +216,8 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	//被ダメをしたらplayerを見つけた判定にする
 	m_isPlayerFound = true;
 
-	//血しぶきを再生する//必殺技中は白い血、それ以外は3パターンからランダム(GetRand(2)は0〜2を返す)
-	{
-		//必殺技の攻撃が当たった瞬間は、AttackColがこの後にSetUltStartするのでGetIsUltimatingはまだfalse
-		//そのため、当たった攻撃が必殺技の判定かどうかも見る
-		const bool isUltimating = System::GetInstance().GetBattleMgr()->GetIsUltimating() ||
-			other.GetTag().role == Collider::ColRole::UltAttack;
-		AsyncData effect = AsyncData::BloodSplashEffectWhite;
-		if (!isUltimating)
-		{
-			const int pattern = GetRand(kBloodSplashPatternNum - 1);
-			effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodSplashEffectA) + pattern);
-		}
-		//エフェクトの+Zを、プレイヤーから敵へ向かう方向(斬られて血が飛ぶ方向)に向ける
-		Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
-		toEnemy.y = 0.0f;
-		if (toEnemy.Magnitude() <= 0.0f)
-		{
-			toEnemy = player->GetTargetVec();//重なっているときはプレイヤーの正面に飛ばす
-		}
-		const Vector3 bloodPos(m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
-		const int playingHandle = EffectManager::GetInstance().Play(effect, bloodPos, atan2f(toEnemy.x, toEnemy.z), kBloodSplashScale);
-
-		//必殺技中の血は、タイムスケールに関係なくkBloodSplashUltSpeedの速さで飛ばす
-		//(当たった直後にスローがかかるので、EffectManagerが毎フレーム速さを設定し直す)
-		if (isUltimating)
-		{
-			EffectManager::GetInstance().SetOwnSpeed(playingHandle, kBloodSplashUltSpeed);
-		}
-	}
+	//血しぶきを再生する
+	PlayBloodSplash(other);
 
 
 	//部位破壊率の確率で部位破壊する//GetRand(99)は0〜99を返す
@@ -472,6 +487,40 @@ void EnemyBase::FinishHitProcess()
 	//m_knockBackVel = Vector3(0, 0, 0);
 	m_knockBackFrame = 0;
 	m_hitType = HitType::None;
+}
+
+void EnemyBase::PlayBloodSplash(Collider& other)
+{
+	auto player = m_player.lock();
+	if (!player)return;
+
+	//必殺技中は白い血、それ以外は3パターンからランダム(GetRand(2)は0〜2を返す)
+	//必殺技の攻撃が当たった瞬間は、AttackColがこの後にSetUltStartするのでGetIsUltimatingはまだfalse
+	//そのため、当たった攻撃が必殺技の判定かどうかも見る
+	const bool isUltimating = System::GetInstance().GetBattleMgr()->GetIsUltimating() ||
+		other.GetTag().role == Collider::ColRole::UltAttack;
+	AsyncData effect = AsyncData::BloodSplashEffectWhite;
+	if (!isUltimating)
+	{
+		const int pattern = GetRand(kBloodSplashPatternNum - 1);
+		effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodSplashEffectA) + pattern);
+	}
+	//エフェクトの+Zを、プレイヤーから敵へ向かう方向(斬られて血が飛ぶ方向)に向ける
+	Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
+	toEnemy.y = 0.0f;
+	if (toEnemy.Magnitude() <= 0.0f)
+	{
+		toEnemy = player->GetTargetVec();//重なっているときはプレイヤーの正面に飛ばす
+	}
+	const Vector3 bloodPos(m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
+	const int playingHandle = EffectManager::GetInstance().Play(effect, bloodPos, atan2f(toEnemy.x, toEnemy.z), kBloodSplashScale);
+
+	//必殺技中の血は、タイムスケールに関係なくkBloodSplashUltSpeedの速さで飛ばす
+	//(当たった直後にスローがかかるので、EffectManagerが毎フレーム速さを設定し直す)
+	if (isUltimating)
+	{
+		EffectManager::GetInstance().SetOwnSpeed(playingHandle, kBloodSplashUltSpeed);
+	}
 }
 
 void EnemyBase::FinisherPerformanceProcess()

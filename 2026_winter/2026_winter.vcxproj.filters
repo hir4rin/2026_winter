@@ -297,6 +297,9 @@
     <ClCompile Include="Character\Enemy\State\General\EnemyGuard.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Enemy\State\General\EnemyGuardBreak.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\EnemyPart.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -666,6 +669,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\General\EnemyGuard.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\State\General\EnemyGuardBreak.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\EnemyPart.h">

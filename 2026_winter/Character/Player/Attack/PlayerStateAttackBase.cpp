@@ -459,7 +459,8 @@ void PlayerStateAttackBase::CreateAttackCol(const ComboNode& node)
 	.knockBackFrame = totalAnimFrame,
 	.hitStopTime = kHitStopTime,
 	.kAttackColOffset = kAttackColOffset,
-	.isKirimomi = node.isKirimomi
+	.isKirimomi = node.isKirimomi,
+	.attackType = node.attackType
 	};
 
 	m_attackCol = std::make_shared<AttackCol>(m_owner, player->m_attackData);

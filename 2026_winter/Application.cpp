@@ -43,6 +43,8 @@ bool Application::Init()
 	{
 		return false;			// エラーが起きたら直ちに終了
 	}
+	//乱数の種を起動時の時刻にする(GetRandが起動ごとに違う並びになる)
+	SRand(GetNowCount());
 	// Effekseerを初期化する。
 	// 引数には画面に表示する最大パーティクル数を設定する。
 	if (Effekseer_Init(kEffekseerMaxParticleNum) == -1)

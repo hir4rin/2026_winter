@@ -1,4 +1,5 @@
 ﻿#include "Game.h"
+#include "DxLib.h"
 
 namespace
 {
@@ -37,5 +38,14 @@ namespace Game
 	float GetScale()
 	{
 		return static_cast<float>(g_screenWidth) / static_cast<float>(kScreenWidth);
+	}
+}
+
+namespace Utility
+{
+	bool IsHitRate(int percent)
+	{
+		//Application::InitでSRandしている
+		return GetRand(99) < percent;
 	}
 }

@@ -2,6 +2,8 @@
 #include "CharacterBase.h"
 #include "State/General/EnemyIdle.h"
 #include "State/General/EnemyChase.h"
+#include "State/General/EnemyGuard.h"
+#include "State/General/EnemyGuardBreak.h"
 #include "State/Attack/EnemyAttack.h"
 #include "State/General/EnemyBack.h"
 #include "State/General/EnemyCaution.h"
@@ -40,10 +42,13 @@ public:
 		Vector3 pos;
 		float waitTime = 0.0f;//このポイントにたどり着いてから、次のポイントへ出発するまでの待機フレーム数//0なら待たずに出発、負の値ならずっと待機
 		int index = -1;//パトロールポイントのインデックス//EnemyManagerで管理するために使う
-
 	};
 
-	//struct HitInfo
+	struct GuardInfo
+	{
+		float GurardGauge = 0.0f;
+		float GuardTimer = 0.0f;
+	};
 
 public:
 	EnemyBase(std::weak_ptr<Player> player);
@@ -147,6 +152,7 @@ protected:
 
 	void ToPlayerLook();//Playerの方を向く
 	void FinishHitProcess();//Hitの終了処理
+	void PlayBloodSplash(Collider& other);//血しぶきを再生する//otherは当たった攻撃の判定
 	//確殺、暗殺後のenemyの状態制御
 	void FinisherPerformanceProcess();//確殺、暗殺後のenemyの状態制御
 
@@ -190,6 +196,10 @@ protected:
 	bool m_isPlayerFound = false;//プレイヤーを発見したか(一度見つけたらtrueのまま)
 	std::string m_groupId;//同じグループの敵がプレイヤーを見つけたら一緒に気づく//空ならグループ無し
 
+
+	//ガード
+	GuardInfo m_guardInfo;
+
 	
 	//頭
 	bool m_isLookAtPlayer = false;//頭をプレイヤーの方に向けるか
@@ -205,6 +215,7 @@ protected:
 	friend class EnemyCaution;
 	friend class EnemyPatrol;
 	friend class EnemyGuard;
+	friend class EnemyGuardBreak;
 	friend class EnemyKnockBack;
 	friend class EnemyKnockDown;
 	friend class EnemyAirStay;

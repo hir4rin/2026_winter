@@ -37,6 +37,13 @@ namespace Game
 	constexpr float kEnemyBackSpeed = 5.0f;//敵の距離を取るときの移動速度
 }
 
+//ゲーム全体で使う便利関数
+namespace Utility
+{
+	//percent(0〜100)%の確率で true を返す
+	bool IsHitRate(int percent);
+}
+
 
 
 //UIの表示座標一覧

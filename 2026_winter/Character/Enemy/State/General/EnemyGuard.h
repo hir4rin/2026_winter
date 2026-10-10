@@ -16,5 +16,9 @@ public:
 
     void DebugDraw()override;
 
+
+    void OnGuardHit();
+
+
 };
 

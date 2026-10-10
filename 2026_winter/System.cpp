@@ -10,7 +10,7 @@ namespace
 	//const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
 	const std::string kPlayerModelPath = "data/Player02.mv1";
 	const std::string kPlayerWeaponModelPath = "data/Player_Weapon/katana_blend.mv1";//プレイヤーの刀
-	//必殺技中の刀身の長い刀//katana_blendと同じ向き・原点・柄の大きさに合わせてある
+	//必殺技中の刀身の長い刀
 	const std::string kPlayerUltWeaponModelPath = "data/Player_Weapon/red_katana_ult.mv1";
 
 	const std::string kEnemyModelpath = "data/Enemy/Enemy.mv1";
@@ -21,14 +21,14 @@ namespace
 
 	//ステージのモデル
 	const std::string kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
-	const std::string kDemoStageModelPath = "data/Stage/DemoStage/DemoStage.mv1";//テクスチャは同じ場所のTextures/を参照する
+	const std::string kDemoStageModelPath = "data/Stage/DemoStage/DemoStage.mv1";
 
-	//スキルエフェクト確認用(モデル・テクスチャは同じ場所を参照する)
+	//スキルエフェクト確認用
 	const std::string kDebugGhostDashEffectPath = "data/Effect/Skill/GhostDash.efk";
 	const std::string kDebugGhostDash3DEffectPath = "data/Effect/Skill/GhostDash3D.efk";
 	const std::string kGhostSkill3FallEffectPath = "data/Effect/Skill/GhostSkill3_Fall.efk";
 	const std::string kGhostSkill3ImpactEffectPath = "data/Effect/Skill/GhostSkill3_Impact.efk";
-	const std::string kBloodWingEffectPath = "data/Effect/Skill/BloodWing.efk";//必殺技状態の翼//アルセーヌ風にするなら ArseneWing.efk
+	const std::string kBloodWingEffectPath = "data/Effect/Skill/BloodWing.efk";//
 
 	//敵が斬られたときの血しぶき
 	const std::string kBloodSplashAEffectPath = "data/Effect/Blood/BloodSplash.efk";

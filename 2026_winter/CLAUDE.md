@@ -100,6 +100,14 @@
 - `Player::ChangeState` で Idle/Move/FastRun 以外に移ったら `m_moveVel` を0にする(攻撃・回避の後に滑らないように)。`ForceIdleState` でも0にする。
 - 真後ろへの切り返しは、一度止まってから逆に加速する(Moveで約16F)。重ければ、逆向き入力のときだけブレーキを強くする。
 
+### 2026-10-10 被弾側で弱攻撃・強攻撃を判別できるようにした
+- `ComboChain01.csv` の index の後(攻撃力の前)に `attackType` 列を追加。値は `AttackType`(-1:なし 0:弱 1:強 2:スキル)。
+  - 切り上げ攻撃(7)・ダッシュ攻撃(14)はひとまず -1。
+- `ComboNodeType` に `AttackTypeCol = 4` を追加し、後ろの列番号を1つずつずらした(`AttackType` だと enum class と名前がぶつかる)。
+- `ComboNode::attackType` → `CreateAttackCol` で `AttackData::attackType` に入れる。敵の `OnDamage` では `data.attackType` で判別できる。
+  - `AttackData::attackType` は初期値 None なので、ドロップ攻撃・必殺技・敵の攻撃は None。
+- `m_attackType`(PlayerStateAttack)はコンボ2段目以降 None になるので、判別には使わないこと。
+
 ---
 
 ## TODO / 次にやること

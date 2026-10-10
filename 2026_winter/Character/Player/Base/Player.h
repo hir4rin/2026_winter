@@ -40,6 +40,7 @@ struct ComboNode
 	std::string animName;//アニメーションの名
 	float animTimeScale = 1.0f;//アニメーションの再生速度
 	int index = -1;//攻撃の種類を管理するための変数
+	AttackType attackType = AttackType::None;//弱攻撃か強攻撃か//CSVの-1:なし 0:弱 1:強 2:スキル
 	float attackPower = 0;//攻撃力
 	float brokenRate = 0;//部位破壊率(%)//0〜100
 	float moveStartFrame = 0.0f;//突進を開始するアニメーションのフレーム
@@ -84,27 +85,28 @@ enum ComboNodeType : int
 	AnimName = 1,
 	AnimTimeScale = 2,
 	Index = 3,
-	AttackPower = 4,
-	BrokenRate = 5,
-	MoveTimeStart = 6,
-	MoveTimeEnd = 7,
-	MoveSpeedX = 8,
-	MoveSpeedY = 9,
-	NextLightAttack = 10,
-	NextHeavyAttack = 11,
-	knockBackXZ = 12,
-	knockBackY = 13,
-	IsKirimomi = 14,
-	SeFrameRate = 15,
-	SeName = 16,
-	AttackColStartFrame = 17,
-	AttackColEndFrame = 18,
-	EndFrame = 19,
-	ComboInputStartFrame = 20,
-	ComboInputEndFrame = 21,
-	CancelFrame = 22,
-	ActionCancelFrame = 23,
-	Size = 24,
+	AttackTypeCol = 4,//enum class AttackTypeと名前がぶつかるのでColを付ける
+	AttackPower = 5,
+	BrokenRate = 6,
+	MoveTimeStart = 7,
+	MoveTimeEnd = 8,
+	MoveSpeedX = 9,
+	MoveSpeedY = 10,
+	NextLightAttack = 11,
+	NextHeavyAttack = 12,
+	knockBackXZ = 13,
+	knockBackY = 14,
+	IsKirimomi = 15,
+	SeFrameRate = 16,
+	SeName = 17,
+	AttackColStartFrame = 18,
+	AttackColEndFrame = 19,
+	EndFrame = 20,
+	ComboInputStartFrame = 21,
+	ComboInputEndFrame = 22,
+	CancelFrame = 23,
+	ActionCancelFrame = 24,
+	Size = 25,
 
 };
 namespace ComboIndex
