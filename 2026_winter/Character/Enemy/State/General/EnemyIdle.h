@@ -15,6 +15,8 @@ public:
     void Exit()override;
 
     void DebugDraw();
+    const char* GetName()const override { return "Idle"; }
+    std::string GetDebugInfo()const override;//経過フレーム/待機する長さ
 
 };
 

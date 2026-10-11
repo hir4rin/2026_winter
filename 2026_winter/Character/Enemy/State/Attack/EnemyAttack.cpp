@@ -4,11 +4,15 @@
 #include "../../../AttackCol.h"
 #include "../../../../Collider/SphereShape.h"
 #include "../../../../Managers/CollisionManager.h"
+#include <format>
 
 namespace
 {
 	constexpr float kAttackPower = 10.0f;//攻撃力
-	constexpr float kAttackColRadius = 80.0f;//攻撃の当たり判定の半径
+	constexpr float kAttackColRadius = 70.0f;//攻撃の当たり判定の半径
+	//攻撃の当たり判定を前に出す距離//AttackCol::ApplyPosでも前に50出しているので、中心は合わせて110前になる
+	//後ろの端(110-70=40)が体の半径(40)より前に来るようにして、横や背中にいるプレイヤーに当たらないようにする
+	constexpr float kAttackColForwardOffset = 60.0f;
 	constexpr float kAttackColOffsetY = 100.0f;//攻撃の当たり判定の高さ//前方へのオフセットはAttackCol::ApplyPosで行う
 	constexpr float kHitStopTime = 0.1f;//攻撃ヒット時のヒットストップ時間
 
@@ -35,8 +39,7 @@ void EnemyAttack::Enter()
 	if (!player)return;
 	//animationの初期化
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Attack"), false);
-	//Playerを見る
-	owner->ToPlayerLook();
+	//向きはEnemyAttackPreで固定済みなので、ここではプレイヤーの方を向き直さない(向き直すと判定が避けた先に追いかけてくる)
 
 	//攻撃の当たり判定を生成する
 	CharacterBase::AttackData attackData = {
@@ -51,7 +54,7 @@ void EnemyAttack::Enter()
 	m_attackCol = std::make_shared<AttackCol>(owner, attackData);
 	m_attackCol->ColInit({
 		.pos = owner->m_rb.m_pos,
-		.offset = Vector3(0, kAttackColOffsetY, 0),
+		.offset = owner->GetTargetVec() * kAttackColForwardOffset + Vector3(0, kAttackColOffsetY, 0),//攻撃中は向きが変わらないので、生成時の前方向で固定してよい
 		.shape = std::make_unique<SphereShape>(kAttackColRadius),
 		.tag = {Collider::Faction::Enemy, Collider::ColRole::Attack},
 		.isActive = false,
@@ -70,7 +73,7 @@ void EnemyAttack::Update()
 	if (owner->m_anim.GetAnimEndFlag())
 	{
 		owner->m_attackCoolTime = kEnemyAttackCoolTime;//攻撃のクールタイムをリセット
-		owner->ChangeState(std::make_shared<EnemyBack>(owner));
+		owner->ChangeState(owner->NextAfterAttack());
 	}
 }
 
@@ -88,6 +91,14 @@ void EnemyAttack::Exit()
 
 void EnemyAttack::DebugDraw()
 {
+}
+
+std::string EnemyAttack::GetDebugInfo() const
+{
+	auto owner = m_owner.lock();
+	if (!owner)return {};
+	const char* colText = (m_attackCol && m_attackCol->GetIsActive()) ? " 判定ON" : "";
+	return std::format("rate {:.2f}{}", owner->m_anim.GetAnimRate(), colText);
 }
 
 void EnemyAttack::AttackMove()

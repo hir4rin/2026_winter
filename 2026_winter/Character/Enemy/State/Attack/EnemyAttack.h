@@ -15,6 +15,9 @@ public:
     void Exit()override;
 
     void DebugDraw();
+    const char* GetName()const override { return "Attack"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Attack; }
+    std::string GetDebugInfo()const override;//アニメの進行率(判定が出ていれば「判定ON」)
 private:
     void AttackMove();
 

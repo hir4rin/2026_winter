@@ -14,6 +14,8 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "KnockBack"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Hit; }
 
 private:
     float m_downTime = 0.0f;//ダウンしている時間

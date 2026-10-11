@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <format>
 
 namespace
 {
@@ -43,6 +44,37 @@ namespace
 	constexpr float kBloodSplashHeight = 100.0f;//足元からの高さ(やられ判定の高さに合わせる)
 	constexpr float kBloodSplashScale = 20.0f;//エフェクトは1/20で作っているので20倍して元の大きさに戻す
 	constexpr float kBloodSplashUltSpeed = 0.45f;//必殺技中の血しぶきの再生速度(タイムスケールに関係なくこの速さになる)
+
+	//デバッグ表示
+	constexpr float kDebugTextHeight = 220.0f;//文字を出す高さ(足元から)
+	constexpr float kDebugLineHeight = 30.0f;//向き・踏み込み先の線を引く高さ(足元から)//地面に埋もれないように少し上げる
+	constexpr float kDebugForwardLength = 150.0f;//向きの線の長さ
+	constexpr float kDebugForwardTipRadius = 8.0f;//向きの線の先の球の半径
+	constexpr int kDebugSphereDivNum = 8;//球の分割数
+	constexpr int kDebugLineSpacing = 2;//文字の行間
+
+	//ステートの種類ごとの文字色
+	unsigned int GetDebugCategoryColor(EnemyStateBase::DebugCategory category)
+	{
+		switch (category)
+		{
+		case EnemyStateBase::DebugCategory::AttackPre: return GetColor(255, 160, 0);//オレンジ
+		case EnemyStateBase::DebugCategory::Attack:    return GetColor(255, 60, 60);//赤
+		case EnemyStateBase::DebugCategory::Recovery:  return GetColor(80, 255, 80);//緑
+		case EnemyStateBase::DebugCategory::Hit:       return GetColor(255, 255, 0);//黄
+		case EnemyStateBase::DebugCategory::Guard:     return GetColor(0, 220, 255);//水色
+		case EnemyStateBase::DebugCategory::Dead:      return GetColor(128, 128, 128);//灰
+		default:                                       return GetColor(255, 255, 255);//白
+		}
+	}
+
+	//影を付けて、xを中心に文字を描く
+	void DrawDebugTextCenter(int x, int y, const std::string& text, unsigned int color)
+	{
+		const int width = GetDrawStringWidth(text.c_str(), static_cast<int>(text.size()));
+		DrawString(x - width / 2 + 1, y + 1, text.c_str(), GetColor(0, 0, 0));
+		DrawString(x - width / 2, y, text.c_str(), color);
+	}
 }
 
 EnemyBase::EnemyBase(std::weak_ptr<Player> player)
@@ -129,7 +161,7 @@ void EnemyBase::OnAlerted()
 	if (!std::dynamic_pointer_cast<EnemyPatrol>(m_currentState))return;
 
 	m_isPlayerFound = true;
-	ChangeState(std::make_shared<EnemyChase>(GetWeakPtr()));
+	ChangeState(NextOnPlayerFound());
 }
 
 void EnemyBase::SetDebugIdle(bool isDebugIdle)
@@ -143,10 +175,61 @@ void EnemyBase::SetDebugIdle(bool isDebugIdle)
 		std::dynamic_pointer_cast<EnemyChase>(m_currentState) ||
 		std::dynamic_pointer_cast<EnemyCaution>(m_currentState) ||
 		std::dynamic_pointer_cast<EnemyAttack>(m_currentState) ||
+		std::dynamic_pointer_cast<EnemyAttackPre>(m_currentState) ||
+		std::dynamic_pointer_cast<EnemyAttackEnd>(m_currentState) ||
 		std::dynamic_pointer_cast<EnemyBack>(m_currentState))
 	{
 		ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
 	}
+}
+
+void EnemyBase::DebugDraw()
+{
+	if (!m_currentState)return;
+
+	//ステートごとの3D描画(巡回経路・視界など)
+	m_currentState->DebugDraw();
+
+	const auto category = m_currentState->GetDebugCategory();
+	const unsigned int color = GetDebugCategoryColor(category);
+	const Vector3 lineStart = m_rb.m_pos + Vector3(0, kDebugLineHeight, 0);
+
+	if (category != EnemyStateBase::DebugCategory::Dead)
+	{
+		//向いている方向(m_targetVec)//予備動作の途中で向きが固定されるかの確認用
+		Vector3 forward = m_targetVec;
+		forward.y = 0.0f;
+		if (forward.Magnitude() > 0.0f)
+		{
+			const Vector3 tip = lineStart + forward.Normalize() * kDebugForwardLength;
+			DrawLine3D(lineStart.ToDxLibVector(), tip.ToDxLibVector(), color);
+			DrawSphere3D(tip.ToDxLibVector(), kDebugForwardTipRadius, kDebugSphereDivNum, color, color, true);
+		}
+	}
+
+	//予備動作・攻撃中は踏み込み先(m_targetPos)への線
+	if (category == EnemyStateBase::DebugCategory::AttackPre ||
+		category == EnemyStateBase::DebugCategory::Attack)
+	{
+		const Vector3 target(m_targetPos.x, lineStart.y, m_targetPos.z);
+		DrawLine3D(lineStart.ToDxLibVector(), target.ToDxLibVector(), color);
+	}
+
+	//頭の上に文字を出す//カメラの後ろにいる(zが0〜1の外)ときは出さない
+	const Vector3 textPos = m_rb.m_pos + Vector3(0, kDebugTextHeight, 0);
+	const VECTOR screenPos = ConvWorldPosToScreenPos(textPos.ToDxLibVector());
+	if (screenPos.z <= 0.0f || screenPos.z >= 1.0f)return;
+
+	std::string stateText = m_currentState->GetName();
+	const std::string info = m_currentState->GetDebugInfo();
+	if (!info.empty()) stateText += " " + info;
+	const std::string statusText = std::format("HP {} CT {:.0f}", m_hp, (std::max)(m_attackCoolTime, 0.0f));
+
+	const int x = static_cast<int>(screenPos.x);
+	const int y = static_cast<int>(screenPos.y);
+	const int lineHeight = GetFontSize() + kDebugLineSpacing;
+	DrawDebugTextCenter(x, y - lineHeight, stateText, color);
+	DrawDebugTextCenter(x, y, statusText, GetColor(255, 255, 255));
 }
 
 void EnemyBase::OnCollision(Collider& other)
@@ -160,21 +243,26 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 
 	//処刑済み(確殺・暗殺中)なら被弾しない(演出中のStateが上書きされないようにする)
 	if (m_isExecuted)return;
+	//死亡済み・死亡吹っ飛び中も被弾しない//ガードより先に見ないと、死体がガードのStateに入ってしまう
+	if (m_isLifeZero || m_isDead || m_isDieOut)return;
 
 	//データの保存
 	m_attackData = data;
 
+	//OnCollision中はIsFloor()がfalseのままなので前フレームの接地状態を見る
+	const bool isFloor = WasFloor();
 
 	//ガード
 	//一旦100移行
-	//攻撃が弱攻撃ならガード
-	if (data.attackType == AttackType::lightAttack)
+	//攻撃が弱攻撃ならガード//かつ地上だったら
+	if (data.attackType == AttackType::lightAttack && isFloor)
 	{
 		//ここから確率
 		if (Utility::IsHitRate(100))
 		{
-			//ガードブレイクの時はガードに移行しない
-			if (!std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState))
+			//ガードブレイク中・攻撃の後隙中はガードに移行しない
+			if (!std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState) &&
+				!std::dynamic_pointer_cast<EnemyAttackEnd>(m_currentState))
 			{
 				//ガード中ではないなら
 				if (!std::dynamic_pointer_cast<EnemyGuard>(m_currentState))
@@ -206,10 +294,6 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 
 
 
-	//死亡していたら処理しない
-	if (m_isDead)return;
-	//死亡吹っ飛び中は処理しない
-	if (m_isDieOut)return;
 	//Playerの攻撃データをもとに被ダメ処理をする
 	m_hp -= static_cast<int>(data.attackPower);
 	
@@ -292,6 +376,32 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 		.isKirimomi = data.isKirimomi,
 	};
 
+	//体力が0になったときの処理
+	if (m_hp <= 0)
+	{
+		const bool isDropHit = data.knockBackPower.y < 0.0f || hitinfo.isKirimomi;
+		if (isDropHit)
+		{
+			//叩きつけ・キリモミ吹っ飛びは、吹き飛んでから着地したときに死ぬ(EnemyHitDropがEnemyDieに切り替える)
+			m_hp = 0;
+			m_isDieOut = true;
+			if (m_hitCol) m_hitCol->SetIsActive(false);
+			//このまま下のHitDropへ進む
+		}
+		else if (isFloor && data.knockBackPower.y <= 0.0f)
+		{
+			//地上で普通の攻撃を受けたらその場で死ぬ
+			m_hp = 0;
+			ChangeState(std::make_shared<EnemyDie>(GetWeakPtr()));
+			return;
+		}
+		else
+		{
+			//空中・打ち上げ中は死なない(空中コンボを続けられるように、体力を1残す)
+			m_hp = 1;
+		}
+	}
+
 	//Stateの切り替え//敵を吹き飛ばす攻撃かどうかで切り替える
 
 	if (data.knockBackPower.y > 0.0f && !hitinfo.isKirimomi)
@@ -366,8 +476,8 @@ void EnemyBase::SetOpacity(float rate)
 void EnemyBase::ApplyPos()
 {
 	CharacterBase::ApplyPos();
-	//歩いて地面から離れたら落下ステートにする//消えている途中の死体は落下ステートにしない
-	if (IsLeftFloor() && m_rb.m_vel.y <= 0.0f && !m_isVanishing)
+	//歩いて地面から離れたら落下ステートにする//死体(消えている途中も含む)は落下ステートにしない(着地後にIdleへ戻って生き返らないように)
+	if (IsLeftFloor() && m_rb.m_vel.y <= 0.0f && !m_isVanishing && !m_isLifeZero)
 	{
 		ChangeState(std::make_shared<EnemyAirFall>(GetWeakPtr()));
 	}
@@ -542,7 +652,7 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 	{
 		//return ChangeState(EnemyState::Attack);
 
-		return 	std::make_shared<EnemyAttack>(GetWeakPtr());;
+		return 	std::make_shared<EnemyAttackPre>(GetWeakPtr());
 	}
 	//ランダム
 	if (rand() % kStateChangeRandomMax < kStateChangeThreshold)
@@ -558,6 +668,51 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 	}
 
 	return std::make_shared<EnemyChase>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextOnArrived()
+{
+	//攻撃できるなら予備動作へ
+	if (CanMeleeAttack(kEnemyMeleeAttackRange))
+	{
+		return std::make_shared<EnemyAttackPre>(GetWeakPtr());
+	}
+	//目的地に着いたが攻撃できない(クールタイム中など)ので、様子を見ながら待つ
+	return std::make_shared<EnemyCaution>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterCaution()
+{
+	return std::make_shared<EnemyChase>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterAttack()
+{
+	//後隙
+	return std::make_shared<EnemyAttackEnd>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterAttackEnd()
+{
+	//距離を取る
+	return std::make_shared<EnemyBack>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterParry()
+{
+	//弾いた後は反撃する
+	return std::make_shared<EnemyAttackPre>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextOnPlayerFound()
+{
+	return std::make_shared<EnemyChase>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterRecover()
+{
+	//一度Idleに戻り、Idleの待機時間が終わったらNextAfterIdleで次の行動を決める
+	return std::make_shared<EnemyIdle>(GetWeakPtr());
 }
 
 void EnemyBase::ChangeState(std::shared_ptr<EnemyStateBase> newState)

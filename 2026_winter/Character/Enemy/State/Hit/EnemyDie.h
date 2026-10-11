@@ -14,4 +14,6 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "Die"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Dead; }
 };

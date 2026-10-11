@@ -1,6 +1,7 @@
 ﻿#include "EnemyGuard.h"
 #include "../../../System.h"
 #include "../../EnemyBase.h"
+#include <format>
 
 
 
@@ -28,8 +29,6 @@ void EnemyGuard::Enter()
 	if (!owner)return;
 
 	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockLoop"), true,0.5f);
-
-
 }
 
 void EnemyGuard::Update()
@@ -44,7 +43,7 @@ void EnemyGuard::Update()
 
 	if (timer >= kGuardMaxTimer)
 	{
-		owner->ChangeState(std::make_shared<EnemyIdle>(m_owner));
+		owner->ChangeState(owner->NextAfterRecover());//ガードが時間切れで終わった
 		return;
 	}
 
@@ -53,9 +52,6 @@ void EnemyGuard::Update()
 	{
 		owner->m_anim.ChangeAnim(owner->GetAnimName("BlockLoop"), true,0.5f); 
 	}
-
-
-	owner->m_anim.Update(owner->m_ownTimeScale);
 }
 
 void EnemyGuard::Exit()
@@ -66,14 +62,19 @@ void EnemyGuard::Exit()
 	//ガード情報をリセット
 	owner->m_guardInfo.GuardTimer = 0.0f;
 	owner->m_guardInfo.GurardGauge = 0.0f;
-
-
-
 }
 
 void EnemyGuard::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:Guard");
+}
+
+std::string EnemyGuard::GetDebugInfo() const
+{
+	auto owner = m_owner.lock();
+	if (!owner)return {};
+	//書式の文字列に日本語を入れると、Shift-JISの2バイト目が{や}と同じ値になることがあるので英字にしておく
+	return std::format("gauge {:.0f}/100 {:.0f}/{:.0f}F",
+		owner->m_guardInfo.GurardGauge, owner->m_guardInfo.GuardTimer, kGuardMaxTimer);
 }
 
 void EnemyGuard::OnGuardHit()
@@ -82,17 +83,26 @@ void EnemyGuard::OnGuardHit()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-
-	owner->m_guardInfo.GurardGauge += owner->m_attackData.attackPower;
-
-	//一旦固定値
-	if (owner->m_guardInfo.GurardGauge >= 100)
+	//強攻撃を喰らったらガードブレイク
+	if (owner->m_attackData.attackType == AttackType::heavyAttack)
 	{
 		owner->m_guardInfo.GurardGauge = 0.0f;//一旦ここ(毎回リセットしたくなったらExitでする
 		owner->ChangeState(std::make_shared<EnemyGuardBreak>(owner));
 		return;
 	}
 
-	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), true);
+
+	//弱攻撃を喰らう->ゲージたまったらはじき
+	owner->m_guardInfo.GurardGauge += owner->m_attackData.attackPower;
+
+	//一旦固定値
+	if (owner->m_guardInfo.GurardGauge >= 100)
+	{
+		owner->m_guardInfo.GurardGauge = 0.0f;//一旦ここ(毎回リセットしたくなったらExitでする
+		owner->ChangeState(std::make_shared<EnemyParry>(owner));
+		return;
+	}
+
+	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), true,0.5f);
 
 }

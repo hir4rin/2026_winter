@@ -21,6 +21,8 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "PartBrokenKilled"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Dead; }
 
 private:
     void PatternAUpdate();

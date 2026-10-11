@@ -27,7 +27,6 @@ void EnemyAirStay::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 	m_airTime += System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 
 	//浮遊させる//重力はかけない
@@ -46,5 +45,4 @@ void EnemyAirStay::Exit()
 
 void EnemyAirStay::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:AirStay");
 }

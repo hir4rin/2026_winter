@@ -366,6 +366,16 @@ void Player::OnDamage(Collider& other, AttackData& data)
 	ChangeState(std::make_shared<PlayerStateHit>(GetWeakPtr(), data));
 }
 
+void Player::OnParried()
+{
+	//死亡中は何もしない
+	if (std::dynamic_pointer_cast<PlayerStateDie>(m_currentState))return;
+	if (std::dynamic_pointer_cast<PlayerAttackParried>(m_currentState))return;
+
+	//敵パリィに遷移
+	ChangeState(std::make_shared<PlayerAttackParried>(GetWeakPtr()));
+}
+
 void Player::OnJustDodge(Collider& other, AttackData& data)
 {
 	//現在の状態に通知する//回避状態以外は何もしない

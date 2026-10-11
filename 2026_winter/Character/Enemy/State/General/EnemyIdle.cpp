@@ -1,6 +1,7 @@
 ﻿#include "EnemyIdle.h"
 #include "../../../System.h"
 #include "../../EnemyBase.h"
+#include <format>
 
 namespace
 {
@@ -43,7 +44,6 @@ void EnemyIdle::Update()
 	//Playerを見る
 	//owner->ToPlayerLook();
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 	//m_idleTime += 1.0f * timeScale * m_ownTimeScale;
 	owner->m_idleTime += 1.0f * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 	
@@ -69,5 +69,11 @@ void EnemyIdle::Exit()
 
 void EnemyIdle::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:Idle");
+}
+
+std::string EnemyIdle::GetDebugInfo() const
+{
+	auto owner = m_owner.lock();
+	if (!owner)return {};
+	return std::format("{:.0f}/{:.0f}F", owner->m_idleTime, kEnemyIdleMaxTime);
 }

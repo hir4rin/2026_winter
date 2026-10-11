@@ -33,7 +33,6 @@ void EnemyHitDrop::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 
 	//重力
 	//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、初速と累積から毎フレーム作り直す
@@ -65,5 +64,4 @@ void EnemyHitDrop::Exit()
 
 void EnemyHitDrop::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:HitDrop");
 }

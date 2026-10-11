@@ -16,6 +16,8 @@ public:
 	void AddEnemy(std::shared_ptr<EnemyBase> enemy);//初期化済みの敵を登録する//テストで使う用
 	void Update();
 	void Draw();
+	//デバッグ描画//文字を出すので、3D・UIを描き終わった後に呼ぶこと//F3で表示を切り替える
+	void DebugDraw();
 
 
 	void SetPlayer(std::weak_ptr<Player> player) { m_player = player; }
@@ -53,4 +55,6 @@ private:
 	bool m_wasFPressed = false;//Fキーの押しっぱなし判定用
 	bool m_wasIPressed = false;//Iキーの押しっぱなし判定用
 	bool m_isDebugIdle = false;//デバッグ用//trueなら敵をずっとIdleにする
+	bool m_wasF3Pressed = false;//F3キーの押しっぱなし判定用
+	bool m_isDebugDraw = true;//デバッグ用//trueなら敵のデバッグ表示を出す
 };

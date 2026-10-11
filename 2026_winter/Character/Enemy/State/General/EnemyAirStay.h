@@ -14,6 +14,8 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "AirStay"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Hit; }
 
 private:
     float m_airTime = 0.0f;//空中で浮いている時間

@@ -22,6 +22,8 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "GuardBreak"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Guard; }
 
 private:
     GuardBreakState m_state = GuardBreakState::Start;

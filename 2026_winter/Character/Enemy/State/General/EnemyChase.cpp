@@ -25,7 +25,7 @@ void EnemyChase::Enter()
 	auto player = owner->m_player.lock();
 	if (!player)return;
 	//animationの初期化
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Run"), true);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("RunMain"), true,0.5f);
 	owner->m_targetPos = player->GetRigidBody().GetPos();
 	//Playerを見る
 	owner->ToPlayerLook();
@@ -42,11 +42,10 @@ void EnemyChase::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	//攻撃可能な距離に入ったら攻撃
+	//攻撃可能な距離に入ったら、次の行動を敵に決めてもらう(初期はAttackPre)
 	if (owner->CanMeleeAttack(kEnemyMeleeAttackRange))
 	{
-		//ChangeState(EnemyState::Attack);
-		owner->ChangeState(std::make_shared<EnemyAttack>(owner));
+		owner->ChangeState(owner->NextOnArrived());
 		return;
 	}
 
@@ -68,10 +67,8 @@ void EnemyChase::Update()
 	//playerの位置についたら
 	else
 	{
-		//いろいろやってもなぜか攻撃せず止まるので、距離関係なく攻撃させる
-		//ChangeState(EnemyState::Attack);
-
-		owner->ChangeState(std::make_shared<EnemyAttack>(owner));
+		//目的地に着いたら、次の行動を敵に決めてもらう(初期は、攻撃できないのでCaution)
+		owner->ChangeState(owner->NextOnArrived());
 		return;
 	}
 }

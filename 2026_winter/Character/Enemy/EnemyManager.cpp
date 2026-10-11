@@ -41,6 +41,14 @@ void EnemyManager::Update()
 	}
 	m_wasIPressed = isIPressed;
 
+	//デバッグ用//F3を押した瞬間に、敵のデバッグ表示(頭の上の文字・向きの線)を切り替える
+	bool isF3Pressed = CheckHitKey(KEY_INPUT_F3) != 0;
+	if (isF3Pressed && !m_wasF3Pressed)
+	{
+		m_isDebugDraw = !m_isDebugDraw;
+	}
+	m_wasF3Pressed = isF3Pressed;
+
 
 	for (auto& enemy : m_enemies)
 	{
@@ -89,14 +97,15 @@ void EnemyManager::Draw()
 	{
 		enemy->Draw();
 	}
+}
 
-#ifdef _DEBUG
-	//敵のステートのデバッグ描画
+void EnemyManager::DebugDraw()
+{
+	if (!m_isDebugDraw)return;
 	for (auto& enemy : m_enemies)
 	{
 		enemy->DebugDraw();
 	}
-#endif
 }
 
 void EnemyManager::SpawnEnemy()

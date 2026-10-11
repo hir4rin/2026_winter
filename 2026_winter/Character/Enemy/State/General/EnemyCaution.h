@@ -13,5 +13,7 @@ public:
     void Exit()override;
 
     void DebugDraw();
+    const char* GetName()const override { return "Caution"; }
+    std::string GetDebugInfo()const override;//経過フレーム/警戒する長さ
 };
 

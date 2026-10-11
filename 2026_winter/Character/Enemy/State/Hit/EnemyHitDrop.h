@@ -15,6 +15,8 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "HitDrop"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Hit; }
 
 private:
     CharacterBase::HitInfo m_info;//被弾情報

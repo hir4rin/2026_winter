@@ -116,7 +116,7 @@ void EnemyPatrol::Update()
 	if (CanSeePlayer())
 	{
 		owner->m_isPlayerFound = true;
-		owner->ChangeState(std::make_shared<EnemyChase>(owner));
+		owner->ChangeState(owner->NextOnPlayerFound());
 	}
 }
 
@@ -127,7 +127,6 @@ void EnemyPatrol::Exit()
 void EnemyPatrol::DebugDraw()
 {
 
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:Patrol");
 
 	auto owner = m_owner.lock();
 	if (!owner) return;

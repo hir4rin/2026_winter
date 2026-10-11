@@ -14,6 +14,7 @@ public:
     void Exit()override;
 
     void DebugDraw();
+    const char* GetName()const override { return "Patrol"; }
 protected:
 	bool IsInView(const Vector3& targetPos)const;//視界内にいるかどうか//XZ平面で判定//のちのちY軸対応
     bool CanSeePlayer()const;

@@ -25,16 +25,15 @@ void EnemyAirFall::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 
 	//水平方向は止めて、重力だけかける//累積から毎フレーム作り直す(タイムスケールで減衰しないように)
 	m_gravity += -Game::kGravity * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 	owner->m_rb.m_vel = Vector3(0, m_gravity, 0);
 
-	//着地したらIdleに戻る
+	//着地したら立ち直った後の行動へ(初期はIdle)
 	if (owner->IsFloor())
 	{
-		owner->ChangeState(std::make_shared<EnemyIdle>(owner));
+		owner->ChangeState(owner->NextAfterRecover());
 	}
 }
 
@@ -44,5 +43,4 @@ void EnemyAirFall::Exit()
 
 void EnemyAirFall::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:AirFall");
 }

@@ -53,5 +53,4 @@ void EnemyVanish::Exit()
 
 void EnemyVanish::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:Vanish");
 }

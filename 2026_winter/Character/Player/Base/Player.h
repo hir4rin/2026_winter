@@ -22,6 +22,7 @@
 #include "PlayerStateWallKick.h"//以下同文
 #include "PlayerStateWallStay.h"//以下同文
 #include "PlayerStateWallRunKick.h"//以下同文
+#include "PlayerAttackParried.h"//以下同文
 #include "../../../DataLoader/AnimData.h"
 #include <memory>
 
@@ -184,6 +185,7 @@ public:
 	void OnCollision(Collider& other) override;
 	void OnDamage(Collider& other, AttackData& data) override;
 	void OnJustDodge(Collider& other, AttackData& data);//ジャスト回避判定に敵の攻撃が当たった時の処理//現在の状態に通知する
+	void OnParried();//攻撃を敵に弾かれたときの処理//ひるませる
 
 	void OnAttackHit(int otherId);//攻撃が当たった時の処理
 
@@ -389,6 +391,7 @@ private:
 	friend class PlayerStateWallKick;
 	friend class PlayerStateWallStay;
 	friend class PlayerStateWallRunKick;
+	friend class PlayerAttackParried;
 	//武器
 	friend class PlayerWeapon;
 

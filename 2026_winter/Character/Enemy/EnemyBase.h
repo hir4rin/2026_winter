@@ -4,7 +4,10 @@
 #include "State/General/EnemyChase.h"
 #include "State/General/EnemyGuard.h"
 #include "State/General/EnemyGuardBreak.h"
+#include "State/General/EnemyParry.h"
 #include "State/Attack/EnemyAttack.h"
+#include "State/Attack/EnemyAttackPre.h"
+#include "State/Attack/EnemyAttackEnd.h"
 #include "State/General/EnemyBack.h"
 #include "State/General/EnemyCaution.h"
 #include "State/General/EnemyPatrol.h"
@@ -56,7 +59,9 @@ public:
 	virtual void Init() = 0;
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
-	virtual void DebugDraw() = 0;
+	//デバッグ描画//頭の上にステート名・HP・クールタイム、足元に向きと踏み込み先の線を出す
+	//ステートごとの3D描画(巡回経路など)もここから呼ぶ//文字を出すので、3D・UIを描き終わった後に呼ぶこと
+	virtual void DebugDraw();
 	bool GetIsLifeZero()const { return m_isLifeZero; }//体力が0になったかどうかを返す
 
 	void OnCollision(Collider& other)override;
@@ -100,7 +105,7 @@ public:
 	void SetGuardPoint();
 	//グループ(同じgroupIdの敵)
 	void SetGroupId(const std::string& groupId) { m_groupId = groupId; }
-	const std::string& GetGroupId()const { return m_groupId; }
+	const std::string& GetGroupId()const { return m_groupId;}
 	//同じグループの敵がプレイヤーを見つけたときに呼ばれる//巡回・見張り中なら追跡を始める
 	void OnAlerted();
 	//------------------------------------------------------------------------------
@@ -156,9 +161,19 @@ protected:
 	//確殺、暗殺後のenemyの状態制御
 	void FinisherPerformanceProcess();//確殺、暗殺後のenemyの状態制御
 
-	//Idleの後のState遷移
-	virtual std::shared_ptr<EnemyStateBase> NextAfterIdle();
-	//着地後の遷移先
+	//判断のState遷移------------------------------------------------------------
+	//「次に何をするか」を決めるところだけを敵側の仮想関数にしている(敵の種類ごとに上書きできる)
+	//打ち上げ→落下→着地のような、どの敵でも同じ流れの遷移は各Stateの中に直接書いたまま
+	//ここの初期の遷移先は、仮想関数にする前の各Stateの遷移と同じ
+	virtual std::shared_ptr<EnemyStateBase> NextAfterIdle();//Idleの待機時間が終わった
+	virtual std::shared_ptr<EnemyStateBase> NextOnArrived();//Chaseで攻撃距離に入った、または目的地に着いた
+	virtual std::shared_ptr<EnemyStateBase> NextAfterCaution();//Cautionの警戒時間が終わった
+	virtual std::shared_ptr<EnemyStateBase> NextAfterAttack();//攻撃のモーションが終わった
+	virtual std::shared_ptr<EnemyStateBase> NextAfterAttackEnd();//攻撃の後隙が終わった
+	virtual std::shared_ptr<EnemyStateBase> NextAfterParry();//弾きが終わった
+	virtual std::shared_ptr<EnemyStateBase> NextOnPlayerFound();//巡回・見張り中にプレイヤーを見つけた(グループの仲間が見つけたときも)
+	virtual std::shared_ptr<EnemyStateBase> NextAfterRecover();//被弾・ダウン・着地・ガード・ガードブレイクから立ち直った
+	//----------------------------------------------------------------------------
 
 	void ChangeState(std::shared_ptr<EnemyStateBase> newState);//状態遷移用
 
@@ -211,11 +226,14 @@ protected:
 	friend class EnemyIdle;
 	friend class EnemyChase;
 	friend class EnemyAttack;
+	friend class EnemyAttackPre;
+	friend class EnemyAttackEnd;
 	friend class EnemyBack;
 	friend class EnemyCaution;
 	friend class EnemyPatrol;
 	friend class EnemyGuard;
 	friend class EnemyGuardBreak;
+	friend class EnemyParry;
 	friend class EnemyKnockBack;
 	friend class EnemyKnockDown;
 	friend class EnemyAirStay;

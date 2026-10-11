@@ -117,6 +117,7 @@ public:
 	bool IsFloor()const { return m_isFloor; }
 	void SetUseGroundSnap(bool use) { m_useGroundSnap = use;}//接地の吸着を行うかどうか//player、Enemyなどをtrue
 	bool IsLeftFloor()const { return m_wasFloor && !m_isFloor; }//このフレームで地面から離れたか(歩いて落ちた時用)
+	bool WasFloor()const { return m_wasFloor; }//前フレームの接地状態
 	void SetIsWall(bool isWall) { m_isWall = isWall; }
 	bool IsWall()const { return m_isWall; }
 

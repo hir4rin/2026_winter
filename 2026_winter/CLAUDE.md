@@ -108,9 +108,95 @@
   - `AttackData::attackType` は初期値 None なので、ドロップ攻撃・必殺技・敵の攻撃は None。
 - `m_attackType`(PlayerStateAttack)はコンボ2段目以降 None になるので、判別には使わないこと。
 
+### 2026-10-11 敵の攻撃予備動作ステート(EnemyAttackPre)
+- `Character/Enemy/State/Attack/EnemyAttackPre.h/.cpp` を追加。遷移は **Chase → AttackPre → Attack**
+  (予備動作は攻撃直前・攻撃距離で出す方針。先に予備動作→追跡だと、攻撃までの時間が距離で変わって読めなくなるため)。
+- アニメは CSV の `AttackPre1`(Combo_Attack_Wave_05_02)。ループなし、終わったら `EnemyAttack` へ。
+- 予備動作中はその場で止まる。アニメの rate が `kAttackPreTrackEndRate`(0.6)まではプレイヤーの方を向き、`m_targetPos` も更新する
+  (EnemyAttack は m_targetPos に向かって踏み込むため)。それ以降は向きを固定して、見てから避けられるようにする。
+- 呼び出し元を差し替え: `EnemyChase`(2か所)、`EnemyBase::NextAfterIdle`。`SetDebugIdle` の対象にも追加。
+- 攻撃権の処理は未実装。`Enter` / `Exit` に TODO を置いてある(中断されたときに攻撃権を返すのを忘れないこと)。
+
+### 2026-10-11 敵の戦闘まわりのバグ修正(4件)
+- **攻撃のクールタイム**: `m_attackCoolTime` を減らす処理が無く、1回攻撃した後は `CanMeleeAttack` がずっと false だった。
+  `EnemySwordman::Update` で毎フレーム減らすようにした。
+  - `EnemyChase` の「目的地に着いたら距離に関係なく攻撃」(このバグの回避策だった)をやめ、クールタイム中なら `EnemyCaution` へ。
+- **死亡処理**: HPを減らすだけで死ななかった。`EnemyBase::OnDamage` に HP<=0 の処理を追加。
+  - 地上で普通の攻撃 → その場で `EnemyDie`
+  - 叩きつけ(knockBack.y<0)・キリモミ → `m_isDieOut` を立てて HitDrop へ。着地で `EnemyDie`(元からある処理)
+  - 空中・打ち上げ → HP1を残す(空中では死なない)
+  - 死亡済み・死亡吹っ飛び中の被弾チェックをガード判定より前に移動(死体がガードに入らないように)
+  - `EnemyDie::Enter` でやられ判定を消す。`EnemyBase::ApplyPos` で死体は AirFall にしない(着地後Idleで生き返るのを防ぐ)
+- **攻撃判定の位置**: AttackCol::ApplyPos の前方50＋半径80で、背中側にも30はみ出していた。
+  `EnemyAttack` で前方に60足して(中心は110前)、半径を70にした。後ろの端が体の半径(40)より前になる。
+  `EnemyAttack::Enter` の `ToPlayerLook()` を削除(予備動作で固定した向きを向き直さない)。
+- **アニメの二重更新**: `EnemySwordman::Update` と各State(Idle/Guard/GuardBreak/Hit系/Air系/Die/KnockBack/KnockDown)の両方で
+  `m_anim.Update` していて、それらのStateだけ2倍速だった。Stateからは消し、Swordmanで `m_anim.Update(m_ownTimeScale)` を1回だけ呼ぶ。
+  - **アニメ速度・終了タイミングがこれまでの半分の速さに戻る**ので、Idle/被弾/ガードブレイクなどの見た目や長さの再調整が要るかも。
+  - 今後Stateを作るときも、State内で `m_anim.Update` を呼ばないこと。
+
+### 2026-10-11 OnDamage 中の接地判定
+- CollisionManager は判定の前に `m_isFloor` を false に戻し、床への吸着(SnapToGround)は全部の OnCollision が終わってから行う。
+  そのため `OnCollision` / `OnDamage` の中では `IsFloor()` がほぼ false になる。
+- `Collider::WasFloor()`(前のフレームの接地状態)を追加。`EnemyBase::OnDamage` のガードの条件(弱攻撃＋地上)と、地上で死ぬ判定はこちらを使う。
+- 当たり判定の処理の中で接地を見るときは `WasFloor()` を使うこと。
+
+### 2026-10-11 敵のデバッグ表示
+- 敵の頭の上に「ステート名＋情報」「HP / 攻撃クールタイム(CT)」を出す。足元に向きの線(先に球)、予備動作・攻撃中は踏み込み先(m_targetPos)への線。
+  - 文字色はステートの種類: 移動・待機=白、予備動作=オレンジ、攻撃=赤、被弾・空中=黄、ガード=水色、死亡・処刑=灰。
+  - 情報を出しているステート: AttackPre(経過/長さ、向き固定後は「固定」)、Attack(rate、判定中は「判定ON」)、Idle・Caution(経過/長さ)、Guard(ゲージ・経過)。
+- **F3** で表示を切り替える(最初は表示)。`SceneMain::NormalDraw` の `#ifdef _DEBUG` 内、UIの後で `EnemyManager::DebugDraw()` を呼ぶ。
+- 仕組み: `EnemyStateBase` に `GetName()`(純粋仮想)/ `GetDebugCategory()` / `GetDebugInfo()` を追加。
+  **新しいStateを作るときは GetName を必ず実装する**(種類がMove以外なら GetDebugCategory も)。
+  各Stateの `DebugDraw()` は3Dの補助線用として残した(Patrolの経路・視界)。左上に出していた "EnemyState:〜" の文字は削除。
+  `EnemyBase::DebugDraw()` が共通処理(純粋仮想をやめて実装を持たせ、EnemySwordman の override は削除)。
+- 当たり判定の線の色を役割で分けた(`Collider::DebugDraw`): 敵の攻撃=赤、プレイヤーの攻撃=薄い赤、やられ判定=青。
+- `std::format` の書式文字列に日本語を入れないこと(Shift-JISの2バイト目が `{` `}` と同じ値になることがある)。日本語は引数で渡す。
+
+### 2026-10-11 敵の判断のステート遷移を仮想関数にした
+- **詳細は `Character/Enemy/EnemyStateTransition.md`**(どの関数がいつ・どこから呼ばれるか、初期の遷移先、この先の使い方)。
+- `EnemyBase` に `NextOnArrived` / `NextAfterCaution` / `NextAfterAttack` / `NextOnPlayerFound` / `NextAfterRecover` を追加(既存の `NextAfterIdle` と合わせて6個)。
+  各Stateの判断の遷移(計11か所)をこれらの呼び出しに差し替えた。初期の遷移先は元と同じなので、動きは変わらない。
+- 打ち上げ→落下→着地、予備動作→攻撃などの「流れ」の遷移は各Stateに直接書いたまま。
+- EnemySwordman ではまだ上書きしていない。
+
+### 2026-10-12 攻撃の後隙ステート(EnemyAttackEnd)
+- `Character/Enemy/State/Attack/EnemyAttackEnd.h/.cpp` を追加し、vcxproj/filters に登録。遷移は **Attack → AttackEnd → Back**。
+  - `NextAfterAttack` の初期の行き先を AttackEnd に変更。`NextAfterAttackEnd`(仮想関数)を追加し、初期は Back。
+- 中身: アニメは変えない(攻撃アニメはループなしなので最後の姿勢で止まる)。その場で止まり、向きも頭も動かさない。
+  `kAttackEndTime`(40F、EnemyAttackEnd.cpp 先頭)で次へ。
+- **後隙中は弱攻撃でもガードしない**(`EnemyBase::OnDamage` のガード条件に追加)。被弾すれば通常どおりHit系に移る。
+- デバッグ表示の種類に `Recovery`(緑)を追加。`SetDebugIdle` の対象にも追加。
+- 攻撃のクールタイム(120F)は今まで通り Attack の終わりで入るので、後隙の40Fもクールタイムに含まれる。
+
+### 2026-10-12 弾きステート(EnemyParry)の土台
+- `Character/Enemy/State/General/EnemyParry.h/.cpp` を追加し、vcxproj/filters に登録。**まだどこからも入らない**(土台だけ)。
+- 中身: 仮のアニメ(BlockHit)、その場で止まってプレイヤーの方を向く、ガードゲージを0に戻す、`kParryTime`(30F・仮)で
+  `NextAfterParry()`(仮想関数を追加、初期は AttackPre=反撃)へ。デバッグ表示はガード系の水色。
+- 未定(TODOを置いてある):
+  - 弾く条件(案: ガード中に弱攻撃でゲージがたまったら弾く、強攻撃ならガードブレイク。今はゲージがたまるとガードブレイク)
+  - プレイヤーをひるませる処理(`Player::OnParried` を作り、ダメージ・無敵時間を通さずにひるませる。最初は PlayerStateHit を使い回す案)
+  - 弾き用のアニメ(敵のアニメCSVに無い)
+  - 弾いている間に攻撃が当たったときの扱い(案: 無視する)
+- 調整の注意: プレイヤーのひるみ時間 > 反撃の予備動作 だと反撃が必ず当たる。ひるみ明けに回避が間に合う長さにする。
+
+### 2026-10-12 弾かれたプレイヤーのステート(PlayerAttackParried)の土台
+- `Character/Player/Defence/PlayerAttackParried.h/.cpp` を追加し、vcxproj/filters に登録。Player.h に include と friend を追加。
+  (名前は依頼どおり。他のプレイヤーのStateは `PlayerState〜` なので、揃えるなら `PlayerStateAttackParried` に改名する)
+- 中身: 仮のアニメ(Hit)、横の速度を止める、`kParriedTime`(30F・仮)たったら PlayerStateHit と同じく Idle/Move/Fall へ。
+  ダメージ・無敵時間は無し。
+- `Player::OnParried()` を追加(死亡中は何もしない)。`EnemyParry::Enter` から呼ぶようにした(EnemyParry自体はまだどこからも入らない)。
+- 未定(TODO): 弾かれた用のアニメ、必殺技中・スキル攻撃中に弾かれたときの扱い、空中で弾かれたとき(今は30F浮いたまま止まる)。
+
 ---
 
 ## TODO / 次にやること
+- [ ] EnemyParry の残り(弾く条件・アニメ・弾き中の被弾の扱い)を決めて実装する
+- [ ] PlayerAttackParried の残り(アニメ・必殺技/スキル中・空中で弾かれたとき)
+- [ ] ゲームで後隙の長さ(40F)と、最後の姿勢で止まる見た目を確認。止まって見えるなら専用のアニメ(構え直し)を検討
+- [ ] ゲームで確認: 敵が倒れるか(地上/叩きつけ/空中)、攻撃が背中側に当たらないか、アニメ速度(二重更新を直した影響)
+- [ ] 攻撃権マネージャーを作り、EnemyAttackPre の TODO 箇所で取得・返却する(取れない敵は周回/ガードで待機)
+- [ ] ゲームで予備動作の長さ・向き固定のタイミング(kAttackPreTrackEndRate)を確認。AttackPre2 も使うか検討
 - [ ] 実際のUIクラス(HPバーなど)を作って `InGameInit()` に登録する
 - [ ] ゲームを起動して血殺中に敵(本体・取れた腕/頭)が黒くなるか確認
 - [ ] ゲームを起動して見た目を確認(フォグの距離・ステージの暗さ、血の大きさ(20倍)、向き、白い血、スロー時の速さ)

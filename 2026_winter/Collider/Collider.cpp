@@ -40,6 +40,16 @@ void Collider::DebugDraw() const
 	{
 		color = GetColor(255, 0, 255);//ジャスト回避判定はマゼンタ
 	}
+	//攻撃判定・やられ判定は陣営より役割で色を分ける(体の判定と見分けるため)
+	else if (m_tag.role == ColRole::Attack || m_tag.role == ColRole::UltAttack)
+	{
+		//敵の攻撃は赤、プレイヤーの攻撃は薄い赤
+		color = (m_tag.faction == Faction::Player) ? GetColor(255, 140, 140) : GetColor(255, 0, 0);
+	}
+	else if (m_tag.role == ColRole::Hit)
+	{
+		color = GetColor(0, 120, 255);//やられ判定は青
+	}
 
 	m_shape->DebugDraw(GetWorldPos(), color); // switch(m_type)が丸ごと消える
 }

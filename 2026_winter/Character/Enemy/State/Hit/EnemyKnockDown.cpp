@@ -28,13 +28,12 @@ void EnemyKnockDown::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 	m_downTime += System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 
-	//一定時間ダウンしたらIdleに戻る
+	//一定時間ダウンしたら立ち直った後の行動へ(初期はIdle)
 	if (m_downTime > kKnockDownTime)
 	{
-		owner->ChangeState(std::make_shared<EnemyIdle>(owner));
+		owner->ChangeState(owner->NextAfterRecover());
 	}
 }
 
@@ -44,5 +43,4 @@ void EnemyKnockDown::Exit()
 
 void EnemyKnockDown::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:KnockDown");
 }

@@ -339,6 +339,8 @@ void SceneMain::NormalDraw()
 	m_uiManager->Draw();
 #ifdef _DEBUG
 	CollisionManager::GetInstance().DebugDraw();
+	//敵のデバッグ表示(頭の上の文字)//2Dの文字は後から描く3Dに上書きされるので、UIの後に描く
+	m_enemyManager->DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
 #endif
 

@@ -1,5 +1,6 @@
 ﻿#include "EnemyDie.h"
 #include "../../EnemyBase.h"
+#include "HitCol.h"
 
 EnemyDie::EnemyDie(std::weak_ptr<EnemyBase> owner) :EnemyStateBase(owner)
 {
@@ -16,7 +17,13 @@ void EnemyDie::Enter()
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Death"), false);
 	owner->m_rb.m_vel = Vector3(0, 0, 0);
 	owner->m_isLifeZero = true;
-	//当たり判定の解除(旧Terminate相当)は、EnemyBase側に処理を用意したらここで呼ぶ
+	//やられ判定を消す(死体に攻撃が当たらないようにする)
+	if (owner->m_hitCol) owner->m_hitCol->SetIsActive(false);
+
+	//キャラ同士の押し戻しを無効化
+	owner->SetIsGhost(true);
+
+
 }
 
 void EnemyDie::Update()
@@ -24,7 +31,6 @@ void EnemyDie::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 	//水平方向は止める//縦の重力はEnemySwordman::Updateがかけている
 	owner->m_rb.m_vel = Vector3(0, owner->m_rb.m_vel.y, 0);
 
@@ -37,9 +43,14 @@ void EnemyDie::Update()
 
 void EnemyDie::Exit()
 {
+	auto owner = m_owner.lock();
+	if (!owner)return;
+
+	//キャラ同士の押し戻しを有効化
+	owner->SetIsGhost(false);
+
 }
 
 void EnemyDie::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:Die");
 }

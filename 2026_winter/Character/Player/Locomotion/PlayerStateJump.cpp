@@ -47,7 +47,7 @@ void PlayerStateJump::Enter()
 	player->SetIsFloor(false);//地面にいない状態にする
 	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("JumpUp"), false, 1.0f, Game::kPlayerAnimJumpUpEndFrame);
 	//System::GetInstance().GetSoundManager().PlaySE("JumpUpAndDown");
-	printfDx("baseVel %.2f %.2f\n", m_baseVel.x, m_baseVel.z);
+	//printfDx("baseVel %.2f %.2f\n", m_baseVel.x, m_baseVel.z);
 
 }
 

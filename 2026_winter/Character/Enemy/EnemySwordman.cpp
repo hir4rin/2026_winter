@@ -166,12 +166,18 @@ void EnemySwordman::Update()
 		m_headPart->Update();
 	}
 
+	//攻撃のクールタイムを減らす
+	if (m_attackCoolTime > 0.0f)
+	{
+		m_attackCoolTime -= System::GetInstance().GetTimeScale() * m_ownTimeScale;
+	}
+
 	if (m_currentState)
 	{
 		m_currentState->Update();//状態の更新
 	}
-	//アニメーションの更新
-	m_anim.Update();
+	//アニメーションの更新//ここで1回だけ行う(各Stateでは更新しない)
+	m_anim.Update(m_ownTimeScale);
 	//頭をプレイヤーの方に向ける//アニメーションの姿勢に回転を足すので、アニメーションの更新の後に呼ぶ
 	UpdateLookAtPlayer(kHeadFrame);
 }
@@ -184,13 +190,6 @@ void EnemySwordman::Draw()
 	if (m_isBreakHead) m_headPart->Draw();
 }
 
-void EnemySwordman::DebugDraw()
-{
-	if (m_currentState)
-	{
-		m_currentState->DebugDraw();//ステートごとのデバッグ描画
-	}
-}
 
 void EnemySwordman::OnCollision(Collider& other)
 {

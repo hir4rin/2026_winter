@@ -20,6 +20,8 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "Assasined"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Dead; }
 private:
     AssasinState m_state;
     float m_startTimer = 0.0f;

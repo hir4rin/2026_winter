@@ -54,16 +54,15 @@ void EnemyGuardBreak::Update()
 		}
 		break;
 	case GuardBreakState::End:
-		//起き上がりが終わったらIdleへ
+		//起き上がりが終わったら立ち直った後の行動へ(初期はIdle)
 		if (owner->m_anim.GetAnimEndFlag())
 		{
-			owner->ChangeState(std::make_shared<EnemyIdle>(m_owner));
+			owner->ChangeState(owner->NextAfterRecover());
 			return;
 		}
 		break;
 	}
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 }
 
 void EnemyGuardBreak::Exit()
@@ -75,5 +74,4 @@ void EnemyGuardBreak::Exit()
 
 void EnemyGuardBreak::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:GuardBreak");
 }

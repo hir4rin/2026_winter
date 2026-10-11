@@ -178,6 +178,7 @@
     <ClCompile Include="Character\Player\Base\PlayerState.cpp" />
     <ClCompile Include="Character\Player\Defence\PlayerStateDie.cpp" />
     <ClCompile Include="Character\Player\Defence\PlayerStateHit.cpp" />
+    <ClCompile Include="Character\Player\Defence\PlayerAttackParried.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateFall.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateIdle.cpp" />
     <ClCompile Include="Character\Player\Locomotion\PlayerStateJump.cpp" />
@@ -202,6 +203,9 @@
     <ClCompile Include="Character\Enemy\EnemyPart.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyChase.cpp" />
     <ClCompile Include="Character\Enemy\State\Attack\EnemyAttack.cpp" />
+    <ClCompile Include="Character\Enemy\State\Attack\EnemyAttackPre.cpp" />
+    <ClCompile Include="Character\Enemy\State\Attack\EnemyAttackEnd.cpp" />
+    <ClCompile Include="Character\Enemy\State\General\EnemyParry.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyBack.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyCaution.cpp" />
     <ClCompile Include="Character\Enemy\State\General\EnemyPatrol.cpp" />
@@ -303,6 +307,7 @@
     <ClInclude Include="Character\Player\Base\PlayerState.h" />
     <ClInclude Include="Character\Player\Defence\PlayerStateDie.h" />
     <ClInclude Include="Character\Player\Defence\PlayerStateHit.h" />
+    <ClInclude Include="Character\Player\Defence\PlayerAttackParried.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateFall.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateIdle.h" />
     <ClInclude Include="Character\Player\Locomotion\PlayerStateJump.h" />
@@ -329,6 +334,9 @@
     <ClInclude Include="Character\Enemy\EnemyPart.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyChase.h" />
     <ClInclude Include="Character\Enemy\State\Attack\EnemyAttack.h" />
+    <ClInclude Include="Character\Enemy\State\Attack\EnemyAttackPre.h" />
+    <ClInclude Include="Character\Enemy\State\Attack\EnemyAttackEnd.h" />
+    <ClInclude Include="Character\Enemy\State\General\EnemyParry.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyBack.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyCaution.h" />
     <ClInclude Include="Character\Enemy\State\General\EnemyPatrol.h" />

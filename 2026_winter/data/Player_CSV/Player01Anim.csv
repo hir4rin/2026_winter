@@ -30,3 +30,6 @@ Assasin04,Ninja_Chudan_Attack_StabChest_Attacker
 HeavyAttackLanding,Attack_Air_To_Floor_End_01
 JustDodgeForward,Ninja_Acrobatic_Frontflip
 JustDodgeBackward,Ninja_Acrobatic_Backflip
+AttackBlock,Block_Hit_Break
+HitLargeB,Hit_Large_B
+HitLargeF,Hit_Large_F

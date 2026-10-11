@@ -32,7 +32,6 @@ void EnemyHitGround::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	owner->m_anim.Update(owner->m_ownTimeScale);
 	m_frame += System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 
 	//水平方向の初速を時間とともに減衰させる//縦はEnemySwordman::Updateの重力に任せる
@@ -60,12 +59,12 @@ void EnemyHitGround::Update()
 	}
 
 
-	//吹き飛ばしが終わったら、床にいればIdle、空中ならAirStayへ
+	//吹き飛ばしが終わったら、床にいれば立ち直った後の行動へ(初期はIdle)、空中ならAirStayへ
 	if (m_frame >= m_info.duration)
 	{
 		if (owner->IsFloor())
 		{
-			owner->ChangeState(std::make_shared<EnemyIdle>(owner));
+			owner->ChangeState(owner->NextAfterRecover());
 		}
 		else
 		{
@@ -80,5 +79,4 @@ void EnemyHitGround::Exit()
 
 void EnemyHitGround::DebugDraw()
 {
-	DrawFormatString(10, 30, GetColor(255, 255, 255), "EnemyState:HitGround");
 }

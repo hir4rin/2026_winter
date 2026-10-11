@@ -15,6 +15,8 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "Vanish"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Dead; }
 
 private:
     float m_timer = 0.0f;//消え始めてからのフレーム数

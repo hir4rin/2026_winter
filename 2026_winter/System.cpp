@@ -8,7 +8,8 @@ namespace
 {
 	//プレイヤーのモデル
 	//const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
-	const std::string kPlayerModelPath = "data/Player02.mv1";
+	//const std::string kPlayerModelPath = "data/Player02.mv1";
+	const std::string kPlayerModelPath = "data/Player03.mv1";
 	const std::string kPlayerWeaponModelPath = "data/Player_Weapon/katana_blend.mv1";//プレイヤーの刀
 	//必殺技中の刀身の長い刀
 	const std::string kPlayerUltWeaponModelPath = "data/Player_Weapon/red_katana_ult.mv1";

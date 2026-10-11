@@ -15,6 +15,9 @@ public:
     void Exit()override;
 
     void DebugDraw()override;
+    const char* GetName()const override { return "Guard"; }
+    DebugCategory GetDebugCategory()const override { return DebugCategory::Guard; }
+    std::string GetDebugInfo()const override;//ガードゲージと経過フレーム
 
 
     void OnGuardHit();
