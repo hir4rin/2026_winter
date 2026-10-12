@@ -6,9 +6,7 @@
 
 namespace
 {
-	constexpr float kEnemyCautionMaxTime = 120.0f;//敵が警戒する時間の最大値
 	constexpr float kEnemyCautionUpdateIntervalDivisor = 3.0f;//警戒中の位置更新間隔の分母
-	constexpr float kEnemyMeleeAttackRange = 400.0f;//敵の近接攻撃の距離
 }
 
 EnemyCaution::EnemyCaution(std::weak_ptr<EnemyBase> owner):EnemyStateBase(owner)
@@ -55,7 +53,7 @@ void EnemyCaution::Update()
 	//owner->m_cautionTime += 1.0f * timeScale * m_ownTimeScale;
 	owner->m_cautionTime += 1.0f * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 
-	if (owner->m_cautionTime > kEnemyCautionMaxTime)
+	if (owner->m_cautionTime > owner->m_status.cautionTime)
 	{
 		owner->m_cautionTime = 0.0f;
 		owner->ChangeState(owner->NextAfterCaution());
@@ -63,11 +61,11 @@ void EnemyCaution::Update()
 	}
 
 	//定期的にプレイヤーの位置を更新する
-	if (owner->CountInterval(owner->m_cautionUpdateTimer, kEnemyCautionMaxTime / kEnemyCautionUpdateIntervalDivisor))
+	if (owner->CountInterval(owner->m_cautionUpdateTimer, owner->m_status.cautionTime / kEnemyCautionUpdateIntervalDivisor))
 	{
 		owner->m_targetPos = owner->TargetPlayerPos();
 	}
-	owner->CautionMove(owner->m_targetPos, kEnemyMeleeAttackRange);
+	owner->CautionMove(owner->m_targetPos, owner->GetMaxAttackRange());
 }
 
 void EnemyCaution::Exit()
@@ -86,5 +84,5 @@ std::string EnemyCaution::GetDebugInfo() const
 {
 	auto owner = m_owner.lock();
 	if (!owner)return {};
-	return std::format("{:.0f}/{:.0f}F", owner->m_cautionTime, kEnemyCautionMaxTime);
+	return std::format("{:.0f}/{:.0f}F", owner->m_cautionTime, owner->m_status.cautionTime);
 }

@@ -4,7 +4,6 @@
 
 namespace
 {
-	constexpr float kKnockDownTime = 60.0f;//ダウンしている時間(frame)
 }
 
 EnemyKnockDown::EnemyKnockDown(std::weak_ptr<EnemyBase> owner) :EnemyStateBase(owner)
@@ -31,7 +30,7 @@ void EnemyKnockDown::Update()
 	m_downTime += System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 
 	//一定時間ダウンしたら立ち直った後の行動へ(初期はIdle)
-	if (m_downTime > kKnockDownTime)
+	if (m_downTime > owner->m_status.knockDownTime)
 	{
 		owner->ChangeState(owner->NextAfterRecover());
 	}

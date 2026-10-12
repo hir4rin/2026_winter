@@ -6,8 +6,7 @@
 
 namespace
 {
-	constexpr float kParryTime = 15.0f;//弾きの長さ(frame)//仮
-	constexpr float kParryBlendRate = 0.5f;//アニメーションのブレンド率
+	constexpr float kParryAnimRate = 0.5f;
 
 	constexpr float kAnimEndFrame = 27.0f;
 	constexpr float kAnimMoveEndFrame = 20.0f;
@@ -28,7 +27,7 @@ void EnemyParry::Enter()
 	if (!owner)return;
 
 	//TODO:弾き用のアニメーションが決まったら差し替える//仮でガードで受けるアニメーション
-	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), false, kParryBlendRate);
+	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), false, kParryAnimRate);
 
 	//その場で止まり、プレイヤーの方を向く
 	owner->m_rb.m_vel = Vector3(0, 0, 0);
@@ -55,7 +54,7 @@ void EnemyParry::Update()
 	owner->m_rb.m_vel = Vector3(0, 0, 0);
 
 	m_timer += System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
-	if (m_timer >= kParryTime)
+	if (m_timer >= owner->m_status.parryTime)
 	{
 		owner->ChangeState(owner->NextAfterParry());
 		return;
@@ -68,5 +67,8 @@ void EnemyParry::Exit()
 
 std::string EnemyParry::GetDebugInfo() const
 {
-	return std::format("{:.0f}/{:.0f}F", m_timer, kParryTime);
+	auto owner = m_owner.lock();
+	if (!owner)return{};
+
+	return std::format("{:.0f}/{:.0f}F", m_timer, owner->m_status.parryTime);
 }

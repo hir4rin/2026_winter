@@ -6,11 +6,7 @@
 
 namespace
 {
-	constexpr float kPatrolMoveSpeed = 2.0f;//パトロール移動の速度
 	constexpr float kPatrolArriveDistance = 10.0f;//この距離(XZ)まで近づいたら到着とする//移動速度より大きくしないと行き過ぎて到着できない
-
-	constexpr float kViewLength = 500.0f;//視界の長さ//巡回中にプレイ��ーを見つける距離
-	constexpr float kViewHalfAngle = DX_PI_F / 4.0f;//視野の半分の角度(左右45度ずつ)
 
 	//デバッグ描画
 	constexpr float kDebugPointRadius = 100.0f;//巡回ポイントの球の半径
@@ -50,7 +46,7 @@ void EnemyPatrol::Enter()
 	auto patrolPoint = owner->m_patrolPoints[currentIndex];
 	m_isWaiting = false;
 	m_waitTimer = 0.0f;
-	owner->ChaseTarget(patrolPoint.pos, kPatrolArriveDistance, kPatrolMoveSpeed);
+	owner->ChaseTarget(patrolPoint.pos, kPatrolArriveDistance, owner->m_status.patrolSpeed);
 
 	//開始時の速度に合わせてアニメーションを設定
 	m_wasWalking = owner->GetRigidBody().m_vel.Magnitude() > 0.1f;
@@ -71,7 +67,7 @@ void EnemyPatrol::Update()
 	if (!m_isWaiting)
 	{
 		//パトロールポイントに向かって移動
-		owner->ChaseTarget(patrolPoint.pos, kPatrolArriveDistance, kPatrolMoveSpeed);
+		owner->ChaseTarget(patrolPoint.pos, kPatrolArriveDistance, owner->m_status.patrolSpeed);
 
 		//高さは床によってずれるので、XZだけで距離を測る
 		Vector3 toPoint = patrolPoint.pos - owner->GetRigidBody().GetPos();
@@ -153,30 +149,33 @@ void EnemyPatrol::DebugDraw()
 	if (forward.Magnitude() <= 0.0001f) return;
 	forward = forward.Normalize();
 
+	const float viewLength = owner->m_status.viewLength;
+	const float viewHalfAngle = owner->m_status.viewHalfAngleDeg * DX_PI_F / 180.0f;//度をラジアンに変換
+
 	//プレイヤーが視界内なら色を変える
 	unsigned int viewColor = CanSeePlayer() ? kDebugViewFoundColor : kDebugViewColor;
 
 	//forwardをY軸まわりにangleだけ回した先の点を返す
 	//ラムダ式
 	//関数の中でしか使わないので、関数の中で定義する
-	//可読性の工場、ヘッダーを触らずにすむためこの形
+	//可読性の向上、ヘッダーを触らずにすむためこの形
 	auto getArcPoint = [&](float angle)
 		{
 			float c = cosf(angle);
 			float s = sinf(angle);
 			Vector3 dir(forward.x * c - forward.z * s, 0.0f, forward.x * s + forward.z * c);
-			return center + dir * kViewLength;
+			return center + dir * viewLength;
 		};
 
 	//左右の端の線
-	DrawLine3D(center.ToDxLibVector(), getArcPoint(-kViewHalfAngle).ToDxLibVector(), viewColor);
-	DrawLine3D(center.ToDxLibVector(), getArcPoint(kViewHalfAngle).ToDxLibVector(), viewColor);
+	DrawLine3D(center.ToDxLibVector(), getArcPoint(-viewHalfAngle).ToDxLibVector(), viewColor);
+	DrawLine3D(center.ToDxLibVector(), getArcPoint(viewHalfAngle).ToDxLibVector(), viewColor);
 
 	//円弧(細かい線分をつなげる)
 	for (int i = 0; i < kDebugViewArcDivNum; ++i)
 	{
-		float a0 = -kViewHalfAngle + (kViewHalfAngle * 2.0f) * i / kDebugViewArcDivNum;
-		float a1 = -kViewHalfAngle + (kViewHalfAngle * 2.0f) * (i + 1) / kDebugViewArcDivNum;
+		float a0 = -viewHalfAngle + (viewHalfAngle * 2.0f) * i / kDebugViewArcDivNum;
+		float a1 = -viewHalfAngle + (viewHalfAngle * 2.0f) * (i + 1) / kDebugViewArcDivNum;
 		DrawLine3D(getArcPoint(a0).ToDxLibVector(), getArcPoint(a1).ToDxLibVector(), viewColor);
 	}
 }
@@ -186,6 +185,9 @@ bool EnemyPatrol::IsInView(const Vector3& targetPos) const
 	auto owner = m_owner.lock();
 	if (!owner)return false;
 
+	const float viewLength = owner->m_status.viewLength;
+	const float viewHalfAngle = owner->m_status.viewHalfAngleDeg * DX_PI_F / 180.0f;//度→ラジアン
+
 	//XZ平面での距離を計算
 	Vector3 toTarget = targetPos - owner->GetRigidBody().GetPos();
 	toTarget.y = 0.0f;
@@ -193,7 +195,7 @@ bool EnemyPatrol::IsInView(const Vector3& targetPos) const
 	float distance = toTarget.Magnitude();
 
 	//距離が大きかったら視界外
-	if (distance > kViewLength)return false;
+	if (distance > viewLength)return false;
 
 	//角度を指定
 	Vector3 forward = owner->GetTargetVec();
@@ -202,7 +204,7 @@ bool EnemyPatrol::IsInView(const Vector3& targetPos) const
 	float dot = forward.Normalize().Dot(toTarget.Normalize());
 
 	//視野角以内なら視界内
-	if(dot > cosf(kViewHalfAngle))
+	if(dot > cosf(viewHalfAngle))
 	{
 		return true;
 	}

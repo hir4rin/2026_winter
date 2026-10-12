@@ -51,7 +51,7 @@ void PlayerStateSkillAttack::Enter()
 	//スキル攻撃の何段目を再生するか決める
 	int currentComboIndex = SelectAnimInit();
 	const ComboNode& node = player->m_comboChain[currentComboIndex];
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, node.blendFrame);
 	//打ち上げは上昇をプログラム(moveSpeedY)で行うので、アニメーションの上昇を見た目から消す
 	if (currentComboIndex == ComboIndex::SkillAttack0)
 	{

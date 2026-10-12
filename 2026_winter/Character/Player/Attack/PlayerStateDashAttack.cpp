@@ -25,7 +25,7 @@ void PlayerStateDashAttack::Enter()
 	if (!player) return;
 	//animationの初期化
 	const ComboNode& node = player->m_comboChain[ComboIndex::DashAttack];
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle,player->GetAnimName("DashAttack"), false, node.animTimeScale);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle,player->GetAnimName("DashAttack"), false, node.animTimeScale, -1.0f, 0.0f, node.blendFrame);
 }
 
 void PlayerStateDashAttack::Update()

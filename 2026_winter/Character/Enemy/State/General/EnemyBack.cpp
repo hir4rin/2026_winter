@@ -4,7 +4,6 @@
 
 namespace
 {
-	constexpr float kEnemyBackDistance = 600.0f;//敵が距離を取るときの距離
 }
 
 EnemyBack::EnemyBack(std::weak_ptr<EnemyBase> owner) :EnemyStateBase(owner)
@@ -35,7 +34,7 @@ void EnemyBack::Update()
 	//確率でバックステップではなくCautionにする
 
 		//一定距離離れたらIdle
-	if (owner->BackMove(owner->m_targetPos, kEnemyBackDistance))
+	if (owner->BackMove(owner->m_targetPos, owner->m_status.backDistance))
 	{
 		owner->ChangeState(std::make_shared<EnemyIdle>(owner));
 		return;

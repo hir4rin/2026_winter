@@ -21,6 +21,9 @@ public:
     void Update()override;
     void Exit()override;
 
+    //他のステートに移行していいか
+    bool CanChangeHit();
+
     void DebugDraw()override;
     const char* GetName()const override { return "GuardBreak"; }
     DebugCategory GetDebugCategory()const override { return DebugCategory::Guard; }

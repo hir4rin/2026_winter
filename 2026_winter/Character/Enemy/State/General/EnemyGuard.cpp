@@ -7,11 +7,6 @@
 
 namespace
 {
-	//一旦
-	constexpr float kGuardMaxTimer = 120.0f;
-
-
-
 }
 
 EnemyGuard::EnemyGuard(std::weak_ptr<EnemyBase> owner):
@@ -41,7 +36,7 @@ void EnemyGuard::Update()
 
 	timer += 1.0f * timeScale * owner->m_ownTimeScale;
 
-	if (timer >= kGuardMaxTimer)
+	if (timer >= owner->m_status.guardTime)
 	{
 		owner->ChangeState(owner->NextAfterRecover());//ガードが時間切れで終わった
 		return;
@@ -73,8 +68,8 @@ std::string EnemyGuard::GetDebugInfo() const
 	auto owner = m_owner.lock();
 	if (!owner)return {};
 	//書式の文字列に日本語を入れると、Shift-JISの2バイト目が{や}と同じ値になることがあるので英字にしておく
-	return std::format("gauge {:.0f}/100 {:.0f}/{:.0f}F",
-		owner->m_guardInfo.GurardGauge, owner->m_guardInfo.GuardTimer, kGuardMaxTimer);
+	return std::format("gauge {:.0f}/{:.0f} {:.0f}/{:.0f}F",
+		owner->m_guardInfo.GurardGauge, owner->m_status.parryGauge, owner->m_guardInfo.GuardTimer, owner->m_status.guardTime);
 }
 
 void EnemyGuard::OnGuardHit()
@@ -96,7 +91,7 @@ void EnemyGuard::OnGuardHit()
 	owner->m_guardInfo.GurardGauge += owner->m_attackData.attackPower;
 
 	//一旦固定値
-	if (owner->m_guardInfo.GurardGauge >= 100)
+	if (owner->m_guardInfo.GurardGauge >= owner->m_status.parryGauge)
 	{
 		owner->m_guardInfo.GurardGauge = 0.0f;//一旦ここ(毎回リセットしたくなったらExitでする
 		owner->ChangeState(std::make_shared<EnemyParry>(owner));

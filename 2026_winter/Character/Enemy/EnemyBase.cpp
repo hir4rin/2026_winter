@@ -25,14 +25,8 @@ namespace
 		Size,//列数
 	};
 
-	constexpr float kCautionMoveSpeedRate = 0.5f;//警戒移動時の速度倍率
 	constexpr float kCautionBackVecRate = 0.2f;//半径を維持するためのベクトルの倍率
 
-	constexpr float kEnemyMeleeAttackRange = 400.0f;//敵の近接攻撃の距離
-	constexpr float kEnemyBackDistance = 600.0f;//敵が距離を取るときの距離
-
-	constexpr int kStateChangeRandomMax = 100;//Chase/Caution遷移の抽選範囲
-	constexpr int kStateChangeThreshold = 50;//Chase/Caution遷移のしきい値
 
 	constexpr float kToTargetPower = 3.0f;//プレイヤーの正面に行くようにknockBackする力
 
@@ -52,29 +46,6 @@ namespace
 	constexpr float kDebugForwardTipRadius = 8.0f;//向きの線の先の球の半径
 	constexpr int kDebugSphereDivNum = 8;//球の分割数
 	constexpr int kDebugLineSpacing = 2;//文字の行間
-
-	//ステートの種類ごとの文字色
-	unsigned int GetDebugCategoryColor(EnemyStateBase::DebugCategory category)
-	{
-		switch (category)
-		{
-		case EnemyStateBase::DebugCategory::AttackPre: return GetColor(255, 160, 0);//オレンジ
-		case EnemyStateBase::DebugCategory::Attack:    return GetColor(255, 60, 60);//赤
-		case EnemyStateBase::DebugCategory::Recovery:  return GetColor(80, 255, 80);//緑
-		case EnemyStateBase::DebugCategory::Hit:       return GetColor(255, 255, 0);//黄
-		case EnemyStateBase::DebugCategory::Guard:     return GetColor(0, 220, 255);//水色
-		case EnemyStateBase::DebugCategory::Dead:      return GetColor(128, 128, 128);//灰
-		default:                                       return GetColor(255, 255, 255);//白
-		}
-	}
-
-	//影を付けて、xを中心に文字を描く
-	void DrawDebugTextCenter(int x, int y, const std::string& text, unsigned int color)
-	{
-		const int width = GetDrawStringWidth(text.c_str(), static_cast<int>(text.size()));
-		DrawString(x - width / 2 + 1, y + 1, text.c_str(), GetColor(0, 0, 0));
-		DrawString(x - width / 2, y, text.c_str(), color);
-	}
 }
 
 EnemyBase::EnemyBase(std::weak_ptr<Player> player)
@@ -183,6 +154,27 @@ void EnemyBase::SetDebugIdle(bool isDebugIdle)
 	}
 }
 
+unsigned int EnemyBase::GetDebugCategoryColor(EnemyStateBase::DebugCategory category)
+{
+	switch (category)
+	{
+	case EnemyStateBase::DebugCategory::AttackPre: return GetColor(255, 160, 0);//オレンジ
+	case EnemyStateBase::DebugCategory::Attack:    return GetColor(255, 60, 60);//赤
+	case EnemyStateBase::DebugCategory::Recovery:  return GetColor(80, 255, 80);//緑
+	case EnemyStateBase::DebugCategory::Hit:       return GetColor(255, 255, 0);//黄
+	case EnemyStateBase::DebugCategory::Guard:     return GetColor(0, 220, 255);//水色
+	case EnemyStateBase::DebugCategory::Dead:      return GetColor(128, 128, 128);//灰
+	default:                                       return GetColor(255, 255, 255);//白
+	}
+}
+
+void EnemyBase::DrawDebugTextCenter(int x, int y, const std::string& text, unsigned int color)
+{
+	const int width = GetDrawStringWidth(text.c_str(), static_cast<int>(text.size()));
+	DrawString(x - width / 2 + 1, y + 1, text.c_str(), GetColor(0, 0, 0));
+	DrawString(x - width / 2, y, text.c_str(), color);
+}
+
 void EnemyBase::DebugDraw()
 {
 	if (!m_currentState)return;
@@ -255,10 +247,17 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	//ガード
 	//一旦100移行
 	//攻撃が弱攻撃ならガード//かつ地上だったら
+	bool isForceHit = false;
 	if (data.attackType == AttackType::lightAttack && isFloor)
 	{
+		//確定ヒット中は抽選しない
+		if (m_forceHitCount > 0)
+		{
+			--m_forceHitCount;
+			isForceHit = true;
+		}
 		//ここから確率
-		if (Utility::IsHitRate(100))
+		else if (Utility::IsHitRate(static_cast<int>(m_status.guardRate)))
 		{
 			//ガードブレイク中・攻撃の後隙中はガードに移行しない
 			if (!std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState) &&
@@ -292,6 +291,13 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 		}
 	}
 
+	//被弾したら、ここから数段は確定ヒット
+	if (!isForceHit && m_forceHitCount <= 0)
+	{
+		m_forceHitCount = m_status.forceHitCount;
+	}
+	m_forceHitTimer = 0.0f;
+
 
 
 	//Playerの攻撃データをもとに被ダメ処理をする
@@ -304,8 +310,8 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	PlayBloodSplash(other);
 
 
-	//部位破壊率の確率で部位破壊する//GetRand(99)は0〜99を返す
-	if (!m_isPartBroken && GetRand(99) < data.brokenRate)
+	//部位破壊率の確率で部位破壊する//部位破壊 * 被部位破壊率
+	if (!m_isPartBroken && Utility::IsHitRate(static_cast<int>(data.brokenRate * m_status.partBreakRate)))
 	{
 		OnPartBreak();
 	}
@@ -403,6 +409,16 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	}
 
 	//Stateの切り替え//敵を吹き飛ばす攻撃かどうかで切り替える
+
+	//ガードブレイク中ならヒットステートじゃなくてガードステートのまま
+	if (std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState))
+	{
+		auto state = std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState);
+
+		//遷移がダメならリターンする
+		if(!state->CanChangeHit())return;
+	}
+
 
 	if (data.knockBackPower.y > 0.0f && !hitinfo.isKirimomi)
 	{
@@ -525,7 +541,7 @@ void EnemyBase::CautionMove(Vector3 target, float distance)
 	toEnemy.y = 0.0f;
 	//接線の求め方はベクトルを90度回転させるので成分を入れ替えて、xを符号反転　
 	Vector3 tangentLine = Vector3(-toEnemy.z, 0.0f, toEnemy.x).Normalize();
-	m_rb.m_vel = tangentLine * Game::kEnemyMoveSpeed * kCautionMoveSpeedRate;
+	m_rb.m_vel = tangentLine * m_status.cautionSpeed;
 	//半径を維持するために後ろ側にもベクトルを加える
 	float dist = toEnemy.Magnitude();
 	if (dist < distance)
@@ -547,26 +563,47 @@ bool EnemyBase::BackMove(Vector3 target, float distance)
 		return true;
 	}
 
-	m_rb.m_vel = toEnemy.Normalize() * Game::kEnemyBackSpeed;
+	m_rb.m_vel = toEnemy.Normalize() * m_status.backSpeed;
 	return false;
 }
 
-bool EnemyBase::CanMeleeAttack(float distance)
+int EnemyBase::SelectAttackIndex()
 {
-	//クールタイムの確認
-	if (m_attackCoolTime <= 0.0f)
-	{
+	//クールタイム中は攻撃しない
+	if (m_attackCoolTime > 0.0f)return -1;
 
-		//プレイヤーとの距離が遠かったら攻撃しない
-		Vector3 toPlayer = TargetPlayerPos() - m_rb.m_pos;
-		toPlayer.y = 0.0f;
-		if (toPlayer.Magnitude() <= distance)
+	//プレイヤーとの距離(XZ)
+	Vector3 toPlayer = TargetPlayerPos() - m_rb.m_pos;
+	toPlayer.y = 0.0f;
+	const float distance = toPlayer.Magnitude();
+
+	//距離に入っている攻撃を集める
+	std::vector<int> candidates;
+	for (const auto& node : m_attackList)
+	{
+		if (node.index < 0)continue;//CSVで抜けているindex(空の要素)
+		if (node.attackRange <= 0.0f)continue;//単体では選ばない攻撃
+		if (distance <= node.attackRange)
 		{
-			return true;
+			candidates.push_back(node.index);
 		}
 	}
-	//攻撃しない
-	return false;
+	if (candidates.empty())return -1;
+
+	//ランダムで1つ選ぶ//GetRand(n)は0〜nを返す
+	const int pick = GetRand(static_cast<int>(candidates.size()) - 1);
+	return candidates[pick];
+}
+
+float EnemyBase::GetMaxAttackRange()const
+{
+	float maxRange = 0.0f;
+	for (const auto& node : m_attackList)
+	{
+		if (node.index < 0)continue;//CSVで抜けているindex(空の要素)
+		maxRange = (std::max)(maxRange, node.attackRange);
+	}
+	return maxRange;
 }
 
 bool EnemyBase::CountInterval(float& timer, float interval)
@@ -648,33 +685,28 @@ void EnemyBase::FinisherPerformanceProcess()
 std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 {
 	//ランダムでChaseかCautionに遷移する
-	if (CanMeleeAttack(kEnemyMeleeAttackRange))
+	const int attackIndex = SelectAttackIndex();
+	if (attackIndex >= 0)
 	{
-		//return ChangeState(EnemyState::Attack);
-
+		m_currentAttackIndex = attackIndex;
 		return 	std::make_shared<EnemyAttackPre>(GetWeakPtr());
 	}
 	//ランダム
-	if (rand() % kStateChangeRandomMax < kStateChangeThreshold)
+	//chaseRate(%)の確率でChase、残りはCaution
+	if (Utility::IsHitRate(static_cast<int>(m_status.chaseRate)))
 	{
-		//ChangeState(EnemyState::Chase);
 		return std::make_shared<EnemyChase>(GetWeakPtr());
-
 	}
-	else if (rand() % kStateChangeRandomMax >= kStateChangeThreshold)
-	{
-		//ChangeState(EnemyState::Caution);
-		return std::make_shared<EnemyCaution>(GetWeakPtr());
-	}
-
-	return std::make_shared<EnemyChase>(GetWeakPtr());
+	return std::make_shared<EnemyCaution>(GetWeakPtr());
 }
 
 std::shared_ptr<EnemyStateBase> EnemyBase::NextOnArrived()
 {
 	//攻撃できるなら予備動作へ
-	if (CanMeleeAttack(kEnemyMeleeAttackRange))
+	const int attackIndex = SelectAttackIndex();
+	if (attackIndex >= 0)
 	{
+		m_currentAttackIndex = attackIndex;
 		return std::make_shared<EnemyAttackPre>(GetWeakPtr());
 	}
 	//目的地に着いたが攻撃できない(クールタイム中など)ので、様子を見ながら待つ
@@ -700,7 +732,8 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterAttackEnd()
 
 std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterParry()
 {
-	//弾いた後は反撃する
+	//弾いた後は反撃する//クールタイムに関係なく出すので固定(仮)
+	m_currentAttackIndex = 0;
 	return std::make_shared<EnemyAttackPre>(GetWeakPtr());
 }
 
@@ -730,4 +763,136 @@ void EnemyBase::ChangeState(std::shared_ptr<EnemyStateBase> newState)
 	{
 		m_currentState->Enter();
 	}
+}
+
+void EnemyBase::InitializeAttackList(const std::vector<std::vector<std::string>>& rawData)
+{
+	m_attackList.clear();//読み込み直しのときに前のデータが残らないように消す
+
+	for (const auto& tokens : rawData)
+	{
+		//列数チェック//最後の列(nextAttack)が空欄だと列数が足りなくなるので、使わないときは-1を入れる
+		if (tokens.size() < EnemyAttackNodeType::Size)
+		{
+			assert(false && "敵の攻撃CSVの列数が不足しています");
+			continue;
+		}
+		EnemyAttackNode node;
+		node.name = tokens[EnemyAttackNodeType::Name];
+		node.index = std::stoi(tokens[EnemyAttackNodeType::Index]);
+
+		//予備動作//再生速度は空欄なら1.0、止めるフレーム・ブレンドは空欄なら-1(デフォルト)
+		node.preAnimName = tokens[EnemyAttackNodeType::PreAnimName];
+		node.preAnimTimeScale = tokens[EnemyAttackNodeType::PreAnimTimeScale].empty() ? 1.0f : std::stof(tokens[EnemyAttackNodeType::PreAnimTimeScale]);
+		node.preAnimEndFrame = tokens[EnemyAttackNodeType::PreAnimEndFrame].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::PreAnimEndFrame]);
+		node.preBlendFrame = tokens[EnemyAttackNodeType::PreBlendFrame].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::PreBlendFrame]);
+		node.preTime = std::stof(tokens[EnemyAttackNodeType::PreTime]);
+		node.preLookTime = std::stof(tokens[EnemyAttackNodeType::PreLookTime]);
+
+		//攻撃//予備動作と同じく空欄なら初期値
+		node.animName = tokens[EnemyAttackNodeType::AnimName];
+		node.animTimeScale = tokens[EnemyAttackNodeType::AnimTimeScale].empty() ? 1.0f : std::stof(tokens[EnemyAttackNodeType::AnimTimeScale]);
+		node.animEndFrame = tokens[EnemyAttackNodeType::AnimEndFrame].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::AnimEndFrame]);
+		node.attackFinishFrame = tokens[EnemyAttackNodeType::AttackFinishFrame].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::AttackFinishFrame]);
+		node.blendFrame = tokens[EnemyAttackNodeType::BlendFrame].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::BlendFrame]);
+		node.attackColStartFrame = std::stof(tokens[EnemyAttackNodeType::AttackColStartFrame]);
+		node.attackColEndFrame = std::stof(tokens[EnemyAttackNodeType::AttackColEndFrame]);
+		node.moveSpeedBeforeCol = std::stof(tokens[EnemyAttackNodeType::MoveSpeedBeforeCol]);
+		node.moveSpeedDuringCol = std::stof(tokens[EnemyAttackNodeType::MoveSpeedDuringCol]);
+		node.attackRange = std::stof(tokens[EnemyAttackNodeType::AttackRange]);
+
+		//攻撃のデータ
+		node.attackPower = std::stof(tokens[EnemyAttackNodeType::AttackPower]);
+		node.brokenRate = std::stof(tokens[EnemyAttackNodeType::BrokenRate]);
+		node.knockBackXZ = std::stof(tokens[EnemyAttackNodeType::KnockBackXZ]);
+		node.knockBackY = std::stof(tokens[EnemyAttackNodeType::KnockBackY]);
+		node.isKirimomi = tokens[EnemyAttackNodeType::IsKirimomi] == "1" ? true : false;//CSVの値が1ならtrue、0ならfalse
+		node.hitStopTime = std::stof(tokens[EnemyAttackNodeType::HitStopTime]);
+
+		//当たり判定
+		node.colRadius = std::stof(tokens[EnemyAttackNodeType::ColRadius]);
+		node.colForwardOffset = std::stof(tokens[EnemyAttackNodeType::ColForwardOffset]);
+		node.colOffsetY = std::stof(tokens[EnemyAttackNodeType::ColOffsetY]);
+
+		//攻撃の後
+		node.attackEndTimeFrame = std::stof(tokens[EnemyAttackNodeType::AttackEndTimeFrame]);
+		node.coolTime = std::stof(tokens[EnemyAttackNodeType::CoolTime]);
+
+		//SE//名前が空ならなし、鳴らす進行度は空欄なら-1(鳴らさない)
+		node.seName = tokens[EnemyAttackNodeType::SeName];
+		node.seFrameRate = tokens[EnemyAttackNodeType::SeFrameRate].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::SeFrameRate]);
+
+		//連撃//-1なら連撃しない
+		node.nextAttack = std::stoi(tokens[EnemyAttackNodeType::NextAttack]);
+
+		//要素の番号=indexなので、CSVはindexの順番に並べる
+		assert(node.index == static_cast<int>(m_attackList.size()) && "敵の攻撃CSVのindexが順番になっていません");
+		m_attackList.push_back(node);
+	}
+}
+
+void EnemyBase::InitializeStatus(const std::vector<std::vector<std::string>>& rawData, const std::string& type)
+{
+	for (const auto& tokens : rawData)
+	{
+		//列数チェック
+		if (tokens.size() < EnemyStatusType::Size)
+		{
+			assert(false && "EnemyStatus.csvの列数が不足しています");
+			continue;
+		}
+		//自分の種類の行だけ読む
+		if (tokens[EnemyStatusType::Type] != type)continue;
+
+		m_status.type = tokens[EnemyStatusType::Type];
+
+		//基本
+		m_status.hp = std::stoi(tokens[EnemyStatusType::Hp]);
+		m_status.moveSpeed = std::stof(tokens[EnemyStatusType::MoveSpeed]);
+		m_status.backSpeed = std::stof(tokens[EnemyStatusType::BackSpeed]);
+		m_status.patrolSpeed = std::stof(tokens[EnemyStatusType::PatrolSpeed]);
+		m_status.cautionSpeed = std::stof(tokens[EnemyStatusType::CautionSpeed]);
+
+		//当たり判定
+		m_status.bodyColOffsetY = std::stof(tokens[EnemyStatusType::BodyColOffsetY]);
+		m_status.bodyColHeight = std::stof(tokens[EnemyStatusType::BodyColHeight]);
+		m_status.bodyColRadius = std::stof(tokens[EnemyStatusType::BodyColRadius]);
+		m_status.hitColOffsetY = std::stof(tokens[EnemyStatusType::HitColOffsetY]);
+		m_status.hitColRadius = std::stof(tokens[EnemyStatusType::HitColRadius]);
+
+		//ガード
+		m_status.guardRate = std::stof(tokens[EnemyStatusType::GuardRate]);
+		m_status.guardTime = std::stof(tokens[EnemyStatusType::GuardTime]);
+		m_status.parryGauge = std::stof(tokens[EnemyStatusType::ParryGauge]);
+		m_status.parryTime = std::stof(tokens[EnemyStatusType::ParryTime]);
+		m_status.guardBreakTime = std::stof(tokens[EnemyStatusType::GuardBreakTime]);
+		m_status.forceHitCount = std::stoi(tokens[EnemyStatusType::ForceHitCount]);
+		m_status.forceHitResetTime = std::stof(tokens[EnemyStatusType::ForceHitResetTime]);
+
+		//部位破壊
+		m_status.partBreakRate = std::stof(tokens[EnemyStatusType::PartBreakRate]);
+
+		//AIの判断
+		m_status.backDistance = std::stof(tokens[EnemyStatusType::BackDistance]);
+		m_status.chaseRate = std::stof(tokens[EnemyStatusType::ChaseRate]);
+		m_status.idleTime = std::stof(tokens[EnemyStatusType::IdleTime]);
+		m_status.cautionTime = std::stof(tokens[EnemyStatusType::CautionTime]);
+		m_status.chaseTargetUpdateTime = std::stof(tokens[EnemyStatusType::ChaseTargetUpdateTime]);
+
+		//索敵
+		m_status.viewLength = std::stof(tokens[EnemyStatusType::ViewLength]);
+		m_status.viewHalfAngleDeg = std::stof(tokens[EnemyStatusType::ViewHalfAngleDeg]);
+
+		//被弾
+		m_status.knockDownTime = std::stof(tokens[EnemyStatusType::KnockDownTime]);
+		m_status.knockBackTime = std::stof(tokens[EnemyStatusType::KnockBackTime]);
+
+		//見た目(部位破壊)
+		m_status.leftArmFrame = std::stoi(tokens[EnemyStatusType::LeftArmFrame]);
+		m_status.headFrame = std::stoi(tokens[EnemyStatusType::HeadFrame]);
+		m_status.leftArmModelScale = std::stof(tokens[EnemyStatusType::LeftArmModelScale]);
+		m_status.headModelScale = std::stof(tokens[EnemyStatusType::HeadModelScale]);
+		return;
+	}
+	assert(false && "EnemyStatus.csvに自分の種類の行がありません");
 }

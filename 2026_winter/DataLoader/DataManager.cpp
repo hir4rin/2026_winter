@@ -15,6 +15,8 @@ namespace
 	const std::string kPlayerComboChainPath = "data/Player_CSV/ComboChain01.csv";
 
     const std::string kEnemySwordmanAnimPath = "data/Enemy/EnemySwordmanAnim.csv";
+    const std::string kEnemySwordmanAttackPath = "data/Enemy/EnemySwordmanAttack.csv";
+    const std::string kEnemyStatusPath = "data/Enemy/EnemyStatus.csv";
 
     const std::string kBossAnimPath = "data/Enemy/Boss/BossAnim.csv";
 
@@ -55,6 +57,8 @@ void DataManager::LoadAll()
 
     LoadAnimData(kPlayerAnimPath, m_playerAnimData);
     LoadAnimData(kEnemySwordmanAnimPath, m_enemySwordmanAnimData);
+    LoadEnemySwordmanAttackRawData();
+    LoadEnemyStatusRawData();
 
 
     LoadComboRawData();
@@ -84,6 +88,40 @@ void DataManager::LoadAnimData(const std::string& filePath, AnimData& animData)
 
 void DataManager::LoadEnemySwordmanAnimData()
 {
+}
+
+void DataManager::LoadEnemySwordmanAttackRawData()
+{
+    std::ifstream file(kEnemySwordmanAttackPath);
+    assert(file.is_open() && "EnemySwordmanAttack.csvが開けませんでした");
+
+    m_enemySwordmanAttackRawData.clear();//読み込み直しのときに前のデータが残らないように消す
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty() || line[0] == '#') continue;
+
+        m_enemySwordmanAttackRawData.push_back(Split(line, ','));//分割したトークンのベクターを生データとして保存する
+    }
+}
+
+void DataManager::LoadEnemyStatusRawData()
+{
+    std::ifstream file(kEnemyStatusPath);
+    assert(file.is_open() && "EnemyStatus.csvが開けませんでした");
+
+    m_enemyStatusRawData.clear();//読み込み直しのときに前のデータが残らないように消す
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty() || line[0] == '#') continue;
+
+        m_enemyStatusRawData.push_back(Split(line, ','));//分割したトークンのベクターを生データとして保存する
+    }
 }
 
 void DataManager::LoadBossAnimData()

@@ -33,8 +33,6 @@ namespace Game
 
 
 	//敵の移動スピード
-	constexpr float kEnemyMoveSpeed = 4.0f;//敵の移動速度
-	constexpr float kEnemyBackSpeed = 5.0f;//敵の距離を取るときの移動速度
 }
 
 //ゲーム全体で使う便利関数

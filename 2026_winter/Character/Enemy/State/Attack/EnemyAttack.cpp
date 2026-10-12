@@ -8,19 +8,6 @@
 
 namespace
 {
-	constexpr float kAttackPower = 10.0f;//攻撃力
-	constexpr float kAttackColRadius = 70.0f;//攻撃の当たり判定の半径
-	//攻撃の当たり判定を前に出す距離//AttackCol::ApplyPosでも前に50出しているので、中心は合わせて110前になる
-	//後ろの端(110-70=40)が体の半径(40)より前に来るようにして、横や背中にいるプレイヤーに当たらないようにする
-	constexpr float kAttackColForwardOffset = 60.0f;
-	constexpr float kAttackColOffsetY = 100.0f;//攻撃の当たり判定の高さ//前方へのオフセットはAttackCol::ApplyPosで行う
-	constexpr float kHitStopTime = 0.1f;//攻撃ヒット時のヒットストップ時間
-
-	constexpr float kEnemyAttackCoolTime = 120.0f;//敵の攻撃のクールタイム
-	constexpr float kAttackMoveStartRate = 0.3f;//攻撃モーション:移動を開始するrate
-	constexpr float kAttackColActivateRate = 0.5f;//攻撃モーション:攻撃判定を有効にするrateの上限
-	constexpr float kAttackMoveSpeed1 = 10.0f;//攻撃モーション前半の移動速度
-	constexpr float kAttackMoveSpeed2 = 16.0f;//攻撃モーション後半の移動速度
 }
 
 EnemyAttack::EnemyAttack(std::weak_ptr<EnemyBase> owner):EnemyStateBase(owner)
@@ -37,25 +24,30 @@ void EnemyAttack::Enter()
 	if (!owner)return;
 	auto player = owner->m_player.lock();
 	if (!player)return;
+
+
+	const auto& node = owner->GetAttackNode(owner->m_currentAttackIndex);
+
+
 	//animationの初期化
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Attack"), false);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(node.animName), false,node.animTimeScale,node.animEndFrame,0.0f,node.blendFrame);
 	//向きはEnemyAttackPreで固定済みなので、ここではプレイヤーの方を向き直さない(向き直すと判定が避けた先に追いかけてくる)
 
 	//攻撃の当たり判定を生成する
 	CharacterBase::AttackData attackData = {
-	.attackPower = kAttackPower,
-	.brokenRate = 0.0f,
-	.knockBackPower = Vector3(0, 0, 0),
-	.knockBackFrame = owner->m_anim.GetAnimTotalFrame(owner->GetAnimName("Attack")),
-	.hitStopTime = kHitStopTime,
+	.attackPower = node.attackPower,
+	.brokenRate = node.brokenRate,
+	.knockBackPower = Vector3(node.knockBackXZ,node.knockBackY,0.0f),
+	.knockBackFrame = owner->m_anim.GetAnimTotalFrame(owner->GetAnimName("Attack")),//ここはどういう値がいいかかなり不明
+	.hitStopTime = node.hitStopTime,
 	.kAttackColOffset = 0.0f,
-	.isKirimomi = false
+	.isKirimomi = node.isKirimomi
 	};
 	m_attackCol = std::make_shared<AttackCol>(owner, attackData);
 	m_attackCol->ColInit({
 		.pos = owner->m_rb.m_pos,
-		.offset = owner->GetTargetVec() * kAttackColForwardOffset + Vector3(0, kAttackColOffsetY, 0),//攻撃中は向きが変わらないので、生成時の前方向で固定してよい
-		.shape = std::make_unique<SphereShape>(kAttackColRadius),
+		.offset = owner->GetTargetVec() * node.colForwardOffset + Vector3(0, node.colOffsetY, 0),//攻撃中は向きが変わらないので、生成時の前方向で固定してよい
+		.shape = std::make_unique<SphereShape>(node.colRadius),
 		.tag = {Collider::Faction::Enemy, Collider::ColRole::Attack},
 		.isActive = false,
 		.isTrigger = true
@@ -68,11 +60,14 @@ void EnemyAttack::Update()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
+	const auto& node = owner->GetAttackNode(owner->m_currentAttackIndex);
+
+
 	AttackMove();
 
-	if (owner->m_anim.GetAnimEndFlag())
+	if (owner->m_anim.GetNowAnimFrame() >= node.attackFinishFrame)
 	{
-		owner->m_attackCoolTime = kEnemyAttackCoolTime;//攻撃のクールタイムをリセット
+		owner->m_attackCoolTime = node.coolTime;//攻撃のクールタイムをリセット
 		owner->ChangeState(owner->NextAfterAttack());
 	}
 }
@@ -106,19 +101,21 @@ void EnemyAttack::AttackMove()
 
 	auto owner = m_owner.lock();
 	if (!owner)return;
+	const auto& node = owner->GetAttackNode(owner->m_currentAttackIndex);
 
-	float rate = owner->m_anim.GetAnimRate();
+	float currentFrame = owner->m_anim.GetNowAnimFrame();
 	Vector3 forward = owner->m_targetPos - owner->m_rb.m_pos;
 	forward.y = 0.0f;
 	forward = forward.Normalize();
+
 	//移動距離
-	if (rate <= kAttackMoveStartRate)
+	if (currentFrame < node.attackColStartFrame)
 	{
-		owner->m_rb.m_vel = forward * kAttackMoveSpeed1;
+		owner->m_rb.m_vel = forward * node.moveSpeedBeforeCol;
 	}
-	else if (rate > kAttackMoveStartRate && rate <= kAttackColActivateRate)
+	else if (owner->m_anim.IsAnimFrameBetween(node.attackColStartFrame,node.attackColEndFrame))
 	{
-		owner->m_rb.m_vel = forward * kAttackMoveSpeed2;
+		owner->m_rb.m_vel = forward * node.moveSpeedDuringCol;
 		if (m_attackCol) m_attackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
 	}
 

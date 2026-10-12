@@ -5,7 +5,6 @@
 
 namespace
 {
-	constexpr float kEnemyIdleMaxTime = 120.0f;//敵がIdle状態でいる時間の最大値
 }
 
 EnemyIdle::EnemyIdle(std::weak_ptr<EnemyBase> owner):
@@ -53,7 +52,7 @@ void EnemyIdle::Update()
 	//デバッグ用//Idleのままにするときは遷移しない
 	if (owner->m_isDebugIdle)return;
 
-	if (owner->m_idleTime < kEnemyIdleMaxTime)return;
+	if (owner->m_idleTime < owner->m_status.idleTime)return;
 
 	//Idleの時間を超えたら次のStateに遷移する
 	owner->ChangeState(owner->NextAfterIdle());
@@ -75,5 +74,5 @@ std::string EnemyIdle::GetDebugInfo() const
 {
 	auto owner = m_owner.lock();
 	if (!owner)return {};
-	return std::format("{:.0f}/{:.0f}F", owner->m_idleTime, kEnemyIdleMaxTime);
+	return std::format("{:.0f}/{:.0f}F", owner->m_idleTime, owner->m_status.idleTime);
 }

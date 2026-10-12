@@ -6,8 +6,6 @@
 
 namespace
 {
-	//一旦//Middle(ダウン中)の時間
-	constexpr float kMiddleMaxTimer = 60.0f;
 }
 
 EnemyGuardBreak::EnemyGuardBreak(std::weak_ptr<EnemyBase> owner):
@@ -47,7 +45,7 @@ void EnemyGuardBreak::Update()
 	case GuardBreakState::Middle:
 		m_middleTimer += 1.0f * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 		//一定時間ダウンしたら起き上がりへ
-		if (m_middleTimer >= kMiddleMaxTimer)
+		if (m_middleTimer >= owner->m_status.guardBreakTime)
 		{
 			m_state = GuardBreakState::End;
 			owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownEnd"), false,0.5f);
@@ -69,6 +67,14 @@ void EnemyGuardBreak::Exit()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
+
+}
+
+bool EnemyGuardBreak::CanChangeHit()
+{
+	//最初のよろめきの時は遷移ダメ
+	if (m_state == GuardBreakState::Start)return false;
+	else true;
 
 }
 

@@ -17,7 +17,8 @@
 | `NextOnPlayerFound()` | 巡回・見張り中にプレイヤーを見つけた | `EnemyPatrol::Update`、`EnemyBase::OnAlerted`(グループの仲間が見つけたとき) | Chase |
 | `NextAfterRecover()` | 被弾・ダウン・着地・ガード・ガードブレイクから立ち直った | `EnemyHitGround`(床にいるとき)、`EnemyKnockDown`、`EnemyKnockBack`、`EnemyAirFall`(着地)、`EnemyGuard`(時間切れ)、`EnemyGuardBreak`(起き上がり後) | Idle |
 
-- 「攻撃できる」= `CanMeleeAttack(400)`(攻撃のクールタイムが0以下 かつ プレイヤーとの距離が400以内)。
+- 「攻撃できる」= `SelectAttackIndex() >= 0`(クールタイムが0以下 かつ 距離が attackRange 以内の攻撃がある)。
+  選んだ index は `NextAfterIdle` / `NextOnArrived` で `m_currentAttackIndex` に入れてから AttackPre へ。`NextAfterParry` は index 0 固定(仮)。
 - `NextOnArrived` は Chase の中で毎フレーム呼ばれる可能性がある。Chase を返すように上書きすると、毎フレーム Chase に入り直すので注意。
 
 ## 流れの遷移(各Stateの中に直接書いたまま)

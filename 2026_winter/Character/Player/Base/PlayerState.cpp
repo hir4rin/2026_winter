@@ -48,7 +48,12 @@ void PlayerState::HandlerInput()
 		Vector3 VelSize = CameraToPlayer.Normalize();//カメラからプレイヤーへのベクトルを正規化して、移動速度を5にする
 		VelSize.y = 0.0f;//y成分は移動に関係ないので、0にする
 
-		player->forward = VelSize.Normalize();
+		//カメラの位置を現在位置ではなくて目標位置にする//角度からGoalPos計算
+		float angleH = player->m_cameraManager.lock()->GetActiveCamera()->GetCameraAngleH();
+
+
+
+		player->forward = Vector3(sinf(angleH), 0.0f, cosf(angleH));
 		player->down = player->forward * -1.0f;
 		player->left = player->forward.Cross(Vector3(0, 1, 0)).Normalize();
 		player->right = player->left * -1.0f;

@@ -3,13 +3,6 @@
 #include "../../EnemyBase.h"
 #include "Player.h"
 
-namespace
-{
-	constexpr float kEnemyMeleeAttackRange = 400.0f;//敵の近接攻撃の距離
-	constexpr float kEnemyTargetUpdateTime = 30.0f;//敵がターゲットを更新する時間
-
-}
-
 EnemyChase::EnemyChase(std::weak_ptr<EnemyBase> owner):EnemyStateBase(owner)
 {
 }
@@ -43,20 +36,20 @@ void EnemyChase::Update()
 	if (!owner)return;
 
 	//攻撃可能な距離に入ったら、次の行動を敵に決めてもらう(初期はAttackPre)
-	if (owner->CanMeleeAttack(kEnemyMeleeAttackRange))
+	if (owner->SelectAttackIndex() >= 0)//選ぶのはNextOnArrived
 	{
 		owner->ChangeState(owner->NextOnArrived());
 		return;
 	}
 
 	//定期的にプレイヤーの位置を更新する
-	if (!owner->ChaseTarget(owner->m_targetPos, kEnemyMeleeAttackRange))
+	if (!owner->ChaseTarget(owner->m_targetPos, owner->GetMaxAttackRange(),owner->m_status.moveSpeed))
 	{
 		//後ほど
 		//owner->m_chasingTime += 1.0f * timeScale * m_ownTimeScale;
 		owner->m_chasingTime += 1.0f * System::GetInstance().GetTimeScale() * owner->m_ownTimeScale;
 		//更新
-		if (owner->m_chasingTime > kEnemyTargetUpdateTime)
+		if (owner->m_chasingTime > owner->m_status.chaseTargetUpdateTime)
 		{
 			owner->m_chasingTime = 0.0f;
 			owner->m_targetPos = owner->TargetPlayerPos();

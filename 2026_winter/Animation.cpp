@@ -132,8 +132,12 @@ void Animation::AnimBlend(float ownTimeScale)
 		m_animChangeFrame += 1.0f * timeScale * ownTimeScale;//アニメーションを切り替えるフレーム数を増やす
 
 		//currentAnimBlendのブレンド率を計算
-		float rate = m_animChangeFrame / kAnimChangeFrame;//アニメーションを切り替えるフレーム数で割ることで、0から1までの値を作る
-		if (rate > 1.0f)
+		float rate = 1.0f;//ブレンドのフレーム数が0なら即切り替え
+		if (m_blendFrame > 0.0f)
+		{
+			rate = m_animChangeFrame / m_blendFrame;//ブレンドのフレーム数で割ることで、0から1までの値を作る
+		}
+		if (rate >= 1.0f)
 		{
 			rate = 1.0f;//ブレンド率が1を超えないようにする
 			//ブレンド完了
@@ -162,8 +166,10 @@ void Animation::SetAnim(bool isRoop)
 
 
 
-void Animation::ChangeAnim(std::string name, bool isRoop, float timescale, float endFrame, float startFrame)
+void Animation::ChangeAnim(std::string name, bool isRoop, float timescale, float endFrame, float startFrame, float blendFrame)
 {
+	//負の値ならデフォルトのフレーム数を使う
+	m_blendFrame = (blendFrame < 0.0f) ? kAnimChangeFrame : blendFrame;
 	m_prevEndFrame = m_endFrame;//現在の最終フレームを前のアニメーション用に保存する
 	m_endFrame = endFrame;
 	m_prevAnimTimeScale = m_animtimeScale;//前のアニメーションの再生速度を保存する
@@ -199,12 +205,12 @@ void Animation::ChangeAnim(std::string name, bool isRoop, float timescale, float
 
 }
 
-void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame, float startFrame)
+void Animation::ChangeAnimWithModelHandle(int modelHandle, std::string name, bool isRoop, float timescale, float endFrame, float startFrame, float blendFrame)
 {
 	if (m_modelHandle == modelHandle)
 	{
 		//同じモデルなら、ブレンド遷移
-		ChangeAnim(name, isRoop, timescale, endFrame, startFrame);
+		ChangeAnim(name, isRoop, timescale, endFrame, startFrame, blendFrame);
 	}
 	else
 	{

@@ -13,21 +13,10 @@
 
 namespace
 {
-	constexpr int kInitialHp = 100;//初期体力
+	const std::string kStatusType = "Swordman";//EnemyStatus.csvのtype
 
-	constexpr float kEnemyOffset = 40.0f;//カプセルの足のオフセット
-	constexpr float kEnemyHead = 120.0f;//カプセルの頭の高さ
-	constexpr float kRadius = 40.0f;//体の当たり判定の半径
-
-	constexpr float kHitColOffsetY = 100.0f;//やられ判定の高さ
-	constexpr float kRadiusHit = 50.0f;//やられ判定の半径
-
-	constexpr int kLeftArmFrame = 21;//左腕のボーン(mixamorig:LeftArm)
-	constexpr int kHeadFrame = 46;//頭のボーン(mixamorig:Head)
 	constexpr float kBreakPartScale = 0.001f;//部位破壊したボーンの大きさ//0だと法線が壊れるので少しだけ残す
 
-	constexpr float kPartModelScale = 0.01f;//左腕モデルと本体モデルの単位スケール差の補正値//大きさが合わなければここを調整する
-	constexpr float kHeadModelScale = 0.01f;//頭モデルと本体モデルの単位スケール差の補正値//大きさが合わなければここを調整する
 	constexpr float kPartColliderRadius = 15.0f;//切り離したパーツの当たり判定の半径
 
 	constexpr float kPartJumpUpSpeed = 15.0f;//切り離した瞬間の上向きの速度
@@ -38,8 +27,14 @@ namespace
 
 EnemySwordman::EnemySwordman(std::weak_ptr<Player> player, Vector3 startPos):EnemyBase(player)
 {
+
+	//ステータス
+	InitializeStatus(DataManager::GetInstance().GetEnemyStatusRawData(), kStatusType);
+	//攻撃のデータ
+	InitializeAttackList(DataManager::GetInstance().GetEnemySwordmanAttackRawData());
+
 	m_rb.m_pos = startPos;
-	m_hp = kInitialHp;
+	m_hp = m_status.hp;
 
 	m_modelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::EnemyModel));
 	m_waistFrame = MV1SearchFrame(m_modelHandle, "mixamorig:Hips");//腰のボーン
@@ -61,6 +56,9 @@ EnemySwordman::EnemySwordman(std::weak_ptr<Player> player, Vector3 startPos):Ene
 	const auto& animData = DataManager::GetInstance().GetEnemySwordmanAnimData();
 
 	m_animNames = animData.animNames;
+
+	
+	
 }
 
 EnemySwordman::~EnemySwordman()
@@ -82,8 +80,8 @@ void EnemySwordman::Init()
 	//当たり判定の初期化
 	ColInit({
 		.pos = m_rb.m_pos,
-		.offset = Vector3(0, kEnemyOffset, 0),
-		.shape = std::make_unique<CapsuleShape>(Vector3(0,kEnemyHead,0),kRadius),
+		.offset = Vector3(0, m_status.bodyColOffsetY, 0),
+		.shape = std::make_unique<CapsuleShape>(Vector3(0,m_status.bodyColHeight,0),m_status.bodyColRadius),
 		.tag = {Collider::Faction::Enemy, Collider::ColRole::None},
 		.isActive = true
 		});
@@ -95,8 +93,8 @@ void EnemySwordman::Init()
 	InitHitCol(GetWeakPtr());
 	m_hitCol->ColInit({
 		.pos = m_rb.m_pos,
-		.offset = Vector3(0, kHitColOffsetY, 0),
-		.shape = std::make_unique<SphereShape>(kRadiusHit),
+		.offset = Vector3(0, m_status.hitColOffsetY, 0),
+		.shape = std::make_unique<SphereShape>(m_status.hitColRadius),
 		.tag = {Collider::Faction::Enemy, Collider::ColRole::Hit},
 		.isActive = true,
 		.isTrigger = true
@@ -156,6 +154,17 @@ void EnemySwordman::Update()
 		m_isPartBroken = true;
 	}
 
+	//デバッグ用//Qを押した瞬間だけEnemySwordmanAttack.csvを読み込み直して攻撃データを更新する
+	bool isQPressed = CheckHitKey(KEY_INPUT_Q) != 0;
+	if (isQPressed && !m_wasQPressed)
+	{
+		DataManager::GetInstance().ReloadEnemySwordmanAttackRawData();
+		InitializeAttackList(DataManager::GetInstance().GetEnemySwordmanAttackRawData());
+		DataManager::GetInstance().ReloadEnemyStatusRawData();
+		InitializeStatus(DataManager::GetInstance().GetEnemyStatusRawData(), kStatusType);
+	}
+	m_wasQPressed = isQPressed;
+
 	if (m_isBreakLeftArm)
 	{
 		m_leftArmPart->Update();
@@ -172,6 +181,13 @@ void EnemySwordman::Update()
 		m_attackCoolTime -= System::GetInstance().GetTimeScale() * m_ownTimeScale;
 	}
 
+	//しばらく被弾しなければ確定ヒットを解除
+	m_forceHitTimer += System::GetInstance().GetTimeScale() * m_ownTimeScale;
+	if (m_forceHitTimer > m_status.forceHitResetTime)
+	{
+		m_forceHitCount = 0;
+	}
+
 	if (m_currentState)
 	{
 		m_currentState->Update();//状態の更新
@@ -179,7 +195,7 @@ void EnemySwordman::Update()
 	//アニメーションの更新//ここで1回だけ行う(各Stateでは更新しない)
 	m_anim.Update(m_ownTimeScale);
 	//頭をプレイヤーの方に向ける//アニメーションの姿勢に回転を足すので、アニメーションの更新の後に呼ぶ
-	UpdateLookAtPlayer(kHeadFrame);
+	UpdateLookAtPlayer(m_status.headFrame);
 }
 
 void EnemySwordman::Draw()
@@ -235,18 +251,18 @@ void EnemySwordman::SetUpBreakLeftArm()
 	{
 		for (int j = 0; j < 3; ++j)
 		{
-			partMat.m[i][j] *= kPartModelScale;
+			partMat.m[i][j] *= m_status.leftArmModelScale;
 		}
 	}
-	VECTOR bonePos = MV1GetFramePosition(m_modelHandle, kLeftArmFrame);
+	VECTOR bonePos = MV1GetFramePosition(m_modelHandle, m_status.leftArmFrame);
 	//上方向＋敵の右方向に飛び上がらせる
 	Vector3 initialVel = Vector3(0, kPartJumpUpSpeed, 0) + GetForward().Cross(Vector3(0, 1, 0)) * kPartJumpSideSpeed;
 	m_leftArmPart->Break(partMat, Vector3::FromDxLibVector(bonePos), initialVel);
 
 	//本体の左腕はボーンを縮めて消す
 	MATRIX scaleMat = MMult(MGetScale(VGet(kBreakPartScale, kBreakPartScale, kBreakPartScale)),
-		MV1GetFrameBaseLocalMatrix(m_modelHandle, kLeftArmFrame));
-	MV1SetFrameUserLocalMatrix(m_modelHandle, kLeftArmFrame, scaleMat);
+		MV1GetFrameBaseLocalMatrix(m_modelHandle, m_status.leftArmFrame));
+	MV1SetFrameUserLocalMatrix(m_modelHandle, m_status.leftArmFrame, scaleMat);
 	m_isBreakLeftArm = true;
 }
 
@@ -259,17 +275,17 @@ void EnemySwordman::SetUpBreakHead()
 	{
 		for (int j = 0; j < 3; ++j)
 		{
-			partMat.m[i][j] *= kHeadModelScale;
+			partMat.m[i][j] *= m_status.headModelScale;
 		}
 	}
-	VECTOR bonePos = MV1GetFramePosition(m_modelHandle, kHeadFrame);
+	VECTOR bonePos = MV1GetFramePosition(m_modelHandle, m_status.headFrame);
 	//上方向＋敵の右方向に飛び上がらせる
 	Vector3 initialVel = Vector3(0, kPartJumpUpSpeed, 0) + GetForward().Cross(Vector3(0, 1, 0)) * kPartJumpSideSpeed;
 	m_headPart->Break(partMat, Vector3::FromDxLibVector(bonePos), initialVel);
 
 	//本体の頭はボーンを縮めて消す
 	MATRIX scaleMat = MMult(MGetScale(VGet(kBreakPartScale, kBreakPartScale, kBreakPartScale)),
-		MV1GetFrameBaseLocalMatrix(m_modelHandle, kHeadFrame));
-	MV1SetFrameUserLocalMatrix(m_modelHandle, kHeadFrame, scaleMat);
+		MV1GetFrameBaseLocalMatrix(m_modelHandle, m_status.headFrame));
+	MV1SetFrameUserLocalMatrix(m_modelHandle, m_status.headFrame, scaleMat);
 	m_isBreakHead = true;
 }

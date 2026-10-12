@@ -60,6 +60,7 @@ struct ComboNode
 	std::vector<float> attackColStartFrames;//攻撃の当たり判定を有効にするアニメーションのフレーム
 	std::vector<float> attackColEndFrames;//攻撃の当たり判定を無効にするアニメーションのフレーム
 	float endFrame = -1.0f;//アニメーションの最終フレーム//負の値なら総フレーム数//コンボが途切れるフレームも兼ねる
+	float blendFrame = -1.0f;//ブレンドのフレーム数
 	float comboInputStartFrame = -1.0f;//コンボの先行入力の受付開始フレーム//負の値なら進行率のデフォルト値を使う
 	float comboInputEndFrame = -1.0f;//コンボの入力の受付終了フレーム//負の値なら進行率のデフォルト値を使う
 	float cancelFrame = -1.0f;//予約済みの次のコンボに移行するフレーム//負の値なら進行率のデフォルト値を使う
@@ -103,11 +104,12 @@ enum ComboNodeType : int
 	AttackColStartFrame = 18,
 	AttackColEndFrame = 19,
 	EndFrame = 20,
-	ComboInputStartFrame = 21,
-	ComboInputEndFrame = 22,
-	CancelFrame = 23,
-	ActionCancelFrame = 24,
-	Size = 25,
+	BlendFrame = 21,
+	ComboInputStartFrame = 22,
+	ComboInputEndFrame = 23,
+	CancelFrame = 24,
+	ActionCancelFrame = 25,
+	Size = 26,
 
 };
 namespace ComboIndex

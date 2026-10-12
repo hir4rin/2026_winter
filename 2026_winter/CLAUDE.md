@@ -188,9 +188,60 @@
 - `Player::OnParried()` を追加(死亡中は何もしない)。`EnemyParry::Enter` から呼ぶようにした(EnemyParry自体はまだどこからも入らない)。
 - 未定(TODO): 弾かれた用のアニメ、必殺技中・スキル攻撃中に弾かれたときの扱い、空中で弾かれたとき(今は30F浮いたまま止まる)。
 
+### 2026-10-12 アニメのブレンドフレーム数を指定できるようにした
+- `Animation::ChangeAnim` / `ChangeAnimWithModelHandle` の最後に `blendFrame` 引数を追加(デフォルト -1)。
+  - 負の値: 今まで通り `kAnimChangeFrame`(20F)。0: 即切り替え(0除算しないよう AnimBlend で分岐)。
+  - 例: `m_anim.ChangeAnim("Hit", false, 1.0f, -1.0f, 0.0f, 5.0f);`
+- 違うモデルへの切り替え(Init経由)はブレンドしないので blendFrame は使われない。
+- `ComboChain01.csv` の endFrame の隣に `blendFrame` 列を追加(空欄なら20F)。`ComboNodeType::BlendFrame = 21` を追加し後ろを1つずつずらした。
+  `ComboNode::blendFrame` を通常攻撃・スキル攻撃・ダッシュ攻撃の ChangeAnimWithModelHandle に渡している。
+
+### 2026-10-12 敵の攻撃データの外部化(読み込みまで)
+- `data/Enemy/EnemySwordmanAttack.csv` を追加(Shift-JIS、ComboChain01.csvと同じく1行目列名・2行目説明・#はコメント)。今は「横斬り」1行だけで、値は今までのコードの定数そのまま。
+- プレイヤー(ComboNode)と同じ形: DataManager は生データだけ持ち、解釈は EnemyBase でする。
+- `EnemyBase.h` の先頭に、1行分の構造体 `EnemyAttackNode` と列番号 `EnemyAttackNodeType`(ComboNodeTypeと名前がぶつかるので enum class)。
+- `DataManager::LoadEnemySwordmanAttackRawData()` / `GetEnemySwordmanAttackRawData()`(生データ)。
+- `EnemyBase::InitializeAttackList(rawData)` で `m_attackList` を作る(EnemySwordmanのコンストラクタで呼ぶ)。要素の番号=index(CSVはindex順に並べる)。
+  - 読み取りはプレイヤー(InitializeComboChain)と同じ書き方。列番号は `struct EnemyAttackNodeType { enum : int {...}; }`(ComboNodeTypeと名前がぶつからないように構造体に入れている)。
+  - 空欄にできるのは「空欄なら〜」と書いた列だけ(再生速度・止めるフレーム・ブレンド・SE)。**最後の列(nextAttack)は空欄だと列数不足になるので -1 を入れる**。ステータスCSVも同じ書き方。
+  `GetAttackNode(index)` / `GetCurrentAttackNode()`、`m_currentAttackIndex`。
+- CSVの列: preBlendFrame・animEndFrame を追加、endTime → attackEndTimeFrame、attackColStart〜moveSpeedDuringCol を blendFrame の後ろへ。
+- Qで `EnemySwordmanAttack.csv` を読み込み直す(EnemySwordman::Update。プレイヤーのComboChainと同時に読み直される)。
+- AttackPre / Attack / AttackEnd はユーザーが node の値に置き換え済み。
+- 攻撃の選択: `EnemyBase::SelectAttackIndex()`(クールタイム中なら-1、距離が attackRange 以内の攻撃からランダム。attackRange<=0 は単体では選ばない)。
+  `NextAfterIdle` / `NextOnArrived` で選んで `m_currentAttackIndex` に入れる。Chase は「出せる攻撃があるか」だけ見る。`NextAfterParry` は0固定(仮)。
+- Chase の近づく距離・Caution の回る半径は `GetMaxAttackRange()`。`CanMeleeAttack` と `kEnemyMeleeAttackRange`(3か所)は削除。
+- 注意: `EnemyAttackPre` の `17.54f` は開始フレームではなく endFrame(引数の順番)。CSVの preAnimEndFrame に入れてある。
+
+### 2026-10-12 敵のステータスの外部化(読み込みまで)
+- `data/Enemy/EnemyStatus.csv`(Shift-JIS、1行=1種類、typeは配置CSVと同じ名前)。値は今までの定数そのまま。警戒移動は倍率ではなく速度(4×0.5=2)。
+- 攻撃と同じ形: `DataManager::LoadEnemyStatusRawData()` / `GetEnemyStatusRawData()` / `ReloadEnemyStatusRawData()`(生データ)、
+  `EnemyBase.h` に `EnemyStatus` / `EnemyStatusType`、`EnemyBase::InitializeStatus(rawData, type)` で自分のtypeの行を `m_status` に入れる。`GetStatus()`。
+- EnemySwordman はコンストラクタと Q の読み込み直しで呼ぶ(type は `kStatusType` = "Swordman")。
+- 各所の定数は `m_status.xxx` に置き換え済み(HP・当たり判定・部位破壊のボーン、速度、ガード、被部位破壊率、AIの判断、視界、ダウン時間)。
+  HP・当たり判定は生成時にしか使わないので、Qで読み直しても今いる敵には反映されない。
+- `airStayTime` は全敵共通なのでCSVから外し、`EnemyAirStay.cpp` の定数のまま。
+- Idle後の抽選は1回にまとめた(`IsHitRate(chaseRate)`)。前は rand を2回引いていて実質 Chase75%/Caution25% だった。
+- `EnemyKnockBack` はどこからも使われていない(knockBackTime も今は効いていない)。
+- 方針: 種類ごとの標準値はこのCSV。Unityの配置CSVには「この1体だけ変えたい値」(HP・視界など)だけを上書き用の列として後で足す(空欄なら標準値)。
+
+### 2026-10-12 被弾後の確定ヒット(ガードしない段数)
+- `EnemyStatus.csv` の guardBreakTime の後に `forceHitCount`(3) / `forceHitResetTime`(60F) を追加。
+- `EnemyBase::OnDamage`: ダメージが通ったら `m_forceHitCount = forceHitCount`。残りがある間の弱攻撃はガード抽選をせず1減らして当てる。
+  確定ヒットで当たった分や、残りがある間の強攻撃では補充しない(使い切ると次の弱攻撃から抽選に戻る)。
+- `EnemySwordman::Update`: 最後の被弾から `forceHitResetTime` たつと残りを0にする。
+
+### 2026-10-12 敵の攻撃CSVに attackFinishFrame を追加(読み込みまで)
+- `EnemySwordmanAttack.csv` の animEndFrame の後に `attackFinishFrame`(攻撃を終えて後隙へ移るフレーム、空欄なら-1=アニメの最後まで)。
+- `EnemyAttackNode::attackFinishFrame` / `EnemyAttackNodeType::AttackFinishFrame` を追加し、`InitializeAttackList` で読む。
+- **まだ使っていない**。EnemyAttack は今もアニメ終了(GetAnimEndFlag)で次へ移る。
+
 ---
 
 ## TODO / 次にやること
+- [ ] 使われていない定数の掃除(EnemyAttackPre の kAttackPreBlendRate / kAttackPreTrackEndRate、EnemyParry の kAnimEndFrame / kAnimMoveEndFrame)
+- [ ] Unityの配置CSVに、1体ごとの上書き用の列(HP・視界など、空欄なら標準値)を必要になったら足す
+- [ ] 敵の攻撃データを各Stateで使う(AttackPre → Attack → AttackEnd → 攻撃距離 → 連撃の順)
 - [ ] EnemyParry の残り(弾く条件・アニメ・弾き中の被弾の扱い)を決めて実装する
 - [ ] PlayerAttackParried の残り(アニメ・必殺技/スキル中・空中で弾かれたとき)
 - [ ] ゲームで後隙の長さ(40F)と、最後の姿勢で止まる見た目を確認。止まって見えるなら専用のアニメ(構え直し)を検討

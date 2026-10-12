@@ -34,12 +34,12 @@ public:
 
 	void SetAnim(bool isRoop);//アニメーションのループ再生を設定する//m_isEndを初期化
 	//startFrameはいろいろ完成ではないので、使い方に注意
-	void ChangeAnim(std::string name,bool isRoop = true,float timescale = 1.0f,float endFrame = -1.0f,float startFrame = 0.0f);//アニメーションを切り替える//nameはアニメーションの名前//endFrameは最終フレーム(負の値なら総フレーム数)//startFrameは再生を始めるフレーム
+	void ChangeAnim(std::string name,bool isRoop = true,float timescale = 1.0f,float endFrame = -1.0f,float startFrame = 0.0f,float blendFrame = -1.0f);//アニメーションを切り替える//nameはアニメーションの名前//endFrameは最終フレーム(負の値なら総フレーム数)//startFrameは再生を始めるフレーム//blendFrameはブレンドにかけるフレーム数(負の値ならデフォルトの20F、0なら即切り替え)
 
 	/// <summary>
 	/// モデルを考慮したアニメーション切換え
 	/// </summary>
-	void ChangeAnimWithModelHandle(int modelHandle,std::string name,bool isRoop,float timescale = 1.0f,float endFrame = -1.0f,float startFrame = 0.0f);
+	void ChangeAnimWithModelHandle(int modelHandle,std::string name,bool isRoop,float timescale = 1.0f,float endFrame = -1.0f,float startFrame = 0.0f,float blendFrame = -1.0f);
 	//モデルハンドルの取得//確認用
 	int GetModelHandleForCheck() { return m_modelHandle; }
 	//アニメーションを再生するのを止める
@@ -47,15 +47,26 @@ public:
 
 
 
-	bool GetAnimEndFlag() { return m_isEndAnim;}//アニメーションが終わったかどうかのフラグを返す
-	float GetAnimRate();//アニメーションの進行率を返す//0から1の値を返す
-	float GetAnimTotalFrame(const std::string& name);//指定したアニメーションの総フレーム数を返す
-	float GetNowAnimFrame();//現在のアニメーションのフレーム数を返す
-	float GetNowAnimFrame(const std::string& name);//指定したアニメーションの現在のフレーム数を返す
-	float GetAnimEndFrame();//現在のアニメーションの実効の最終フレームを返す//endFrameの指定がなければ総フレーム数
-	float GetAnimRemainFrame();//最終フレームまでの残りフレーム数を返す
-	bool IsAnimFrameOver(float frame);//現在のフレームが指定フレーム以上かどうか
-	bool IsAnimFrameBetween(float startFrame, float endFrame);//現在のフレームが範囲内(start以上end未満)かどうか
+	//アニメーションが終わったかどうかのフラグを返す
+	bool GetAnimEndFlag() { return m_isEndAnim;}
+	//アニメーションの進行率を返す//0から1の値を返す
+	float GetAnimRate();
+	//指定したアニメーションの総フレーム数を返す
+	float GetAnimTotalFrame(const std::string& name);
+	//現在のアニメーションのフレーム数を返す
+	float GetNowAnimFrame();
+	//指定したアニメーションの現在のフレーム数を返す
+	float GetNowAnimFrame(const std::string& name);
+	//現在のアニメーションの実効の最終フレームを返す//endFrameの指定がなければ総フレーム数
+	float GetAnimEndFrame();
+	//最終フレームまでの残りフレーム数を返す
+	float GetAnimRemainFrame();
+	//現在のフレームが指定フレーム以上かどうか
+	bool IsAnimFrameOver(float frame);
+	//現在のフレームが範囲内(start以上end未満)かどうか
+	bool IsAnimFrameBetween(float startFrame, float endFrame);
+
+
 
 	/// <summary>
 	/// 現在のアニメーションのルートモーション(上下方向の移動)を見た目から消す
@@ -86,6 +97,7 @@ private:
 	float m_prevEndFrame = -1.0f;//前のアニメーションの最終フレーム
 
 	float m_animChangeFrame;//アニメーションを切り替えるフレーム数
+	float m_blendFrame = 20.0f;//今のブレンドにかけるフレーム数
 
 	bool m_isRoop;//アニメーションをループさせるかどうかのフラグ
 	bool m_prevRoop;//前のアニメーションがループしているかどうかのフラグ

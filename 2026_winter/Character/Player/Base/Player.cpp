@@ -661,6 +661,7 @@ void Player::InitializeComboChain()
 		}
 		//空欄なら-1(総フレーム数を使う)
 		node.endFrame = tokens[ComboNodeType::EndFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::EndFrame]);
+		node.blendFrame = tokens[ComboNodeType::BlendFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::BlendFrame]);
 		//遷移フレーム//空欄なら-1(進行率のデフォルト値を使う)
 		node.comboInputStartFrame = tokens[ComboNodeType::ComboInputStartFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::ComboInputStartFrame]);
 		node.comboInputEndFrame = tokens[ComboNodeType::ComboInputEndFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::ComboInputEndFrame]);

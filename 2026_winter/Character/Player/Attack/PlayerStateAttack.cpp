@@ -59,7 +59,7 @@ void PlayerStateAttack::Enter()
 	//アニメーションの初期化//コンボの段数によってアニメーションを変える//-1はplayerがいないとき
 	int currentComboIndex = SelectAnimInit();
 	const ComboNode& node = player->m_comboChain[currentComboIndex];
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, node.blendFrame);
 	//切り上げ攻撃は、上昇をプログラム(moveSpeedY)で行うので、アニメーションの上昇を見た目から消す
 	//アニメーションが切り替わってブレンドが終わると、Animation側で自動的に解除される
 	if (node.index == kRootMotionCancelComboIndexUp)
