@@ -1,10 +1,10 @@
 ﻿#include "PartBrokenBCamera.h"
 #include "../../CameraManager.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 #include "../Character/Enemy/EnemyBase.h"
 #include "../PlayerFollowCamera.h"
 #include "../Math/Matrix4x4.h"
-#include "../System.h"
+#include "Main/System.h"
 #include <algorithm>
 #include <cmath>
 

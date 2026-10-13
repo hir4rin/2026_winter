@@ -1,7 +1,7 @@
 ﻿#include "PlayerWeapon.h"
 #include "DxLib.h"
-#include "Base/Player.h"
-#include "../../System.h"
+#include "Player.h"
+#include "Main/System.h"
 
 namespace
 {

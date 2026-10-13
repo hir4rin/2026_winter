@@ -1,15 +1,15 @@
 ﻿#include "PlayerFollowCamera.h"
 #include "../Cameramanager.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 //#include "../PlayerCamera.h"
 #include "../Math/Matrix4x4.h"
-#include "../Input.h"
+#include "Main/Input.h"
 #include "../CameraManager.h"
 #include "../LockOnManager.h"
 #include "../Character/Enemy/EnemyBase.h"
 //#include "../Stage/Stage.h"
-#include "../System.h"
-#include "../BattleManager.h"
+#include "Main/System.h"
+#include "Battle/BattleManager.h"
 #include <algorithm>
 
 

@@ -1,6 +1,6 @@
 ﻿#include "EnemyDie.h"
 #include "../../EnemyBase.h"
-#include "HitCol.h"
+#include "Collision/HitCol.h"
 
 EnemyDie::EnemyDie(std::weak_ptr<EnemyBase> owner) :EnemyStateBase(owner)
 {

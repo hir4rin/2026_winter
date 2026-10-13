@@ -1,6 +1,6 @@
 ﻿#include "CharacterBase.h"
 #include "../Math/Matrix4x4.h"
-#include "hitCol.h"
+#include "Collision/HitCol.h"
 #include <cassert>
 #include <algorithm>
 #include <cmath>

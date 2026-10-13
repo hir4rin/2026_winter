@@ -3,9 +3,9 @@
 #include "PlayerFollowCamera.h"
 #include "LockOnCameraState.h"
 #include "../Camera/LockOnManager.h"
-#include "Player.h"
-#include "../System.h"
-#include "../../BattleManager.h"
+#include "Character/Player/Player.h"
+#include "Main/System.h"
+#include "Battle/BattleManager.h"
 #include "../Character/Enemy/EnemyBase.h"
 #include "../../Math/Matrix4x4.h"
 #include <algorithm>

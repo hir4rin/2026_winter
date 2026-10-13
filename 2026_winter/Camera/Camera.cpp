@@ -1,5 +1,5 @@
 ﻿#include "Camera.h"
-#include "../System.h"
+#include "Main/System.h"
 #include "../Math/Matrix4x4.h"
 #include "EffekseerForDXLib.h"
 namespace

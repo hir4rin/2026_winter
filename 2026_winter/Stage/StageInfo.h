@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../System.h"
+#include "Main/System.h"
 #include <array>
 
 /// <summary>

@@ -1,13 +1,13 @@
 ﻿#include "LockOnManager.h"
-#include "../Managers/CollisionManager.h"
+#include "Collision/CollisionManager.h"
 #include "../Character/Enemy/EnemyBase.h"
 #include "../Character/Enemy/EnemyManager.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 #include "CameraManager.h"
 #include "CameraState/CameraStateBase.h"
-#include "../BattleManager.h"
-#include "../System.h"
-#include "../Input.h"
+#include "Battle/BattleManager.h"
+#include "Main/System.h"
+#include "Main/Input.h"
 #include <cassert>
 
 namespace

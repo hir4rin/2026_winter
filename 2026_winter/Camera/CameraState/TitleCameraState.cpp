@@ -1,6 +1,6 @@
 ﻿#include "TitleCameraState.h"
 #include "../CameraManager.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 
 namespace
 {

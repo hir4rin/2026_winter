@@ -1,7 +1,7 @@
 ﻿#include "EnemyHitAir.h"
 #include "../../EnemyBase.h"
-#include "../../../System.h"
-#include "../Game.h"
+#include "Main/System.h"
+#include "Main/Game.h"
 
 EnemyHitAir::EnemyHitAir(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
 	EnemyStateBase(owner),

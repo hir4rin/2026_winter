@@ -1,15 +1,15 @@
 ﻿#include "EnemySwordman.h"
 #include "../../DataLoader/DataManager.h"
-#include "../System.h"
+#include "Main/System.h"
 #include "../../Math/Matrix4x4.h"
-#include "../../Collider/SphereShape.h"
-#include "../../Collider/CapsuleShape.h"
+#include "Collision/SphereShape.h"
+#include "Collision/CapsuleShape.h"
 #include "EnemyPart.h"
-#include "HitCol.h"
-#include "State/General/EnemyIdle.h"
-#include "State/General/EnemyPatrol.h"
-#include "../Input.h"
-#include "../../Managers/ModelShaderManager.h"
+#include "Collision/HitCol.h"
+#include "Character/Enemy/State/Locomotion/EnemyIdle.h"
+#include "Character/Enemy/State/Locomotion/EnemyPatrol.h"
+#include "Main/Input.h"
+#include "Render/ModelShaderManager.h"
 
 namespace
 {

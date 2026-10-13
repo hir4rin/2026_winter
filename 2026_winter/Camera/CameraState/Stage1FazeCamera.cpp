@@ -1,5 +1,5 @@
 ﻿#include "Stage1FazeCamera.h"
-#include "../System.h"
+#include "Main/System.h"
 #include "../CameraManager.h"
 #include "PlayerFollowCamera.h"
 #include <cmath>

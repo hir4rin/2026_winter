@@ -1,7 +1,7 @@
 ﻿#include "EnemyPart.h"
-#include "../System.h"
-#include "../../Game.h"
-#include "../../Managers/ModelShaderManager.h"
+#include "Main/System.h"
+#include "Main/Game.h"
+#include "Render/ModelShaderManager.h"
 
 namespace
 {

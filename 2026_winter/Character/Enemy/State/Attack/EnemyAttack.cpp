@@ -1,9 +1,9 @@
 ﻿#include "EnemyAttack.h"
 #include "../../EnemyBase.h"
-#include "Player.h"
-#include "../../../AttackCol.h"
-#include "../../../../Collider/SphereShape.h"
-#include "../../../../Managers/CollisionManager.h"
+#include "Character/Player/Player.h"
+#include "Collision/AttackCol.h"
+#include "Collision/SphereShape.h"
+#include "Collision/CollisionManager.h"
 #include <format>
 
 namespace

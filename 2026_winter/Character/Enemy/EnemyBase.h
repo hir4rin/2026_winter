@@ -1,20 +1,20 @@
 ﻿#pragma once
-#include "CharacterBase.h"
-#include "State/General/EnemyIdle.h"
-#include "State/General/EnemyChase.h"
-#include "State/General/EnemyGuard.h"
-#include "State/General/EnemyGuardBreak.h"
-#include "State/General/EnemyParry.h"
+#include "Character/CharacterBase.h"
+#include "Character/Enemy/State/Locomotion/EnemyIdle.h"
+#include "Character/Enemy/State/Locomotion/EnemyChase.h"
+#include "Character/Enemy/State/Defence/EnemyGuard.h"
+#include "Character/Enemy/State/Defence/EnemyGuardBreak.h"
+#include "Character/Enemy/State/Defence/EnemyParry.h"
 #include "State/Attack/EnemyAttack.h"
 #include "State/Attack/EnemyAttackPre.h"
 #include "State/Attack/EnemyAttackEnd.h"
-#include "State/General/EnemyBack.h"
-#include "State/General/EnemyCaution.h"
-#include "State/General/EnemyPatrol.h"
+#include "Character/Enemy/State/Locomotion/EnemyBack.h"
+#include "Character/Enemy/State/Locomotion/EnemyCaution.h"
+#include "Character/Enemy/State/Locomotion/EnemyPatrol.h"
 #include "State/Hit/EnemyKnockBack.h"
 #include "State/Hit/EnemyKnockDown.h"
-#include "State/General/EnemyAirStay.h"
-#include "State/General/EnemyAirFall.h"
+#include "Character/Enemy/State/Hit/EnemyAirStay.h"
+#include "Character/Enemy/State/Hit/EnemyAirFall.h"
 #include "State/Hit/EnemyHitDrop.h"
 #include "State/Hit/EnemyDie.h"
 #include "State/Hit/EnemyHitGround.h"
@@ -22,7 +22,7 @@
 #include "State/Hit/EnemyAssasined.h"
 #include "State/Hit/EnemyPartBrokenKilled.h"
 #include "State/Hit/EnemyVanish.h"
-#include "../../Game.h"
+#include "Main/Game.h"
 #include "../../Stage/EnemySpawnData.h"
 
 
@@ -375,6 +375,8 @@ protected:
 	//----------------------------------------------------------------------------
 
 	void ChangeState(std::shared_ptr<EnemyStateBase> newState);//状態遷移用
+	//攻撃の流れ(予備動作・攻撃・後隙)のステートか
+	bool IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state)const;
 
 	//攻撃CSVの生データ(DataManagerで読み込んだもの)からm_attackListを作る//各敵のコンストラクタで呼ぶ
 	void InitializeAttackList(const std::vector<std::vector<std::string>>& rawData);

@@ -1,9 +1,9 @@
 ﻿#include "AssasinCameraStart.h"
 #include "AssasinCamera.h"
 #include "../../CameraManager.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 #include "../Character/Enemy/EnemyBase.h"
-#include "../System.h"
+#include "Main/System.h"
 #include <cmath>
 
 namespace

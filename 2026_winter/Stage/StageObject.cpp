@@ -1,5 +1,5 @@
 ﻿#include "StageObject.h"
-#include "../Collider/BoxShape.h"
+#include "Collision/BoxShape.h"
 
 StageObject::StageObject()
 {

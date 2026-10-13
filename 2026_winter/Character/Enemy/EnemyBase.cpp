@@ -1,12 +1,13 @@
 ﻿#include "EnemyBase.h"
-#include "Enemy/State/General/EnemyStateBase.h"
-#include "Player.h"
-#include "HitCol.h"
-#include "../../Game.h"
-#include "../System.h"
+#include "Character/Enemy/State/EnemyStateBase.h"
+#include "Character/Player/Player.h"
+#include "Collision/HitCol.h"
+#include "Main/Game.h"
+#include "Main/System.h"
 #include "../../DataLoader/DataManager.h"
-#include "../../BattleManager.h"
-#include "../../Managers/EffectManager.h"
+#include "Battle/BattleManager.h"
+#include "Render/EffectManager.h"
+#include "Battle/AttackTokenManager.h"
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -46,6 +47,8 @@ namespace
 	constexpr float kDebugForwardTipRadius = 8.0f;//向きの線の先の球の半径
 	constexpr int kDebugSphereDivNum = 8;//球の分割数
 	constexpr int kDebugLineSpacing = 2;//文字の行間
+	constexpr float kDebugTokenRingRadius = 80.0f;//攻撃権の輪の半径
+	constexpr int kDebugTokenRingDivNum = 24;//攻撃権の輪の分割数
 }
 
 EnemyBase::EnemyBase(std::weak_ptr<Player> player)
@@ -207,6 +210,25 @@ void EnemyBase::DebugDraw()
 		DrawLine3D(lineStart.ToDxLibVector(), target.ToDxLibVector(), color);
 	}
 
+	//攻撃権を持っていたら足元に輪を出す
+	bool hasToken = false;
+	if (auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock())
+	{
+		hasToken = tokenMgr->HasToken(*this);
+	}
+	const unsigned int tokenColor = GetColor(255, 0, 255);
+	if (hasToken)
+	{
+		for (int i = 0; i < kDebugTokenRingDivNum; i++)
+		{
+			const float angle0 = DX_TWO_PI_F * i / kDebugTokenRingDivNum;
+			const float angle1 = DX_TWO_PI_F * (i + 1) / kDebugTokenRingDivNum;
+			const Vector3 p0 = lineStart + Vector3(cosf(angle0), 0, sinf(angle0)) * kDebugTokenRingRadius;
+			const Vector3 p1 = lineStart + Vector3(cosf(angle1), 0, sinf(angle1)) * kDebugTokenRingRadius;
+			DrawLine3D(p0.ToDxLibVector(), p1.ToDxLibVector(), tokenColor);
+		}
+	}
+
 	//頭の上に文字を出す//カメラの後ろにいる(zが0〜1の外)ときは出さない
 	const Vector3 textPos = m_rb.m_pos + Vector3(0, kDebugTextHeight, 0);
 	const VECTOR screenPos = ConvWorldPosToScreenPos(textPos.ToDxLibVector());
@@ -220,6 +242,7 @@ void EnemyBase::DebugDraw()
 	const int x = static_cast<int>(screenPos.x);
 	const int y = static_cast<int>(screenPos.y);
 	const int lineHeight = GetFontSize() + kDebugLineSpacing;
+	if (hasToken)DrawDebugTextCenter(x, y - lineHeight * 2, "TOKEN", tokenColor);
 	DrawDebugTextCenter(x, y - lineHeight, stateText, color);
 	DrawDebugTextCenter(x, y, statusText, GetColor(255, 255, 255));
 }
@@ -686,7 +709,9 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 {
 	//ランダムでChaseかCautionに遷移する
 	const int attackIndex = SelectAttackIndex();
-	if (attackIndex >= 0)
+	//攻撃できて攻撃権が取れたら予備動作へ
+	auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock();
+	if (attackIndex >= 0 && tokenMgr && tokenMgr->Request(*this))
 	{
 		m_currentAttackIndex = attackIndex;
 		return 	std::make_shared<EnemyAttackPre>(GetWeakPtr());
@@ -702,9 +727,10 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterIdle()
 
 std::shared_ptr<EnemyStateBase> EnemyBase::NextOnArrived()
 {
-	//攻撃できるなら予備動作へ
+	//攻撃できて攻撃権が取れたら予備動作へ
 	const int attackIndex = SelectAttackIndex();
-	if (attackIndex >= 0)
+	auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock();
+	if (attackIndex >= 0 && tokenMgr && tokenMgr->Request(*this))
 	{
 		m_currentAttackIndex = attackIndex;
 		return std::make_shared<EnemyAttackPre>(GetWeakPtr());
@@ -748,8 +774,25 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterRecover()
 	return std::make_shared<EnemyIdle>(GetWeakPtr());
 }
 
+bool EnemyBase::IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state) const
+{
+	return std::dynamic_pointer_cast<EnemyAttackPre>(state) ||
+		std::dynamic_pointer_cast<EnemyAttack>(state) ||
+		std::dynamic_pointer_cast<EnemyAttackEnd>(state);
+}
+
 void EnemyBase::ChangeState(std::shared_ptr<EnemyStateBase> newState)
 {
+	//攻撃の流れから抜けたら攻撃権を返す(被弾で中断されたときも
+	//Initの最初のChangeStateはBattleManagerができる前なので、攻撃の流れから抜けるときだけ見る
+	if (IsAttackFlowState(m_currentState) && !IsAttackFlowState(newState))
+	{
+		if (auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock())
+		{
+			tokenMgr->Release(*this);
+		}
+	}
+
 	//現在の状態から抜ける
 	if (m_currentState)
 	{

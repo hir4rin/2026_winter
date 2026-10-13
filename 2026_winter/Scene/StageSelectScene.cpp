@@ -1,10 +1,10 @@
 ﻿#include "StageSelectScene.h"
 #include "SceneController.h"
 #include "DxLib.h"
-#include "../SceneMain.h"
-#include "../Input.h"
-#include "../Game.h"
-#include "../System.h"
+#include "SceneMain.h"
+#include "Main/Input.h"
+#include "Main/Game.h"
+#include "Main/System.h"
 #include "../Stage/StageInfo.h"
 
 namespace

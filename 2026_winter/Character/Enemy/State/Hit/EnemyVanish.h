@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../General/EnemyStateBase.h"
+#include "Character/Enemy/State/EnemyStateBase.h"
 
 //死体を少しずつ透明にして消すState//消え終わったらEnemyManagerが削除する
 class EnemyVanish :

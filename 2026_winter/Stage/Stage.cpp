@@ -2,9 +2,9 @@
 #include "StageCsvIO.h"
 #include "../DataLoader/DataManager.h"
 #include "../Math/Matrix4x4.h"
-#include "../System.h"
-#include "../Managers/CollisionManager.h"
-#include "../Collider/PolygonShape.h"
+#include "Main/System.h"
+#include "Collision/CollisionManager.h"
+#include "Collision/PolygonShape.h"
 
 namespace
 {

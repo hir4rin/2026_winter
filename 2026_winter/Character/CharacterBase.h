@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "../Collider/Collider.h"
-#include "../Animation.h"
-#include "Player/Base/PlayerEnums.h"
+#include "Collision/Collider.h"
+#include "Animation.h"
+#include "Character/Player/PlayerEnums.h"
 #include <unordered_map>
 
 class HitCol;

@@ -1,9 +1,9 @@
 ﻿#include "PartBrokenACamera.h"
 #include "../../CameraManager.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 #include "../Character/Enemy/EnemyBase.h"
 #include "../Math/Matrix4x4.h"
-#include "../System.h"
+#include "Main/System.h"
 #include <cmath>
 
 

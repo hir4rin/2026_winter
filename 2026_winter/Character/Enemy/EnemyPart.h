@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../../Collider/Collider.h"
+#include "Collision/Collider.h"
 #include "../../Math/Matrix4x4.h"
 
 //部位破壊で切り離されたパーツ//ステージのポリゴンと当たってその場で止まる、簡易な物理挙動を持つ

@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include "../Collider/Collider.h"
+#include "Collision/Collider.h"
 #include "StageObject.h"
 #include "WallZone.h"
-#include "../System.h"
+#include "Main/System.h"
 #include <memory>
 #include <vector>
 

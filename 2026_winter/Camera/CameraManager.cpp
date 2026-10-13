@@ -1,7 +1,7 @@
 ﻿#include "CameraManager.h"
 #include "Camera.h"
 #include "LockOnManager.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 #include "CameraState/CameraStateBase.h"
 #include "CameraState/PlayerFollowCamera.h"
 #include "CameraState/LockOnCameraState.h"
@@ -18,14 +18,14 @@
 #include "CameraState/PartBroken/PartBrokenACameraEnd.h"
 #include "CameraState/PartBroken/PartBrokenBCamera.h"
 #include "CameraState/PartBroken/PartBrokenBCameraStart.h"
-#include "../Managers/CollisionManager.h"
-#include "../System.h"
-#include "../BattleManager.h"
+#include "Collision/CollisionManager.h"
+#include "Main/System.h"
+#include "Battle/BattleManager.h"
 #include "../Character/Enemy/EnemyBase.h"
 #include "EffekseerForDXLib.h"
-#include "../Input.h"
+#include "Main/Input.h"
 #include "../Math/Matrix4x4.h"
-#include "../imguiApp.h"
+#include "Main/imguiApp.h"
 #include <algorithm>
 #include <cmath>
 

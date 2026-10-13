@@ -1,10 +1,10 @@
 ﻿#include "PauseScene.h"
 #include "SceneController.h"
 #include "DxLib.h"
-#include "../Input.h"
-#include "../Game.h"
-#include "../System.h"
-#include "../BattleManager.h"
+#include "Main/Input.h"
+#include "Main/Game.h"
+#include "Main/System.h"
+#include "Battle/BattleManager.h"
 #include "StageSelectScene.h"
 #include <iterator>
 

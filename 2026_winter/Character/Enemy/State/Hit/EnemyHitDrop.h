@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../General/EnemyStateBase.h"
+#include "Character/Enemy/State/EnemyStateBase.h"
 #include "../../../CharacterBase.h"
 
 class EnemyHitDrop :

@@ -1,7 +1,7 @@
 ﻿#include "EnemyHitGround.h"
 #include "../../EnemyBase.h"
-#include "../../../System.h"
-#include "Player.h"
+#include "Main/System.h"
+#include "Character/Player/Player.h"
 
 namespace
 {

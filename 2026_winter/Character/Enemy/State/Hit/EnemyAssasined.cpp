@@ -1,8 +1,8 @@
 ﻿#include "EnemyAssasined.h"
 #include "../../EnemyBase.h"
-#include "../../HitCol.h"
-#include "Player.h"
-#include "../System.h"
+#include "Collision/HitCol.h"
+#include "Character/Player/Player.h"
+#include "Main/System.h"
 
 namespace
 {

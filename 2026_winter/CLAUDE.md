@@ -236,9 +236,42 @@
 - `EnemyAttackNode::attackFinishFrame` / `EnemyAttackNodeType::AttackFinishFrame` を追加し、`InitializeAttackList` で読む。
 - **まだ使っていない**。EnemyAttack は今もアニメ終了(GetAnimEndFlag)で次へ移る。
 
+### 2026-10-13 敵の攻撃権(AttackTokenManager)
+- `Managers/AttackTokenManager.h/.cpp`。**シングルトンではなく BattleManager が `shared_ptr` で持つ**。`BattleManager::Init()`(SceneMain::Init で呼ぶ)で作る。
+  `GetAttackTokenMgr()` は weak_ptr を返すので、`System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock()` して使う。BattleManager はシーンごとに作り直すので、前のシーンの攻撃権は残らない。
+- 中身: 同時に使える重さの合計 `m_maxCost`(2)、攻撃ごとの重さ `cost`(省略で1)、全体の攻撃間隔 `kGlobalAttackInterval`(30F。誰かが取ってから次に渡すまで)。
+  名簿 `m_holders` は weak_ptr + cost。比べるのは `GetId()`(Collider のID)。
+- 取る: `NextAfterIdle` / `NextOnArrived` で、攻撃を選べたときだけ `Request`。取れなければ今まで通り Chase/Caution(Caution → Chase → 着いたらまた頼む、のループで待つ)。
+- 返す: `EnemyBase::ChangeState` で「攻撃の流れ(AttackPre/Attack/AttackEnd)から、それ以外に移ったとき」に `Release`(被弾・処刑などの中断も含む)。返すのは AttackEnd → Back のとき。
+  - 「攻撃の流れから移ったとき」だけにしているのは、敵の Init の最初の ChangeState が BattleManager を作る前(SceneMain::Init)に呼ばれ、`GetBattleMgr` の assert に当たるため。
+- 保険: `AttackTokenManager::Update`(`BattleManager::Update` の中で呼ぶ)で、消えた敵・死んだ敵の分を回収する。
+- `BattleManager::Update` は System::Update の中ではなく、`SceneMain::NormalUpdate` の `System::Update()` の直後で呼ぶようにした(Systemでタイムスケールを戻した後に更新するため)。
+- `NextAfterParry`(弾き後の反撃)は攻撃権を見ずに攻撃する(ひとまずこのまま)。持っていなくても攻撃後の Release は何もしないだけ。
+- EnemyAttackPre の攻撃権の TODO は消した。
+- デバッグ表示(F3): 攻撃権を持っている敵は足元に紫の輪＋頭の上に「TOKEN」。左上(10,130)に `AttackToken:使用/上限 Interval:残り`。
+
+### 2026-10-14 フォルダ整理(案A)
+- **これより前のログに出てくるパスは整理前のもの**。対応表(全ファイル・全include)は `../進捗/ファイル整理_変更一覧.md`。
+- 今の構成:
+  - `Main/` Application, Game, System, Input, IDManager, imguiApp, main
+  - `Scene/` SceneMain(PauseScene などと同じ場所)
+  - `Battle/` BattleManager, AttackTokenManager
+  - `Collision/` 旧 Collider/ の全部 ＋ CollisionManager, CollisionChecker, FixNextPosition ＋ AttackCol, HitCol, JustDodgeCol, SkillAttackCol
+  - `Character/` CharacterBase, Animation
+    - `Player/` Player, PlayerState, PlayerEnums, PlayerWeapon(旧 Base/ を直下へ)。`Player/State/{Attack, Defence, Locomotion}`
+    - `Enemy/State/` EnemyStateBase。`Locomotion/`(Idle, Chase, Patrol, Caution, Back)、`Defence/`(Guard, GuardBreak, Parry)、
+      `Hit/`(AirFall, AirStay を追加)、`Attack/`(変更なし)。General/ は廃止
+  - `Render/` ModelShaderManager, EffectManager, BloodKillFog。`Render/Shader/`(旧 Shader/)
+  - Camera/, Stage/, UI/, Math/, DataLoader/ は変更なし。Managers/, Collider/, Shader/ は廃止
+- 追加のインクルードディレクトリは `$(ProjectDir)` にした(Player の各フォルダと Character は外した)。
+  **新しい include はプロジェクト基準で書く**(例 `#include "Main/System.h"`)。同じフォルダならファイル名だけ。
+- シェーダーは実行時に読むので、`ModelShaderManager.cpp` のパスを `Render/Shader/...` に変えた。
+- Debug/Release(x64) とも Rebuild が通ることを確認済み。ゲームの起動確認はまだ。
+
 ---
 
 ## TODO / 次にやること
+- [ ] フォルダ整理後にゲームを起動して確認(特にシェーダー読み込み = 血殺中に敵が黒くなるか)
 - [ ] 使われていない定数の掃除(EnemyAttackPre の kAttackPreBlendRate / kAttackPreTrackEndRate、EnemyParry の kAnimEndFrame / kAnimMoveEndFrame)
 - [ ] Unityの配置CSVに、1体ごとの上書き用の列(HP・視界など、空欄なら標準値)を必要になったら足す
 - [ ] 敵の攻撃データを各Stateで使う(AttackPre → Attack → AttackEnd → 攻撃距離 → 連撃の順)
@@ -246,7 +279,8 @@
 - [ ] PlayerAttackParried の残り(アニメ・必殺技/スキル中・空中で弾かれたとき)
 - [ ] ゲームで後隙の長さ(40F)と、最後の姿勢で止まる見た目を確認。止まって見えるなら専用のアニメ(構え直し)を検討
 - [ ] ゲームで確認: 敵が倒れるか(地上/叩きつけ/空中)、攻撃が背中側に当たらないか、アニメ速度(二重更新を直した影響)
-- [ ] 攻撃権マネージャーを作り、EnemyAttackPre の TODO 箇所で取得・返却する(取れない敵は周回/ガードで待機)
+- [ ] ゲームで攻撃権を確認(敵3〜4体で同時に予備動作に入るのが2体までか、30Fずれるか、中断・死亡で返るか)。デバッグ表示(HasToken / GetUsedCost)を足すと見やすい
+- [ ] 攻撃権の待機ステート(EnemyAttackWait)を検討(攻撃距離より外側で周回し、空いたらすぐ攻撃)
 - [ ] ゲームで予備動作の長さ・向き固定のタイミング(kAttackPreTrackEndRate)を確認。AttackPre2 も使うか検討
 - [ ] 実際のUIクラス(HPバーなど)を作って `InGameInit()` に登録する
 - [ ] ゲームを起動して血殺中に敵(本体・取れた腕/頭)が黒くなるか確認

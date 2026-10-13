@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../Collider/Collider.h"
+#include "Collision/Collider.h"
 
 /// <summary>
 /// ステージ制作モードで配置する、当たり判定のみのBOX

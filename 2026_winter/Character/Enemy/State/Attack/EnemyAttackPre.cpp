@@ -1,7 +1,7 @@
 ﻿#include "EnemyAttackPre.h"
 #include "../../EnemyBase.h"
-#include "Player.h"
-#include "../System.h"
+#include "Character/Player/Player.h"
+#include "Main/System.h"
 #include <format>
 
 namespace
@@ -43,8 +43,6 @@ void EnemyAttackPre::Enter()
 
 	//頭をプレイヤーの方に向ける
 	owner->m_isLookAtPlayer = true;
-
-	//TODO:攻撃権の取得(攻撃権マネージャーを作ったらここ or Chase側で取得する)
 }
 
 void EnemyAttackPre::Update()
@@ -86,8 +84,6 @@ void EnemyAttackPre::Exit()
 	if (!owner)return;
 	//頭の向きを正面に戻す
 	owner->m_isLookAtPlayer = false;
-
-	//TODO:Attackへ遷移しなかった(被弾などで中断された)ときは攻撃権を返す
 }
 
 void EnemyAttackPre::DebugDraw()

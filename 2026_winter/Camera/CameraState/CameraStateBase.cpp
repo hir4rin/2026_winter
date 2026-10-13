@@ -1,7 +1,7 @@
 ﻿#include "CameraStateBase.h"
 #include <algorithm>
 #include <cmath>
-#include "../System.h"
+#include "Main/System.h"
 
 namespace
 {

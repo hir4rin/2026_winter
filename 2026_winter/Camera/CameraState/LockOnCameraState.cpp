@@ -1,11 +1,11 @@
 ﻿#include "LockOnCameraState.h"
-#include "../System.h"
+#include "Main/System.h"
 #include "../CameraManager.h"
 #include "../LockOnManager.h"
 #include "PlayerFollowCamera.h"
 #include "../Character/Enemy/EnemyBase.h"
 //#include "../Character/Enemy/Boss/BossEnemy.h"
-#include "Player.h"
+#include "Character/Player/Player.h"
 //#include "../Stage/Stage.h"
 #include "../Math/Matrix4x4.h"
 #include <algorithm>

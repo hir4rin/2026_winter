@@ -1,5 +1,5 @@
 ﻿#include "FinishingFirstCamera.h"
-#include "../System.h"
+#include "Main/System.h"
 #include "FinishingSecondCamera.h"
 #include "../CameraManager.h"
 #include "PlayerFollowCamera.h"

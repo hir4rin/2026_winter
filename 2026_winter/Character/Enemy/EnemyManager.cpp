@@ -1,8 +1,11 @@
 ﻿#include "EnemyManager.h"
 #include "EnemyBase.h"
 #include "EnemySwordman.h"
-#include "Player.h"
-#include "../Input.h"
+#include "Character/Player/Player.h"
+#include "Main/Input.h"
+#include "Main/System.h"
+#include "Battle/BattleManager.h"
+#include "Battle/AttackTokenManager.h"
 #include <memory>
 #include <algorithm>
 #include <unordered_set>
@@ -105,6 +108,13 @@ void EnemyManager::DebugDraw()
 	for (auto& enemy : m_enemies)
 	{
 		enemy->DebugDraw();
+	}
+
+	//攻撃権の使用数と攻撃間隔
+	if (auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock())
+	{
+		DrawFormatString(10, 130, GetColor(255, 0, 255), "AttackToken:%d/%d Interval:%.0f",
+			tokenMgr->GetUsedCost(), tokenMgr->GetMaxCost(), (std::max)(tokenMgr->GetGlobalInterval(), 0.0f));
 	}
 }
 

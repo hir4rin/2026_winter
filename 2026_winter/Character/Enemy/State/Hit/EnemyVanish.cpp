@@ -1,6 +1,6 @@
 ﻿#include "EnemyVanish.h"
 #include "../../EnemyBase.h"
-#include "../System.h"
+#include "Main/System.h"
 #include <algorithm>
 
 namespace

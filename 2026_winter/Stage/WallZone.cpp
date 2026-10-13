@@ -1,6 +1,6 @@
 ﻿#include "WallZone.h"
-#include "../Collider/BoxShape.h"
-#include "../Collider/CapsuleShape.h"
+#include "Collision/BoxShape.h"
+#include "Collision/CapsuleShape.h"
 #include <algorithm>
 #include <cmath>
 

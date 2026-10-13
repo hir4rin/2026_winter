@@ -1,8 +1,8 @@
 ﻿#include "KessatsuUI.h"
 #include "DxLib.h"
-#include "../Game.h"
-#include "../System.h"
-#include "../BattleManager.h"
+#include "Main/Game.h"
+#include "Main/System.h"
+#include "Battle/BattleManager.h"
 #include "../Camera/CameraManager.h"
 #include "../Camera/CameraState/CameraStateBase.h"
 

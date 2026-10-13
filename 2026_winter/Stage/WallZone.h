@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../Collider/Collider.h"
+#include "Collision/Collider.h"
 #include "WallZoneData.h"
 
 /// <summary>
