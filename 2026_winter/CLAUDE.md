@@ -271,6 +271,9 @@
 ---
 
 ## TODO / 次にやること
+- [ ] **フェーズ進行の外部化**(遷移表CSV＋グループ指定＋EnterArea)。設計と手順は `../進捗/フェーズ進行_設計メモ.md`
+  - [ ] Step1 PhaseManagerへ移すだけ → [ ] Step2 遷移CSV(AllDead) → [ ] Step3 デバッグ表示
+  - [ ] Step4 グループ指定/Timer/KillCount → [ ] Step5 EnterArea → [ ] Step6 イベント・ボス(仮)
 - [ ] フォルダ整理後にゲームを起動して確認(特にシェーダー読み込み = 血殺中に敵が黒くなるか)
 - [ ] 使われていない定数の掃除(EnemyAttackPre の kAttackPreBlendRate / kAttackPreTrackEndRate、EnemyParry の kAnimEndFrame / kAnimMoveEndFrame)
 - [ ] Unityの配置CSVに、1体ごとの上書き用の列(HP・視界など、空欄なら標準値)を必要になったら足す
