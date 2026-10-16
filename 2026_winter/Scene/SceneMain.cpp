@@ -21,7 +21,7 @@
 #include "Main/Game.h"
 #include "Main/imguiApp.h"
 #include "Scene/PauseScene.h"
-#include "Stage/WallZoneEditor.h"
+#include "Stage/WallZone/WallZoneEditor.h"
 #include "UI/UIManager.h"
 #include "imgui.h"
 

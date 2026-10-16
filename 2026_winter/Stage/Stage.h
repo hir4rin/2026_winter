@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "Collision/Collider.h"
-#include "StageObject.h"
-#include "WallZone.h"
+#include "WallZone/WallZone.h"
 #include "Main/System.h"
 #include <memory>
 #include <vector>
@@ -21,12 +20,6 @@ public:
 	void OnCollision(Collider& other)override;
 	int GetStageModelHandle()const { return m_stageModelHandle;}
 	int GetStageViewHandle()const { return m_stageViewHandle; }//[BloodKillFog]
-
-	/// <summary>
-	/// ステージ制作モード(StageEditScene)で作ったCSVから、ステージ番号を指定してBOX配置を読み込む
-	/// ステージを増やす場合は、この関数を呼ぶstageNumberを変えるだけでよい
-	/// </summary>
-	void LoadStageObjects(int stageNumber);
 
 	//壁ゾーン(WallKickZone/WallRunZone)----------------------------------------------
 	/// <summary>指定したステージ番号の壁ゾーンCSVを読み込み、今あるゾーンと入れ替える</summary>
@@ -59,17 +52,11 @@ public:
 private:
 	void ApplyPos() override {};//座標の更新はしない
 
-	/// <summary>読み込み済みのBOXを全て破棄する(CollisionManagerからも解除する)</summary>
-	void ClearStageObjects();
-
 	Vector3 m_pos_graphic;
 
 	int m_stageModelHandle;
 	int m_stageViewHandle;
 
-
-	//CSVから読み込んだ、当たり判定のみのBOX配置(ステージ制作モードで作成したもの)
-	std::vector<std::shared_ptr<StageObject>> m_stageObjects;
 
 	/// <summary>読み込み済みの壁ゾーンを全て破棄する(CollisionManagerからも解除する)</summary>
 	void ClearWallZones();

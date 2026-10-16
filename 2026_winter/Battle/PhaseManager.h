@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <memory>
 #include <vector>
-#include "Stage/EnemySpawnData.h"
-#include "Stage/PhaseFlowData.h"
+#include "Stage/Phase/EnemySpawnData.h"
+#include "Stage/Phase/PhaseFlowData.h"
 
 class EnemyManager;
 

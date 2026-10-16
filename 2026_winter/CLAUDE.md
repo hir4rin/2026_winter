@@ -311,6 +311,16 @@
 - **まだどこからも呼んでいない**。次は SceneMain で読んで PhaseManager::Init に渡す(手順4〜)。
 - ここではビルドできないので、DxLib を仮の定義にして DataManager.cpp の文法だけ確認した。VS でのビルドはまだ。
 
+### 2026-10-16 Stage フォルダの整理・使っていない箱CSVの削除
+- 削除: `StageCsvIO.h/.cpp`、`StageObjectData.h`、`StageObject.h/.cpp`(どこからも使われていなかった BOX 配置CSV)。
+  `Stage` の `LoadStageObjects` / `ClearStageObjects` / `m_stageObjects`(と Draw・デストラクタの呼び出し)も外した。
+- 今の構成:
+  - `Stage/` Stage, StageInfo, SkyBox(SkyBox は今どこからも使われていない)
+  - `Stage/WallZone/` WallZone, WallZoneData, WallZoneEditor
+  - `Stage/Phase/` EnemySpawnData, PhaseFlowData, PhaseAreaData(CSV 1行分の構造体)。PhaseManager は `Battle/` のまま
+- 直した include はプロジェクト基準で書いた(例 `"Stage/Phase/EnemySpawnData.h"`、`"Math/Vector3.h"`)。vcxproj/filters のパスも変更。
+- ここではビルドできないので、include のパスが全部見つかることだけ確認した。**VS でのビルドはまだ**。
+
 ---
 
 ## TODO / 次にやること

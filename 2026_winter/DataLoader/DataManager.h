@@ -1,9 +1,9 @@
 ﻿#pragma once
 #include "AnimData.h"
-#include "../Stage/WallZoneData.h"
-#include "../Stage/EnemySpawnData.h"
-#include "../Stage/PhaseFlowData.h"
-#include "../Stage/PhaseAreaData.h"
+#include "Stage/WallZone/WallZoneData.h"
+#include "Stage/Phase/EnemySpawnData.h"
+#include "Stage/Phase/PhaseFlowData.h"
+#include "Stage/Phase/PhaseAreaData.h"
 #include <vector>
 #include <string>
 

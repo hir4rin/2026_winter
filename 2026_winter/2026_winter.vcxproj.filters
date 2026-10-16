@@ -90,16 +90,10 @@
     <ClCompile Include="Stage\Stage.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Stage\StageObject.cpp">
+    <ClCompile Include="Stage\WallZone\WallZone.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Stage\StageCsvIO.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Stage\WallZone.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Stage\WallZoneEditor.cpp">
+    <ClCompile Include="Stage\WallZone\WallZoneEditor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Render\BloodKillFog.cpp">
@@ -488,31 +482,22 @@
     <ClInclude Include="Stage\Stage.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Stage\StageObject.h">
+    <ClInclude Include="Stage\WallZone\WallZone.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Stage\StageObjectData.h">
+    <ClInclude Include="Stage\WallZone\WallZoneData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Stage\StageCsvIO.h">
+    <ClInclude Include="Stage\Phase\EnemySpawnData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Stage\WallZone.h">
+    <ClInclude Include="Stage\Phase\PhaseFlowData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Stage\WallZoneData.h">
+    <ClInclude Include="Stage\Phase\PhaseAreaData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Stage\EnemySpawnData.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Stage\PhaseFlowData.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Stage\PhaseAreaData.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Stage\WallZoneEditor.h">
+    <ClInclude Include="Stage\WallZone\WallZoneEditor.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Render\BloodKillFog.h">

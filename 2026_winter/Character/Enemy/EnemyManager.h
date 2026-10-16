@@ -2,7 +2,7 @@
 #include <memory>
 #include <vector>
 #include <deque>
-#include "../../Stage/EnemySpawnData.h"
+#include "Stage/Phase/EnemySpawnData.h"
 
 class EnemyBase;
 class Player;

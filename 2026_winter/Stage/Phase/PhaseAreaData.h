@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../Math/Vector3.h"
+#include "Math/Vector3.h"
 #include <string>
 
 //フェーズ進行用のエリア(箱)1つ分

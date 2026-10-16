@@ -1,6 +1,6 @@
 ﻿#include "WallZoneEditor.h"
-#include "Stage.h"
-#include "../DataLoader/DataManager.h"
+#include "Stage/Stage.h"
+#include "DataLoader/DataManager.h"
 #include "imgui.h"
 #include <algorithm>
 #include <cmath>
