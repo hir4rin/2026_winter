@@ -401,6 +401,7 @@
     <ClInclude Include="Stage\WallZoneData.h" />
     <ClInclude Include="Stage\EnemySpawnData.h" />
     <ClInclude Include="Stage\PhaseFlowData.h" />
+    <ClInclude Include="Stage\PhaseAreaData.h" />
     <ClInclude Include="Stage\StageInfo.h" />
     <ClInclude Include="Stage\WallZoneEditor.h" />
     <ClInclude Include="Stage\StageObject.h" />

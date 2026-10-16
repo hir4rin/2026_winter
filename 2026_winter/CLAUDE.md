@@ -302,7 +302,14 @@
   - `Area_Test`(0,0,4000 / 500,300,300): 確認用。フェーズ1の敵の近く(床 y=0 あたり)。
   - `Area_H0` / `Area_Boss`: 設計メモの例の値そのまま。実際の地形に合わせて直す。
 - position は箱の中心。足元の高さが 中心±halfExtentY に入らないと判定されない。
-- 読み込み(Step5の3)は try を使わない形で書く予定(数値でないセルがあると std::stof の例外で止まる)。
+
+### 2026-10-16 フェーズ進行 Step5 の3(エリアCSVの読み込み)
+- `Stage/PhaseAreaData.h`: `PhaseArea`(name / position / halfExtents / rotYDeg)。vcxproj/filters に登録。
+- `DataManager::LoadPhaseAreas(stageNumber)` / `GetPhaseAreas()` / `GetPhaseAreaFilePath()`。列番号は `PhaseAreaColumn`(無名namespace)。
+  - **try を使わない形**。数値の欄が空欄・文字だと `std::stof` の例外で止まる(どの行かは出ない)。列不足の行は飛ばす。
+  - 敵配置の `EnemySpawnColumn::RotYDeg` と名前がぶつかるので、列名は `AreaName` / `AreaPosX` … `AreaRotYDeg` にした。
+- **まだどこからも呼んでいない**。次は SceneMain で読んで PhaseManager::Init に渡す(手順4〜)。
+- ここではビルドできないので、DxLib を仮の定義にして DataManager.cpp の文法だけ確認した。VS でのビルドはまだ。
 
 ---
 

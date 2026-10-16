@@ -509,6 +509,9 @@
     <ClInclude Include="Stage\PhaseFlowData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Stage\PhaseAreaData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Stage\WallZoneEditor.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
