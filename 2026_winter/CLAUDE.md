@@ -297,6 +297,13 @@
 - `PhaseManager::DebugDraw()`: (10,150) に `Phase / Frame / Kill`。`SceneMain::NormalDraw` の `#ifdef _DEBUG` で EnemyManager の DebugDraw の次に呼ぶ。
 - ビルドは通った。**ゲームでの確認(Step2・3とも)はまだ**。
 
+### 2026-10-16 フェーズ進行 Step5 の2(エリアCSV)
+- `data/Stage/PhaseAreas/Stage003.csv` を追加。列は `#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg`(壁ゾーンから type/isActive を抜いた形)。
+  - `Area_Test`(0,0,4000 / 500,300,300): 確認用。フェーズ1の敵の近く(床 y=0 あたり)。
+  - `Area_H0` / `Area_Boss`: 設計メモの例の値そのまま。実際の地形に合わせて直す。
+- position は箱の中心。足元の高さが 中心±halfExtentY に入らないと判定されない。
+- 読み込み(Step5の3)は try を使わない形で書く予定(数値でないセルがあると std::stof の例外で止まる)。
+
 ---
 
 ## TODO / 次にやること
