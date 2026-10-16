@@ -33,7 +33,7 @@ struct EnemySpawnRoutePoint
 
 /// <summary>
 /// 敵1体分の配置データ
-/// UnityのEnemySpawnExporterで書き出したCSV(data/Stage/Enemies/Stage003.csvなど)の1行に対応する
+/// UnityのEnemySpawnExporterで書き出したCSV(data/Stage/Enemies/Enemies003.csvなど)の1行に対応する
 /// </summary>
 struct EnemySpawnData
 {

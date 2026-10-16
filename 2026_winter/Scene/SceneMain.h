@@ -9,6 +9,7 @@ class Player;
 class EnemySwordman;
 class CameraManager;
 class EnemyManager;
+class PhaseManager;
 class BattleManager;
 class Camera;
 class Stage;
@@ -52,6 +53,7 @@ private:
 
 	std::shared_ptr<Player> m_player;
 	std::shared_ptr<EnemyManager> m_enemyManager;
+	std::shared_ptr<PhaseManager> m_phaseManager;//フェーズ進行
 	std::shared_ptr<CameraManager> m_cameraManager;
 	std::shared_ptr<BattleManager> m_battleManager;
 	std::unique_ptr<Camera> m_camera;//Player::Updateに渡すだけ(実際のカメラはCameraManagerが制御する)

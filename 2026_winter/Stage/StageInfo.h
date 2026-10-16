@@ -22,7 +22,7 @@ struct StageInfo
 	const char* description;//ステージセレクトに出す説明
 	AsyncData model;//ステージのモデル(System::LoadAllで読み込んだもの)
 	int wallZoneNumber;//壁ゾーンのCSV番号(data/Stage/WallZones/Stage001.csv など)
-	int enemySpawnNumber;//敵配置のCSV番号(data/Stage/Enemies/Stage003.csv など)//ファイルが無ければ今まで通りテスト用の敵を1体出す
+	int enemySpawnNumber;//敵配置のCSV番号(data/Stage/Enemies/Enemies003.csv など)//ファイルが無ければ今まで通りテスト用の敵を1体出す
 };
 
 namespace StageData

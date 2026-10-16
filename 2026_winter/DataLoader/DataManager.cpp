@@ -28,7 +28,8 @@ namespace
     constexpr int kWallZoneColumnNum = 10;//壁ゾーンCSVの1行の列数
 
     //敵の配置
-    const std::string kEnemySpawnDirectory = "data/Stage/Enemies/";//後ろに"Stage003.csv"のようにステージ番号をつける
+    const std::string kEnemySpawnDirectory = "data/Stage/Enemies/";//後ろに"Enemies003.csv"のようにステージ番号をつける
+    const std::string kEnemySpawnFilePrefix = "Enemies";
     //敵配置CSVの列番号
     //#type,posX,posY,posZ,rotYDeg,phase,initialState,groupId,route
     enum EnemySpawnColumn : int
@@ -48,6 +49,20 @@ namespace
     constexpr char kRoutePointSeparator = '|';//巡回ポイント同士の区切り
     constexpr char kRouteValueSeparator = ':';//巡回ポイントの中の値(x,y,z,wait)の区切り
     constexpr int kRouteValueNum = 4;//巡回ポイント1つの値の数(x,y,z,wait)
+
+    //フェーズの遷移表
+    const std::string kPhaseFlowDirectory = "data/Stage/PhaseFlow/";//後ろに"PhaseStage003.csv"
+    const std::string kPhaseFlowFilePrefix = "PhaseStage";
+    //#from,condition,param,to,event
+    enum PhaseFlowColumn : int
+    {
+        From = 0,
+        Condition,
+        Param,
+        To,
+        Event,//空ならNone
+    };
+    constexpr int kPhaseFlowMinColumnNum = PhaseFlowColumn::Event;//event列は省略可
 }
 
 void DataManager::LoadAll()
@@ -289,7 +304,7 @@ bool DataManager::SaveWallZoneData(int stageNumber, const std::vector<WallZoneDa
 std::string DataManager::GetEnemySpawnFilePath(int stageNumber)
 {
     std::ostringstream oss;
-    oss << kEnemySpawnDirectory << "Stage" << std::setw(3) << std::setfill('0') << stageNumber << ".csv";
+    oss << kEnemySpawnDirectory << kEnemySpawnFilePrefix << std::setw(3) << std::setfill('0') << stageNumber << ".csv";
     return oss.str();
 }
 
@@ -333,6 +348,57 @@ void DataManager::LoadEnemySpawnData(int stageNumber)
     }
 }
 
+std::string DataManager::GetPhaseFlowFilePath(int stageNumber)
+{
+    std::ostringstream oss;
+    oss << kPhaseFlowDirectory << kPhaseFlowFilePrefix << std::setw(3) << std::setfill('0') << stageNumber << ".csv";
+    return oss.str();
+}
+
+void DataManager::LoadPhaseFlow(int stageNumber)
+{
+    m_phaseFlow.clear();
+
+    std::ifstream file(GetPhaseFlowFilePath(stageNumber));
+    if (!file.is_open()) return;
+
+    std::string line;
+    while (std::getline(file, line))//1行ずつ読む
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();//改行コードの\rを消す
+        if (line.empty() || line[0] == '#') continue;//空行・コメントは飛ばす
+
+        auto tokens = Split(line, ',');//カンマで分ける
+        if (tokens.size() < kPhaseFlowMinColumnNum) continue;//列不足は飛ばす
+
+        PhaseTransition t;
+        //コンディションを登録
+        if (!StringToPhaseCondition(tokens[PhaseFlowColumn::Condition], t.condition)) continue;//知らない条件は飛ばす
+        if (tokens.size() > PhaseFlowColumn::Event && !tokens[PhaseFlowColumn::Event].empty())//event列があれば
+        {
+            if (!StringToPhaseEvent(tokens[PhaseFlowColumn::Event], t.event)) continue;//知らないイベントは飛ばす
+        }
+        t.param = tokens[PhaseFlowColumn::Param];//条件の値
+        //try catchは失敗するかもしれない処理を試して、失敗したら別の処理をする
+        try
+        {
+            t.from = std::stoi(tokens[PhaseFlowColumn::From]);//元のフェーズ
+            t.to = std::stoi(tokens[PhaseFlowColumn::To]);//次のフェーズ
+            //Timer//KillCountは数字をもつ
+            if (t.condition == PhaseConditionType::Timer || t.condition == PhaseConditionType::KillCount)
+            {
+                t.intParam = std::stoi(t.param);
+            }
+
+        }
+        catch (...)
+        {
+            continue;//数字でなければ飛ばす
+        }
+        m_phaseFlow.push_back(t);//1行分を追加
+    }
+}
+
 const char* DataManager::WallZoneTypeToString(Collider::ColRole type)
 {
     switch (type)
@@ -361,6 +427,24 @@ bool DataManager::StringToEnemyInitialState(const std::string& str, EnemyInitial
     if (str == "Idle") { outState = EnemyInitialState::Idle; return true; }
     if (str == "Patrol") { outState = EnemyInitialState::Patrol; return true; }
     if (str == "Guard") { outState = EnemyInitialState::Guard; return true; }
+    return false;
+}
+
+bool DataManager::StringToPhaseCondition(const std::string& str, PhaseConditionType& outCondition)
+{
+    if (str == "Start") { outCondition = PhaseConditionType::Start; return true; }
+    if (str == "AllDead") { outCondition = PhaseConditionType::AllDead; return true; }
+    if (str == "KillCount") { outCondition = PhaseConditionType::KillCount; return true; }
+    if (str == "Timer") { outCondition = PhaseConditionType::Timer; return true; }
+    if (str == "EnterArea") { outCondition = PhaseConditionType::EnterArea; return true; }
+    return false;
+}
+
+bool DataManager::StringToPhaseEvent(const std::string& str, PhaseEvent& outEvent)
+{
+    if (str == "None") { outEvent = PhaseEvent::None; return true; }
+    if (str == "BossAppear") { outEvent = PhaseEvent::BossAppear; return true; }
+    if (str == "GameClear") { outEvent = PhaseEvent::GameClear; return true; }
     return false;
 }
 

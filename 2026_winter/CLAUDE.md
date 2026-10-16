@@ -268,11 +268,40 @@
 - シェーダーは実行時に読むので、`ModelShaderManager.cpp` のパスを `Render/Shader/...` に変えた。
 - Debug/Release(x64) とも Rebuild が通ることを確認済み。ゲームの起動確認はまだ。
 
+### 2026-10-16 フェーズ進行 Step1(PhaseManagerへ移すだけ)
+- `Battle/PhaseManager.h/.cpp` を追加し、vcxproj/filters に登録。`SceneMain` が `shared_ptr` で持つ(EnemyManager は weak_ptr で参照)。
+  - `Init(enemyManager, spawnData)`: 配置データのフェーズ番号を集め(`m_phaseList`、小さい順・重複なし)、EnemyManager に `SetSpawnData` して最初のフェーズを始める。
+  - `Update()`: `SceneMain::NormalUpdate` の `m_enemyManager->Update()` の直後で呼ぶ。全滅していたら `ChangePhase(FindNextPhase())`。
+  - `m_currentPhase`: 0=始まっていない、-1=全フェーズ終わった。
+- EnemyManager に残したもの: `SetSpawnData` / `StartPhase(phase)`(public にした) / `IsPhaseEnemiesAllDead()`。
+  `StartSpawn` / `UpdatePhase` / `FindNextPhase` / `m_currentPhase` / `GetCurrentPhase` は削除。
+- Debug(x64) のビルドは通った。**ゲームでの確認はまだ**(全滅で次の敵が出るか)。
+- 新しいファイルは **UTF-8(BOM付き)・CRLF** で保存すること(他のファイルに合わせる)。
+
+### 2026-10-16 フェーズ進行 Step2 の1〜3(遷移表の読み込みまで)
+- `Stage/PhaseFlowData.h`: `PhaseConditionType` / `PhaseEvent` / `PhaseTransition`(1行分)。vcxproj/filters に登録。
+- `DataManager::LoadPhaseFlow(stageNumber)` / `GetPhaseFlow()` / `GetPhaseFlowFilePath()`、`StringToPhaseCondition` / `StringToPhaseEvent`。
+  - パスは `data/Stage/PhaseFlow/PhaseStage003.csv`。event列は省略可(None)。知らない condition/event の行は飛ばす。
+  - Timer/KillCount の `intParam`、EnterArea の `areaIndex` はまだ読んでいない(Step4/5)。
+- `data/Stage/PhaseFlow/PhaseStage003.csv` に今と同じ流れ(0→1→…→6→-1、全部 AllDead)を書いた。
+- Step2の4(Initまで): `SceneMain::Init` で `LoadPhaseFlow` して `PhaseManager::Init(enemyMgr, spawnData, flow)` に渡す。
+  - 遷移表が空・Start の行が無いときは assert。`from=0, condition=Start` の行で `ChangePhase(to, event)`。
+  - `m_phaseList` / `FindNextPhase` は削除。`ChangePhase` に event 引数を追加(処理はまだ)。
+  - Update / IsConditionFulfilled / ChangePhase はユーザーが書いた(Start と AllDead(param空)のみ対応)。
+    ChangePhase は to=-1 でも event を処理する(敵を出すのは next>0 のときだけ)。
+
+### 2026-10-16 フェーズ進行 Step3(デバッグ表示)
+- `EnemyManager::m_totalKillCount`: `UpdateCorpses` で新しく死んだ敵を死体リストに入れるときに+1。`GetTotalKillCount()`。
+- PhaseManager: `m_phaseFrame`(実フレーム、Updateで+1)、`m_killCountAtPhaseStart`(ChangePhaseで記録)、
+  `GetPhaseKillCount()` = 合計 − フェーズ開始時。前のフェーズの生き残りを倒した分も数える。
+- `PhaseManager::DebugDraw()`: (10,150) に `Phase / Frame / Kill`。`SceneMain::NormalDraw` の `#ifdef _DEBUG` で EnemyManager の DebugDraw の次に呼ぶ。
+- ビルドは通った。**ゲームでの確認(Step2・3とも)はまだ**。
+
 ---
 
 ## TODO / 次にやること
 - [ ] **フェーズ進行の外部化**(遷移表CSV＋グループ指定＋EnterArea)。設計と手順は `../進捗/フェーズ進行_設計メモ.md`
-  - [ ] Step1 PhaseManagerへ移すだけ → [ ] Step2 遷移CSV(AllDead) → [ ] Step3 デバッグ表示
+  - [x] Step1 PhaseManagerへ移すだけ(ゲームでの確認はまだ) → [x] Step2 遷移CSV(AllDead) → [x] Step3 デバッグ表示(どちらもゲームでの確認はまだ)
   - [ ] Step4 グループ指定/Timer/KillCount → [ ] Step5 EnterArea → [ ] Step6 イベント・ボス(仮)
 - [ ] フォルダ整理後にゲームを起動して確認(特にシェーダー読み込み = 血殺中に敵が黒くなるか)
 - [ ] 使われていない定数の掃除(EnemyAttackPre の kAttackPreBlendRate / kAttackPreTrackEndRate、EnemyParry の kAnimEndFrame / kAnimMoveEndFrame)

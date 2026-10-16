@@ -61,8 +61,6 @@ void EnemyManager::Update()
 	}
 	//グループの敵がプレイヤーを見つけたら、同じグループの敵も気づく
 	UpdateGroupAlert();
-	//フェーズの更新//今のフェーズの敵が全員倒されたら、次のフェーズを始める
-	UpdatePhase();
 
 	//死体の数を制限する//m_enemiesを回している途中に消すと壊れるので、Updateの後に行う
 	UpdateCorpses();
@@ -78,6 +76,7 @@ void EnemyManager::UpdateCorpses()
 		//すでに登録済みなら追加しない
 		if (std::find(m_corpses.begin(), m_corpses.end(), enemy) != m_corpses.end())continue;
 		m_corpses.push_back(enemy);
+		m_totalKillCount++;
 	}
 
 	//上限を超えたら、一番古い死体から消え始めさせる//消えている途中の死体は数に入れない
@@ -128,20 +127,8 @@ void EnemyManager::SpawnEnemy()
 	m_enemies.push_back(enemy);
 }
 
-void EnemyManager::StartSpawn(const std::vector<EnemySpawnData>& spawnData)
-{
-	m_spawnData = spawnData;
-	m_currentPhase = 0;
-	m_phaseEnemies.clear();
-
-	int firstPhase = FindNextPhase();
-	if (firstPhase < 0)return;//配置データが無い
-	StartPhase(firstPhase);
-}
-
 void EnemyManager::StartPhase(int phase)
 {
-	m_currentPhase = phase;
 	m_phaseEnemies.clear();
 
 	for (const auto& data : m_spawnData)
@@ -154,36 +141,15 @@ void EnemyManager::StartPhase(int phase)
 	}
 }
 
-void EnemyManager::UpdatePhase()
+bool EnemyManager::IsPhaseEnemiesAllDead() const
 {
-	if (m_currentPhase <= 0)return;//配置データで始めていない
-
-	//今のフェーズの敵が1体でも生きていたら、まだ次へ進まない
+	//消えた敵は倒されたものとして扱う
 	for (const auto& weakEnemy : m_phaseEnemies)
 	{
 		auto enemy = weakEnemy.lock();
-		if (enemy && !enemy->GetIsLifeZero())return;
+		if (enemy && !enemy->GetIsLifeZero())return false;
 	}
-
-	int nextPhase = FindNextPhase();
-	if (nextPhase < 0)
-	{
-		//最後のフェーズを倒しきった//何度もここを通らないように、敵のリストだけ空にしておく
-		m_phaseEnemies.clear();
-		return;
-	}
-	StartPhase(nextPhase);
-}
-
-int EnemyManager::FindNextPhase() const
-{
-	int next = -1;
-	for (const auto& data : m_spawnData)
-	{
-		if (data.phase <= m_currentPhase)continue;
-		if (next < 0 || data.phase < next) next = data.phase;
-	}
-	return next;
+	return true;
 }
 
 std::shared_ptr<EnemyBase> EnemyManager::CreateEnemy(const EnemySpawnData& data)
@@ -241,4 +207,14 @@ void EnemyManager::UpdateGroupAlert()
 		if (!alertedGroups.contains(enemy->GetGroupId()))continue;
 		enemy->OnAlerted();
 	}
+}
+
+bool EnemyManager::IsGroupAllDead(const std::string& groupId) const
+{
+	for (const auto& enemy : m_enemies)
+	{
+		if (enemy->GetGroupId() != groupId)continue;
+		if (!enemy->GetIsLifeZero())return false;
+	}
+	return true;
 }

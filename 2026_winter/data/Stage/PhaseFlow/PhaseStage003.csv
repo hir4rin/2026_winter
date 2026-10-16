@@ -1,0 +1,8 @@
+#from,condition,param,to,event
+0,Start,,1,None
+1,AllDead,,2,None
+2,AllDead,,3,None
+3,AllDead,,4,None
+4,AllDead,,5,None
+5,AllDead,,6,None
+6,AllDead,,-1,None

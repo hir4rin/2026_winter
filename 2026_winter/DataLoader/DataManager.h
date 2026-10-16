@@ -2,6 +2,7 @@
 #include "AnimData.h"
 #include "../Stage/WallZoneData.h"
 #include "../Stage/EnemySpawnData.h"
+#include "../Stage/PhaseFlowData.h"
 #include <vector>
 #include <string>
 
@@ -62,7 +63,7 @@ public:
 
 	//敵の配置(UnityのEnemySpawnExporterで書き出したもの)--------------------------
 	/// <summary>
-	/// 指定したステージ番号の敵配置CSV(data/Stage/Enemies/Stage003.csvなど)を読み込む
+	/// 指定したステージ番号の敵配置CSV(data/Stage/Enemies/Enemies003.csvなど)を読み込む
 	/// ファイルが無ければ空のデータになる
 	/// </summary>
 	void LoadEnemySpawnData(int stageNumber);
@@ -70,6 +71,12 @@ public:
 	const std::vector<EnemySpawnData>& GetEnemySpawnData() const { return m_enemySpawnData; }
 	/// <summary>ステージ番号から敵配置CSVのファイルパスを組み立てる</summary>
 	static std::string GetEnemySpawnFilePath(int stageNumber);
+	//---------------------------------------------------------------------------
+
+	//フェーズの遷移表-----------------------------------------------------------
+	void LoadPhaseFlow(int stageNumber);//無ければ空
+	const std::vector<PhaseTransition>& GetPhaseFlow() const { return m_phaseFlow; }
+	static std::string GetPhaseFlowFilePath(int stageNumber);
 	//---------------------------------------------------------------------------
 private:
 	//シングルトンパターンの実装
@@ -97,6 +104,9 @@ private:
 	//敵配置CSVの文字列とenumの変換
 	static bool StringToEnemyType(const std::string& str, EnemyType& outType);
 	static bool StringToEnemyInitialState(const std::string& str, EnemyInitialState& outState);
+	//遷移表CSVの文字列とenumの変換
+	static bool StringToPhaseCondition(const std::string& str, PhaseConditionType& outCondition);
+	static bool StringToPhaseEvent(const std::string& str, PhaseEvent& outEvent);
 	/// <summary>strをseparatorで分割する(空の要素も残す)</summary>
 	static std::vector<std::string> Split(const std::string& str, char separator);
 	/// <summary>
@@ -119,6 +129,7 @@ private:
 	std::vector<std::vector<std::vector<std::string>>> m_patrolRouteRawData;//巡回ルートの生データ//[ルート番号][行][列]
 	std::vector<WallZoneData> m_wallZoneData;//壁ゾーンのデータ(最後にLoad/Saveしたステージのもの)
 	std::vector<EnemySpawnData> m_enemySpawnData;//敵配置のデータ(最後にLoadしたステージのもの)
+	std::vector<PhaseTransition> m_phaseFlow;//遷移表
 
 };
 

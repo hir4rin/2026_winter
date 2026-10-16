@@ -17,6 +17,7 @@
 #include "Main/Input.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
+#include "Battle/PhaseManager.h"
 #include "Main/Game.h"
 #include "Main/imguiApp.h"
 #include "Scene/PauseScene.h"
@@ -137,9 +138,11 @@ void SceneMain::Init()
 	//Unityで書き出した敵配置CSVを読み込んで、最初のフェーズの敵を出す
 	DataManager::GetInstance().LoadEnemySpawnData(stageInfo.enemySpawnNumber);
 	const auto& spawnData = DataManager::GetInstance().GetEnemySpawnData();
+	m_phaseManager = std::make_shared<PhaseManager>();
 	if (!spawnData.empty())
 	{
-		m_enemyManager->StartSpawn(spawnData);
+		DataManager::GetInstance().LoadPhaseFlow(stageInfo.enemySpawnNumber);
+		m_phaseManager->Init(m_enemyManager, spawnData, DataManager::GetInstance().GetPhaseFlow());
 	}
 	else
 	{
@@ -253,6 +256,7 @@ void SceneMain::NormalUpdate()
 
 	m_player->Update(*m_camera);
 	m_enemyManager->Update();
+	m_phaseManager->Update();
 	m_stage->Update();
 	CollisionManager::GetInstance().Update();
 	System::GetInstance().Update();
@@ -342,6 +346,7 @@ void SceneMain::NormalDraw()
 	CollisionManager::GetInstance().DebugDraw();
 	//敵のデバッグ表示(頭の上の文字)//2Dの文字は後から描く3Dに上書きされるので、UIの後に描く
 	m_enemyManager->DebugDraw();
+	m_phaseManager->DebugDraw();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
 #endif
 
