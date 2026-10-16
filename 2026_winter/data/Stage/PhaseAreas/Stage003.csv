@@ -1,0 +1,4 @@
+#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg
+Area_Test,0,0,4000,500,300,300,0
+Area_H0,0,-200,14000,1500,500,300,0
+Area_Boss,0,-200,27000,2000,800,400,0

@@ -1,8 +1,9 @@
 ﻿#pragma once
 #include "AnimData.h"
-#include "../Stage/WallZoneData.h"
-#include "../Stage/EnemySpawnData.h"
-#include "../Stage/PhaseFlowData.h"
+#include "Stage/WallZone/WallZoneData.h"
+#include "Stage/Phase/EnemySpawnData.h"
+#include "Stage/Phase/PhaseFlowData.h"
+#include "Stage/Phase/PhaseAreaData.h"
 #include <vector>
 #include <string>
 
@@ -78,6 +79,12 @@ public:
 	const std::vector<PhaseTransition>& GetPhaseFlow() const { return m_phaseFlow; }
 	static std::string GetPhaseFlowFilePath(int stageNumber);
 	//---------------------------------------------------------------------------
+
+	//フェーズ進行のエリア-------------------------------------------------------
+	void LoadPhaseAreas(int stageNumber);//無ければ空
+	const std::vector<PhaseArea>& GetPhaseAreas() const { return m_phaseAreas; }
+	static std::string GetPhaseAreaFilePath(int stageNumber);
+	//---------------------------------------------------------------------------
 private:
 	//シングルトンパターンの実装
 	DataManager() = default;
@@ -130,6 +137,7 @@ private:
 	std::vector<WallZoneData> m_wallZoneData;//壁ゾーンのデータ(最後にLoad/Saveしたステージのもの)
 	std::vector<EnemySpawnData> m_enemySpawnData;//敵配置のデータ(最後にLoadしたステージのもの)
 	std::vector<PhaseTransition> m_phaseFlow;//遷移表
+	std::vector<PhaseArea> m_phaseAreas;//フェーズ進行のエリア
 
 };
 

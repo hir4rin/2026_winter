@@ -63,6 +63,22 @@ namespace
         Event,//空ならNone
     };
     constexpr int kPhaseFlowMinColumnNum = PhaseFlowColumn::Event;//event列は省略可
+
+    //フェーズ進行のエリア
+    const std::string kPhaseAreaDirectory = "data/Stage/PhaseAreas/";//後ろに"Stage003.csv"
+    //#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg
+    enum PhaseAreaColumn : int
+    {
+        AreaName = 0,
+        AreaPosX,
+        AreaPosY,
+        AreaPosZ,
+        AreaHalfExtentX,
+        AreaHalfExtentY,
+        AreaHalfExtentZ,
+        AreaRotYDeg,
+        PhaseAreaColumnNum,//列数
+    };
 }
 
 void DataManager::LoadAll()
@@ -396,6 +412,41 @@ void DataManager::LoadPhaseFlow(int stageNumber)
             continue;//数字でなければ飛ばす
         }
         m_phaseFlow.push_back(t);//1行分を追加
+    }
+}
+
+std::string DataManager::GetPhaseAreaFilePath(int stageNumber)
+{
+    std::ostringstream oss;
+    oss << kPhaseAreaDirectory << "Stage" << std::setw(3) << std::setfill('0') << stageNumber << ".csv";
+    return oss.str();
+}
+
+void DataManager::LoadPhaseAreas(int stageNumber)
+{
+    m_phaseAreas.clear();
+
+    std::ifstream file(GetPhaseAreaFilePath(stageNumber));
+    if (!file.is_open()) return;//無ければエリア無し
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();//改行コードの\rを消す
+        if (line.empty() || line[0] == '#') continue;//空行・コメントは飛ばす
+
+        auto tokens = Split(line, ',');
+        if (tokens.size() < PhaseAreaColumn::PhaseAreaColumnNum) continue;//列不足は飛ばす
+
+        //数値の欄が空欄・文字だとstd::stofの例外で止まる
+        PhaseArea area;
+        area.name = tokens[PhaseAreaColumn::AreaName];
+        area.position = Vector3(std::stof(tokens[PhaseAreaColumn::AreaPosX]),
+            std::stof(tokens[PhaseAreaColumn::AreaPosY]), std::stof(tokens[PhaseAreaColumn::AreaPosZ]));
+        area.halfExtents = Vector3(std::stof(tokens[PhaseAreaColumn::AreaHalfExtentX]),
+            std::stof(tokens[PhaseAreaColumn::AreaHalfExtentY]), std::stof(tokens[PhaseAreaColumn::AreaHalfExtentZ]));
+        area.rotYDeg = std::stof(tokens[PhaseAreaColumn::AreaRotYDeg]);
+        m_phaseAreas.push_back(area);
     }
 }
 

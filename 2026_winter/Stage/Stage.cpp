@@ -1,5 +1,4 @@
 ﻿#include "Stage.h"
-#include "StageCsvIO.h"
 #include "../DataLoader/DataManager.h"
 #include "../Math/Matrix4x4.h"
 #include "Main/System.h"
@@ -88,7 +87,6 @@ Stage::~Stage()
 {
 	MV1DeleteModel(m_stageModelHandle);
 	MV1DeleteModel(m_stageViewHandle);
-	ClearStageObjects();
 	ClearWallZones();
 }
 
@@ -102,40 +100,11 @@ void Stage::Draw() const
 {
 	//MV1DrawModel(m_stageModelHandle);
 	MV1DrawModel(m_stageViewHandle);
-
-	for (const auto& object : m_stageObjects)
-	{
-		object->Draw();
-	}
 }
 
 void Stage::OnCollision(Collider& other)
 {
 	//何もしない
-}
-
-void Stage::LoadStageObjects(int stageNumber)
-{
-	ClearStageObjects();
-
-	const std::vector<StageObjectData> objects = StageCsvIO::Load(stageNumber);
-	m_stageObjects.reserve(objects.size());
-
-	for (const auto& data : objects)
-	{
-		auto object = std::make_shared<StageObject>();
-		object->Init(data.position, data.halfExtents);
-		m_stageObjects.push_back(object);
-	}
-}
-
-void Stage::ClearStageObjects()
-{
-	for (auto& object : m_stageObjects)
-	{
-		CollisionManager::GetInstance().ReleaseCollider(object);
-	}
-	m_stageObjects.clear();
 }
 
 void Stage::LoadWallZones(int stageNumber)

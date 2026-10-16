@@ -297,6 +297,30 @@
 - `PhaseManager::DebugDraw()`: (10,150) に `Phase / Frame / Kill`。`SceneMain::NormalDraw` の `#ifdef _DEBUG` で EnemyManager の DebugDraw の次に呼ぶ。
 - ビルドは通った。**ゲームでの確認(Step2・3とも)はまだ**。
 
+### 2026-10-16 フェーズ進行 Step5 の2(エリアCSV)
+- `data/Stage/PhaseAreas/Stage003.csv` を追加。列は `#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg`(壁ゾーンから type/isActive を抜いた形)。
+  - `Area_Test`(0,0,4000 / 500,300,300): 確認用。フェーズ1の敵の近く(床 y=0 あたり)。
+  - `Area_H0` / `Area_Boss`: 設計メモの例の値そのまま。実際の地形に合わせて直す。
+- position は箱の中心。足元の高さが 中心±halfExtentY に入らないと判定されない。
+
+### 2026-10-16 フェーズ進行 Step5 の3(エリアCSVの読み込み)
+- `Stage/PhaseAreaData.h`: `PhaseArea`(name / position / halfExtents / rotYDeg)。vcxproj/filters に登録。
+- `DataManager::LoadPhaseAreas(stageNumber)` / `GetPhaseAreas()` / `GetPhaseAreaFilePath()`。列番号は `PhaseAreaColumn`(無名namespace)。
+  - **try を使わない形**。数値の欄が空欄・文字だと `std::stof` の例外で止まる(どの行かは出ない)。列不足の行は飛ばす。
+  - 敵配置の `EnemySpawnColumn::RotYDeg` と名前がぶつかるので、列名は `AreaName` / `AreaPosX` … `AreaRotYDeg` にした。
+- **まだどこからも呼んでいない**。次は SceneMain で読んで PhaseManager::Init に渡す(手順4〜)。
+- ここではビルドできないので、DxLib を仮の定義にして DataManager.cpp の文法だけ確認した。VS でのビルドはまだ。
+
+### 2026-10-16 Stage フォルダの整理・使っていない箱CSVの削除
+- 削除: `StageCsvIO.h/.cpp`、`StageObjectData.h`、`StageObject.h/.cpp`(どこからも使われていなかった BOX 配置CSV)。
+  `Stage` の `LoadStageObjects` / `ClearStageObjects` / `m_stageObjects`(と Draw・デストラクタの呼び出し)も外した。
+- 今の構成:
+  - `Stage/` Stage, StageInfo, SkyBox(SkyBox は今どこからも使われていない)
+  - `Stage/WallZone/` WallZone, WallZoneData, WallZoneEditor
+  - `Stage/Phase/` EnemySpawnData, PhaseFlowData, PhaseAreaData(CSV 1行分の構造体)。PhaseManager は `Battle/` のまま
+- 直した include はプロジェクト基準で書いた(例 `"Stage/Phase/EnemySpawnData.h"`、`"Math/Vector3.h"`)。vcxproj/filters のパスも変更。
+- ここではビルドできないので、include のパスが全部見つかることだけ確認した。**VS でのビルドはまだ**。
+
 ---
 
 ## TODO / 次にやること

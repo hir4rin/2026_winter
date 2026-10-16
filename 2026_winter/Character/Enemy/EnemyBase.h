@@ -23,7 +23,7 @@
 #include "State/Hit/EnemyPartBrokenKilled.h"
 #include "State/Hit/EnemyVanish.h"
 #include "Main/Game.h"
-#include "../../Stage/EnemySpawnData.h"
+#include "Stage/Phase/EnemySpawnData.h"
 
 
 class Player;
