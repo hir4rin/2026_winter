@@ -96,6 +96,9 @@
     <ClCompile Include="Stage\WallZone\WallZoneEditor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Stage\Phase\PhaseAreaEditor.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Render\BloodKillFog.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -495,6 +498,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\Phase\PhaseAreaData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage\Phase\PhaseAreaEditor.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\WallZone\WallZoneEditor.h">

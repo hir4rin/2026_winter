@@ -22,6 +22,7 @@
 #include "Main/imguiApp.h"
 #include "Scene/PauseScene.h"
 #include "Stage/WallZone/WallZoneEditor.h"
+#include "Stage/Phase/PhaseAreaEditor.h"
 #include "UI/UIManager.h"
 #include "imgui.h"
 
@@ -142,7 +143,8 @@ void SceneMain::Init()
 	if (!spawnData.empty())
 	{
 		DataManager::GetInstance().LoadPhaseFlow(stageInfo.enemySpawnNumber);
-		m_phaseManager->Init(m_enemyManager, spawnData, DataManager::GetInstance().GetPhaseFlow());
+		DataManager::GetInstance().LoadPhaseAreas(stageInfo.enemySpawnNumber);
+		m_phaseManager->Init(m_enemyManager, m_player);
 	}
 	else
 	{
@@ -151,6 +153,8 @@ void SceneMain::Init()
 		enemy->Init();
 		m_enemyManager->AddEnemy(enemy);//追加
 	}
+	m_phaseAreaEditor = std::make_unique<PhaseAreaEditor>();
+	m_phaseAreaEditor->SetStageNumber(stageInfo.enemySpawnNumber);
 
 
 	m_battleManager = std::make_shared<BattleManager>();
@@ -347,6 +351,8 @@ void SceneMain::NormalDraw()
 	//敵のデバッグ表示(頭の上の文字)//2Dの文字は後から描く3Dに上書きされるので、UIの後に描く
 	m_enemyManager->DebugDraw();
 	m_phaseManager->DebugDraw();
+	//ステージ編集中はエディタ側で(選択中を白にして)描く
+	if (!System::GetInstance().GetBattleMgr()->GetStageEditMode())m_phaseManager->DrawAreas();
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
 #endif
 
@@ -368,6 +374,9 @@ void SceneMain::NormalDraw()
 		m_wallZoneEditor->DrawZones(*m_stage);
 		m_wallZoneEditor->DrawWindow(*m_stage, m_player.get(),
 			m_cameraManager->GetPhotoCameraPos(),
+			m_cameraManager->GetPhotoCameraTarget());
+		m_phaseAreaEditor->DrawAreas(*m_phaseManager);
+		m_phaseAreaEditor->DrawWindow(*m_phaseManager, *m_stage, m_player.get(),
 			m_cameraManager->GetPhotoCameraTarget());
 	}
 

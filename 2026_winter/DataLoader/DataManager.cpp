@@ -66,7 +66,7 @@ namespace
 
     //フェーズ進行のエリア
     const std::string kPhaseAreaDirectory = "data/Stage/PhaseAreas/";//後ろに"Stage003.csv"
-    //#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg
+    const char* const kPhaseAreaHeaderComment = "#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg";
     enum PhaseAreaColumn : int
     {
         AreaName = 0,
@@ -448,6 +448,28 @@ void DataManager::LoadPhaseAreas(int stageNumber)
         area.rotYDeg = std::stof(tokens[PhaseAreaColumn::AreaRotYDeg]);
         m_phaseAreas.push_back(area);
     }
+}
+
+bool DataManager::SavePhaseAreas(int stageNumber, const std::vector<PhaseArea>& areas)
+{
+    //出力先フォルダが無ければ作る
+    std::filesystem::create_directories(kPhaseAreaDirectory);
+
+    std::ofstream file(GetPhaseAreaFilePath(stageNumber));
+    if (!file.is_open()) return false;
+
+    file << kPhaseAreaHeaderComment << "\n";
+    for (const auto& area : areas)
+    {
+        file << SanitizeCsvCell(area.name) << ","
+            << area.position.x << "," << area.position.y << "," << area.position.z << ","
+            << area.halfExtents.x << "," << area.halfExtents.y << "," << area.halfExtents.z << ","
+            << area.rotYDeg << "\n";
+    }
+    if (!file.good()) return false;
+
+    m_phaseAreas = areas;//保存した内容を持っているデータにも反映する
+    return true;
 }
 
 const char* DataManager::WallZoneTypeToString(Collider::ColRole type)

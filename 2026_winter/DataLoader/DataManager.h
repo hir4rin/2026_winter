@@ -82,6 +82,7 @@ public:
 
 	//フェーズ進行のエリア-------------------------------------------------------
 	void LoadPhaseAreas(int stageNumber);//無ければ空
+	bool SavePhaseAreas(int stageNumber, const std::vector<PhaseArea>& areas);//エディタから保存
 	const std::vector<PhaseArea>& GetPhaseAreas() const { return m_phaseAreas; }
 	static std::string GetPhaseAreaFilePath(int stageNumber);
 	//---------------------------------------------------------------------------

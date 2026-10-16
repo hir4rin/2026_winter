@@ -309,6 +309,7 @@
   - **try を使わない形**。数値の欄が空欄・文字だと `std::stof` の例外で止まる(どの行かは出ない)。列不足の行は飛ばす。
   - 敵配置の `EnemySpawnColumn::RotYDeg` と名前がぶつかるので、列名は `AreaName` / `AreaPosX` … `AreaRotYDeg` にした。
 - **まだどこからも呼んでいない**。次は SceneMain で読んで PhaseManager::Init に渡す(手順4〜)。
+- (2026-10-17 確認) Step4 はコードに入っていた: `IsConditionFulfilled` で AllDead の param(グループ指定 → `EnemyManager::IsGroupAllDead`)・Timer(`m_phaseFrame`)・KillCount(`GetPhaseKillCount`)、`LoadPhaseFlow` で `intParam` を読む。
 - ここではビルドできないので、DxLib を仮の定義にして DataManager.cpp の文法だけ確認した。VS でのビルドはまだ。
 
 ### 2026-10-16 Stage フォルダの整理・使っていない箱CSVの削除
@@ -317,16 +318,33 @@
 - 今の構成:
   - `Stage/` Stage, StageInfo, SkyBox(SkyBox は今どこからも使われていない)
   - `Stage/WallZone/` WallZone, WallZoneData, WallZoneEditor
-  - `Stage/Phase/` EnemySpawnData, PhaseFlowData, PhaseAreaData(CSV 1行分の構造体)。PhaseManager は `Battle/` のまま
+  - `Stage/Phase/` EnemySpawnData, PhaseFlowData, PhaseAreaData(CSV 1行分の構造体)、PhaseAreaEditor(10/17追加)。PhaseManager は `Battle/` のまま
 - 直した include はプロジェクト基準で書いた(例 `"Stage/Phase/EnemySpawnData.h"`、`"Math/Vector3.h"`)。vcxproj/filters のパスも変更。
 - ここではビルドできないので、include のパスが全部見つかることだけ確認した。**VS でのビルドはまだ**。
+
+### 2026-10-17 フェーズ進行 Step5 の4〜(EnterArea・エリアエディタ)
+- `PhaseManager::Init(enemyMgr, player)`: 遷移表・エリア・敵配置は Init の中で DataManager から取る(Load は SceneMain で先に済ませる)。
+- 名前→番号は `ResolveAreaIndex()`(見つからなければ -1)。Init では `GetMissingAreaNames()` が空でなければ assert。
+- `IsInArea`: `BoxShape::WorldToLocalDir` でプレイヤーの位置を箱のローカルに直して比べる。足元 = `GetRigidBody().GetPos()`。
+- `DrawAreas(selected)`: 黄=通常、赤=プレイヤーが中、白=選択中。Debug ビルドでは普段から描く(編集モード中はエディタ側で描く)。
+- `Stage/Phase/PhaseAreaEditor`(WallZoneEditor とほぼ同じ作り): ステージ編集モードで「Phase Area Editor」ウィンドウ。
+  追加(カメラ注視点/プレイヤー足元)・複製・削除・名前/位置/大きさ/回転・床に落とす・Undo/Redo・Load/Save(`DataManager::SavePhaseAreas`)。
+  - 編集はその場で `PhaseManager::SetAreas` に入る(番号も引き直す)。遷移表で使っている名前が無くなると赤字で出る。
+  - Ctrl+Z/Y は触っているウィンドウだけ(WallZoneEditor にも同じ条件を足した)。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
 
 ---
 
 ## TODO / 次にやること
 - [ ] **フェーズ進行の外部化**(遷移表CSV＋グループ指定＋EnterArea)。設計と手順は `../進捗/フェーズ進行_設計メモ.md`
   - [x] Step1 PhaseManagerへ移すだけ(ゲームでの確認はまだ) → [x] Step2 遷移CSV(AllDead) → [x] Step3 デバッグ表示(どちらもゲームでの確認はまだ)
-  - [ ] Step4 グループ指定/Timer/KillCount → [ ] Step5 EnterArea → [ ] Step6 イベント・ボス(仮)
+  - [x] Step4 グループ指定/Timer/KillCount(コードは入った。遷移CSVではまだ使っておらず、ゲームでの確認もまだ)
+  - [ ] Step5 EnterArea(途中)
+    - [x] エリアCSV(`data/Stage/PhaseAreas/Stage003.csv`) → [x] `DataManager::LoadPhaseAreas`
+    - [x] SceneMain で読んで `PhaseManager::Init` に渡す → [x] 遷移表のエリア名から `areaIndex` を引く(無ければ assert)
+    - [x] `IsInArea` と `IsConditionFulfilled` の EnterArea → [x] 箱のデバッグ描画 → [x] エリアエディタ(ImGui)
+    - [ ] ゲームで箱の位置を確認・エディタで直して保存 → [ ] 遷移CSVに EnterArea の行を書いて確認
+  - [ ] Step6 イベント・ボス(仮)
 - [ ] フォルダ整理後にゲームを起動して確認(特にシェーダー読み込み = 血殺中に敵が黒くなるか)
 - [ ] 使われていない定数の掃除(EnemyAttackPre の kAttackPreBlendRate / kAttackPreTrackEndRate、EnemyParry の kAnimEndFrame / kAnimMoveEndFrame)
 - [ ] Unityの配置CSVに、1体ごとの上書き用の列(HP・視界など、空欄なら標準値)を必要になったら足す

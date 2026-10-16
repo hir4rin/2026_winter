@@ -263,6 +263,7 @@
     <ClCompile Include="Stage\Stage.cpp" />
     <ClCompile Include="Stage\WallZone\WallZone.cpp" />
     <ClCompile Include="Stage\WallZone\WallZoneEditor.cpp" />
+    <ClCompile Include="Stage\Phase\PhaseAreaEditor.cpp" />
     <ClCompile Include="Main\System.cpp" />
     <ClCompile Include="UI\FontManager.cpp" />
     <ClCompile Include="UI\UIBase.cpp" />
@@ -399,6 +400,7 @@
     <ClInclude Include="Stage\Phase\EnemySpawnData.h" />
     <ClInclude Include="Stage\Phase\PhaseFlowData.h" />
     <ClInclude Include="Stage\Phase\PhaseAreaData.h" />
+    <ClInclude Include="Stage\Phase\PhaseAreaEditor.h" />
     <ClInclude Include="Stage\StageInfo.h" />
     <ClInclude Include="Stage\WallZone\WallZoneEditor.h" />
     <ClInclude Include="Main\System.h" />

@@ -166,7 +166,8 @@ void WallZoneEditor::DrawHistoryButtons()
 	ImGui::TextDisabled("history: %d", static_cast<int>(m_undoHistory.size()));
 
 	//文字入力中のCtrl+Zはテキストボックス側のUndoに任せる
-	if (!ImGui::GetIO().WantTextInput)
+	//PhaseAreaEditorと同時に戻らないように、このウィンドウを触っているときだけ
+	if (!ImGui::GetIO().WantTextInput && ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 	{
 		if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Z))m_requestUndo = true;
 		if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Y))m_requestRedo = true;
