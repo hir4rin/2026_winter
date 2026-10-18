@@ -173,6 +173,8 @@
     <ClCompile Include="Character\Player\State\Attack\PlayerStateAttack.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateAttackBase.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateDashAttack.cpp" />
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.cpp" />
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateAttackLanding.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateSkillAttack.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateUlt.cpp" />
@@ -200,6 +202,10 @@
     <ClCompile Include="Character\Enemy\State\EnemyStateBase.cpp" />
     <ClCompile Include="Character\Enemy\State\Locomotion\EnemyIdle.cpp" />
     <ClCompile Include="Character\Enemy\EnemySwordman.cpp" />
+    <ClCompile Include="Character\Enemy\EnemyGunner.cpp" />
+    <ClCompile Include="Character\Enemy\EnemyGunnerWeapon.cpp" />
+    <ClCompile Include="Character\Enemy\EnemyBazooka.cpp" />
+    <ClCompile Include="Character\Enemy\EnemyBazookaWeapon.cpp" />
     <ClCompile Include="Character\Enemy\State\Defence\EnemyGuard.cpp" />
     <ClCompile Include="Character\Enemy\State\Defence\EnemyGuardBreak.cpp" />
     <ClCompile Include="Character\Enemy\EnemyPart.cpp" />
@@ -255,6 +261,7 @@
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Scene\PauseScene.cpp" />
     <ClCompile Include="Scene\StageSelectScene.cpp" />
+    <ClCompile Include="Scene\ResultScene.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\SceneController.cpp" />
     <ClCompile Include="Collision\SphereShape.cpp" />
@@ -302,6 +309,8 @@
     <ClInclude Include="Character\Player\State\Attack\PlayerStateAttack.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateAttackBase.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateDashAttack.h" />
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.h" />
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateAttackLanding.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateSkillAttack.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateUlt.h" />
@@ -332,6 +341,10 @@
     <ClInclude Include="Character\Enemy\State\EnemyStateBase.h" />
     <ClInclude Include="Character\Enemy\State\Locomotion\EnemyIdle.h" />
     <ClInclude Include="Character\Enemy\EnemySwordman.h" />
+    <ClInclude Include="Character\Enemy\EnemyGunner.h" />
+    <ClInclude Include="Character\Enemy\EnemyGunnerWeapon.h" />
+    <ClInclude Include="Character\Enemy\EnemyBazooka.h" />
+    <ClInclude Include="Character\Enemy\EnemyBazookaWeapon.h" />
     <ClInclude Include="Character\Enemy\State\Defence\EnemyGuard.h" />
     <ClInclude Include="Character\Enemy\State\Defence\EnemyGuardBreak.h" />
     <ClInclude Include="Character\Enemy\EnemyPart.h" />
@@ -388,6 +401,7 @@
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Scene\PauseScene.h" />
     <ClInclude Include="Scene\StageSelectScene.h" />
+    <ClInclude Include="Scene\ResultScene.h" />
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Scene\SceneController.h" />
     <ClInclude Include="Collision\SphereShape.h" />

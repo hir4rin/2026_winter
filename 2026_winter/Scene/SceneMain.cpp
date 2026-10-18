@@ -21,6 +21,7 @@
 #include "Main/Game.h"
 #include "Main/imguiApp.h"
 #include "Scene/PauseScene.h"
+#include "Scene/ResultScene.h"
 #include "Stage/WallZone/WallZoneEditor.h"
 #include "Stage/Phase/PhaseAreaEditor.h"
 #include "UI/UIManager.h"
@@ -289,6 +290,14 @@ void SceneMain::NormalUpdate()
 
 	//再生中のエフェクトを、このフレームのタイムスケールに合わせて進める(自分の速さを持つエフェクトの設定し直しもここで行う)
 	EffectManager::GetInstance().Update();
+
+	//バトルが終わったらフェードアウトしてリザルトへ
+	if (m_battleManager->GetIsBattleEnd())
+	{
+		m_fadeFrame = 0;
+		m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::FadeOutUpdate);
+		m_drawFunc = static_cast<DrawFunc_t>(&SceneMain::FadeOutDraw);
+	}
 }
 
 void SceneMain::PlayDebugSkillEffect(int effectHandle)
@@ -309,9 +318,9 @@ void SceneMain::FadeOutUpdate()
 	m_fadeFrame++;
 	if (m_fadeFrame >= kFadeFrame)
 	{
-		//TODO:次のシーンができたらここで切り替える
-		//m_controller.ResetScene<次のシーン>();
-		m_fadeFrame = kFadeFrame;
+		//このシーンはここで破棄されるので、呼んだ後は何もしない
+		m_controller.ResetScene<ResultScene>();
+		return;
 	}
 }
 

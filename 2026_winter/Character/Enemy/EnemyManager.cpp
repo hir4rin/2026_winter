@@ -1,6 +1,8 @@
 ﻿#include "EnemyManager.h"
 #include "EnemyBase.h"
 #include "EnemySwordman.h"
+#include "EnemyGunner.h"
+#include "EnemyBazooka.h"
 #include "Character/Player/Player.h"
 #include "Main/Input.h"
 #include "Main/System.h"
@@ -159,6 +161,12 @@ std::shared_ptr<EnemyBase> EnemyManager::CreateEnemy(const EnemySpawnData& data)
 	{
 	case EnemyType::Swordman:
 		enemy = std::make_shared<EnemySwordman>(m_player, data.position);
+		break;
+	case EnemyType::Gunner:
+		enemy = std::make_shared<EnemyGunner>(m_player, data.position);
+		break;
+	case EnemyType::Bazooka:
+		enemy = std::make_shared<EnemyBazooka>(m_player, data.position);
 		break;
 	default:
 		return nullptr;

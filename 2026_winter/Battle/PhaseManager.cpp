@@ -3,6 +3,8 @@
 #include "Character/Player/Player.h"
 #include "DataLoader/DataManager.h"
 #include "Collision/BoxShape.h"
+#include "Battle/BattleManager.h"
+#include "Main/System.h"
 #include "DxLib.h"
 #include <cassert>
 #include <cmath>
@@ -81,7 +83,15 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event)
 	{
 		m_killCountAtPhaseStart = enemyMgr->GetTotalKillCount();
 		//-1(終了)なら敵は出さない
-		if (next > 0) enemyMgr->StartPhase(next);
+		if (next > 0)
+		{
+			enemyMgr->StartPhase(next);
+		}
+		else if(next == -1)
+		{
+			//終了の合図だけ出す(遷移はSceneMain)
+			System::GetInstance().GetBattleMgr()->SetIsBattleEnd(true);
+		}
 	}
 
 	//eventの処理

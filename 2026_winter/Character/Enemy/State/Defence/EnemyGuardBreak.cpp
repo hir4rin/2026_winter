@@ -1,6 +1,7 @@
 ﻿#include "EnemyGuardBreak.h"
 #include "Main/System.h"
 #include "../../EnemyBase.h"
+#include "Character/Player/Player.h"
 
 
 
@@ -25,6 +26,12 @@ void EnemyGuardBreak::Enter()
 
 	owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownStart"),false,0.5f,26.0f);
 	m_state = GuardBreakState::Start;
+
+	//プレイヤーに通知
+	if (auto player = owner->m_player.lock())
+	{
+		player->RequestGuardBreakChance(owner);
+	}
 }
 
 void EnemyGuardBreak::Update()
@@ -74,7 +81,7 @@ bool EnemyGuardBreak::CanChangeHit()
 {
 	//最初のよろめきの時は遷移ダメ
 	if (m_state == GuardBreakState::Start)return false;
-	else true;
+	else return true;
 
 }
 

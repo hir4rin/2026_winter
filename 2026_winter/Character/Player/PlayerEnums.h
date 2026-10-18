@@ -6,5 +6,6 @@ enum class  AttackType
 	lightAttack = 0,
 	heavyAttack = 1,
 	SkillAttack = 2,
-	UltAttack = 3
+	UltAttack = 3,
+	GuardBreakAttack = 4,
 };

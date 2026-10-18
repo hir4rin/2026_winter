@@ -235,7 +235,7 @@ void Player::Update(Camera& camera)
 	m_lockOnManager->Update();
 	UpdateSoftTarget();
 
-
+	UpdateGuardBreakChance();//ブレイクのチャンス
 
 	if (m_currentState)
 	{
@@ -1118,6 +1118,19 @@ void Player::UpdatePlayerHeadLook()
 
 	//頭のボーンを回すのは通常のモデルだけ//Idle,Moveは通常のモデルを使っている
 	UpdateHeadLook(m_headFrame, isLook, targetPos);
+}
+
+void Player::UpdateGuardBreakChance()
+{
+	if (m_guardBreakChanceTarget.expired())return;
+
+	//地上の通常攻撃中だけ
+	bool canChance = std::dynamic_pointer_cast<PlayerStateAttack>(m_currentState) && IsFloor();
+	if (canChance)
+	{
+		ChangeState(std::make_shared<PlayerStateGuardBreakChance>(GetWeakPtr()));
+	}
+	m_guardBreakChanceTarget.reset();//持ち越さない
 }
 
 void Player::UpdateSoftTarget()

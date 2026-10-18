@@ -333,9 +333,88 @@
   - Ctrl+Z/Y は触っているウィンドウだけ(WallZoneEditor にも同じ条件を足した)。
 - MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
 
+### 2026-10-17 フェーズ終了でリザルトへ遷移
+- `BattleManager::SetIsBattleEnd / GetIsBattleEnd` を追加。`PhaseManager::ChangePhase` で next=-1 のときに立てる。
+- `SceneMain::NormalUpdate` の最後でフラグを見てフェードアウト → `FadeOutUpdate` で `ResetScene<ResultScene>()`。
+  PhaseManager から直接 ResetScene しないこと(Update 中に SceneMain が破棄される)。
+- `Scene/ResultScene.h/.cpp`(仮、文字だけ)。Aで `StageSelectScene` へ。vcxproj/filters に登録。
+- 注意: PhaseManager::Init は BattleManager を作る前に呼ばれるので、Start の行で直接 -1 に行くと GetBattleMgr の assert に当たる。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
+### 2026-10-17 敵のデバッグ表示にグループ名
+- `EnemyBase::DebugDraw`: `m_groupId` が空でなければ、ステート名の上(TOKEN があればさらにその上)に緑で `Group:〜` を出す。
+
+### 2026-10-17 ガードブレイクのチャンス状態(PlayerStateGuardBreakChance)の土台
+- バトルデザイン: 弱→強はガード崩し(打ち上げない)。ブレイクしたら自動でチャンス状態に入り、時間内にYで打ち上げ派生(案A)。
+- `Character/Player/State/Attack/PlayerStateGuardBreakChance.h/.cpp` を追加し、vcxproj/filters に登録。Player.h に include と friend。
+- 流れ: `EnemyGuardBreak::Enter` → `player->RequestGuardBreakChance(owner)`(通知だけ) → 次の `Player::Update` の
+  `UpdateGuardBreakChance()`(State更新の前)で遷移。敵から直接 ChangeState しないのは、当たり判定の処理中に攻撃判定を消さないため。
+  - 入る条件: 今のStateが `PlayerStateAttack` かつ地上。通知は毎回消す(条件を満たさなくても持ち越さない)。
+  - ターゲットは State のコンストラクタで `player->m_guardBreakChanceTarget` から受け取る。そのため reset は ChangeState の**後**。
+- 中身(仮): Idleアニメ、その場で止まる、`kChanceTime`(60F)で Idle/Move へ。敵が消えた・GuardBreakが終わったら終了。
+  Bで回避。Yは **TODO(今は Idle/Move に戻るだけ)**。
+- TODO: 打ち上げ攻撃のステート、専用カメラ(Enter/Exit)、スロー・演出。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
+---
+
+### 2026-10-17 打ち上げ攻撃ステート(PlayerStateGuardBreakAttack)の土台
+- `Character/Player/State/Attack/PlayerStateGuardBreakAttack.h/.cpp`(`PlayerStateAttackBase` 継承)を追加し、vcxproj/filters・Player.h(include/friend)に登録。
+- `PlayerStateGuardBreakChance` で Y を押すとここへ遷移する。
+
+### 2026-10-17 打ち上げ攻撃(PlayerStateGuardBreakAttack)の中身
+- **スキル0(index 15) → 切り上げ(index 7) → 先行入力があれば PlayerStateAttack(空中攻撃1)**。
+  2段で1つの演出なので自分に遷移せず、State内の `Phase`(Skill0 / UpAttack)で切り替える(Enter/Exit は1回ずつ)。
+  - `StartPhase`: 前の判定を消す → `currentComboIndex` をその段に → アニメ → (切り上げのみ RootMotionCancel::Up) → `InitVerticalMove` → `CreateAttackCol`。
+  - Skill0: 当たったらカメラの注視点を敵に(`m_isCameraFocusOverride`。SkillAttack の UpdateLaunchCamera と同じ)。cancelFrame で当たっていれば切り上げ、外れたら Idle/Move。
+  - UpAttack: X/Y の先行入力 → cancelFrame で `PlayerStateAttack(弱/強)`。なければアニメ終了で Fall(地上なら Idle/Move)。回避・ジャンプのキャンセルは無し。
+  - Exit: currentComboIndex=None、isHit/鴉/カメラ注視点を戻す、判定を消す。
+- スキルゲージは消費しない(ブレイクのご褒美)。振りのSEは PlayerStateAttack 側も全部コメントアウトなので入れていない。
+- 打ち上げの量は CSV の knockBack のまま。**打ち上げの処理・CSVはユーザーが作り直す予定**。
+- (追記) スキル0・切り上げの行を使い回すのをやめ、`ComboChain01.csv` の最後に専用の行を追加した。
+  `ガードブレイクアタック0`(index 20、スキル0のコピー) / `ガードブレイクアタック1`(index 21、切り上げのコピー)。どちらも attackType=4(GuardBreakAttack)、nextLight/nextHeavy は空欄。
+  `ComboIndex::GuardBreakAttack0/1` を追加。判定は通常の `CreateAttackCol`(attackType は CSV から入る)。
+- `EnemyGuardBreak::CanChangeHit` の `else true;` → `else return true;` に直した(C4715 が消えた)。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
+### 2026-10-18 銃の敵(EnemyGunner)
+- `Character/Enemy/EnemyGunner.h/.cpp`(EnemySwordman のコピー)。モデルは `data/Enemy/EnemyGun.mv1`(`AsyncData::EnemyGunnerModel`)。vcxproj/filters に登録。
+  - 部位破壊で落とすパーツのモデルが無いので、パーツ関係(Z/Xのデバッグ部位破壊も)は外した。`OnHeadBreak` はフラグを立てるだけ。
+  - Q で `EnemyGunnerAttack.csv` とステータスを読み直す。
+- CSV: `data/Enemy/EnemyGunnerAnim.csv`(Rifle系のアニメを割り当て)、`EnemyGunnerAttack.csv`(仮の「銃床打ち」1行、Rifle Punch。値は適当)、
+  `EnemyStatus.csv` に `Gunner` 行(Swordmanの値をもとに HP600、leftArmFrame=16、headFrame=40)。
+- `EnemyType::Gunner` / 配置CSVの type `Gunner`。`DataManager::LoadRawCsv` を作り、Swordman と Gunner の攻撃CSVの読み込みを共通にした。
+- 確認用に `Enemies003.csv` の最初の3体(フェーズ1・A2)を Gunner にした。Unityの `EnemySpawnType` にも Gunner を追加
+  (**Unityから配置を書き出し直すと Swordman に戻る**ので、Unity側のその3体も Gunner にしておくこと)。
+- 撃つ処理はまだ無い(近接の Swordman と同じ動き)。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+- 銃: `Character/Enemy/EnemyGunnerWeapon.h/.cpp`(PlayerWeapon と同じ作り)。`data/Enemy/EnemyGun/AK74.mv1`(`AsyncData::EnemyGunnerWeaponModel`)を
+  右手(`mixamorig:RightHand`)の行列に合わせる。EnemyGunner の Init で生成、Update の最後で更新、Draw で描画(血殺中は黒)、SetOpacity で一緒に消える。
+  手元の位置・回転は Rifle Idle の姿勢で計算して合わせた(銃口=右手→左手の向き、握り=手首と人差し指・中指の付け根の中間)。
+  走り・歩きでも構えた形になる。Gunplay(銃を回す)や Rifle Punch では左手が離れる。
+- 部位破壊: Swordman と同じ処理(Z/Xのデバッグ部位破壊も)。頭は Swordman と同じ `Part/Swordman/Head.mv1`(`EnemyPartHeadModel`)。
+  左腕は `data/Enemy/Part/Gunner/LeftArm.mv1`(`EnemyGunnerPartLeftArmModel`)。Swordman の LeftArm.mv1 から盾のメッシュを外したもの。
+  - 作り方: DxLib で元の mv1 の腕メッシュ(mesh 1)を参照メッシュで取り出し(フレームの変換込み)、`LeftArm.x` に書いて読み直し MV1SaveModelToMV1File。
+    テクスチャは同じフォルダの Meshy_AI_〜.png(元の mv1 が実際に使っている白青のもの)。LeftArm.x は元データとして残してある。
+  - フレームの変換を頂点に焼き込んだので、`leftArmModelScale`(0.01)は Swordman と同じ値のまま。
+  - 元の LeftArm.fbx はメッシュ名が逆(`Helmet.001` が盾、`Sword` が腕)。
+
+### 2026-10-18 バズーカの敵(EnemyBazooka)
+- EnemyGunner と全く同じ作り。`Character/Enemy/EnemyBazooka.h/.cpp`・`EnemyBazookaWeapon.h/.cpp`(Gunner のファイルの名前を置き換えたもの)。
+  体のモデル(`EnemyGunnerModel`)・盾なしの左腕(`EnemyGunnerPartLeftArmModel`)・頭はガンナーと共有。武器だけ RPG7(`AsyncData::EnemyBazookaWeaponModel`)。
+- CSV: `EnemyBazookaAnim.csv` / `EnemyBazookaAttack.csv`(Gunner のコピー)、`EnemyStatus.csv` の `Bazooka` 行(Gunner と同じ値)。type は `Bazooka`(Unity の EnemySpawnType にも追加)。
+- 確認用に `Enemies003.csv` の4・5体目(フェーズ1・A3)を Bazooka にした。
+- RPG7 のモデル: `data/Enemy/EnemyBazooka/RPG7.mv1`(元は `Desktop/GunFBX/Gun/RPG7.fbx`)。
+  - DxLib は FBX を読めないので、Blender で .x に書き出して(スクリプトは scratchpad の fbx2x.py)DxLib で読み直して mv1 に保存した。`RPG7.x` は元データとして残してある。
+  - 軸はビューアの変換と同じ(x=x, y=Blenderのz, z=Blenderのy)。原点は引き金。AK74 と同じく +Z が前(弾頭)、+Y が上。
+  - RPG7.fbx は AK74.fbx の10倍の大きさで作られていたので、倍率は ×10(AK74 は ×100)。全長は弾頭込みで約127。
+  - 弾頭は `Rocket`、発射筒は `Launcher` という別のフレームにしてある(撃ったときに弾頭だけ消す用)。
+  - 手元の値はガンナーと同じ(銃のモデルの向きをそろえたので同じ値で合う)。銃のアニメのままなので、肩に担がずライフルと同じ持ち方。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
 ---
 
 ## TODO / 次にやること
+- [ ] ブレイクの打ち上げの続き: 敵を打ち上げる処理とCSV(ユーザー)・専用カメラ・演出。ゲームで一連の流れを確認
 - [ ] **フェーズ進行の外部化**(遷移表CSV＋グループ指定＋EnterArea)。設計と手順は `../進捗/フェーズ進行_設計メモ.md`
   - [x] Step1 PhaseManagerへ移すだけ(ゲームでの確認はまだ) → [x] Step2 遷移CSV(AllDead) → [x] Step3 デバッグ表示(どちらもゲームでの確認はまだ)
   - [x] Step4 グループ指定/Timer/KillCount(コードは入った。遷移CSVではまだ使っておらず、ゲームでの確認もまだ)

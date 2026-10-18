@@ -219,6 +219,7 @@ void EnemyBase::DebugDraw()
 	const unsigned int tokenColor = GetColor(255, 0, 255);
 	if (hasToken)
 	{
+		//分割して円を下向きに表示
 		for (int i = 0; i < kDebugTokenRingDivNum; i++)
 		{
 			const float angle0 = DX_TWO_PI_F * i / kDebugTokenRingDivNum;
@@ -242,7 +243,14 @@ void EnemyBase::DebugDraw()
 	const int x = static_cast<int>(screenPos.x);
 	const int y = static_cast<int>(screenPos.y);
 	const int lineHeight = GetFontSize() + kDebugLineSpacing;
-	if (hasToken)DrawDebugTextCenter(x, y - lineHeight * 2, "TOKEN", tokenColor);
+	int topY = y - lineHeight * 2;
+	if (hasToken)
+	{
+		DrawDebugTextCenter(x, topY, "TOKEN", tokenColor);
+		topY -= lineHeight;
+	}
+	//グループ名(あれば)
+	if (!m_groupId.empty())DrawDebugTextCenter(x, topY, "Group:" + m_groupId, GetColor(0, 255, 0));
 	DrawDebugTextCenter(x, y - lineHeight, stateText, color);
 	DrawDebugTextCenter(x, y, statusText, GetColor(255, 255, 255));
 }
@@ -434,7 +442,9 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	//Stateの切り替え//敵を吹き飛ばす攻撃かどうかで切り替える
 
 	//ガードブレイク中ならヒットステートじゃなくてガードステートのまま
-	if (std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState))
+	//ガードブレイク攻撃の時はしっかり移行させる
+	bool isGuardBreakAttack = data.attackType == AttackType::GuardBreakAttack;
+	if (std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState) && !isGuardBreakAttack)
 	{
 		auto state = std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState);
 

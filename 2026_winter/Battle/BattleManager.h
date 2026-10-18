@@ -34,6 +34,10 @@ public:
 	//falseから初めてtrueになった瞬間だけ、内部でtrueにする(多重呼び出し防止)
 	//void SetIsLastHitEventPlayingTrigger(bool ans);
 
+	//全フェーズが終わったか(シーン遷移の合図)
+	void SetIsBattleEnd(bool ans) { m_isBattleEnd = ans; }
+	bool GetIsBattleEnd() { return m_isBattleEnd; }
+
 	std::weak_ptr<AttackTokenManager> GetAttackTokenMgr() { return m_attackTokenMgr; }
 private:
 	std::shared_ptr<AttackTokenManager> m_attackTokenMgr;//敵の攻撃権
@@ -47,6 +51,8 @@ private:
 	bool m_isEventPlaying = false;//イベント演出中かどうか
 
 	bool m_isLastHitEventPlaying = false;//ラストヒットのイベント中かどうか
+
+	bool m_isBattleEnd = false;//バトルが終わったか
 
 };
 

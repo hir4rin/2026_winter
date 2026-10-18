@@ -33,6 +33,14 @@ public:
 	/// </summary>
 	void ReloadEnemySwordmanAttackRawData() { LoadEnemySwordmanAttackRawData(); }
 	/// <summary>
+	/// EnemyGunnerAttack.csvを読み込み直す(デバッグ用)
+	/// </summary>
+	void ReloadEnemyGunnerAttackRawData() { LoadEnemyGunnerAttackRawData(); }
+	/// <summary>
+	/// EnemyBazookaAttack.csvを読み込み直す(デバッグ用)
+	/// </summary>
+	void ReloadEnemyBazookaAttackRawData() { LoadEnemyBazookaAttackRawData(); }
+	/// <summary>
 	/// EnemyStatus.csvを読み込み直す(デバッグ用)
 	/// </summary>
 	void ReloadEnemyStatusRawData() { LoadEnemyStatusRawData(); }
@@ -40,6 +48,10 @@ public:
 	const AnimData& GetPlayerAnimData() const { return m_playerAnimData;}
 	const AnimData& GetEnemySwordmanAnimData() const { return m_enemySwordmanAnimData; }
 	const std::vector<std::vector<std::string>>& GetEnemySwordmanAttackRawData() const { return m_enemySwordmanAttackRawData; }//敵(ソードマン)の攻撃の生データ//解釈はEnemyBase::InitializeAttackList
+	const AnimData& GetEnemyGunnerAnimData() const { return m_enemyGunnerAnimData; }
+	const std::vector<std::vector<std::string>>& GetEnemyGunnerAttackRawData() const { return m_enemyGunnerAttackRawData; }//敵(ガンナー)の攻撃の生データ
+	const AnimData& GetEnemyBazookaAnimData() const { return m_enemyBazookaAnimData; }
+	const std::vector<std::vector<std::string>>& GetEnemyBazookaAttackRawData() const { return m_enemyBazookaAttackRawData; }//敵(バズーカ兵)の攻撃の生データ
 	const std::vector<std::vector<std::string>>& GetEnemyStatusRawData() const { return m_enemyStatusRawData; }//敵のステータスの生データ(1行=1種類)//解釈はEnemyBase::InitializeStatus
 	const AnimData& GetBossAnimData() const { return m_bossAnimData;}
 	const std::vector<std::vector<std::string>>& GetComboRawData() const { return m_comboRawData;}
@@ -98,6 +110,9 @@ private:
 	void LoadPlayerAnimData(); //プレイヤーのアニメーションデータを読み込む関数
 	void LoadEnemySwordmanAnimData();
 	void LoadEnemySwordmanAttackRawData(); //敵(ソードマン)の攻撃の生データを読み込む関数
+	void LoadEnemyGunnerAttackRawData(); //敵(ガンナー)の攻撃の生データを読み込む関数
+	void LoadEnemyBazookaAttackRawData(); //敵(バズーカ兵)の攻撃の生データを読み込む関数
+	void LoadRawCsv(const std::string& filePath, std::vector<std::vector<std::string>>& rawData);//#の行を飛ばして1行ずつ分割する
 	void LoadEnemyStatusRawData(); //敵のステータスの生データを読み込む関数
 	void LoadBossAnimData(); //ボスのアニメーションデータを読み込む関数
 	void LoadComboRawData(); //コンボの生データを読み込む関数
@@ -129,6 +144,10 @@ private:
 	AnimData m_playerAnimData;//プレイヤーのアニメーションデータ
 	AnimData m_enemySwordmanAnimData;//敵(ソードマン)のアニメデータ
 	std::vector<std::vector<std::string>> m_enemySwordmanAttackRawData;//敵(ソードマン)の攻撃の生データ
+	AnimData m_enemyGunnerAnimData;//敵(ガンナー)のアニメデータ
+	std::vector<std::vector<std::string>> m_enemyGunnerAttackRawData;//敵(ガンナー)の攻撃の生データ
+	AnimData m_enemyBazookaAnimData;//敵(バズーカ兵)のアニメデータ
+	std::vector<std::vector<std::string>> m_enemyBazookaAttackRawData;//敵(バズーカ兵)の攻撃の生データ
 	std::vector<std::vector<std::string>> m_enemyStatusRawData;//敵のステータスの生データ
 	AnimData m_bossAnimData;//ボスのアニメーションデータ
 	std::vector<std::vector<std::string>> m_comboRawData;//コンボの生データ

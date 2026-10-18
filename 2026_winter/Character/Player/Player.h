@@ -23,6 +23,8 @@
 #include "Character/Player/State/Locomotion/PlayerStateWallStay.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateWallRunKick.h"//以下同文
 #include "Character/Player/State/Defence/PlayerAttackParried.h"//以下同文
+#include "Character/Player/State/Attack/PlayerStateGuardBreakChance.h"//以下同文
+#include "Character/Player/State/Attack/PlayerStateGuardBreakAttack.h"//以下同文
 #include "DataLoader/AnimData.h"
 #include <memory>
 
@@ -140,6 +142,8 @@ namespace ComboIndex
 	constexpr int SkillAttack2 = 17;
 	constexpr int SkillAttack3 = 18;
 	constexpr int AirSkillAttack1 = 19;//空中から直接出すスキル攻撃1//y軸の移動なし//次はスキル攻撃2へ
+	constexpr int GuardBreakAttack0 = 20;//ブレイク時の打ち上げ
+	constexpr int GuardBreakAttack1 = 21;//ブレイク時の切り上げ
 
 };
 
@@ -245,6 +249,9 @@ public:
 	void SetIsPartBrokenKilling(bool value) { m_isPartBrokenKilling = value; }
 	bool GetIsPartBrokenKilling()const { return m_isPartBrokenKilling; }
 
+	//ブレイクの通知
+	void RequestGuardBreakChance(std::shared_ptr<EnemyBase> target) { m_guardBreakChanceTarget = target; }
+
 
 	//内部ロックオンのために
 	std::weak_ptr<CameraManager> GetCameraManager()const { return m_cameraManager; }
@@ -286,6 +293,7 @@ private:
 	bool CanUltFinish()const;//専用必殺技(PlayerStateUlt)を出せるかどうか//必殺技状態中に地上の特定のステートからだけ
 
 	void UpdateSoftTarget();//内部ターゲットの消去条件をチェック
+	void UpdateGuardBreakChance();//チャンス状態へ
 
 	//頭を向ける
 	void UpdatePlayerHeadLook();
@@ -362,6 +370,7 @@ private:
 	//部位破壊したターゲット//サーチはロックオンマネージャーに任せてる
 	std::weak_ptr<EnemyBase> m_partBrokenTarget;
 	bool m_isPartBrokenKilling = false;//確殺演出中かどうか//trueの間はロックオンマネージャーが確殺対象を更新しない
+	std::weak_ptr<EnemyBase> m_guardBreakChanceTarget;//ブレイクした敵
 
 	//壁走り、壁キック用
 	//当たった壁との情報//壁走りの開始位置の判定に使う
@@ -394,6 +403,8 @@ private:
 	friend class PlayerStateWallStay;
 	friend class PlayerStateWallRunKick;
 	friend class PlayerAttackParried;
+	friend class PlayerStateGuardBreakChance;
+	friend class PlayerStateGuardBreakAttack;
 	//武器
 	friend class PlayerWeapon;
 

@@ -10,6 +10,8 @@
 enum class EnemyType : int
 {
 	Swordman,
+	Gunner,
+	Bazooka,
 };
 
 /// <summary>

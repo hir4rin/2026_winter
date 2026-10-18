@@ -15,6 +15,10 @@ namespace
 	const std::string kPlayerUltWeaponModelPath = "data/Player_Weapon/red_katana_ult.mv1";
 
 	const std::string kEnemyModelpath = "data/Enemy/Enemy.mv1";
+	const std::string kEnemyGunnerModelPath = "data/Enemy/EnemyGun.mv1";
+	const std::string kEnemyGunnerWeaponModelPath = "data/Enemy/EnemyGun/AK74.mv1";//ガンナーの銃
+	const std::string kEnemyGunnerPartLeftArmModelPath = "data/Enemy/Part/Gunner/LeftArm.mv1";//ソードマンの左腕から盾を外したもの
+	const std::string kEnemyBazookaWeaponModelPath = "data/Enemy/EnemyBazooka/RPG7.mv1";//バズーカ兵のRPG7
 
 	//部位破壊で落ちるパーツのモデル//原点はそれぞれのボーンの付け根
 	const std::string kEnemyPartLeftArmModelPath = "data/Enemy/Part/Swordman/LeftArm.mv1";
@@ -54,6 +58,10 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::EnemyModel] = MV1LoadModel(kEnemyModelpath.c_str());
 	m_asyncHandles[AsyncData::EnemyPartLeftArmModel] = MV1LoadModel(kEnemyPartLeftArmModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyPartHeadModel] = MV1LoadModel(kEnemyPartHeadModelPath.c_str());
+	m_asyncHandles[AsyncData::EnemyGunnerModel] = MV1LoadModel(kEnemyGunnerModelPath.c_str());
+	m_asyncHandles[AsyncData::EnemyGunnerWeaponModel] = MV1LoadModel(kEnemyGunnerWeaponModelPath.c_str());
+	m_asyncHandles[AsyncData::EnemyGunnerPartLeftArmModel] = MV1LoadModel(kEnemyGunnerPartLeftArmModelPath.c_str());
+	m_asyncHandles[AsyncData::EnemyBazookaWeaponModel] = MV1LoadModel(kEnemyBazookaWeaponModelPath.c_str());
 	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
 	m_asyncHandles[AsyncData::DemoStageModel] = MV1LoadModel(kDemoStageModelPath.c_str());
 
@@ -87,6 +95,10 @@ void System::Terminate()
 	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyPartLeftArmModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyPartHeadModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyGunnerModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyGunnerWeaponModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyGunnerPartLeftArmModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::EnemyBazookaWeaponModel]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::EnemyHitEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::EnemyHitEffectUlt]);
 	//ボス

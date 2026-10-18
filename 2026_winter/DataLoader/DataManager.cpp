@@ -16,6 +16,10 @@ namespace
 
     const std::string kEnemySwordmanAnimPath = "data/Enemy/EnemySwordmanAnim.csv";
     const std::string kEnemySwordmanAttackPath = "data/Enemy/EnemySwordmanAttack.csv";
+    const std::string kEnemyGunnerAnimPath = "data/Enemy/EnemyGunnerAnim.csv";
+    const std::string kEnemyGunnerAttackPath = "data/Enemy/EnemyGunnerAttack.csv";
+    const std::string kEnemyBazookaAnimPath = "data/Enemy/EnemyBazookaAnim.csv";
+    const std::string kEnemyBazookaAttackPath = "data/Enemy/EnemyBazookaAttack.csv";
     const std::string kEnemyStatusPath = "data/Enemy/EnemyStatus.csv";
 
     const std::string kBossAnimPath = "data/Enemy/Boss/BossAnim.csv";
@@ -89,6 +93,10 @@ void DataManager::LoadAll()
     LoadAnimData(kPlayerAnimPath, m_playerAnimData);
     LoadAnimData(kEnemySwordmanAnimPath, m_enemySwordmanAnimData);
     LoadEnemySwordmanAttackRawData();
+    LoadAnimData(kEnemyGunnerAnimPath, m_enemyGunnerAnimData);
+    LoadEnemyGunnerAttackRawData();
+    LoadAnimData(kEnemyBazookaAnimPath, m_enemyBazookaAnimData);
+    LoadEnemyBazookaAttackRawData();
     LoadEnemyStatusRawData();
 
 
@@ -123,10 +131,25 @@ void DataManager::LoadEnemySwordmanAnimData()
 
 void DataManager::LoadEnemySwordmanAttackRawData()
 {
-    std::ifstream file(kEnemySwordmanAttackPath);
-    assert(file.is_open() && "EnemySwordmanAttack.csvが開けませんでした");
+    LoadRawCsv(kEnemySwordmanAttackPath, m_enemySwordmanAttackRawData);
+}
 
-    m_enemySwordmanAttackRawData.clear();//読み込み直しのときに前のデータが残らないように消す
+void DataManager::LoadEnemyGunnerAttackRawData()
+{
+    LoadRawCsv(kEnemyGunnerAttackPath, m_enemyGunnerAttackRawData);
+}
+
+void DataManager::LoadEnemyBazookaAttackRawData()
+{
+    LoadRawCsv(kEnemyBazookaAttackPath, m_enemyBazookaAttackRawData);
+}
+
+void DataManager::LoadRawCsv(const std::string& filePath, std::vector<std::vector<std::string>>& rawData)
+{
+    std::ifstream file(filePath);
+    assert(file.is_open() && "敵の攻撃CSVが開けませんでした");
+
+    rawData.clear();//読み込み直しのときに前のデータが残らないように消す
 
     std::string line;
     while (std::getline(file, line))
@@ -134,7 +157,7 @@ void DataManager::LoadEnemySwordmanAttackRawData()
         if (!line.empty() && line.back() == '\r') line.pop_back();
         if (line.empty() || line[0] == '#') continue;
 
-        m_enemySwordmanAttackRawData.push_back(Split(line, ','));//分割したトークンのベクターを生データとして保存する
+        rawData.push_back(Split(line, ','));//分割したトークンのベクターを生データとして保存する
     }
 }
 
@@ -492,6 +515,8 @@ bool DataManager::StringToWallZoneType(const std::string& str, Collider::ColRole
 bool DataManager::StringToEnemyType(const std::string& str, EnemyType& outType)
 {
     if (str == "Swordman") { outType = EnemyType::Swordman; return true; }
+    if (str == "Gunner") { outType = EnemyType::Gunner; return true; }
+    if (str == "Bazooka") { outType = EnemyType::Bazooka; return true; }
     return false;
 }
 

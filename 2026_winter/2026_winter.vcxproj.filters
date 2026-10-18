@@ -54,6 +54,9 @@
     <ClCompile Include="Scene\StageSelectScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\ResultScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Scene\Scene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -118,6 +121,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\State\Attack\PlayerStateDashAttack.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\State\Attack\PlayerStateAttackLanding.cpp">
@@ -294,6 +303,18 @@
     <ClCompile Include="Character\Enemy\EnemySwordman.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Enemy\EnemyGunner.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\EnemyGunnerWeapon.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\EnemyBazooka.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\EnemyBazookaWeapon.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\State\Defence\EnemyGuard.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -440,6 +461,9 @@
     <ClInclude Include="Scene\StageSelectScene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\ResultScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Stage\StageInfo.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -525,6 +549,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\State\Attack\PlayerStateDashAttack.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\State\Attack\PlayerStateAttackLanding.h">
@@ -705,6 +735,18 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\EnemySwordman.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\EnemyGunner.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\EnemyGunnerWeapon.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\EnemyBazooka.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\EnemyBazookaWeapon.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Defence\EnemyGuard.h">
