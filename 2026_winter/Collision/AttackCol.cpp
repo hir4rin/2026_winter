@@ -170,8 +170,11 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 					comboInfo.isHit = true;//攻撃が当たったことを通知する//これで、攻撃の移動を止める
 				}
 			}
+
+			bool isUltimating = player->GetIsUltimating() && m_attackData->attackType == AttackType::SkillAttack;
+
 			//もしプレイヤーの必殺技攻撃だったら
-			if (GetTag().role == Collider::ColRole::UltAttack)
+			if (GetTag().role == Collider::ColRole::UltAttack || isUltimating)
 			{
 				auto cameraManager = player->GetCameraManager().lock();
 
@@ -292,15 +295,19 @@ void AttackCol::PlayerGaugeUp(Collider& other)
 	if (!player)return;
 
 
+	//スキル攻撃・ガードブレイクアタックかどうか
+	const bool isSkillAttack = m_attackData->attackType == AttackType::SkillAttack ||
+		m_attackData->attackType == AttackType::GuardBreakAttack;
+
 	//通常攻撃ならスキル攻撃をあげる
-	if (!player->GetIsRaven())
+	if (!isSkillAttack)
 	{
 		//スキルゲージの上昇
 		player->AddSkillGauge(kSkillGaugeGainPerHit);
 		//必殺技ゲージの上昇
 		player->AddUltGauge(kUltGaugeGainPerHitNormal);
 	}
-	//raven状態なら
+	//スキル攻撃なら
 	else
 	{
 		//必殺技ではないのならスキルゲージを上げる//スキル攻撃

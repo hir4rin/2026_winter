@@ -47,15 +47,6 @@ void PlayerStateIdle::Update()
 
 
 
-	//鴉状態の更新
-	if (input.IsPressed("LB"))
-	{
-		player->m_isRaven = true;
-	}
-	else
-	{
-		player->m_isRaven = false;
-	}
 
 	//暗殺
 	if (input.IsTriggered("Y") && player->CanAssasin())

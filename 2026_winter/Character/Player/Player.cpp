@@ -40,8 +40,6 @@ namespace
 	constexpr float kCameraShakePower = 2.5f;//カメラの揺れの強さ
 	constexpr float kCameraShakeTime = 5.0f;//カメラの揺れの時間
 
-	constexpr float kWingScale = 0.35f;//鴉の羽モデルのスケール
-	const Vector3 kWingOffset = Vector3(0.0f, -10.0f, -40.0f);//鴉の羽モデルのオフセット
 
 	constexpr float kBloodWingScale = 14.0f;//必殺技状態の翼エフェクトのスケール//エフェクトは長さ10ほどで作っている
 	const char* const kBloodWingFrameName = "spine_05";//翼の付け根にするボーン//背骨の一番上(肩甲骨の高さ)
@@ -95,10 +93,6 @@ Player::Player()
 	const auto& animData = DataManager::GetInstance().GetPlayerAnimData();
 	m_animNames = animData.animNames;
 
-	//鴉の羽のモデルの読み込み
-	m_wingModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::PlayerWingModel));
-	WingUpdate();//鴉状態の羽の更新
-
 	//必殺技状態の翼の付け根のボーン
 	m_bloodWingFrame = MV1SearchFrame(m_modelHandle, kBloodWingFrameName);
 	m_bloodWingAttackFrame = MV1SearchFrame(m_attackModelHandle, kBloodWingFrameName);
@@ -113,7 +107,6 @@ Player::~Player()
 	if (m_bloodWingPlayingHandle != -1)StopEffekseer3DEffect(m_bloodWingPlayingHandle);
 	MV1DeleteModel(m_modelHandle);
 	MV1DeleteModel(m_attackModelHandle);
-	MV1DeleteModel(m_wingModelHandle);
 	DeleteGraph(m_whiteHandle);
 }
 
@@ -246,7 +239,6 @@ void Player::Update(Camera& camera)
 
 
 	//これらは押し戻しの時に呼ばれないのでずれる→そこでも呼ぶ必要あり
-	WingUpdate();
 	BloodWingUpdate();
 	m_weapon->Update();//武器の更新
 
@@ -288,8 +280,6 @@ void Player::Draw()
 			MV1DrawModel(m_attackModelHandle);
 		}
 
-		//鴉状態のときのみ描画
-		if (m_isRaven)MV1DrawModel(m_wingModelHandle);
 		m_weapon->Draw();//武器
 	}
 	//コンボチェーンの描画
@@ -698,49 +688,6 @@ void Player::UpdateAngle()
 	//	MV1SetMatrix(m_modelHandle, Matrix4x4::ToDxLibMatrix(mtx));
 }
 
-void Player::WingUpdate()
-{
-	//モデルハンドルの取得
-	int modelHandle = -1;
-	if(m_anim.GetModelHandleForCheck() == m_modelHandle)
-	{
-		modelHandle = m_modelHandle;
-	}
-	else
-	{
-		modelHandle = m_attackModelHandle;
-	}
-
-
-	//モデルフレームのローカルワールド行列を取得
-	MATRIX mat = MV1GetFrameLocalWorldMatrix(modelHandle, kPlayerNeckBoneIndex);//モデルフレームのローカルワールド行列を取得
-
-	////武器の位置を取得
-	//Vector3 weaponPos = MV1GetFramePosition(m_ownerHandle, slotIndex);
-
-	//MATRIX transmat = MGetTranslate(weaponPos.ToDxLibVector());
-	//90度回転させる
-	MATRIX rotmat = MGetRotY(DX_PI_F / 2.0f);//回転行列を作成する//90度回転させる
-	MATRIX rotXmat = MGetRotX(DX_PI_F / 2.0f);//回転行列を作成する//90度回転させる
-	MATRIX rotZmat = MGetRotZ(DX_PI_F / 2.0f);//回転行列を作成する//90度回転させる
-
-	rotmat = MMult(rotXmat, rotmat);//回転行列を掛ける//90度回転させる
-	rotmat = MMult(rotZmat, rotmat);//回転行列を掛ける//90度回転させる
-	mat = MMult(rotmat, mat);//回転行列を掛ける//90度回転させる
-
-	MATRIX scale = MGetScale(VGet(kWingScale, kWingScale, kWingScale));//スケーリング行列を作成する//モデルの大きさを半分にする
-
-	mat = MMult(scale, mat);//スケーリング行列を掛ける//モデルの大きさを半分にする
-
-	//オフセット
-	MATRIX transmat = MGetTranslate(kWingOffset.ToDxLibVector()); // -Z が後ろ
-	//これを先に掛けることで、ローカル空間でのオフセットを適用する
-	mat = MMult(transmat, mat);
-
-	//モデルにマトリクスをセット
-	MV1SetMatrix(m_wingModelHandle, mat);
-}
-
 void Player::BloodWingUpdate()
 {
 	//必殺技状態の間だけ出す//スキル攻撃でモデルを消している間は翼も消す
@@ -999,7 +946,6 @@ void Player::ApplyPos()
 		m_comboInfo.isAirSkillAttack = false;
 	}
 
-	WingUpdate();
 	BloodWingUpdate();
 	m_weapon->Update();//武器の更新
 }

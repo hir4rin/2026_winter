@@ -685,15 +685,8 @@ void EnemyBase::PlayBloodSplash(Collider& other)
 		const int pattern = GetRand(kBloodSplashPatternNum - 1);
 		effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodSplashEffectA) + pattern);
 	}
-	//エフェクトの+Zを、プレイヤーから敵へ向かう方向(斬られて血が飛ぶ方向)に向ける
-	Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
-	toEnemy.y = 0.0f;
-	if (toEnemy.Magnitude() <= 0.0f)
-	{
-		toEnemy = player->GetTargetVec();//重なっているときはプレイヤーの正面に飛ばす
-	}
 	const Vector3 bloodPos(m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
-	const int playingHandle = EffectManager::GetInstance().Play(effect, bloodPos, atan2f(toEnemy.x, toEnemy.z), kBloodSplashScale);
+	const int playingHandle = PlayBlood(effect, bloodPos);
 
 	//必殺技中の血は、タイムスケールに関係なくkBloodSplashUltSpeedの速さで飛ばす
 	//(当たった直後にスローがかかるので、EffectManagerが毎フレーム速さを設定し直す)
@@ -701,6 +694,28 @@ void EnemyBase::PlayBloodSplash(Collider& other)
 	{
 		EffectManager::GetInstance().SetOwnSpeed(playingHandle, kBloodSplashUltSpeed);
 	}
+}
+
+int EnemyBase::PlayBlood(AsyncData effect, const Vector3& pos)
+{
+	auto player = m_player.lock();
+	if (!player)return -1;
+
+	//エフェクトの+Zを、プレイヤーから敵へ向かう方向(斬られて血が飛ぶ方向)に向ける
+	Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
+	toEnemy.y = 0.0f;
+	if (toEnemy.Magnitude() <= 0.0f)
+	{
+		toEnemy = player->GetTargetVec();//重なっているときはプレイヤーの正面に飛ばす
+	}
+	return EffectManager::GetInstance().Play(effect, pos, atan2f(toEnemy.x, toEnemy.z), kBloodSplashScale);
+}
+
+void EnemyBase::PlayHeadBreakBlood()
+{
+	if (m_status.headFrame < 0)return;
+	const Vector3 neckPos = Vector3::FromDxLibVector(MV1GetFramePosition(m_modelHandle, m_status.headFrame));
+	PlayBlood(AsyncData::BloodSplashEffectB, neckPos);
 }
 
 void EnemyBase::FinisherPerformanceProcess()

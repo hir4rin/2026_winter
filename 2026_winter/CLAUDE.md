@@ -411,6 +411,28 @@
   - 手元の値はガンナーと同じ(銃のモデルの向きをそろえたので同じ値で合う)。銃のアニメのままなので、肩に担がずライフルと同じ持ち方。
 - MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
 
+### 2026-10-19 暗殺・確殺の距離制限
+- `LockOnManager.cpp` 先頭に `kAssasinRange` / `kPartBrokenRange`(どちらも400・仮)と `kExecuteReleaseMargin`(50)。
+- `TryAssasinTarget` / `TryPartBrokenTarget`: 探す範囲を `範囲 * i / kLockOnCheckNum`(400なら133→266→400)にした(前はロックオンと共通の300×i、最大900)。
+- `CheckAssasinTarget` / `CheckPartBrokenTarget`: 外す距離を `kLockOnMaxDistance`(10000)から `範囲 + kExecuteReleaseMargin` にした。
+- デバッグ表示 `LockOnManager::DebugDraw()`(SceneMain の `#ifdef _DEBUG` で呼ぶ): プレイヤーの足元に円(暗殺=紫、確殺=赤。明るい=入る距離、暗い=外れる距離)、
+  対象の頭の上に球(暗殺=紫、確殺=赤。確殺の球は少し上)。範囲が同じ値だと円は重なる。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-10-19 確殺・暗殺で頭を切ったときに血を出す
+- `EnemyBase::PlayBlood(effect, pos)`: `PlayBloodSplash` から再生部分を切り出したもの(+Z をプレイヤー→敵の向き、スケール20)。再生ハンドルを返す。
+- `EnemyBase::PlayHeadBreakBlood()`: 首の付け根(`m_status.headFrame` の位置)から `BloodSplash_B`(真上に噴き上がる)を出す。
+- `OnHeadBreak()` を呼んでいる3か所(`EnemyPartBrokenKilled` のパターンA/B、`EnemyAssasined`)の直後で呼ぶ。暗殺でも出る。
+- 斬るフレームと頭が飛ぶフレームがずれて見えたら、血用のフレームを別に持つ(`m_anim.IsAnimFrameOver` で判定)。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-10-19 鴉状態(m_isRaven)を削除
+- `Player::m_isRaven` / `GetIsRaven` と、鴉の羽(`m_wingModelHandle` / `WingUpdate` / `kWingScale` / `kWingOffset`)を削除。
+  Idle/Move/FastRun の「LB を押している間は鴉状態」も消した(LB は今は何もしない)。
+- `AttackCol::PlayerGaugeUp` は鴉状態の代わりに `m_attackData->attackType`(SkillAttack / GuardBreakAttack)でスキル攻撃を判別する。ゲージの増え方は前と同じ。
+- `AsyncData::PlayerWingModel` の読み込み・解放(System)は残っている。要らなければ消す。
+- MSBuild(Debug x64)でビルドは通った。
+
 ---
 
 ## TODO / 次にやること

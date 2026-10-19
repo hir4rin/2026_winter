@@ -62,8 +62,6 @@ void PlayerStateSkillAttack::Enter()
 		//内部ターゲットの敵が地上にいるなら
 	}
 
-	//スキル攻撃中は鴉状態にする
-	player->m_isRaven = true;
 
 	//スキル1,2はモデルを消して、代わりに分身エフェクトを出す
 	PlayGhostEffect(currentComboIndex);
@@ -231,7 +229,6 @@ void PlayerStateSkillAttack::Exit()
 		if (!m_isComboTransition)
 		{
 			player->m_comboInfo.currentComboIndex = ComboIndex::None;//攻撃していない状態に戻す
-			player->m_isRaven = false;//鴉状態を解除する
 			player->m_isCameraFocusOverride = false;//カメラの注視点を通常に戻す
 		}
 		

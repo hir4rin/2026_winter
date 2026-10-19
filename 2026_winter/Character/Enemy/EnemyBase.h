@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Character/CharacterBase.h"
+enum class AsyncData : int;
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
 #include "Character/Enemy/State/Locomotion/EnemyChase.h"
 #include "Character/Enemy/State/Defence/EnemyGuard.h"
@@ -357,6 +358,8 @@ protected:
 	void ToPlayerLook();//Playerの方を向く
 	void FinishHitProcess();//Hitの終了処理
 	void PlayBloodSplash(Collider& other);//血しぶきを再生する//otherは当たった攻撃の判定
+	int PlayBlood(AsyncData effect, const Vector3& pos);//posで血を再生する(+Zはプレイヤー→敵の向き)//再生ハンドルを返す
+	void PlayHeadBreakBlood();//首の付け根から血を出す(確殺・暗殺で頭を切ったとき)
 	//確殺、暗殺後のenemyの状態制御
 	void FinisherPerformanceProcess();//確殺、暗殺後のenemyの状態制御
 

@@ -49,15 +49,6 @@ void PlayerStateFastRun::Update()
 	auto& input = Input::GetInstance();
 	//Move中は上下差がないので、毎フレームすべて初期化
 	player->m_rb.m_vel = Vector3(0, 0, 0);
-	//鴉状態の更新
-	if (input.IsPressed("LB"))
-	{
-		player->m_isRaven = true;
-	}
-	else
-	{
-		player->m_isRaven = false;
-	}
 
 	//暗殺
 	if (input.IsTriggered("Y") && player->CanAssasin())

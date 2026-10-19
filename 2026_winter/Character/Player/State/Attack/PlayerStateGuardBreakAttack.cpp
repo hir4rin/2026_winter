@@ -29,7 +29,6 @@ void PlayerStateGuardBreakAttack::Enter()
 	if (!player) return;
 	DecideAttackDirection();
 
-	player->m_isRaven = true;
 	player->m_isCameraFocusOverride = false;
 	player->m_cameraFocusEnemy.reset();
 
@@ -63,7 +62,6 @@ void PlayerStateGuardBreakAttack::Exit()
 	{
 		player->m_comboInfo.currentComboIndex = ComboIndex::None;
 		player->m_comboInfo.isHit = false;
-		player->m_isRaven = false;
 		player->m_isCameraFocusOverride = false;
 	}
 

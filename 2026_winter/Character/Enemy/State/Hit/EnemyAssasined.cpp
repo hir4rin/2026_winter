@@ -77,6 +77,7 @@ void EnemyAssasined::Update()
 		{
 			m_state = AssasinState::Execute;
 			owner->OnHeadBreak();
+			owner->PlayHeadBreakBlood();
 		}
 		break;
 	case AssasinState::Execute:

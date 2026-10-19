@@ -211,8 +211,6 @@ public:
 	//血殺(必殺技ゲージ)を最大にする//ラストヒットイベント演出用
 	void MaxUltGauge() { m_comboInfo.UltGauge = kMaxGaugeValue; }
 
-	//鴉状態かどうか
-	bool GetIsRaven()const { return m_isRaven; }
 
 	//カメラが注視するプレイヤーの座標//打ち上げ(スキル0)が当たってからスキル1が終わるまでは、Yだけ打ち上げた敵の高さになる
 	Vector3 GetCameraFocusPos()const;
@@ -251,6 +249,8 @@ public:
 
 	//ブレイクの通知
 	void RequestGuardBreakChance(std::shared_ptr<EnemyBase> target) { m_guardBreakChanceTarget = target; }
+	//必殺技状態中かどうか
+	bool GetIsUltimating() { return m_isUltimating; }
 
 
 	//内部ロックオンのために
@@ -280,7 +280,6 @@ private:
 
 	void InitializeComboChain();//CSVからコンボデータの読み込みをする
 	void UpdateAngle();//回転処理
-	void WingUpdate();//鴉状態の羽の更新
 	void BloodWingUpdate();//必殺技状態の翼エフェクトの再生・停止と、背中への追従
 	static MATRIX ScaleRotation(const MATRIX& rot, float rate);//回転行列の回転量だけを割合で弱める(回転軸はそのまま)
 	static MATRIX GetRotationOnly(const MATRIX& mat);//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
@@ -321,7 +320,6 @@ private:
 	std::shared_ptr<PlayerState> m_currentState;//プレイヤーの状態//攻撃中、移動中など//状態遷移の管理をするためのもの
 	std::shared_ptr<PlayerState> m_prevState;//前の状態
 
-	bool m_isRaven = false;//鴉状態かどうか//攻撃が変化する
 	bool m_isUltimating = false;//必殺技状態かどうか
 	bool m_isSkillInvisible = false;//スキル攻撃中にモデル(本体・羽・武器)を描画しないか//代わりにエフェクトを出す
 	bool m_isCameraFocusOverride = false;//カメラの注視点のYを敵の高さで上書きするか//打ち上げ(スキル0)が当たってからスキル1の間だけtrue
@@ -329,7 +327,6 @@ private:
 	bool m_isTitleMode = false;//タイトル画面かどうか//trueの場合、移動方向をカメラ基準ではなく固定軸にする
 	const int kPlayerNeckBoneIndex = 25;//首のボーンのインデックス
 	int m_headFrame = -1;//頭のボーンのフレーム番号(通常のモデル)//見つからなければ-1で頭を向けない
-	int m_wingModelHandle = -1;//鴉の羽のモデルのハンドル//鴉状態の時に表示する
 	int m_bloodWingPlayingHandle = -1;//必殺技状態の翼エフェクト(再生中)のハンドル//再生していなければ-1
 	int m_bloodWingFrame = -1;//翼の付け根にする背中(肩甲骨の高さ)のボーン//通常のモデル用
 	int m_bloodWingAttackFrame = -1;//同じボーンの攻撃のモデル用

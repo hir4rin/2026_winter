@@ -152,6 +152,7 @@ void EnemyPartBrokenKilled::PatternAUpdate()
 		if (m_excuteTimer > kHeadBrokenTime)
 		{
 			owner->OnHeadBreak();
+			owner->PlayHeadBreakBlood();
 			m_state = PartBrokenKill::End;
 		}
 		break;
@@ -194,6 +195,7 @@ void EnemyPartBrokenKilled::PatternBUpdate()
 		if (m_excuteTimer > (kEndMoveFrame - kStartMoveFrame))//()は実行中のフレーム間だけを確保した
 		{
 			owner->OnHeadBreak();
+			owner->PlayHeadBreakBlood();
 			m_state = PartBrokenKill::End;
 		}
 		break;

@@ -26,6 +26,8 @@ public:
 	bool IsLockOn()const { return !m_lockTarget.expired(); }//まだいるときはfalseが返ってくる
 	std::shared_ptr<EnemyBase> GetLockTarget()const { return m_lockTarget.lock(); }
 
+	//暗殺・確殺の範囲と対象を描く
+	void DebugDraw()const;
 
 
 	
