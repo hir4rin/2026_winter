@@ -8,4 +8,6 @@ enum class  AttackType
 	SkillAttack = 2,
 	UltAttack = 3,
 	GuardBreakAttack = 4,
+	ImpactAttack = 5,//着地の衝撃
+	ImpactSkillAttack = 6,//スキルの着地の衝撃
 };

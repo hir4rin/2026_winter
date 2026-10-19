@@ -26,6 +26,7 @@ public:
 		m_attackData->knockBackPower = power;
 		m_attackData->isKirimomi = isKirimomi;
 	}
+	void SetIsLastHit(bool isLastHit) { m_attackData->isLastHit = isLastHit; }
 protected:
 	void PlayerAttackOnCollision(Collider& other);//Playerの攻撃が当たった時の処理
 	void EnemyAttackOnCollision(Collider& other);//Enemyの攻撃が当たった時の処理

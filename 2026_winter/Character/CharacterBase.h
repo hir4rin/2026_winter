@@ -44,6 +44,8 @@ public:
 		float kAttackColOffset;//攻撃判定を前に出す距離
 		bool isKirimomi;//吹っ飛ぶかどうか
 		AttackType attackType = AttackType::None;//弱攻撃か強攻撃か//プレイヤーの通常攻撃以外はNone
+		bool isLastHit = false;//最後の区間か
+		int comboIndex = -1;//コンボの段数
 	};
 
 	//被ダメ情報

@@ -362,6 +362,7 @@ bool PlayerStateAttackBase::UpdateAttackWindow(AttackCol& col, const ComboNode& 
 			//途中はその場で削るだけ
 			col.SetKnockBack(Vector3(0, 0, 0), false);
 		}
+		col.SetIsLastHit(isLastHit);
 	}
 	m_lastAttackWindow = activeWindow;//次のフレーム用に覚えとく
 
@@ -427,7 +428,10 @@ void PlayerStateAttackBase::InpuctAttackSetUp()
 			.knockBackFrame = totalAnimFrame,
 			.hitStopTime = kHitStopTime,
 			.kAttackColOffset = kAttackColOffset,
-			.isKirimomi = true
+			.isKirimomi = true,
+			.attackType = node.attackType == AttackType::SkillAttack ? AttackType::ImpactSkillAttack : AttackType::ImpactAttack,
+			.isLastHit = true,
+			.comboIndex = player->m_comboInfo.currentComboIndex
 		};
 		//AttackColを生成
 		player->m_burstAttackCol = std::make_shared<AttackCol>(m_owner, dropAttackData);
@@ -460,7 +464,8 @@ void PlayerStateAttackBase::CreateAttackCol(const ComboNode& node)
 	.hitStopTime = kHitStopTime,
 	.kAttackColOffset = kAttackColOffset,
 	.isKirimomi = node.isKirimomi,
-	.attackType = node.attackType
+	.attackType = node.attackType,
+	.comboIndex = player->m_comboInfo.currentComboIndex
 	};
 
 	m_attackCol = std::make_shared<AttackCol>(m_owner, player->m_attackData);

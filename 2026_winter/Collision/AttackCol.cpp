@@ -171,7 +171,15 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				}
 			}
 
-			bool isUltimating = player->GetIsUltimating() && m_attackData->attackType == AttackType::SkillAttack;
+			//スキル1・2の最後の一撃、スキル3の着地で血殺
+			const int comboIndex = m_attackData->comboIndex;
+
+			const bool isUltTriggerSkill = comboIndex == ComboIndex::SkillAttack1 ||
+				comboIndex == ComboIndex::AirSkillAttack1 ||
+				comboIndex == ComboIndex::SkillAttack2 ||
+				m_attackData->attackType == AttackType::ImpactSkillAttack;
+
+			bool isUltimating = player->GetIsUltimating() && m_attackData->isLastHit && isUltTriggerSkill;
 
 			//もしプレイヤーの必殺技攻撃だったら
 			if (GetTag().role == Collider::ColRole::UltAttack || isUltimating)

@@ -433,6 +433,15 @@
 - `AsyncData::PlayerWingModel` の読み込み・解放(System)は残っている。要らなければ消す。
 - MSBuild(Debug x64)でビルドは通った。
 
+### 2026-10-19 血殺の発動をスキル1・2の最後の一撃に限定
+- `AttackData` に `isLastHit` / `comboIndex` を追加。`CreateAttackCol` で comboIndex、`UpdateAttackWindow` の新しい区間で `SetIsLastHit(最後の区間か)`(単発も true)。
+- `AttackCol` の血殺条件: `GetIsUltimating() && isLastHit && comboIndex が SkillAttack1/AirSkillAttack1/SkillAttack2`。attackType は見なくなった。
+- 同じ if の中にある被ダメージのエフェクトの向きの処理も、最後の一撃のときだけになる(今はエフェクトがコメントアウトされている)。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+- (追記) スキル3の着地の衝撃(`m_burstAttackCol`)でも血殺。`AttackType` に `ImpactAttack`(5) / `ImpactSkillAttack`(6) を追加し、
+  `InpuctAttackSetUp` で今の段の attackType が SkillAttack なら ImpactSkillAttack、それ以外(空中強攻撃の着地)は ImpactAttack。comboIndex・isLastHit=true も入れる。
+  前は None だったが、敵側の attackType の判定(弱でガード・スキルでガードしない等)はどちらにも当たらないので挙動は同じ。
+
 ---
 
 ## TODO / 次にやること
