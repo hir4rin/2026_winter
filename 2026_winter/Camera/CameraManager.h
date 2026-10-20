@@ -38,7 +38,10 @@ public:
 		PartBrokenACameraEnd,
 		PartBrokenBCamera,
 		PartBrokenBCameraStart,
-		UltStartCamera
+		UltStartCamera,
+		SkillKessatuCamera,
+		AirAssasinCamera,
+		AirAssasinCameraStart
 
 	};
 

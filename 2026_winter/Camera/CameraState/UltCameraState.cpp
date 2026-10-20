@@ -26,7 +26,6 @@ namespace
 	constexpr float kBlendDuration = 45.0f;//ブレンドにかけるフレーム数
 	constexpr float kBlendEasingPower = 0.5f;//ブレンドのイージング指数
 
-	constexpr float kCameraViewAngle = DX_PI_F / 3.0f;
 	constexpr float kCameraNear = 10.0f;//ニアクリップ(0だとDxLibの深度計算が壊れて何も映らなくなる)
 	constexpr float kCameraFar = 5000.0f;//ファークリップ(SceneMainと同じ値)
 }
@@ -45,7 +44,6 @@ void UltCameraState::Enter(CameraData data)
 	m_angleV = data.angleV;
 	ResetBlend(data.pos, data.target);
 
-	SetupCamera_Perspective(kCameraViewAngle);
 	SetCameraNearFar(kCameraNear, kCameraFar);
 }
 

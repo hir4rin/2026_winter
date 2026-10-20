@@ -216,6 +216,12 @@
     <ClCompile Include="Camera\CameraState\Assasin\AssasinCameraStart.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Camera\CameraState\Assasin\AirAssasinCamera.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\CameraState\Assasin\AirAssasinCameraStart.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Camera\CameraState\ResultCameraState.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -232,6 +238,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\UltStartCamera.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\LockOnManager.cpp">
@@ -310,6 +319,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\EnemyBazooka.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\BossEnemyPirate.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\EnemyBazookaWeapon.cpp">
@@ -391,6 +403,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\State\Hit\EnemyAssasined.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\State\Hit\EnemyAirAssasined.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateAirAssasin.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\State\Hit\EnemyPartBrokenKilled.cpp">
@@ -647,6 +665,12 @@
     <ClInclude Include="Camera\CameraState\Assasin\AssasinCameraStart.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Camera\CameraState\Assasin\AirAssasinCamera.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\CameraState\Assasin\AirAssasinCameraStart.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Camera\CameraState\ResultCameraState.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -663,6 +687,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\UltStartCamera.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\LockOnManager.h">
@@ -746,6 +773,9 @@
     <ClInclude Include="Character\Enemy\EnemyBazooka.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\Enemy\BossEnemyPirate.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Character\Enemy\EnemyBazookaWeapon.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -825,6 +855,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Hit\EnemyAssasined.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\State\Hit\EnemyAirAssasined.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateAirAssasin.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Hit\EnemyPartBrokenKilled.h">

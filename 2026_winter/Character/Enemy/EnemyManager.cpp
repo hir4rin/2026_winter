@@ -3,6 +3,7 @@
 #include "EnemySwordman.h"
 #include "EnemyGunner.h"
 #include "EnemyBazooka.h"
+#include "BossEnemyPirate.h"
 #include "Character/Player/Player.h"
 #include "Main/Input.h"
 #include "Main/System.h"
@@ -125,6 +126,7 @@ void EnemyManager::SpawnEnemy()
 	auto enemy = std::make_shared<EnemySwordman>(m_player,Vector3());
 	enemy->Init();
 	enemy->SetPatrolRoute(0);//パトロールルート0を設定
+	enemy->SetIsPlayerFound(false);
 	enemy->SetPatrolState();
 	m_enemies.push_back(enemy);
 }
@@ -141,6 +143,13 @@ void EnemyManager::StartPhase(int phase)
 		m_enemies.push_back(enemy);
 		m_phaseEnemies.push_back(enemy);
 	}
+}
+
+void EnemyManager::DebugClearEnemies()
+{
+	m_enemies.clear();
+	m_corpses.clear();
+	m_phaseEnemies.clear();
 }
 
 bool EnemyManager::IsPhaseEnemiesAllDead() const
@@ -168,6 +177,9 @@ std::shared_ptr<EnemyBase> EnemyManager::CreateEnemy(const EnemySpawnData& data)
 	case EnemyType::Bazooka:
 		enemy = std::make_shared<EnemyBazooka>(m_player, data.position);
 		break;
+	case EnemyType::BossEnemyPirate:
+		enemy = std::make_shared<BossEnemyPirate>(m_player, data.position);
+		break;
 	default:
 		return nullptr;
 	}
@@ -181,12 +193,14 @@ std::shared_ptr<EnemyBase> EnemyManager::CreateEnemy(const EnemySpawnData& data)
 		break;//Initで設定済み
 	case EnemyInitialState::Patrol:
 		//ルートが無ければ、その場で見張る
-		if (data.route.empty()) enemy->SetGuardPoint();
+		if (data.route.empty()) enemy->SetWatchPoint();
 		else enemy->SetPatrolPoints(data.route);
+		enemy->SetIsPlayerFound(false);
 		enemy->SetPatrolState();
 		break;
-	case EnemyInitialState::Guard:
-		enemy->SetGuardPoint();
+	case EnemyInitialState::Watch:
+		enemy->SetWatchPoint();
+		enemy->SetIsPlayerFound(false);
 		enemy->SetPatrolState();
 		break;
 	}

@@ -1,2 +1,3 @@
 #name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg
 Area00,21.0031,100,18771.8,997,300,300,0
+Area_Boss,0,-1100,29800,2400,300,500,0

@@ -11,6 +11,7 @@
 #include "Character/Player/State/Attack/PlayerStateSkillAttack.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateUlt.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateAssasin.h"//以下同文
+#include "Character/Player/State/Attack/PlayerStateAirAssasin.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStatePartBrokenKill.h"//以下同文
 #include "Character/Player/State/Defence/PlayerStateDie.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateDashAttack.h"//以下同文
@@ -388,6 +389,7 @@ private:
 	friend class PlayerStateSkillAttack;
 	friend class PlayerStateUlt;
 	friend class PlayerStateAssasin;
+	friend class PlayerStateAirAssasin;
 	friend class PlayerStatePartBrokenKill;
 	friend class PlayerStateDie;
 	friend class PlayerStateDashAttack;

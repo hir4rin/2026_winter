@@ -117,6 +117,7 @@ protected:
 	float m_tiltAngle = 0.0f;//今の傾き(モデルの前後軸まわり)
 	float m_targetTiltAngle = 0.0f;//目標の傾き
 	float m_headAngle = 0.0f;//今の頭の向き(体の正面からの角度)
+	float m_modelScale = 1.0f;//モデルの大きさ//ボスを大きくする用
 
 
 	Vector3 m_targetVec = {};//移動したい方向のベクトル

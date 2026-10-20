@@ -28,7 +28,6 @@ void EnemyAttack::Enter()
 
 	const auto& node = owner->GetAttackNode(owner->m_currentAttackIndex);
 
-
 	//animationの初期化
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(node.animName), false,node.animTimeScale,node.animEndFrame,0.0f,node.blendFrame);
 	//向きはEnemyAttackPreで固定済みなので、ここではプレイヤーの方を向き直さない(向き直すと判定が避けた先に追いかけてくる)

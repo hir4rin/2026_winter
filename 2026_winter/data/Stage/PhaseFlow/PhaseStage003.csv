@@ -4,4 +4,6 @@
 2,AllDead,B1_Right,3,None,,
 3,EnterArea,Area00,4,None,,
 4,AllDead,,5,None,,
-5,AllDead,,-1,None,,
+5,AllDead,,6,None,,
+6,EnterArea,Area_Boss,7,BossAppear,,
+7,AllDead,,-1,GameClear,,

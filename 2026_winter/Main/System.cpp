@@ -19,6 +19,7 @@ namespace
 	const std::string kEnemyGunnerWeaponModelPath = "data/Enemy/EnemyGun/AK74.mv1";//ガンナーの銃
 	const std::string kEnemyGunnerPartLeftArmModelPath = "data/Enemy/Part/Gunner/LeftArm.mv1";//ソードマンの左腕から盾を外したもの
 	const std::string kEnemyBazookaWeaponModelPath = "data/Enemy/EnemyBazooka/RPG7.mv1";//バズーカ兵のRPG7
+	const std::string kBossModelPath = "data/Enemy/BossPirate/BossPirate.mv1";//ボス(海賊)
 
 	//部位破壊で落ちるパーツのモデル//原点はそれぞれのボーンの付け根
 	const std::string kEnemyPartLeftArmModelPath = "data/Enemy/Part/Swordman/LeftArm.mv1";
@@ -62,6 +63,7 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::EnemyGunnerWeaponModel] = MV1LoadModel(kEnemyGunnerWeaponModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyGunnerPartLeftArmModel] = MV1LoadModel(kEnemyGunnerPartLeftArmModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyBazookaWeaponModel] = MV1LoadModel(kEnemyBazookaWeaponModelPath.c_str());
+	m_asyncHandles[AsyncData::BossModel] = MV1LoadModel(kBossModelPath.c_str());
 	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
 	m_asyncHandles[AsyncData::DemoStageModel] = MV1LoadModel(kDemoStageModelPath.c_str());
 

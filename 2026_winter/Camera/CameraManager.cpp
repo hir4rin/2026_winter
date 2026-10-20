@@ -7,12 +7,15 @@
 #include "CameraState/LockOnCameraState.h"
 #include "CameraState/UltCameraState.h"
 #include "CameraState/UltStartCamera.h"
+#include "CameraState/SkillKessatuCamera.h"
 #include "CameraState/TitleCameraState.h"
 #include "CameraState/FinishingFirstCamera.h"
 #include "CameraState/FinishingSecondCamera.h"
 #include "CameraState/ResultCameraState.h"
 #include "CameraState/Assasin/AssasinCamera.h"
 #include "CameraState/Assasin/AssasinCameraStart.h"
+#include "CameraState/Assasin/AirAssasinCamera.h"
+#include "CameraState/Assasin/AirAssasinCameraStart.h"
 #include "CameraState/PartBroken/PartBrokenACamera.h"
 #include "CameraState/PartBroken/PartBrokenACameraStart.h"
 #include "CameraState/PartBroken/PartBrokenACameraEnd.h"
@@ -79,6 +82,7 @@ void CameraManager::Update()
 	m_renderPos = renderPos;
 
 	SetCameraPositionAndTarget_UpVecY(m_renderPos.ToDxLibVector(), m_currentState->GetTarget().ToDxLibVector());
+	SetupCamera_Perspective(m_currentState->GetFov());
 	return;
 	
 }
@@ -95,6 +99,7 @@ void CameraManager::ApplyCameraSettings()
 		SetCameraPositionAndTarget_UpVecY(
 			imguiApp::GetInstance().GetAnimatorCameraPos().ToDxLibVector(),
 			imguiApp::GetInstance().GetAnimatorCameraTarget().ToDxLibVector());
+		SetupCamera_Perspective(CameraStateBase::kDefaultFov);
 		Effekseer_Sync3DSetting();
 		return;
 	}
@@ -107,6 +112,7 @@ void CameraManager::ApplyCameraSettings()
 		SetCameraPositionAndTarget_UpVecY(
 			imguiApp::GetInstance().GetOverrideCameraPos().ToDxLibVector(),
 			imguiApp::GetInstance().GetOverrideCameraTarget().ToDxLibVector());
+		SetupCamera_Perspective(imguiApp::GetInstance().GetOverrideCameraFov());
 		//DxLib側のカメラ情報が変わったので、Effekseer(エフェクト)側のカメラ情報も合わせて更新する
 		//(これをしないとエフェクトの見た目・位置がカメラとズレる)
 		Effekseer_Sync3DSetting();
@@ -118,12 +124,14 @@ void CameraManager::ApplyCameraSettings()
 	if (battleMgr->GetPhotoMode() || battleMgr->GetStageEditMode())
 	{
 		SetCameraPositionAndTarget_UpVecY(m_photoCamPos.ToDxLibVector(), m_photoCamTarget.ToDxLibVector());
+		SetupCamera_Perspective(imguiApp::GetInstance().GetOverrideCameraFov());
 		Effekseer_Sync3DSetting();
 		return;
 	}
 
 	//m_mainCamera->CameraSetting();
 	SetCameraPositionAndTarget_UpVecY(m_renderPos.ToDxLibVector(), m_currentState->GetTarget().ToDxLibVector());
+	SetupCamera_Perspective(m_currentState->GetFov());
 	//カメラ変更を反映させる
 	Effekseer_Sync3DSetting();
 }
@@ -278,6 +286,7 @@ void CameraManager::ChangeState(std::shared_ptr<CameraStateBase> newState)
 		data.target = m_currentState->GetTarget();
 		data.angleH = m_currentState->GetCameraAngleH();
 		data.angleV = m_currentState->GetCameraAngleV();
+		data.fov = m_currentState->GetFov();
 		data.overrideSetting = m_currentState->GetOverrideBlendSetting();
 	}
 
@@ -285,6 +294,7 @@ void CameraManager::ChangeState(std::shared_ptr<CameraStateBase> newState)
 
 	if (m_currentState)
 	{
+		m_currentState->SetStartFov(data.fov);
 		m_currentState->Enter(data);
 	}
 
@@ -319,6 +329,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 	case CameraStateName::UltStartCamera:
 		newState = std::make_shared<UltStartCamera>(shared_from_this());
 		break;
+	case CameraStateName::SkillKessatuCamera:
+		newState = std::make_shared<SkillKessatuCamera>(shared_from_this());
+		break;
 	case CameraStateName::TitleCamera:
 		newState = std::make_shared<TitleCameraState>(shared_from_this());
 		break;
@@ -336,6 +349,12 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::AssasinCameraStart:
 		newState = std::make_shared<AssasinCameraStart>(shared_from_this());
+		break;
+	case CameraStateName::AirAssasinCamera:
+		newState = std::make_shared<AirAssasinCameraState>(shared_from_this());
+		break;
+	case CameraStateName::AirAssasinCameraStart:
+		newState = std::make_shared<AirAssasinCameraStart>(shared_from_this());
 		break;
 	case CameraStateName::PartBrokenACamera:
 		newState = std::make_shared<PartBrokenACamera>(shared_from_this());

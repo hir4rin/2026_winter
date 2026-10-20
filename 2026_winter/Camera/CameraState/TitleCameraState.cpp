@@ -28,7 +28,6 @@ namespace
 	constexpr float kTargetMoveDisY = 1050.0f;
 	constexpr float kTargetMoveDisZ = 1000.0f;
 
-	constexpr float kCameraViewAngle = DX_PI_F / 3.0f;//カメラの視野角
 	constexpr float kCameraNear = 0.0f;//ニアクリップ
 	constexpr float kCameraFar = 1500.0f;//ファークリップ
 
@@ -52,7 +51,6 @@ void TitleCameraState::Enter(CameraData data)
 
 	//カメラの設定
 	SetCameraPositionAndTarget_UpVecY(m_pos.ToDxLibVector(), m_target.ToDxLibVector());
-	SetupCamera_Perspective(kCameraViewAngle);
 	SetCameraNearFar(kCameraNear, kCameraFar);
 }
 

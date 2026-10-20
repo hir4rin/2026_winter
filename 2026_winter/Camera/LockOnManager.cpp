@@ -17,6 +17,7 @@ namespace
 	constexpr float kLockOnRangeExpandMult = 3.0f;//切り替え・再取得時の範囲の倍率
 
 	constexpr float kAssasinRange = 400.0f;//暗殺できる距離
+	constexpr float kAirAssasinRange = 800.0f;//空中暗殺できる距離(プレイヤーが空中のとき)
 	constexpr float kPartBrokenRange = 400.0f;//確殺できる距離
 	constexpr float kExecuteReleaseMargin = 50.0f;//暗殺・確殺の対象を外す距離の余裕(境目でのちらつき防止)
 
@@ -221,13 +222,15 @@ void LockOnManager::TryAssasinTarget()
 	if (!GetCameraInfo(cameraPos, cameraDir))return;
 
 	//細かい範囲の調整は後で調整
+	//空中なら空中暗殺の範囲
+	const float range = player->IsFloor() ? kAssasinRange : kAirAssasinRange;
 
 	//範囲内にいる敵を見つける
 	std::vector<std::shared_ptr<EnemyBase>> candidates;
 	//範囲をだんだん広げる
 	for (int i = 1; i <= kLockOnCheckNum; i++)
 	{
-		candidates = CollectEnemiesRange(kAssasinRange * i / kLockOnCheckNum);
+		candidates = CollectEnemiesRange(range * i / kLockOnCheckNum);
 		//処刑済み(確殺・暗殺が始まった)敵、空中にいる敵、プレイヤーを発見している敵は外す//範囲を広げる判定より前に外す
 		std::erase_if(candidates, [](const auto& enemy)
 		{
@@ -275,9 +278,10 @@ void LockOnManager::CheckAssasinTarget()
 	//細かい範囲の調整は後で調整
 
 
-	//離れすぎたら解除
+	//離れすぎたら解除(空中なら空中暗殺の範囲)
+	const float range = player->IsFloor() ? kAssasinRange : kAirAssasinRange;
 	float distance = (target->GetRigidBody().GetPos() - player->GetRigidBody().GetPos()).Magnitude();
-	if (distance > kAssasinRange + kExecuteReleaseMargin)
+	if (distance > range + kExecuteReleaseMargin)
 	{
 		//解除
 		player->ClearAssasinTarget();
@@ -422,8 +426,9 @@ void LockOnManager::DebugDraw() const
 	const unsigned int partBrokenReleaseColor = GetColor(128, 0, 0);
 
 	//足元に範囲(明るい色=入る距離、暗い色=外れる距離)
-	drawCircle(kAssasinRange, assasinColor);
-	drawCircle(kAssasinRange + kExecuteReleaseMargin, assasinReleaseColor);
+	const float assasinRange = player->IsFloor() ? kAssasinRange : kAirAssasinRange;//空中なら空中暗殺の範囲
+	drawCircle(assasinRange, assasinColor);
+	drawCircle(assasinRange + kExecuteReleaseMargin, assasinReleaseColor);
 	drawCircle(kPartBrokenRange, partBrokenColor);
 	drawCircle(kPartBrokenRange + kExecuteReleaseMargin, partBrokenReleaseColor);
 

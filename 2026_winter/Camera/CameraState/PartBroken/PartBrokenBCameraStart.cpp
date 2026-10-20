@@ -17,7 +17,6 @@ namespace
 
 	constexpr float kNextBlendDuration = 40.0f;//AssasinCameraStateへのSlerpのフレーム数
 
-	constexpr float kCameraViewAngle = DX_PI_F / 3.0f;//カメラの視野角
 	constexpr float kCameraNear = 10.0f;//ニアクリップ(0だとDxLibの深度計算が壊れて何も映らなくなる)
 	constexpr float kCameraFar = 5000.0f;//ファークリップ(SceneMainと同じ値)
 }
@@ -40,7 +39,6 @@ void PartBrokenBCameraStart::Enter(CameraData data)
 	m_goalTarget = data.target;
 	ResetBlend(data.pos, data.target);
 
-	SetupCamera_Perspective(kCameraViewAngle);
 	SetCameraNearFar(kCameraNear, kCameraFar);
 }
 

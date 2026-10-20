@@ -121,7 +121,7 @@ void EnemyBase::SetPatrolPoints(const std::vector<EnemySpawnRoutePoint>& route)
 	}
 }
 
-void EnemyBase::SetGuardPoint()
+void EnemyBase::SetWatchPoint()
 {
 	//今の位置で、ずっと待機する(waitTimeが負なら次へ出発しない)
 	SetPatrolPoints({ { m_rb.m_pos, -1.0f } });
@@ -486,6 +486,15 @@ void EnemyBase::OnAssasined()
 	m_isExecuted = true;
 	//StateをAssasinに変える
 	ChangeState(std::make_shared<EnemyAssasined>(GetWeakPtr()));
+	return;
+}
+
+void EnemyBase::OnAirAssasined()
+{
+	//処刑済みにする(もう一度暗殺・確殺の対象にならないようにする)
+	m_isExecuted = true;
+	//StateをAirAssasinに変える
+	ChangeState(std::make_shared<EnemyAirAssasined>(GetWeakPtr()));
 	return;
 }
 

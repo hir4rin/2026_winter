@@ -27,6 +27,10 @@ namespace
 	constexpr float kDistanceDragSpeed = 1.0f;//距離のドラッグ感度
 	constexpr float kDistanceMin = 10.0f;//注視点までの距離の最小値
 	constexpr float kDistanceMax = 5000.0f;//注視点までの距離の最大値
+	constexpr float kFovDragSpeed = 0.5f;//視野角のドラッグ感度
+	constexpr float kFovDegMin = 10.0f;//視野角の最小値(度)
+	constexpr float kFovDegMax = 120.0f;//視野角の最大値(度)
+	constexpr float kFovDegDefault = 60.0f;//視野角の標準値(度)
 
 	constexpr float kMinDistanceEpsilon = 0.0001f;//距離がこれ以下だと0割りに近くなり不安定になるため計算を中断する閾値
 
@@ -130,6 +134,7 @@ void imguiApp::DrawCameraDebugWindow(const Vector3& currentPos, const Vector3& c
 	//今実際に使われているカメラの座標・注視点を、文字として表示するだけ(この2行は編集できない)
 	ImGui::Text("Current Pos    : (%.1f, %.1f, %.1f)", currentPos.x, currentPos.y, currentPos.z);
 	ImGui::Text("Current Target : (%.1f, %.1f, %.1f)", currentTarget.x, currentTarget.y, currentTarget.z);
+	ImGui::Text("Current FOV    : %.1f deg", GetCameraFov() * kRadToDeg);
 
 	//ボタンが押された瞬間だけtrueを返す。押されたら、実際のカメラの値をこのクラスの編集用変数にコピーする
 	if (ImGui::Button("Sync From Current"))
@@ -172,6 +177,14 @@ void imguiApp::DrawCameraDebugWindow(const Vector3& currentPos, const Vector3& c
 	{
 		//角度か距離を直接いじったので、座標側もそれに合わせて計算し直す
 		RecalcPosFromAngleDistance();
+	}
+
+	//視野角(フォトモード・Override Camera中に使われる)
+	ImGui::DragFloat("FOV (deg)", &m_camFovDeg, kFovDragSpeed, kFovDegMin, kFovDegMax);
+	ImGui::SameLine();
+	if (ImGui::Button("Reset FOV"))
+	{
+		m_camFovDeg = kFovDegDefault;
 	}
 
 	ImGui::End();//"Camera Debug"ウィンドウの中身の記述はここまで、という合図

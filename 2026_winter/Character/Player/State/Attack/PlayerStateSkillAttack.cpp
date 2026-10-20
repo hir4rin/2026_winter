@@ -143,6 +143,13 @@ void PlayerStateSkillAttack::Update()
 		return;
 	}
 
+	//血殺中は入力も遷移もしない
+	if (System::GetInstance().GetBattleMgr()->GetIsUltimating())
+	{
+		player->m_anim.Update();
+		return;
+	}
+
 	//コンボ予約の入力を取る//予約を取ったらもうここは通らないようにする
 	AttackInputCheck();
 

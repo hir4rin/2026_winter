@@ -12,6 +12,7 @@ enum class EnemyType : int
 	Swordman,
 	Gunner,
 	Bazooka,
+	BossEnemyPirate,
 };
 
 /// <summary>
@@ -20,8 +21,8 @@ enum class EnemyType : int
 enum class EnemyInitialState : int
 {
 	Idle,//すぐに戦闘を始める(今までの敵と同じ)
-	Patrol,//巡回ルートを回りながらプレイヤーを探す(ルートが無ければGuardになる)
-	Guard,//その場に立ったまま、向いている方向でプレイヤーを探す
+	Patrol,//巡回ルートを回りながらプレイヤーを探す(ルートが無ければWatchになる)
+	Watch,//その場に立ったまま、向いている方向でプレイヤーを探す
 };
 
 /// <summary>

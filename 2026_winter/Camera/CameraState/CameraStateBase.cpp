@@ -117,6 +117,20 @@ void CameraStateBase::UpdateBlend(const Vector3& rawPos, const Vector3& rawTarge
 		break;
 	}
 
+	//視野角は位置とは別のイージング(カット切り替えのときはすぐに目標値にする)
+	if (m_activeBlend.mode == BlendSetting::Mode::None)
+	{
+		m_fov = m_goalFov;
+	}
+	else
+	{
+		float fovDuration = m_activeBlend.GetFovDuration();
+		float tFov = (fovDuration > 0.0f) ? m_blendElapsed / fovDuration : 1.0f;
+		tFov = std::clamp(tFov, 0.0f, 1.0f);
+		tFov = Easing::Apply(m_activeBlend.fovEasingMode, tFov, m_activeBlend.fovEasingPower);
+		m_fov = std::lerp(m_startFov, m_goalFov, tFov);
+	}
+
 	if (!m_activeBlend.isChase)
 	{
 		m_pos = easedPos;

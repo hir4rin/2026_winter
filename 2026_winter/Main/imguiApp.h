@@ -88,6 +88,8 @@ public:
 	const Vector3& GetOverrideCameraPos()const { return m_camPos; }
 	//上書き用の注視点を返す(同上)
 	const Vector3& GetOverrideCameraTarget()const { return m_camTarget; }
+	//上書き・フォトモード用の視野角を返す(ラジアン)
+	float GetOverrideCameraFov()const { return m_camFovDeg * (DX_PI_F / 180.0f); }
 
 	//カメラアニメーターが再生中かどうかを返す("Execute"ボタンを押してから再生が終わるまでtrue)
 	bool IsCameraAnimatorPlaying()const { return m_isAnimatorPlaying; }
@@ -131,6 +133,7 @@ private:
 	float m_angleHDeg = 0.0f;//注視点を中心にした水平方向の角度(度)
 	float m_angleVDeg = 0.0f;//注視点を中心にした垂直方向の角度(度)
 	float m_distance = 700.0f;//注視点までの距離
+	float m_camFovDeg = 60.0f;//視野角(度)
 
 	std::vector<CameraKeyframe> m_cameraKeyframes;//Camera Animatorで保存したキーフレームの一覧(再生順)
 	int m_selectedKeyframeIndex = -1;//Camera Keyframe Editorで今編集対象になっているキーフレームのindex(-1なら未選択)

@@ -31,6 +31,7 @@ public:
 	int GetTotalKillCount()const { return m_totalKillCount; }
 	//Group内の敵がすべて死んだかどうか
 	bool IsGroupAllDead(const std::string& groupId)const;
+	void DebugClearEnemies();//デバッグ用//敵と死体を全部消す
 private:
 	void SpawnEnemy();
 	void UpdateCorpses();//死体の数が上限を超えたら、古い順に消す

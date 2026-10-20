@@ -442,6 +442,85 @@
   `InpuctAttackSetUp` で今の段の attackType が SkillAttack なら ImpactSkillAttack、それ以外(空中強攻撃の着地)は ImpactAttack。comboIndex・isLastHit=true も入れる。
   前は None だったが、敵側の attackType の判定(弱でガード・スキルでガードしない等)はどちらにも当たらないので挙動は同じ。
 
+### 2026-10-20 ボス(BossEnemyPirate)
+- `Character/Enemy/BossEnemyPirate.h/.cpp`(EnemySwordman のコピー、名前だけ置き換え)。vcxproj/filters に登録。
+  - モデル: `data/Enemy/BossPirate/BossPirate.mv1`(既にあった `AsyncData::BossModel` で読み込む)。UE の骨格(腰=`pelvis`、左腕=38 `upperarm_l`、頭=78 `head`)。テクスチャ無し。
+  - 部位破壊で落ちるパーツは Swordman のもの(盾付きの腕・ヘルメット)を仮で使っている。
+  - 大きさ: `CharacterBase::m_modelScale`(新規、標準1.0)を `UpdateAngleAndPos` で掛ける。ボスは `kModelScale`=1.3(身長 約187→243)。
+- CSV: `BossEnemyPirateAnim.csv`(Mixamo名の9個だけ別名。残りは Swordman と同じ名前)、`BossEnemyPirateAttack.csv`(Swordman のコピー)、
+  `EnemyStatus.csv` の `BossEnemyPirate` 行(HP3000、当たり判定を約1.5倍、視界1000)。`EnemyType::BossEnemyPirate` / 配置の type `BossEnemyPirate`。
+- 配置: `Enemies003.csv` 最後の行。ボス広場の台の上(Unity の Boss マーカー 0,-11.7,315m → 0,-1170,31500)、180度(-Z、来る方を向く)、phase7、Idle、group `Boss`。
+  **Unity から配置を書き出し直すと消える**ので、Unity の EnemySpawnType にも追加すること。
+- フェーズ: `5 AllDead→6`、`6 EnterArea(Area_Boss)→7 / BossAppear`、`7 AllDead→-1 / GameClear`(イベントの中身はまだ空)。
+  `Area_Boss`(0,-1100,29800 / 2400,300,500): 坂を下りきった先、広場の入口。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(首の向きの処理が UE の骨格で変に回らないか、攻撃の距離・判定が大きさに合うか)。
+- (追記) テクスチャ: Unity の `Desktop/programm/ninja_motion/Assets/Pirate/Textures` の Albedo(4096の TGA)を 2048 の PNG にして `data/Enemy/BossPirate/Texture/` に置き、
+  `BossPirate.mv1` に貼って上書き保存した(DxLib の MV1AddTexture → MV1SetMaterialDifMapTexture → MV1SaveModelToMV1File。元の mv1 は git にある)。
+  - 割り当ては Unity のプレハブ `Pirate_Full` と同じ: 体(Body_01)・服(Cloth)・小物(Details_Weapons)・髭(Hair_01)。服と髭はアルファテスト(>128)。ディフューズ色は 1.0 にした。
+  - 法線・AO・メタリックは使っていない。体・髭の色違い(_02/_03)も未使用。
+- (追記) デバッグ: **F4でボスの一つ手前のフェーズへ飛ぶ**(Debug ビルドのみ。`SceneMain::NormalUpdate`)。
+  `PhaseManager::DebugSkipToBossPrevPhase()`: 配置CSVでボスのいるフェーズを探し、そこへ進む行の from へ `ChangePhase`(event は None)。
+  `EnemyManager::DebugClearEnemies()` で敵・死体を全部消す。その行が EnterArea なら、プレイヤーをエリアの手前(-Z側に halfZ+300、高さは箱の中心)へ移して速度を0にする。
+  ゲームでの確認はまだ(カメラが遅れて追いかけないか)。
+
+### 2026-10-20 スキル血殺用のカメラ(SkillKessatuCamera)
+- `Camera/CameraState/SkillKessatuCamera.h/.cpp`(UltCameraState のコピー、名前だけ置き換え)。vcxproj/filters に登録。
+  `CameraStateName::SkillKessatuCamera` / `CameraStateBase::Type::SkillKessatuCamera`(19)。
+- `AttackCol` のカメラ移行: `isUltimating`(スキル1・2の最後の一撃/スキル3の着地)なら SkillKessatuCamera、それ以外(UltAttack)は UltCamera。
+- コンパイルは通った(リンクはゲーム起動中で未確認)。ゲームでの確認はまだ。
+- (追記) 長さの定数も分けた(`AttackCol.cpp` 先頭): `kSkillKessatuFrame`(演出の長さ) / `kSkillKessatuSlowFrame`(スローの長さ) / `kSkillKessatuTimeScaleRate`。
+  初期値は必殺技と同じ(120 / 120 / 0.1)。`SetUltStart` も分岐の中に入れた。
+  - 注意: 演出の長さ(`m_ultCount`)は `BattleManager::Update` でタイムスケールを掛けて減るので、スロー中はほぼ減らない。
+    今の値だと演出は実フレームで約228F(スロー120F + 等速108F)。カメラ・フォグ・黒い敵・UIは演出の長さに従う。
+- MSBuild(Debug x64)でビルドは通った。
+
+### 2026-10-20 m_isPlayerFound の初期値を true に
+- `EnemyBase::m_isPlayerFound` の初期値を true にし、`SetIsPlayerFound()` を追加。
+- `EnemyManager::CreateEnemy` で Patrol / Watch の配置のときだけ false にする(デバッグ用の `SpawnEnemy` も false)。Idle 配置の敵は最初から発見済み(暗殺できない)。
+- 配置の初期状態 `Guard` を `Watch` に改名(ガードのStateと紛らわしいため)。`SetGuardPoint` → `SetWatchPoint`、配置CSVの文字列も `Watch`(Enemies003.csv / TestStage/Stage003.csv)。
+  **Unity の書き出し側も `Watch` に直すこと**(`Guard` のままだと読み込みでその行が飛ばされる)。
+- ビルドはまだ。
+
+### 2026-10-20 空中暗殺(PlayerStateAirAssasin / EnemyAirAssasined)
+- `PlayerStateAssasin` / `EnemyAssasined` のコピー。アニメだけ変更: プレイヤー `Assasin02`、敵 `fromAvobeForwardVictim`。vcxproj/filters・Player.h・EnemyBase.h(include/friend)に登録。
+  - 4段階(プレイヤー・敵とも同じフレームで進む。各定数は .cpp 先頭、敵側の値はプレイヤーと合わせる):
+    Approach(11F、敵の手前50へlerp) → Move(25F、2人とも水平に速度8で移動) → Execute(敵は頭破壊＋血、プレイヤーは止まって25F) → End(アニメ終了で終わり)。
+  - フレームはタイムスケールを掛けたゲームのフレーム(アニメのフレームではない)。カメラは Approach → Move で AssasinCamera に切り替え。
+- `EnemyBase::OnAirAssasined()`(OnAssasined と同じく処刑済みにして EnemyAirAssasined へ)。
+- 入口: `PlayerStateJump` / `PlayerStateFall` で `Y && CanAssasin()`(空中攻撃より前)。
+- 対象は `m_assasinTarget` を共通で使う。`LockOnManager` で、プレイヤーが空中(`!IsFloor()`)なら範囲を `kAirAssasinRange`(800・3D距離)にする(探す・外す・デバッグの円)。
+  見つかっている敵・空中の敵を外す条件は地上と同じ。着地すると地上の範囲(400+50)で外れる。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+- (追記) 空中暗殺用のカメラ `Camera/CameraState/Assasin/AirAssasinCamera`(`AirAssasinCameraState`) / `AirAssasinCameraStart` を追加(AssasinCamera / AssasinCameraStart のコピー、名前だけ置き換え)。
+  `CameraStateName::AirAssasinCamera / AirAssasinCameraStart`、`Type` 20 / 21。vcxproj/filters に登録。
+- (追記) `PlayerStateAirAssasin::Enter` で `AirAssasinCameraStart` に切り替える。中身を UltCamera 風に変更:
+  - 位置: 敵→プレイヤーの延長線から5度、Enter時のカメラに近いほうへずらす。水平距離300(PlayerFollowは350)、高さ250。注視点はプレイヤーから敵側へ100・高さ100。
+  - 視野角: 60°→40°へ45Fでだんだん狭くする(EaseOut、タイムスケール込み)。戻し方は下の「視野角をカメラの状態として扱う」。
+  - 遷移は地上の暗殺と同じ: `PlayerStateAirAssasin` の Enter で Start、Approach→Move で `AirAssasinCamera`(Startからは上書きブレンドでプレイヤー中心の Slerp・EaseOutBack 40F)、
+    Start 自身のタイマーでの遷移はコメントアウト。
+  - `AirAssasinCamera` の中身は PartBrokenACameraEnd と同じ: プレイヤーの向き(`GetTargetVec`)の後ろ、PlayerFollowCamera の初期値(距離350・縦 π/10・注視点の高さ150)へ向かい、
+    ブレンドが終わったら `PlayerFollowCamera`。Exit で `m_goalAngleH/V` を渡し、上書きブレンドは None。前の中身(敵側から見上げる・距離を縮める)は消した。
+  - Start にいるのは Approach の間だけ(11F)なので、視野角は 40° まで狭まりきらない。狭めきりたいなら `kZoomFrame` を短くする。
+  - MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-10-20 視野角をカメラの状態として扱う
+- `CameraStateBase` に `m_fov / m_startFov / m_goalFov`(初期値 `kDefaultFov` = 60°)。演出したいカメラは `m_goalFov` を変えるだけ。`GetFov()` はブレンドが終わっていれば目標値を返す。
+- 引き継ぎ: `CameraData::fov`。`CameraManager::ChangeState` で前のカメラの `GetFov()` を詰め、`SetStartFov(data.fov)` を **Enter の前に**呼ぶ。
+- ブレンド: `UpdateBlend` で位置と同じ t を使い、`BlendSetting::fovEasingMode / fovEasingPower`(最後に追加、初期値 EaseOut・2.0)で補間する。
+  カット切り替え(`m_activeBlend.mode == None`)のときはすぐ目標値。使われる設定は位置と同じ(新しいカメラの GetBlendSetting か、前のカメラの GetOverrideBlendSetting)。
+- 反映: `CameraManager::Update` / `ApplyCameraSettings` で `SetupCamera_Perspective(GetFov())`。
+  フォトモード(ステージ編集中も)・Override Camera は Camera Debug ウィンドウの `FOV (deg)`(`imguiApp::GetOverrideCameraFov`、10〜120°、Reset FOV で60°)。カメラアニメーターは `kDefaultFov`。
+  Camera Debug には今の視野角(`Current FOV`、DxLib の GetCameraFov)も出す。
+- 各カメラの `SetupCamera_Perspective` と `kCameraViewAngle` は消した。**新しいカメラでも SetupCamera_Perspective を呼ばないこと**。ニア・ファー(`SetCameraNearFar`)は各カメラのまま。
+  `SceneMain` の初期化と、古い `Camera.cpp` の SetupCamera_Perspective は残っている(CameraManager が毎フレーム上書きする)。
+- AirAssasinCameraStart: 視野角はブレンド設定だけで変える。Enter で `m_goalFov` = 40°。
+  60°→40° は Start の `GetBlendSetting`(30F、`kFovEasingMode/Power`)、40°→60° は Start の `GetOverrideBlendSetting`(40F、`kNextFovEasingMode/Power`)。どちらも初期値 EaseOut・2.0。
+  長さは `kFovDuration`(45F) / `kNextFovDuration`(40F)。ブレンドはタイムスケールに関係なく実フレームで進む。
+- `BlendSetting::fovDuration`(負の値なら duration と同じ。`GetFovDuration()`)。視野角だけ長さを変えられる。
+  `IsBlending()` は duration と fovDuration の長いほうまで true(視野角のほうが長いと、位置は着いていてもブレンド中扱い。ブレンドが終わったら次へ移るカメラはその分遅れる)。
+  コンパイルは通った(ゲーム起動中でリンクは未確認)。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ(空中暗殺の後のカクつきが消えたか)。
+
 ---
 
 ## TODO / 次にやること

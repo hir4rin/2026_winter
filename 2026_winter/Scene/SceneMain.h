@@ -65,6 +65,7 @@ private:
 	BloodKillFog m_bloodKillFog;//[BloodKillFog]血殺中に背景とステージを赤くする(お試し)
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか
+	bool m_wasF4Pressed = false;//前フレームにF4キーが押されていたか(ボスの手前へ飛ぶ)
 	bool m_wasF5Pressed = false;//前フレームにF5キーが押されていたか(スキルエフェクト確認用)
 	bool m_wasF6Pressed = false;//前フレームにF6キーが押されていたか(スキルエフェクト確認用)
 };

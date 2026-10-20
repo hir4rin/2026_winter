@@ -4,6 +4,7 @@
 #include "../../Math/Easing.h"
 #include "DxLib.h"
 #include <memory>
+#include <algorithm>
 
 class Input;
 class CameraManager;
@@ -29,7 +30,14 @@ public:
 		OrbitDirection orbitDirection = OrbitDirection::Shortest;//Slerp時に水平にどちら向きに回すか(基本は最短)
 		bool isChase = false;//trueだとイージングの点を毎フレームchaseRateずつ追いかける(最後はたどり着かず追い続ける)。どのEasingModeでも使える
 		float chaseRate = 0.15f;//isChase時、1フレームで残り距離の何割詰めるか(0~1。小さいほど遅れて追いかける)
+		EasingMode fovEasingMode = EasingMode::EaseOut;//視野角のイージング(位置とは別)
+		float fovEasingPower = 2.0f;//視野角のイージングの指数
+		float fovDuration = -1.0f;//視野角を何フレームで目標にするか(負の値ならdurationと同じ)
+
+		float GetFovDuration()const { return (fovDuration < 0.0f) ? duration : fovDuration; }
 	};
+
+	static constexpr float kDefaultFov = DX_PI_F / 3.0f;//標準の視野角(60度)
 
 	//isChase用:pos/targetを、goalPos/goalTargetに向けてchaseRate分だけ近づける(Slerpならpivot中心に回り込みながら)
 	//imguiAppのカメラアニメーターからも使うためstatic
@@ -42,6 +50,7 @@ public:
 		Vector3 target;
 		float angleH;
 		float angleV;
+		float fov = kDefaultFov;
 
 		BlendSetting overrideSetting = {};
 	};
@@ -69,6 +78,9 @@ public:
 		PartBrokenCameraBStart = 16,
 		PartBrokenCameraAEnd = 17,
 		UltStartCamera = 18,
+		SkillKessatuCamera = 19,
+		AirAssasinCamera = 20,
+		AirAssasinCameraStart = 21,
 
 		
 
@@ -88,6 +100,8 @@ public:
 
 	Vector3 GetPos()const { return m_pos; }
 	Vector3 GetTarget()const { return m_target; }
+	float GetFov()const { return IsBlending() ? m_fov : m_goalFov; }//ブレンドが終わっていたら目標の視野角
+	void SetStartFov(float fov) { m_startFov = fov; m_fov = fov; }//Enterの前に呼ぶ
 
 	virtual Type GetCameraType()const = 0;//各Stateが自分の種類を返す(実装を強制する)
 
@@ -125,7 +139,8 @@ protected:
 	void ResetBlend(const Vector3& startPos, const Vector3& startTarget);//Enterの最初に呼ぶ
 	// 現在blend中かどうか
 	//isChase時はduration経過後も、追いつく(ほぼ重なる)まではblend中扱い
-	bool IsBlending()const { return m_blendElapsed < m_activeBlend.duration || (m_activeBlend.isChase && !m_isChaseArrived); }
+	//視野角のほうが長いときは、視野角が目標に着くまでblend中扱い
+	bool IsBlending()const { return m_blendElapsed < (std::max)(m_activeBlend.duration, m_activeBlend.GetFovDuration()) || (m_activeBlend.isChase && !m_isChaseArrived); }
 protected:
 	//ステートの親
 	std::weak_ptr<CameraManager> m_owner;
@@ -138,6 +153,9 @@ protected:
 	Vector3 m_pos;//カメラの位置//現座標
 	Vector3 m_startPos;//カメラの位置//初期座標
 	Vector3 m_goalPos;//カメラの位置//目的座標
+	float m_fov = kDefaultFov;//視野角//現在
+	float m_startFov = kDefaultFov;//視野角//初期
+	float m_goalFov = kDefaultFov;//視野角//目的
 
 	float m_angleH = 0.0f;// 水平方向の回転角度
 	float m_angleV = 0.0f;// 垂直方向の回転角度

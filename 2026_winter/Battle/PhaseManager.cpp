@@ -9,6 +9,11 @@
 #include <cassert>
 #include <cmath>
 
+namespace
+{
+	constexpr float kDebugSkipBackDistance = 300.0f;//F4で移すとき、エリアの手前どれだけ離すか
+}
+
 void PhaseManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player)
 {
 	m_enemyManager = enemyManager;
@@ -144,6 +149,46 @@ bool PhaseManager::IsConditionFulfilled(const PhaseTransition& trans) const
 
 
 	return false;
+}
+
+void PhaseManager::DebugSkipToBossPrevPhase()
+{
+	//ボスがいるフェーズ
+	int bossPhase = -1;
+	for (const auto& data : DataManager::GetInstance().GetEnemySpawnData())
+	{
+		if (data.type != EnemyType::BossEnemyPirate)continue;
+		bossPhase = data.phase;
+		break;
+	}
+	if (bossPhase <= 0)return;
+
+	//ボスのフェーズへ進む行
+	const PhaseTransition* toBoss = nullptr;
+	for (const auto& t : m_transitions)
+	{
+		if (t.to != bossPhase || t.from <= 0)continue;
+		toBoss = &t;
+		break;
+	}
+	if (!toBoss)return;
+
+	//今いる敵を消す
+	if (auto enemyMgr = m_enemyManager.lock())
+	{
+		enemyMgr->DebugClearEnemies();
+	}
+	ChangePhase(toBoss->from, PhaseEvent::None);
+
+	//エリアの手前(-Z側)に移す//高さは箱の中心にして、床に落とす
+	if (toBoss->condition != PhaseConditionType::EnterArea || toBoss->areaIndex < 0)return;
+	auto player = m_player.lock();
+	if (!player)return;
+	const PhaseArea& area = m_areas[toBoss->areaIndex];
+	float back = area.halfExtents.z + kDebugSkipBackDistance;
+	float rad = area.rotYDeg * DX_PI_F / 180.0f;
+	player->SetPos(area.position + Vector3(-sinf(rad) * back, 0.0f, -cosf(rad) * back));
+	player->GetRigidBody().ResetVel();
 }
 
 bool PhaseManager::IsInArea(const PhaseArea& area, const Vector3& pos) const

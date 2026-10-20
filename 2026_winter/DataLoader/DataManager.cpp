@@ -20,6 +20,8 @@ namespace
     const std::string kEnemyGunnerAttackPath = "data/Enemy/EnemyGunnerAttack.csv";
     const std::string kEnemyBazookaAnimPath = "data/Enemy/EnemyBazookaAnim.csv";
     const std::string kEnemyBazookaAttackPath = "data/Enemy/EnemyBazookaAttack.csv";
+    const std::string kBossEnemyPirateAnimPath = "data/Enemy/BossEnemyPirateAnim.csv";
+    const std::string kBossEnemyPirateAttackPath = "data/Enemy/BossEnemyPirateAttack.csv";
     const std::string kEnemyStatusPath = "data/Enemy/EnemyStatus.csv";
 
     const std::string kBossAnimPath = "data/Enemy/Boss/BossAnim.csv";
@@ -97,6 +99,8 @@ void DataManager::LoadAll()
     LoadEnemyGunnerAttackRawData();
     LoadAnimData(kEnemyBazookaAnimPath, m_enemyBazookaAnimData);
     LoadEnemyBazookaAttackRawData();
+    LoadAnimData(kBossEnemyPirateAnimPath, m_bossEnemyPirateAnimData);
+    LoadBossEnemyPirateAttackRawData();
     LoadEnemyStatusRawData();
 
 
@@ -142,6 +146,11 @@ void DataManager::LoadEnemyGunnerAttackRawData()
 void DataManager::LoadEnemyBazookaAttackRawData()
 {
     LoadRawCsv(kEnemyBazookaAttackPath, m_enemyBazookaAttackRawData);
+}
+
+void DataManager::LoadBossEnemyPirateAttackRawData()
+{
+    LoadRawCsv(kBossEnemyPirateAttackPath, m_bossEnemyPirateAttackRawData);
 }
 
 void DataManager::LoadRawCsv(const std::string& filePath, std::vector<std::vector<std::string>>& rawData)
@@ -517,6 +526,7 @@ bool DataManager::StringToEnemyType(const std::string& str, EnemyType& outType)
     if (str == "Swordman") { outType = EnemyType::Swordman; return true; }
     if (str == "Gunner") { outType = EnemyType::Gunner; return true; }
     if (str == "Bazooka") { outType = EnemyType::Bazooka; return true; }
+    if (str == "BossEnemyPirate") { outType = EnemyType::BossEnemyPirate; return true; }
     return false;
 }
 
@@ -524,7 +534,7 @@ bool DataManager::StringToEnemyInitialState(const std::string& str, EnemyInitial
 {
     if (str == "Idle") { outState = EnemyInitialState::Idle; return true; }
     if (str == "Patrol") { outState = EnemyInitialState::Patrol; return true; }
-    if (str == "Guard") { outState = EnemyInitialState::Guard; return true; }
+    if (str == "Watch") { outState = EnemyInitialState::Watch; return true; }
     return false;
 }
 

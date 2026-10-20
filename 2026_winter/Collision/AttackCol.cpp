@@ -24,6 +24,10 @@ namespace
 	constexpr int kUltStartFrame = 120;//必殺技の演出の開始フレーム数
 	constexpr float kUltTimeScaleRate = 0.1f;//必殺技演出中の時間スケール
 
+	constexpr int kSkillKessatuFrame = 60;//スキル血殺の演出の長さ(タイムスケールを掛けて減る)
+	constexpr int kSkillKessatuSlowFrame = 60;//スキル血殺のスローの長さ(実フレーム)
+	constexpr float kSkillKessatuTimeScaleRate = 0.1f;//スキル血殺中の時間スケール
+
 	constexpr int kSkillGaugeGainPerHit = 20;//攻撃ヒット時のスキルゲージ上昇量
 	constexpr int kUltGaugeGainPerHitNormal = 10;//通常時の攻撃ヒット時の必殺技ゲージ上昇量
 	constexpr int kUltGaugeGainPerHitRaven = 20;//raven状態時の攻撃ヒット時の必殺技ゲージ上昇量
@@ -190,12 +194,26 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				bool isUltStart = System::GetInstance().GetBattleMgr()->GetIsUltimating();
 				if (!isUltStart)
 				{
-					System::GetInstance().GetBattleMgr()->SetUltStart(kUltStartFrame);//必殺技の演出をスタートする
-					if (!System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying())
+					const bool isLastHitEvent = System::GetInstance().GetBattleMgr()->GetIsLastHitEventPlaying();
+
+					//スキルと必殺の血殺を分ける
+					if (isUltimating)
 					{
-						System::GetInstance().SetTimeScaleForFrames(kUltTimeScaleRate, kUltStartFrame);//時間を遅くする//60フレームで元に戻す
-						//カメラを移行
-						cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::UltCamera);
+						System::GetInstance().GetBattleMgr()->SetUltStart(kSkillKessatuFrame);//スキル血殺の演出をスタートする
+						if (!isLastHitEvent)
+						{
+							System::GetInstance().SetTimeScaleForFrames(kSkillKessatuTimeScaleRate, kSkillKessatuSlowFrame);//時間を遅くする//60フレームで元に戻す
+							cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::SkillKessatuCamera);
+						}
+					}
+					else
+					{
+						System::GetInstance().GetBattleMgr()->SetUltStart(kUltStartFrame);//必殺技の演出をスタートする
+						if (!isLastHitEvent)
+						{
+							System::GetInstance().SetTimeScaleForFrames(kUltTimeScaleRate, kUltStartFrame);//時間を遅くする//60フレームで元に戻す
+							cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::UltCamera);
+						}
 					}
 				}
 				if (m_hitIds.empty())

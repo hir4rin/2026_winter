@@ -1,0 +1,46 @@
+#key,animName
+Idle,Idle
+Walk,Walking
+Run,Sword And Shield Run
+StrafeRight,Sword And Shield Strafe (1)
+StrafeLeft,Sword And Shield Strafe
+Back,Standing Dodge Backward
+Attack,Sword And Shield Attack
+Hit,Medium Hit To Head
+Kirimomi,Getting Hit Backwards
+Death,Falling Back Death
+BlockEnd,Block_End
+BlockHit,Block_Hit
+BlockBreak,Block_Hit_Break
+BlockLoop,Block_Loop
+BlockStart,Block_Start
+KnockDownStart,Knock_Down_Start
+KnockDownLoop,Knock_Down_Loop
+KnockDownEnd,Knock_Down_End
+HitB,Hit_Combat_B
+HitF,Hit_Combat_F
+HitL,Hit_Combat_L
+HitR,Hit_Combat_R
+HitDeath,Hit_Combat_Death
+GetUp,Get_Up_Combat
+HitLargeB,Hit_Large_Combat_B
+HitLargeF,Hit_Large_Combat_F
+HitLargeL,Hit_Large_Combat_L
+HitLargeR,Hit_Large_Combat_R
+Execute01Victim,Execution_Target_01
+Execute02Victim,Execution_Target_02
+Execute03Victim,Execution_Target_03
+FootPlantVictim,Ninja_Chudan_Attack_FootPlantJumpSlash_Victim
+RunSlashFinisher,Ninja_Chudan_Attack_RunSlashFinisher_Victim
+StabBehindVictim,Ninja_Chudan_Attack_StabBehind_Victim
+StabChestVictim,Ninja_Chudan_Attack_StabChest_Victim
+fromAvobeVictim,Ninja_fromAbove_Attack_StabDown_Victim
+fromAvobeForwardVictim,Ninja_fromAbove_Attack_StabDown_ForwardFacing_Victim
+SneakStabBehindVictim,Ninja_Sneak_Attack_StabBehind_Victim
+AttackMain,Combo_Attack_04_01
+AttackPre1,Combo_Attack_Wave_05_02
+AttackPre2,Combo_Attack_Wave_05_04
+RunMain,Run_Combat_Loop_F_0_RM
+CautionLMain,Run_Combat_Loop_F_L_45_RM
+CautionRRMain,Run_Combat_Loop_F_R_45_RM
+WalkMain,Walk_Loop_F_0_RM

@@ -77,6 +77,13 @@ void PlayerStateJump::Update()
 		}
 	}
 
+	//空中暗殺
+	if (input.IsTriggered("Y") && player->CanAssasin())
+	{
+		player->ChangeState(std::make_shared<PlayerStateAirAssasin>(m_owner));
+		return;
+	}
+
 	//攻撃状態に遷移する
 	if (input.IsTriggered("X"))//弱攻撃
 	{

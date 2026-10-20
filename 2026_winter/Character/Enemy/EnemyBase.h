@@ -21,6 +21,7 @@ enum class AsyncData : int;
 #include "State/Hit/EnemyHitGround.h"
 #include "State/Hit/EnemyHitAir.h"
 #include "State/Hit/EnemyAssasined.h"
+#include "State/Hit/EnemyAirAssasined.h"
 #include "State/Hit/EnemyPartBrokenKilled.h"
 #include "State/Hit/EnemyVanish.h"
 #include "Main/Game.h"
@@ -260,9 +261,11 @@ public:
 	void OnDamage(Collider& other, AttackData& data)override;
 
 	virtual void OnAssasined();//暗殺確定時
+	virtual void OnAirAssasined();//空中暗殺確定時
 	virtual void OnPartBrokenKilled(PartBrokenPattern pattern);//確殺確定時
 	bool GetIsExecuted()const { return m_isExecuted; }//確殺・暗殺が始まったかどうか//trueなら確殺・暗殺の対象にしない
 	bool GetIsPlayerFound()const { return m_isPlayerFound; }//プレイヤーを発見したかどうか//trueなら暗殺の対象にしない
+	void SetIsPlayerFound(bool isPlayerFound) { m_isPlayerFound = isPlayerFound; }
 
 	//部位破壊
 	virtual void OnHeadBreak() {};
@@ -300,7 +303,7 @@ public:
 	//巡回ルートを直接設定する
 	void SetPatrolPoints(const std::vector<EnemySpawnRoutePoint>& route);
 	//その場で見張る//今いる位置に、ずっと待機する巡回ポイントを1つだけ置く(視界でプレイヤーを探す処理を巡回と共通にするため)
-	void SetGuardPoint();
+	void SetWatchPoint();
 	//グループ(同じgroupIdの敵)
 	void SetGroupId(const std::string& groupId) { m_groupId = groupId; }
 	const std::string& GetGroupId()const { return m_groupId;}
@@ -424,7 +427,7 @@ protected:
 	//巡回ルートのデータ
 	std::vector<PatrolPoint> m_patrolPoints;
 	int m_currentPatrolIndex = -1;//現在の巡回ポイントのインデックス
-	bool m_isPlayerFound = false;//プレイヤーを発見したか(一度見つけたらtrueのまま)
+	bool m_isPlayerFound = true;//プレイヤーを発見したか(一度見つけたらtrueのまま)//巡回・見張りで配置したときだけfalse
 	std::string m_groupId;//同じグループの敵がプレイヤーを見つけたら一緒に気づく//空ならグループ無し
 
 
@@ -466,6 +469,7 @@ protected:
 	friend class EnemyHitGround;
 	friend class EnemyHitAir;
 	friend class EnemyAssasined;
+	friend class EnemyAirAssasined;
 	friend class EnemyPartBrokenKilled;
 	friend class EnemyVanish;
 

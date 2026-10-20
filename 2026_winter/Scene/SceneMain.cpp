@@ -274,6 +274,16 @@ void SceneMain::NormalUpdate()
 	//[BloodKillFog]必殺技中かどうかで赤いフォグのかかり具合を進める
 	m_bloodKillFog.Update(battleMgr->GetIsUltimating());
 
+#ifdef _DEBUG
+	//F4キーでボスの一つ手前のフェーズへ飛ぶ
+	const bool isF4Pressed = CheckHitKey(KEY_INPUT_F4) != 0;
+	if (isF4Pressed && !m_wasF4Pressed)
+	{
+		m_phaseManager->DebugSkipToBossPrevPhase();
+	}
+	m_wasF4Pressed = isF4Pressed;
+#endif
+
 	//F5/F6キーでスキルエフェクトを再生する(エフェクト確認用)
 	const bool isF5Pressed = CheckHitKey(KEY_INPUT_F5) != 0;
 	const bool isF6Pressed = CheckHitKey(KEY_INPUT_F6) != 0;
