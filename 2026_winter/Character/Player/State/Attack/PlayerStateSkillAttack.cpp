@@ -45,6 +45,8 @@ void PlayerStateSkillAttack::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を有効化
+	player->SetPreventFall(true);
 	//攻撃の方向を決める(入力→ロックオン→内部ターゲット)
 	DecideAttackDirection();
 
@@ -231,6 +233,8 @@ void PlayerStateSkillAttack::Exit()
 	auto player = m_owner.lock();
 	if (player)
 	{
+		//落下禁止を無効化
+		player->SetPreventFall(false);
 		player->m_comboInfo.isHit = false;
 
 		if (!m_isComboTransition)

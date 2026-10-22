@@ -15,6 +15,8 @@ void EnemyChase::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
+	//落下禁止を有効化
+	owner->SetPreventFall(true);
 	auto player = owner->m_player.lock();
 	if (!player)return;
 	//animationの初期化
@@ -70,6 +72,8 @@ void EnemyChase::Exit()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
+	//落下禁止を無効化
+	owner->SetPreventFall(false);
 	//頭の向きを正面に戻す
 	owner->m_isLookAtPlayer = false;
 }

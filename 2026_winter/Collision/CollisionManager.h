@@ -43,13 +43,12 @@ public:
 	//指定したidのコライダーを取得する
 	std::shared_ptr<Collider> GetColliderById(int id)const;
 private:
-	//隠し関数
+
 	bool ContainsCollider(const std::vector<std::weak_ptr<Collider>>& list, const std::shared_ptr<Collider>& target);
 	//weak_ptr同士が同じ実体を指しているかどうかを判定する(lockせずに比較できる)
 	static bool IsSameOwner(const std::weak_ptr<Collider>& a, const std::weak_ptr<Collider>& b);
 	//壁キック/壁走りのゾーンかどうか
 	static bool IsWallZone(const Collider& col);
-
 private:
 	//コンストラクタとデストラクタをプライベートにして、シングルトンパターンを実装
 	CollisionManager() = default;
@@ -74,6 +73,14 @@ private:
 	/// 床がなければ空中扱いにする
 	/// </summary>
 	void SnapToGround();
+	/// <summary>
+	/// 落下禁止のコライダーが縁から落ちないように水平速度を止める
+	/// </summary>
+	void PreventFall();
+	/// <summary>
+	/// 指定した水平移動量だけ進んだ先に床があるか
+	/// </summary>
+	bool HasFloorAt(int stageHandle, const Collider& collider, const Vector3& moveVec);
 
 private:
 	//当たり判定のチェックを行うクラス

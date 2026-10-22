@@ -22,6 +22,8 @@ void EnemyAttack::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
+	//落下禁止を有効化
+	owner->SetPreventFall(true);
 	auto player = owner->m_player.lock();
 	if (!player)return;
 
@@ -81,6 +83,10 @@ void EnemyAttack::Exit()
 		m_attackCol->SetLifeTimeLimited();
 		m_attackCol.reset();
 	}
+	auto owner = m_owner.lock();
+	if (!owner)return;
+	//落下禁止を無効化
+	owner->SetPreventFall(false);
 }
 
 void EnemyAttack::DebugDraw()

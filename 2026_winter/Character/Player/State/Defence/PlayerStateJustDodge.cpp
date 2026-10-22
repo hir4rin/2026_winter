@@ -27,6 +27,8 @@ void PlayerStateJustDodge::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を有効化
+	player->SetPreventFall(true);
 	//ジャスト回避用のアニメーションにする//前回避か後ろ回避かで変える
 	if (m_avoidState == PlayerStateDodge::AvoidState::Backward)
 	{
@@ -82,6 +84,8 @@ void PlayerStateJustDodge::Exit()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を無効化
+	player->SetPreventFall(false);
 
 	//プレイヤーのタイムスケールを調整する
 	player->SetOwnTimeScale(1.0f);

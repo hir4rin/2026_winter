@@ -530,9 +530,43 @@
 - 呼び出し: `AttackCol` のカメラシェイクと同じ場所(最初に当たったとき・必殺技以外)。`kFovPunchAngle`(4°) / `kFovPunchTime`(14F)。
 - MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
 
+### 2026-10-22 カメラとステージの当たり判定(案A: 線分だけ)
+- `CameraManager::FixStageCollision(pos, target)`: 注視点→カメラに `MV1CollCheck_Line`(ステージモデル)。当たったら当たった点から `kCollisionMargin`(20)手前に寄せる(最短 `kCollisionMinDist` 30)。
+  - 寄るときはすぐ、離れるときは `kCollisionReturnRate`(0.1/F)で戻る。補正後の距離は `m_collisionDist`(-1=補正なし)。
+  - Stateの `m_pos` は書き換えず、描画用の `m_renderPos` だけ補正。シェイクは補正の後に足す。
+- 対象は PlayerCamera / LockOnCamera / BattleSmoothCamera(`CameraManager::IsStageCollisionCamera()`、今のステートの種類を見る)。演出カメラ・フォトモードは判定しない。
+  - 対象のカメラ→演出カメラに切り替わった瞬間は補正が消えるので、壁ぎわだと一瞬飛ぶかも。
+- `CameraManager::Init` の stage 引数(今まで使っていなかった)を `m_stage` に入れるようにした。
+- 線分なので太さが無い(壁ぎわでニアクリップが壁にめり込む・細い隙間を抜ける)。気になったら案B(球の二分探索)にする。設計の案は会話の中だけ。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
+### 2026-10-22 攻撃・演出中に縁から落ちないようにする(落下禁止)
+- `Collider::SetPreventFall(bool)` / `m_preventFall`。立っている間は、`CollisionManager::PreventFall()` が毎フレーム縁で水平速度を止める。
+  - 場所: `Update()` の押し戻しループの後、`SnapToGround()` の前。
+  - `HasFloorAt()`: 移動先の足元から真下に `MV1CollCheck_Line`(長さは SnapToGround と同じ)。床(法線 y>=0.5)が無ければ false。
+  - X→Z の順に1軸ずつ試すので、縁では辺に沿って滑り、角では止まる。空中(`m_wasFloor` が false)は対象外。
+- オンにしているステート(Enter で true、Exit で false): PlayerStateAttack / DashAttack / SkillAttack / GuardBreakAttack / Assasin / PartBrokenKill / Dodge / JustDodge。
+  必殺技(Ult)・被弾・弾かれは対象外(落ちる)。
+- 敵: EnemyPatrol / Chase / Caution / Back / Attack。止まっているステート(Idle / AttackPre / AttackEnd)と被弾系は対象外。
+- 足の中心で判定しているので、半分くらいはみ出して止まる。気になったら `moveVec` に進む向きへ半径分を足す。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
+### 2026-10-22 BattleSmoothCamera から戻る条件を追加
+- 問題: カメラの向きが毎フレーム「敵→プレイヤー」にくっついていて、移動はカメラ基準なので、歩くとカメラが回って移動が引っ張られる。空中の敵が真上近くにいると向きが暴れる。
+- `BattleSmoothCamera::IsExitCondition()`: 右スティックに加えて、次のどれかで PlayerFollowCamera に戻る(定数は .cpp 先頭)。
+  - Move / FastRun が `kExitMoveFrame`(30F、実フレーム)続いた(`Player::IsMoveState()` を追加)。Idle で止まっているだけなら戻らない
+  - 敵との水平距離が `kExitDistance`(800)より遠い
+  - 敵が空中で、水平距離が `kExitNearDistance`(100)より近い
+- また攻撃が当たれば `OnPlayerAttackHit` で入り直す。戻るときがカクつくなら `GetOverrideBlendSetting` を足す。
+- 案2(向きの更新を緩める)・案3(スティックを倒している間は入力の基準の向きを固定)はやっていない。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
 ---
 
 ## TODO / 次にやること
+- [ ] BattleSmoothCamera の戻る条件をゲームで確認(30F / 800 / 100 の調整)
+- [ ] 落下禁止をゲームで確認(縁で止まる・辺に沿って滑る・角で止まる・攻撃・回避の後に歩けば落ちる)
+- [ ] カメラとステージの当たり判定(案A)をゲームで確認。めり込みが気になれば案B(MV1CollCheck_Sphere の二分探索)へ
 - [x] FOVパンチ(ゲームで強さ・長さを確認。場面ごとの強さ・向きは note の8章の表)
 - [ ] ダッシュ/ブースト用の視野角オフセット(戻すまでずっと)を CameraManager に入れる。設計は `../進捗/note_カメラの視野角.md` の8・9章(視野角まわりの設計のまとめもここ)
 - [ ] ブレイクの打ち上げの続き: 敵を打ち上げる処理とCSV(ユーザー)・専用カメラ・演出。ゲームで一連の流れを確認

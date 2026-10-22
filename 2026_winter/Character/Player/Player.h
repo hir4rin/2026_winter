@@ -227,6 +227,8 @@ public:
 	//攻撃の対象//ロックオン中はロックオン対象、そうでなければ内部ターゲット
 	std::shared_ptr<EnemyBase> GetAttackTarget()const;
 
+	bool IsMoveState()const;//Move,FastRunのときtrue
+
 	//暗殺
 
 	void SetAssasinTarget(std::shared_ptr<EnemyBase> target) { m_assasinTarget = target; }

@@ -12,13 +12,17 @@ namespace
 {
 	const Vector3 kCameraHeight = Vector3(0.0f, 150.0f, 0.0f);//カメラの高さ(Vector3)//PlayerFollowCameraと同じ値
 
-	constexpr float kPtoETargetLength = 100.0f;//プレイヤー→敵方向に注視点をずらす距離
+	constexpr float kPtoETargetLength = 50.0f;//プレイヤー→敵方向に注視点をずらす距離
 
 	constexpr float kEtoPVecLength = 350.0f;//敵→プレイヤーベクトルの長さ
-	constexpr float kRotateAngle = DX_PI_F / 4.0f;//カメラを回転させる角度(45度)
+	constexpr float kRotateAngle = DX_PI_F / 3.0f;//カメラを回転させる角度
 
 	constexpr float kBlendDuration = 90.0f;//ブレンドにかけるフレーム数
 	constexpr float kBlendEasingPower = 0.8f;//ブレンドのイージング指数
+
+	constexpr int kExitMoveFrame = 30;//歩き続けたら戻るフレーム数
+	constexpr float kExitDistance = 800.0f;//敵との水平距離がこれより遠いと戻る
+	constexpr float kExitNearDistance = 100.0f;//空中の敵との水平距離がこれより近いと戻る
 }
 
 BattleSmoothCamera::BattleSmoothCamera(std::weak_ptr<CameraManager> owner):CameraStateBase(owner)
@@ -34,6 +38,7 @@ void BattleSmoothCamera::Enter(CameraData data)
 	m_angleH = data.angleH;
 	m_angleV = data.angleV;
 	ResetBlend(data.pos, data.target);
+	m_moveFrame = 0;
 	//遷移元のカメラ位置(m_pos)から、近いほうの45度を決める
 	DecideRotateSide();
 }
@@ -60,16 +65,26 @@ void BattleSmoothCamera::Update()
 		return;
 	}
 
+	Vector3 playerPos = player->GetRigidBody().GetPos();
+	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+
+	//歩き出した・離れた・空中の敵が近すぎるときもPlayerCameraに戻す
+	if (IsExitCondition(playerPos, enemyPos, enemy->IsFloor()))
+	{
+		cameraManager->ChangeState(std::make_shared<PlayerFollowCamera>(m_owner));
+		return;
+	}
+
 	//目標座標を計算
 	FixCameraPos();
 
-	Vector3 playerPos = player->GetRigidBody().GetPos();
-	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
 	enemyPos.y = playerPos.y;
 
 	//注視点//プレイヤーから敵のほうへ固定距離ずらす//高さはPlayerFollowCameraと同じ
 	Vector3 pToEVec = (enemyPos - playerPos).Normalize() * kPtoETargetLength;
+	//Vector3 pToEVec = (enemyPos - playerPos) * 0.45f;
 	m_goalTarget = (playerPos + pToEVec) + kCameraHeight;
+	//m_goalTarget = (playerPos +pToEVec) + kCameraHeight;
 
 	//Blend中はBlendのほうのlerp
 	if (IsBlending())
@@ -165,6 +180,36 @@ void BattleSmoothCamera::DecideRotateSide()
 	{
 		m_rotateAngle = kRotateAngle;
 	}
+}
+
+bool BattleSmoothCamera::IsExitCondition(const Vector3& playerPos, const Vector3& enemyPos, bool isEnemyFloor)
+{
+	auto cameraManager = m_owner.lock();
+	if (!cameraManager)return false;
+	auto player = cameraManager->GetContext()->m_player.lock();
+	if (!player)return false;
+
+	//攻撃せずに歩いている時間を数える//実フレーム
+	if (player->IsMoveState())
+	{
+		m_moveFrame++;
+	}
+	else
+	{
+		m_moveFrame = 0;
+	}
+	if (m_moveFrame >= kExitMoveFrame)return true;
+
+	//水平距離
+	Vector3 toEnemy = enemyPos - playerPos;
+	float horizontalDist = Vector3(toEnemy.x, 0.0f, toEnemy.z).Magnitude();
+
+	//離れすぎ
+	if (horizontalDist > kExitDistance)return true;
+	//空中の敵が真上近くにいると向きが暴れる
+	if (!isEnemyFloor && horizontalDist < kExitNearDistance)return true;
+
+	return false;
 }
 
 using BlendSetting = CameraStateBase::BlendSetting;

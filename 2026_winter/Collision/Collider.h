@@ -116,6 +116,8 @@ public:
 	void SetIsFloor(bool isFloor) { m_isFloor = isFloor; }
 	bool IsFloor()const { return m_isFloor; }
 	void SetUseGroundSnap(bool use) { m_useGroundSnap = use;}//接地の吸着を行うかどうか//player、Enemyなどをtrue
+	void SetPreventFall(bool prevent) { m_preventFall = prevent; }//縁から落ちないようにするかどうか//攻撃・回避中などをtrue
+	bool IsPreventFall()const { return m_preventFall; }
 	bool IsLeftFloor()const { return m_wasFloor && !m_isFloor; }//このフレームで地面から離れたか(歩いて落ちた時用)
 	bool WasFloor()const { return m_wasFloor; }//前フレームの接地状態
 	void SetIsWall(bool isWall) { m_isWall = isWall; }
@@ -157,6 +159,7 @@ protected:
 	bool m_isFloor = true;;//床についているかどうか
 	bool m_wasFloor = true;//押し戻し前に床についていたかどうか
 	bool m_useGroundSnap = false;//地面の吸着を行うかどうか
+	bool m_preventFall = false;//縁から落ちないようにするかどうか
 
 	bool m_isWall = false;//壁にあたったかどうか
 	int m_id = -1;//当たり判定などに使うID

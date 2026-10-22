@@ -219,8 +219,11 @@ void CollisionManager::Update()
 		}
 		//更新
 		collider->m_prevPressColliders = collider->m_currentPressColliders;
+
 	}
 
+	//ステージの縁から落ちないように速度を消したりする
+	PreventFall();
 
 	//床に当たらなかったものを真下の床に吸着させる
 	SnapToGround();
@@ -364,3 +367,55 @@ void CollisionManager::SnapToGround()
 	}
 }
 
+
+void CollisionManager::PreventFall()
+{
+	auto stage = m_stage.lock();
+	if (!stage)return;
+	int stageHandle = stage->GetStageModelHandle();
+
+	for (auto& weakCollider : m_colliders)
+	{
+		auto collider = weakCollider.lock();
+		if (!collider)continue;
+		if (!collider->GetIsActive())continue;
+		if (!collider->m_preventFall)continue;
+		//空中は対象外
+		if (!collider->m_wasFloor)continue;
+
+		Vector3& vel = collider->m_rb.m_vel;
+		//X→Zの順に1軸ずつ試す(縁で滑らせるため)
+		if (!HasFloorAt(stageHandle, *collider, Vector3(vel.x, 0.0f, 0.0f)))
+		{
+			vel.x = 0.0f;
+		}
+		if (!HasFloorAt(stageHandle, *collider, Vector3(vel.x, 0.0f, vel.z)))
+		{
+			vel.z = 0.0f;
+		}
+	}
+}
+
+bool CollisionManager::HasFloorAt(int stageHandle, const Collider& collider, const Vector3& moveVec)
+{
+	auto capsule = dynamic_cast<CapsuleShape*>(&collider.GetShape());
+	if (!capsule)return true;//カプセル以外は止めない
+
+	//移動後の足元
+	Vector3 endPos = collider.GetWorldPos() + moveVec;
+	Vector3 startPos = endPos + capsule->GetEndPos();
+	Vector3 legPos = (startPos.y < endPos.y) ? startPos : endPos;
+	float radius = capsule->GetRadius();
+
+	//SnapToGroundと同じ長さ
+	float rayLength = radius / kMinFloorNormalY + kGroundSnapDistance;
+	Vector3 rayEnd = legPos + Vector3(0.0f, -rayLength, 0.0f);
+
+	auto hit = MV1CollCheck_Line(stageHandle, -1,
+		legPos.ToDxLibVector(), rayEnd.ToDxLibVector());
+
+	if (!hit.HitFlag)return false;
+	//壁ポリゴンは床扱いしない
+	if (hit.Normal.y < kMinFloorNormalY)return false;
+	return true;
+}

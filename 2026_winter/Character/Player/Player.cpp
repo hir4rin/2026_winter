@@ -548,6 +548,12 @@ std::shared_ptr<EnemyBase> Player::GetAttackTarget() const
 	return GetSoftTarget();
 }
 
+bool Player::IsMoveState() const
+{
+	return std::dynamic_pointer_cast<PlayerStateMove>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateFastRun>(m_currentState);
+}
+
 std::shared_ptr<EnemyBase> Player::GetAssasinTarget() const
 {
 	return m_assasinTarget.lock();

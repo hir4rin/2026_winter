@@ -105,7 +105,14 @@ public:
 private:
 	//ロックオン状態とカメラのステートがずれていたら遷移する
 	void SyncLockOnState();
+	//ステージに当たらない位置に補正する
+	Vector3 FixStageCollision(const Vector3& pos, const Vector3& target);
+	//今のカメラがステージとの当たり判定をするか
+	bool IsStageCollisionCamera() const;
 private:
+	std::weak_ptr<Stage> m_stage;
+	float m_collisionDist = -1.0f;//補正後の注視点からの距離(-1なら補正なし)
+
 	//必要な情報
 	std::shared_ptr<CameraContext> m_context;
 

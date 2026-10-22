@@ -31,6 +31,8 @@ void PlayerStateAssasin::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を有効化
+	player->SetPreventFall(true);
 
 	//暗殺名前一覧
 	//	Execute01->Execute01Victim     移動させないとださい　△
@@ -137,6 +139,8 @@ void PlayerStateAssasin::Exit()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を無効化
+	player->SetPreventFall(false);
 
 	//キャラ同士の押し戻しを有効化
 	player->SetIsGhost(false);

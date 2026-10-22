@@ -32,6 +32,8 @@ void EnemyPatrol::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
+	//落下禁止を有効化
+	owner->SetPreventFall(true);
 
 	//パトロールポイントのインデックスを取得
 	int currentIndex = owner->m_currentPatrolIndex;
@@ -118,6 +120,10 @@ void EnemyPatrol::Update()
 
 void EnemyPatrol::Exit()
 {
+	auto owner = m_owner.lock();
+	if (!owner)return;
+	//落下禁止を無効化
+	owner->SetPreventFall(false);
 }
 
 void EnemyPatrol::DebugDraw()

@@ -27,6 +27,8 @@ void PlayerStateGuardBreakAttack::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を有効化
+	player->SetPreventFall(true);
 	DecideAttackDirection();
 
 	player->m_isCameraFocusOverride = false;
@@ -60,6 +62,8 @@ void PlayerStateGuardBreakAttack::Exit()
 	auto player = m_owner.lock();
 	if (player)
 	{
+		//落下禁止を無効化
+		player->SetPreventFall(false);
 		player->m_comboInfo.currentComboIndex = ComboIndex::None;
 		player->m_comboInfo.isHit = false;
 		player->m_isCameraFocusOverride = false;

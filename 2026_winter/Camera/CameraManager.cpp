@@ -23,6 +23,7 @@
 #include "CameraState/PartBroken/PartBrokenBCameraStart.h"
 #include "CameraState/BattleSmoothCamera.h"
 #include "Collision/CollisionManager.h"
+#include "Stage/Stage.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
 #include "../Character/Enemy/EnemyBase.h"
@@ -44,6 +45,10 @@ namespace
 	constexpr float kShakeRandNormalize = 100.0f;//ランダム値を-1.0~1.0の範囲に正規化するための除数
 
 	constexpr float kFovPunchCoolTime = 80.0f;//パンチのクールタイム
+
+	constexpr float kCollisionMargin = 20.0f;//当たった位置から注視点側に離す距離
+	constexpr float kCollisionMinDist = 30.0f;//注視点に近づける限界
+	constexpr float kCollisionReturnRate = 0.1f;//離れるときの戻る速さ
 }
 
 CameraManager::CameraManager()
@@ -61,6 +66,7 @@ void CameraManager::Init(std::weak_ptr<Player> player,std::weak_ptr<Stage> stage
 {
 	//プレイヤーカメラの初期化
 	m_context->m_player = player;
+	m_stage = stage;
 
 	////PlayerCameraでスタート
 	ChangeState(std::make_shared<PlayerFollowCamera>(shared_from_this()));
@@ -77,8 +83,8 @@ void CameraManager::Update()
 	SyncLockOnState();
 
 	m_currentState->Update();
-	//カメラに反映
-	Vector3 renderPos = m_currentState->GetPos();
+	//カメラに反映//stageとの当たり判定もする
+	Vector3 renderPos = FixStageCollision(m_currentState->GetPos(), m_currentState->GetTarget());
 	renderPos += CameraShakeUpdate();
 	m_renderPos = renderPos;
 
@@ -87,7 +93,58 @@ void CameraManager::Update()
 	SetCameraPositionAndTarget_UpVecY(m_renderPos.ToDxLibVector(), m_currentState->GetTarget().ToDxLibVector());
 	SetupCamera_Perspective(m_renderFov);
 	return;
-	
+
+}
+
+Vector3 CameraManager::FixStageCollision(const Vector3& pos, const Vector3& target)
+{
+	auto stage = m_stage.lock();
+	if (!stage || !IsStageCollisionCamera())
+	{
+		m_collisionDist = -1.0f;
+		return pos;
+	}
+
+	Vector3 toCamera = pos - target;
+	float rawDist = toCamera.Magnitude();
+	if (rawDist <= kCollisionMinDist) return pos;
+	Vector3 dir = toCamera.Normalize();
+
+	//注視点からカメラへ線分を引く
+	float goalDist = rawDist;
+	auto hit = MV1CollCheck_Line(stage->GetStageModelHandle(), -1, target.ToDxLibVector(), pos.ToDxLibVector());
+	if (hit.HitFlag)
+	{
+		float hitDist = (Vector3::FromDxLibVector(hit.HitPosition) - target).Magnitude();
+		goalDist = (std::max)(hitDist - kCollisionMargin, kCollisionMinDist);
+	}
+
+	//寄るときはすぐで、離れるときはゆっくり
+	//今の判定よりステージとのほうが短いときは寄る
+	if (m_collisionDist < 0.0f || goalDist < m_collisionDist)
+	{
+		m_collisionDist = goalDist;
+	}
+	else
+	{
+		
+		m_collisionDist += (goalDist - m_collisionDist) * kCollisionReturnRate;
+	}
+	m_collisionDist = (std::min)(m_collisionDist, rawDist);
+
+	return target + dir * m_collisionDist;
+}
+
+bool CameraManager::IsStageCollisionCamera() const
+{
+	//ここはよう悩み//一旦全部の判定をする
+	return true;
+
+
+	auto type = m_currentState->GetCameraType();
+	return type == CameraStateBase::Type::PlayerCamera ||
+		type == CameraStateBase::Type::LockOnCamera ||
+		type == CameraStateBase::Type::BattleSmoothCamera;
 }
 void CameraManager::Draw()
 {

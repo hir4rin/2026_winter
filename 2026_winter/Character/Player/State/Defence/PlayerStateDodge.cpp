@@ -31,6 +31,8 @@ void PlayerStateDodge::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を有効化
+	player->SetPreventFall(true);
 	auto& input = Input::GetInstance();
 	//カメラから見たPlayerの正面方向を取る
 	HandlerInput();
@@ -141,6 +143,10 @@ void PlayerStateDodge::Exit()
 {
 	//ジャスト回避判定を削除する//被弾などで途中で状態が変わっても必ず消す
 	ReleaseJustDodgeCol();
+	auto player = m_owner.lock();
+	if (!player) return;
+	//落下禁止を無効化
+	player->SetPreventFall(false);
 }
 
 void PlayerStateDodge::DebugDraw()

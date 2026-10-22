@@ -23,6 +23,8 @@ void PlayerStateDashAttack::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を有効化
+	player->SetPreventFall(true);
 	//animationの初期化
 	const ComboNode& node = player->m_comboChain[ComboIndex::DashAttack];
 	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle,player->GetAnimName("DashAttack"), false, node.animTimeScale, -1.0f, 0.0f, node.blendFrame);
@@ -56,6 +58,10 @@ void PlayerStateDashAttack::Update()
 
 void PlayerStateDashAttack::Exit()
 {
+	auto player = m_owner.lock();
+	if (!player) return;
+	//落下禁止を無効化
+	player->SetPreventFall(false);
 }
 
 void PlayerStateDashAttack::DebugDraw()

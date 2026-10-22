@@ -63,6 +63,8 @@ void PlayerStatePartBrokenKill::Enter()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を有効化
+	player->SetPreventFall(true);
 
 	auto partBrokenTarget = player->GetPartBrokenTarget();
 	if (!partBrokenTarget)return;
@@ -160,6 +162,8 @@ void PlayerStatePartBrokenKill::Exit()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+	//落下禁止を無効化
+	player->SetPreventFall(false);
 
 	//キャラ同士の押し戻しを有効化
 	player->SetIsGhost(false);
