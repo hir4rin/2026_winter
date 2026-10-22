@@ -19,6 +19,11 @@ namespace
 	constexpr float kCameraShakePower = 2.5f;//カメラの揺れの強さ
 	constexpr float kCameraShakeTime = 5.0f;//カメラの揺れの時間
 
+	constexpr float kFovPunchAngle = -15.0f;//FOVパンチの強さ(度)
+	constexpr float kFovPunchTime = 90.0f;//FOVパンチの長さ
+	constexpr float kFovPunchInFrame = 20.0f;//FOVパンチの入りのフレーム数
+	constexpr float kFovPunchOutPower = 1.5f;//FOVパンチの戻りのイージングの指数
+
 	constexpr float kEfOffset = 80.0f;//エフェクトの座標のオフセット
 
 	constexpr int kUltStartFrame = 120;//必殺技の演出の開始フレーム数
@@ -143,6 +148,13 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				if (m_hitIds.empty() && GetTag().role != Collider::ColRole::UltAttack)
 				{
 					cameraManager->StartCameraShake(kCameraShakePower, kCameraShakeTime);//カメラを揺らす
+					//空中攻撃の最後の攻撃だったら
+					int comboIndex = m_attackData->comboIndex;
+					bool isAirAttack = comboIndex >= ComboIndex::AirAttack1 && comboIndex <= ComboIndex::AirAttack5;
+					if (isAirAttack && m_attackData->isLastHit)
+					{
+						cameraManager->StartFovPunch(kFovPunchAngle, kFovPunchTime, kFovPunchInFrame, kFovPunchOutPower);
+					}
 				}
 
 				//attackDataの変更//現在経過時間を引いて、敵の移動距離、時間を決める
@@ -165,6 +177,11 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				if (!player->IsLockOn() && !player->GetSoftTarget())
 				{
 					player->SetSoftTarget(hitOwnerEnemy);
+				}
+				//最初に当たった攻撃なら、PlayerCamera中だけ敵との位置関係から45度傾けたカメラに遷移する//必殺技はUltCameraに任せる
+				if (m_hitIds.empty() && GetTag().role != Collider::ColRole::UltAttack)
+				{
+					cameraManager->OnPlayerAttackHit();
 				}
 				//攻撃の対象に当たったら攻撃の移動を止める
 				if (hitOwnerEnemy && hitOwnerEnemy == player->GetAttackTarget())

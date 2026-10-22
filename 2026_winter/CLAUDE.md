@@ -521,10 +521,20 @@
   コンパイルは通った(ゲーム起動中でリンクは未確認)。
 - MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ(空中暗殺の後のカクつきが消えたか)。
 
+### 2026-10-22 FOVパンチ
+- `CameraManager::StartFovPunch(angleDeg, time)`(+で広げる、-で狭める) / `FovPunchUpdate()`(今フレームのずれ、ラジアン)。
+  - 入りは `kFovPunchInFrame`(2F)で最大へ、戻りは EaseOut(`kFovPunchOutPower`)で0へ。**実フレーム**で進む(ヒットストップ・スロー中も止まらない)。
+  - 今のずれより弱いパンチは無視(多段ヒットで強くなりすぎないように)。
+  - クールタイム `kFovPunchCoolTime`(20F、実フレーム)。受け付けたときだけ入り、その間は強さに関係なく全部無視。`FovPunchUpdate` の先頭で減らす。
+- `Update` で `m_renderFov = GetFov() + FovPunchUpdate()` を1回だけ計算し、`ApplyCameraSettings` は `m_renderFov` を使う(位置の `m_renderPos` と同じ)。
+- 呼び出し: `AttackCol` のカメラシェイクと同じ場所(最初に当たったとき・必殺技以外)。`kFovPunchAngle`(4°) / `kFovPunchTime`(14F)。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
 ---
 
 ## TODO / 次にやること
-- [ ] FOVパンチ(一瞬)・ダッシュ/ブースト用の視野角オフセット(戻すまでずっと)を CameraManager に入れる。設計は `../進捗/note_カメラの視野角.md` の8・9章(視野角まわりの設計のまとめもここ)
+- [x] FOVパンチ(ゲームで強さ・長さを確認。場面ごとの強さ・向きは note の8章の表)
+- [ ] ダッシュ/ブースト用の視野角オフセット(戻すまでずっと)を CameraManager に入れる。設計は `../進捗/note_カメラの視野角.md` の8・9章(視野角まわりの設計のまとめもここ)
 - [ ] ブレイクの打ち上げの続き: 敵を打ち上げる処理とCSV(ユーザー)・専用カメラ・演出。ゲームで一連の流れを確認
 - [ ] **フェーズ進行の外部化**(遷移表CSV＋グループ指定＋EnterArea)。設計と手順は `../進捗/フェーズ進行_設計メモ.md`
   - [x] Step1 PhaseManagerへ移すだけ(ゲームでの確認はまだ) → [x] Step2 遷移CSV(AllDead) → [x] Step3 デバッグ表示(どちらもゲームでの確認はまだ)

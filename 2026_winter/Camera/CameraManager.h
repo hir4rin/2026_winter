@@ -41,7 +41,8 @@ public:
 		UltStartCamera,
 		SkillKessatuCamera,
 		AirAssasinCamera,
-		AirAssasinCameraStart
+		AirAssasinCameraStart,
+		BattleSmoothCamera
 
 	};
 
@@ -72,6 +73,10 @@ public:
 	void StartCameraShake(float power, float time);
 	//カメラシェイクのUpdate
 	Vector3 CameraShakeUpdate();
+	//Fovパンチ
+	void StartFovPunch(float angleDeg, float time, float inFrame, float outPower);//+で広げる、-で挟める
+	float FovPunchUpdate();//今フレームのずれ(ラジアン)。
+
 
 	//ロックオン//Player経由で読むだけ
 	bool IsLockOn()const;
@@ -87,12 +92,16 @@ public:
 	Vector3 GetPhotoCameraPos() { return m_photoCamPos; }
 	Vector3 GetPhotoCameraTarget() { return m_photoCamTarget; }
 
+	//プレイヤーの攻撃がヒットしたとき//PlayerCamera中だけBattleSmoothCameraに遷移する
+	void OnPlayerAttackHit();
 
 public:
 	void ChangeState(std::shared_ptr<CameraStateBase> newState);
 	void InitState(std::shared_ptr<CameraStateBase> newState);
 	//外部からステートを変えるとき
 	void ChangeStateFromScene(CameraStateName stateName);
+
+
 private:
 	//ロックオン状態とカメラのステートがずれていたら遷移する
 	void SyncLockOnState();
@@ -110,6 +119,17 @@ private:
 	float m_shakeTimerMax = 0.0f;//減衰用のコピー
 	bool m_isShaking = false;//今カメラが揺れているかどうか
 	Vector3 m_renderPos = Vector3();//カメラ描画用の座標
+
+
+	//Fov用
+	float m_renderFov = DX_PI_F / 3.0f;//カメラ描画用の視野角
+	float m_fovPunchAngle = 0.0f;//パンチの強さ(ラジアン)
+	float m_fovPunchOffset = 0.0f;//今フレームのずれ
+	float m_fovPunchTimer = 0.0f;
+	float m_fovPunchMaxTime = 0.0f;
+	float m_fovPunchInFrame = 0.0f;//入りのフレーム数
+	float m_fovPunchOutPower = 0.0f;//戻りのイージングの指数
+	float m_fovPunchCoolTimer = 0.0f;//次のパンチを受け付けるまでの残り
 
 	//フォトモード用のフリーカメラ
 	Vector3 m_photoCamPos = Vector3();

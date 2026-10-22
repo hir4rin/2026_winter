@@ -21,6 +21,7 @@
 #include "CameraState/PartBroken/PartBrokenACameraEnd.h"
 #include "CameraState/PartBroken/PartBrokenBCamera.h"
 #include "CameraState/PartBroken/PartBrokenBCameraStart.h"
+#include "CameraState/BattleSmoothCamera.h"
 #include "Collision/CollisionManager.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
@@ -41,12 +42,12 @@ namespace
 
 	constexpr int kShakeRandMax = 200;//カメラ揺れのランダム値の最大
 	constexpr float kShakeRandNormalize = 100.0f;//ランダム値を-1.0~1.0の範囲に正規化するための除数
+
+	constexpr float kFovPunchCoolTime = 80.0f;//パンチのクールタイム
 }
 
 CameraManager::CameraManager()
 {
-
-	
 	m_context = std::make_shared<CameraContext>();
 
 }
@@ -81,8 +82,10 @@ void CameraManager::Update()
 	renderPos += CameraShakeUpdate();
 	m_renderPos = renderPos;
 
+	m_renderFov = m_currentState->GetFov() + FovPunchUpdate();
+
 	SetCameraPositionAndTarget_UpVecY(m_renderPos.ToDxLibVector(), m_currentState->GetTarget().ToDxLibVector());
-	SetupCamera_Perspective(m_currentState->GetFov());
+	SetupCamera_Perspective(m_renderFov);
 	return;
 	
 }
@@ -131,7 +134,7 @@ void CameraManager::ApplyCameraSettings()
 
 	//m_mainCamera->CameraSetting();
 	SetCameraPositionAndTarget_UpVecY(m_renderPos.ToDxLibVector(), m_currentState->GetTarget().ToDxLibVector());
-	SetupCamera_Perspective(m_currentState->GetFov());
+	SetupCamera_Perspective(m_renderFov);
 	//カメラ変更を反映させる
 	Effekseer_Sync3DSetting();
 }
@@ -233,6 +236,54 @@ Vector3 CameraManager::CameraShakeUpdate()
 	return mag;
 
 
+}
+
+void CameraManager::StartFovPunch(float angleDeg, float time, float inFrame, float outPower)
+{
+	float angle = angleDeg * DX_PI_F / 180.0f;
+	//クールタイム中は無視
+	if (m_fovPunchCoolTimer > 0.0f)return;
+	//今より弱いなら無視
+	if (std::abs(angle) < std::abs(m_fovPunchOffset))return;
+
+	m_fovPunchAngle = angle;
+	m_fovPunchTimer = 0.0f;
+	m_fovPunchMaxTime = time;
+	m_fovPunchInFrame = inFrame;
+	m_fovPunchOutPower = outPower;
+	m_fovPunchCoolTimer = kFovPunchCoolTime;
+}
+
+float CameraManager::FovPunchUpdate()
+{
+	//クールタイムはパンチが終わっていても減らす
+	m_fovPunchCoolTimer = (std::max)(m_fovPunchCoolTimer - 1.0f, 0.0f);
+
+	//最大時間を超えたら終わる
+	if (m_fovPunchTimer >= m_fovPunchMaxTime)
+	{
+		m_fovPunchOffset = 0.0f;
+		return 0.0f;
+	}
+	//タイムスケールとかをするならここにかける(いまはしない設計
+	m_fovPunchTimer += 1.0f;
+
+	float rate = 0.0f;
+	if (m_fovPunchTimer < m_fovPunchInFrame)
+	{
+		//入り:一瞬で最大へ
+		rate = m_fovPunchTimer / m_fovPunchInFrame;
+	}
+	else
+	{
+		//戻り:ゆっくり0へ
+		float outFrame = (std::max)(m_fovPunchMaxTime - m_fovPunchInFrame, 1.0f);
+		float t = std::clamp((m_fovPunchTimer - m_fovPunchInFrame) / outFrame, 0.0f, 1.0f);
+		rate = 1.0f - Easing::Apply(EasingMode::EaseOut, t, m_fovPunchOutPower);
+	}
+
+	m_fovPunchOffset = m_fovPunchAngle * rate;
+	return m_fovPunchOffset;
 }
 
 bool CameraManager::IsLockOn()const
@@ -371,12 +422,24 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 	case CameraStateName::PartBrokenBCameraStart:
 		newState = std::make_shared<PartBrokenBCameraStart>(shared_from_this());
 		break;
+	case CameraStateName::BattleSmoothCamera:
+		newState = std::make_shared<BattleSmoothCamera>(shared_from_this());
+		break;
 	default:
 		return;
 
 	}
 
 	ChangeState(newState);
+}
+
+void CameraManager::OnPlayerAttackHit()
+{
+	if (!m_currentState)return;
+	//PlayerCamera以外(LockOnCamera、UltCamera、演出カメラなど)の時は遷移しない
+	if (m_currentState->GetCameraType() != CameraStateBase::Type::PlayerCamera)return;
+
+	ChangeStateFromScene(CameraStateName::BattleSmoothCamera);
 }
 
 void CameraManager::SyncLockOnState()
@@ -386,7 +449,7 @@ void CameraManager::SyncLockOnState()
 	bool isLockOn = IsLockOn();
 
 	//追従カメラとロックオンカメラの間だけ切り替える(必殺技・演出カメラには触らない)
-	if (isLockOn && type == CameraStateBase::Type::PlayerCamera)
+	if (isLockOn && (type == CameraStateBase::Type::PlayerCamera || type == CameraStateBase::Type::BattleSmoothCamera))
 	{
 		ChangeStateFromScene(CameraStateName::LockOnCamera);
 	}

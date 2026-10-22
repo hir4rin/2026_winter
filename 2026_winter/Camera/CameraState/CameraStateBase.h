@@ -81,6 +81,7 @@ public:
 		SkillKessatuCamera = 19,
 		AirAssasinCamera = 20,
 		AirAssasinCameraStart = 21,
+		BattleSmoothCamera = 22,
 
 		
 

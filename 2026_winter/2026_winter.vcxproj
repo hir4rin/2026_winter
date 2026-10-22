@@ -165,6 +165,7 @@
     <ClCompile Include="Camera\CameraState\Stage2FazeCamera.cpp" />
     <ClCompile Include="Camera\CameraState\TitleCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\UltCameraState.cpp" />
+    <ClCompile Include="Camera\CameraState\BattleSmoothCamera.cpp" />
     <ClCompile Include="Camera\CameraState\UltStartCamera.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
@@ -306,6 +307,7 @@
     <ClInclude Include="Camera\CameraState\Stage2FazeCamera.h" />
     <ClInclude Include="Camera\CameraState\TitleCameraState.h" />
     <ClInclude Include="Camera\CameraState\UltCameraState.h" />
+    <ClInclude Include="Camera\CameraState\BattleSmoothCamera.h" />
     <ClInclude Include="Camera\CameraState\UltStartCamera.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
