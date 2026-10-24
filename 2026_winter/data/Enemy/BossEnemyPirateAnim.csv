@@ -24,9 +24,9 @@ HitR,Hit_Combat_R,1
 HitDeath,Hit_Combat_Death,1
 GetUp,Get_Up_Combat,1
 HitLargeB,Hit_Large_Combat_B,1
-HitLargeF,Hit_Large_Combat_F,1
-HitLargeL,Hit_Large_Combat_L,1
-HitLargeR,Hit_Large_Combat_R,1
+HitLargeF,Hit_Large_Combat_F,0.5
+HitLargeL,Hit_Large_Combat_L,0.5
+HitLargeR,Hit_Large_Combat_R,0.5
 Execute01Victim,Execution_Target_01,1
 Execute02Victim,Execution_Target_02,1
 Execute03Victim,Execution_Target_03,1

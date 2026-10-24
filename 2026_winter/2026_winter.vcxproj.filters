@@ -402,6 +402,9 @@
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitGround.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Enemy\State\Hit\EnemyHitLargeHit.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\State\Hit\EnemyHitAir.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -870,6 +873,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitGround.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\State\Hit\EnemyHitLargeHit.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Hit\EnemyHitAir.h">

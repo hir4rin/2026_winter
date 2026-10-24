@@ -245,8 +245,11 @@ int BossEnemyPirateR0::SelectAttackIndex()
 	//クールタイム中は攻撃しない
 	if (m_attackCoolTime > 0.0f)return -1;
 
+	//個々の攻撃ランダムをどうするか、、
+	//攻撃を選んだその範囲に移動とかのほうがいい気がするが
 
-	return 3;
+
+	return 6;
 
 
 	//プレイヤーとの距離(XZ)
@@ -467,6 +470,29 @@ void BossEnemyPirateR0::OnDamage(Collider& other, AttackData& data)
 		//遷移がダメならリターンする
 		if (!state->CanChangeHit())return;
 	}
+
+	//ボスは空中とかに行かないし、攻撃中はヒットリアクションを取らない。部位破壊もラウンド0はしない
+	//よろめいた感じとパターンは出す
+
+	//isKirimomiのような大きい攻撃は大きくのけぞる
+
+	if (hitinfo.isKirimomi)
+	{
+		ChangeState(std::make_shared<EnemyHitLargeHit>(GetWeakPtr(), hitinfo));
+		return;
+	}
+	else
+	{
+		//既にHitStateの時はやらない
+		//if (!std::dynamic_pointer_cast<EnemyHitGround>(m_currentState))
+		//{
+			ChangeState(std::make_shared<EnemyHitGround>(GetWeakPtr(), hitinfo));
+		//}
+		return;
+	}
+
+	
+
 
 
 	if (data.knockBackPower.y > 0.0f && !hitinfo.isKirimomi)

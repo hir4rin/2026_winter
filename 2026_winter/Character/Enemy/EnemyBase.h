@@ -19,6 +19,7 @@ enum class AsyncData : int;
 #include "State/Hit/EnemyHitDrop.h"
 #include "State/Hit/EnemyDie.h"
 #include "State/Hit/EnemyHitGround.h"
+#include "State/Hit/EnemyHitLargeHit.h"
 #include "State/Hit/EnemyHitAir.h"
 #include "State/Hit/EnemyAssasined.h"
 #include "State/Hit/EnemyAirAssasined.h"
@@ -496,6 +497,7 @@ protected:
 	friend class EnemyHitDrop;
 	friend class EnemyDie;
 	friend class EnemyHitGround;
+	friend class EnemyHitLargeHit;
 	friend class EnemyHitAir;
 	friend class EnemyAssasined;
 	friend class EnemyAirAssasined;

@@ -709,6 +709,22 @@
 - `SetDebugIdle` を変えた: `m_isDebugIdle` = I キー(全体)|| Stop AI。攻撃中を Idle に戻すのは I キーのときだけ。
 - MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(外に出したウィンドウの描画・入力、デバッグウィンドウの動き)。
 
+### 2026-10-24 大きくのけぞる被弾ステート(EnemyHitLargeHit)
+- `Character/Enemy/State/Hit/EnemyHitLargeHit.h/.cpp`: EnemyHitGround のコピー。違いはアニメ(`HitLargeF` = Hit_Large_Combat_F)と GetName("HitLargeHit")だけ。
+  吹き飛ばし・プレイヤーの正面に寄せる処理・終わったら NextAfterRecover(空中なら AirStay)も同じ。コンストラクタは `(owner, HitInfo)`。
+  `HitLargeF` は5つの敵のアニメCSV全部にある。向きで B/L/R を使い分けたいなら Enter で選ぶ。
+- (追記) `EnemyHitGround` の被弾アニメを `Hit` から **`HitF` / `HitL` / `HitR` のランダム**(`GetRand(2)`)にした。3つとも5つの敵のアニメCSV全部にある。`Hit` の key は EnemyHitAir・確殺(EnemyPartBrokenKilled)でまだ使っている。
+- EnemyBase.h に include と friend、vcxproj/filters に登録。**まだどこからも入らない**(OnDamage などで `std::make_shared<EnemyHitLargeHit>(GetWeakPtr(), hitinfo)` に遷移させる)。
+- MSBuild(Debug x64)でビルドは通った。
+
+### 2026-10-24 敵の攻撃の踏み込みでガタガタする問題
+- 原因(推定): `EnemyAttack::AttackMove` が毎フレーム「`m_targetPos` - 今の位置」で向きを計算し直していたので、速い踏み込み(突進)で目標を通り過ぎると、次のフレームで逆向きになり前後に揺れていた。
+  押し戻しの設定(2人で0.5ずつ、1フレーム3回)は変えていない。
+- `EnemyAttack::m_moveDir`: 踏み込む向きを `Enter` で1回だけ決めて固定(連撃の向き直しの後)。目標が自分の位置と同じなら今の向き。
+- 目標を通り過ぎたら止まる: 1フレームの移動量を「目標までの残りの距離(進む向きの成分)」までに抑える。通り過ぎていたら0。判定のON/OFFはそのまま。
+  - 目標はプレイヤーの位置(予備動作の途中まで追う)なので、プレイヤーがそこにいればぶつかって押し戻しで止まる。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。プレイヤーに当たっている間の揺れ(押し合い)が残っていれば、別の対策が要る。
+
 ---
 
 ## TODO / 次にやること

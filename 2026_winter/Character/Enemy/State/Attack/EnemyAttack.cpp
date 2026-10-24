@@ -5,6 +5,7 @@
 #include "Collision/SphereShape.h"
 #include "Collision/CollisionManager.h"
 #include <format>
+#include <algorithm>
 
 namespace
 {
@@ -46,6 +47,20 @@ void EnemyAttack::Enter()
 			//向きはそのまま//1撃目で通り過ぎた踏み込み先へ戻らないように、前方に置き直す
 			owner->m_targetPos = owner->m_rb.m_pos + owner->GetTargetVec() * kChainForwardDistance;
 		}
+	}
+
+	//踏み込む向きはここで決めて固定する//目標が自分の位置と重なっていたら今の向き
+	m_moveDir = owner->m_targetPos - owner->m_rb.m_pos;
+	m_moveDir.y = 0.0f;
+	if (m_moveDir.Magnitude() > 0.0f)
+	{
+		m_moveDir = m_moveDir.Normalize();
+	}
+	else
+	{
+		m_moveDir = owner->GetTargetVec();
+		m_moveDir.y = 0.0f;
+		m_moveDir = m_moveDir.Normalize();
 	}
 
 	//animationの初期化
@@ -132,18 +147,22 @@ void EnemyAttack::AttackMove()
 	const auto& node = owner->GetAttackNode(owner->m_currentAttackIndex);
 
 	float currentFrame = owner->m_anim.GetNowAnimFrame();
-	Vector3 forward = owner->m_targetPos - owner->m_rb.m_pos;
-	forward.y = 0.0f;
-	forward = forward.Normalize();
+	//Enterで決めた向きに進む
+	const Vector3& forward = m_moveDir;
+	//目標までの残りの距離(進む向きの成分)//通り過ぎたら0以下
+	//playerがいどうしてもそのラインで止める
+	Vector3 toTarget = owner->m_targetPos - owner->m_rb.m_pos;
+	toTarget.y = 0.0f;
+	const float remain = (std::max)(toTarget.Dot(forward), 0.0f);
 
-	//移動距離
+	//移動距離//目標を通り過ぎないように、残りの距離までに抑える
 	if (currentFrame < node.attackColStartFrame)
 	{
-		owner->m_rb.m_vel = forward * node.moveSpeedBeforeCol;
+		owner->m_rb.m_vel = forward * (std::min)(node.moveSpeedBeforeCol, remain);
 	}
 	else if (owner->m_anim.IsAnimFrameBetween(node.attackColStartFrame,node.attackColEndFrame))
 	{
-		owner->m_rb.m_vel = forward * node.moveSpeedDuringCol;
+		owner->m_rb.m_vel = forward * (std::min)(node.moveSpeedDuringCol, remain);
 		if (m_attackCol) m_attackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
 	}
 

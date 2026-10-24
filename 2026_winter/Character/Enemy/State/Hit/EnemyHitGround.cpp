@@ -24,7 +24,10 @@ void EnemyHitGround::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false, owner->GetAnimSpeed("Hit"));
+	//被弾のアニメはN,F,L,Rからランダム
+	const char* kHitAnimKeys[] = { "Hit","HitF", "HitL", "HitR" };
+	const char* animKey = kHitAnimKeys[GetRand(3)];
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(animKey), false, owner->GetAnimSpeed(animKey));
 }
 
 void EnemyHitGround::Update()
