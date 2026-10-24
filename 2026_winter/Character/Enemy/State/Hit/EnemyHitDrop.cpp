@@ -23,7 +23,7 @@ void EnemyHitDrop::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Kirimomi"), false,0.5f, kAnimEndFrame);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Kirimomi"), false, 0.5f * owner->GetAnimSpeed("Kirimomi"), kAnimEndFrame);
 	//縦の速度は初速(m_info.knockBackVel.y)と重力の累積(m_gravity)から作る
 	m_gravity = 0.0f;
 }

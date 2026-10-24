@@ -26,7 +26,7 @@ void EnemyCaution::Enter()
 	auto player = owner->m_player.lock();
 	if (!player)return;
 
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("StrafeRight"), true);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("StrafeRight"), true, owner->GetAnimSpeed("StrafeRight"));
 
 	owner->m_targetPos = player->GetRigidBody().GetPos();
 

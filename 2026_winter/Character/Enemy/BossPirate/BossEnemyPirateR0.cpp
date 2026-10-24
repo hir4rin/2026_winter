@@ -1,20 +1,21 @@
-﻿#include "BossEnemyPirate.h"
-#include "../../DataLoader/DataManager.h"
+﻿#include "BossEnemyPirateR0.h"
+#include "DataLoader/DataManager.h"
 #include "Main/System.h"
-#include "../../Math/Matrix4x4.h"
+#include "Math/Matrix4x4.h"
 #include "Collision/SphereShape.h"
 #include "Collision/CapsuleShape.h"
-#include "EnemyPart.h"
+#include "Character/Enemy/EnemyPart.h"
 #include "Collision/HitCol.h"
 #include "Character/Player/Player.h"
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
 #include "Character/Enemy/State/Locomotion/EnemyPatrol.h"
 #include "Main/Input.h"
 #include "Render/ModelShaderManager.h"
+#include "Character/Enemy/BossPirate/Part/BossPirateWeapon.h"
 
 namespace
 {
-	const std::string kStatusType = "BossEnemyPirate";//EnemyStatus.csvのtype
+	const std::string kStatusType = "BossEnemyPirate";//EnemyStatus.csvのtype//今は第二ラウンドと同じ行
 
 	constexpr float kBreakPartScale = 0.001f;//部位破壊したボーンの大きさ//0だと法線が壊れるので少しだけ残す
 
@@ -34,7 +35,7 @@ namespace
 }
 
 
-BossEnemyPirate::BossEnemyPirate(std::weak_ptr<Player> player, Vector3 startPos):EnemyBase(player)
+BossEnemyPirateR0::BossEnemyPirateR0(std::weak_ptr<Player> player, Vector3 startPos):EnemyBase(player)
 {
 
 	//ステータス
@@ -67,12 +68,13 @@ BossEnemyPirate::BossEnemyPirate(std::weak_ptr<Player> player, Vector3 startPos)
 	const auto& animData = DataManager::GetInstance().GetBossEnemyPirateAnimData();
 
 	m_animNames = animData.animNames;
+	m_animSpeeds = animData.animSpeeds;//アニメCSVの再生速度
 
 	
 	
 }
 
-BossEnemyPirate::~BossEnemyPirate()
+BossEnemyPirateR0::~BossEnemyPirateR0()
 {
 	if (m_currentState)
 	{
@@ -83,10 +85,10 @@ BossEnemyPirate::~BossEnemyPirate()
 	MV1DeleteModel(m_headModelHandle);
 }
 
-void BossEnemyPirate::Init()
+void BossEnemyPirateR0::Init()
 {
 	//初期状態をIdleにする//アニメーションの初期化
-	m_anim.Init(m_modelHandle, GetAnimName("Idle"), true);
+	m_anim.Init(m_modelHandle, GetAnimName("Idle"), true, GetAnimSpeed("Idle"));
 
 	//当たり判定の初期化
 	ColInit({
@@ -134,9 +136,11 @@ void BossEnemyPirate::Init()
 
 	m_headPart->SetIsGhost(true);
 	m_headPart->SetUseGroundSnap(true);
+
+	m_weapon = std::make_shared<BossPirateWeapon>(m_modelHandle);//剣の生成
 }
 
-void BossEnemyPirate::Update()
+void BossEnemyPirateR0::Update()
 {
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(HitAir,HitDrop,AirFall)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
@@ -176,6 +180,17 @@ void BossEnemyPirate::Update()
 	}
 	m_wasQPressed = isQPressed;
 
+	//デバッグ用//Iを押した瞬間だけBossEnemyPirateAnim.csvを読み込み直す//次にアニメが切り替わったときから効く
+	bool isIPressed = CheckHitKey(KEY_INPUT_I) != 0;
+	if (isIPressed && !m_wasIPressed)
+	{
+		DataManager::GetInstance().ReloadBossEnemyPirateAnimData();
+		const auto& animData = DataManager::GetInstance().GetBossEnemyPirateAnimData();
+		m_animNames = animData.animNames;
+		m_animSpeeds = animData.animSpeeds;
+	}
+	m_wasIPressed = isIPressed;
+
 	if (m_isBreakLeftArm)
 	{
 		m_leftArmPart->Update();
@@ -207,22 +222,57 @@ void BossEnemyPirate::Update()
 	m_anim.Update(m_ownTimeScale);
 	//頭をプレイヤーの方に向ける//アニメーションの姿勢に回転を足すので、アニメーションの更新の後に呼ぶ
 	UpdateLookAtPlayer(m_status.headFrame);
+	//剣を右手に合わせる//アニメーションの更新の後
+	m_weapon->Update();
 }
 
-void BossEnemyPirate::Draw()
+void BossEnemyPirateR0::Draw()
 {
 	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);//血殺中は黒く描く
+	m_weapon->Draw();//剣
 	//部位破壊したパーツの描画
 	if (m_isBreakLeftArm) m_leftArmPart->Draw();
 	if (m_isBreakHead) m_headPart->Draw();
 }
 
 
-void BossEnemyPirate::OnCollision(Collider& other)
+void BossEnemyPirateR0::OnCollision(Collider& other)
 {
 }
 
-void BossEnemyPirate::OnDamage(Collider& other, AttackData& data)
+int BossEnemyPirateR0::SelectAttackIndex()
+{
+	//クールタイム中は攻撃しない
+	if (m_attackCoolTime > 0.0f)return -1;
+
+
+	return 3;
+
+
+	//プレイヤーとの距離(XZ)
+	Vector3 toPlayer = TargetPlayerPos() - m_rb.m_pos;
+	toPlayer.y = 0.0f;
+	const float distance = toPlayer.Magnitude();
+
+	//距離に入っている攻撃を集める
+	std::vector<int> candidates;
+	for (const auto& node : m_attackList)
+	{
+		if (node.index < 0)continue;//CSVで抜けているindex(空の要素)
+		if (node.attackRange <= 0.0f)continue;//単体では選ばない攻撃
+		if (distance <= node.attackRange)
+		{
+			candidates.push_back(node.index);
+		}
+	}
+	if (candidates.empty())return -1;
+
+	//ランダムで1つ選ぶ//GetRand(n)は0〜nを返す
+	const int pick = GetRand(static_cast<int>(candidates.size()) - 1);
+	return candidates[pick];
+}
+
+void BossEnemyPirateR0::OnDamage(Collider& other, AttackData& data)
 {
 	//一旦EnemyBaseからコピーしてきた
 
@@ -445,33 +495,34 @@ void BossEnemyPirate::OnDamage(Collider& other, AttackData& data)
 	}
 }
 
-void BossEnemyPirate::OnAssasined()
+void BossEnemyPirateR0::OnAssasined()
 {
 	EnemyBase::OnAssasined();
 }
 
-void BossEnemyPirate::OnHeadBreak()
+void BossEnemyPirateR0::OnHeadBreak()
 {
 	m_isPartBroken = true;
 	SetUpBreakHead();
 	//SetUpBreakLeftArm();
 }
 
-void BossEnemyPirate::OnPartBreak()
+void BossEnemyPirateR0::OnPartBreak()
 {
 	if (m_isBreakLeftArm)return;
 	m_isPartBroken = true;
 	SetUpBreakLeftArm();
 }
 
-void BossEnemyPirate::SetOpacity(float rate)
+void BossEnemyPirateR0::SetOpacity(float rate)
 {
 	EnemyBase::SetOpacity(rate);
 	MV1SetOpacityRate(m_leftArmModelHandle, rate);
 	MV1SetOpacityRate(m_headModelHandle, rate);
+	if (m_weapon) m_weapon->SetOpacity(rate);
 }
 
-void BossEnemyPirate::SetUpBreakLeftArm()
+void BossEnemyPirateR0::SetUpBreakLeftArm()
 {
 	//切り落とした腕のモデルを、本体の向きのまま左腕ボーンの付け根に置く
 	MATRIX partMat = MV1GetMatrix(m_modelHandle);
@@ -495,7 +546,7 @@ void BossEnemyPirate::SetUpBreakLeftArm()
 	m_isBreakLeftArm = true;
 }
 
-void BossEnemyPirate::SetUpBreakHead()
+void BossEnemyPirateR0::SetUpBreakHead()
 {
 	//切り落とした頭のモデルを、本体の向きのまま頭ボーンの付け根に置く
 	MATRIX partMat = MV1GetMatrix(m_modelHandle);

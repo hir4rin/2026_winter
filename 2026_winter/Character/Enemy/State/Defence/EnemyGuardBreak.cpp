@@ -24,7 +24,7 @@ void EnemyGuardBreak::Enter()
 	if (!owner)return;
 
 
-	owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownStart"),false,0.5f,26.0f);
+	owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownStart"), false, 0.5f * owner->GetAnimSpeed("KnockDownStart"), 26.0f);
 	m_state = GuardBreakState::Start;
 
 	//プレイヤーに通知
@@ -46,7 +46,7 @@ void EnemyGuardBreak::Update()
 		if (owner->m_anim.GetAnimEndFlag())
 		{
 			m_state = GuardBreakState::Middle;
-			owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownLoop"), true,0.5f);
+			owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownLoop"), true, 0.5f * owner->GetAnimSpeed("KnockDownLoop"));
 		}
 		break;
 	case GuardBreakState::Middle:
@@ -55,7 +55,7 @@ void EnemyGuardBreak::Update()
 		if (m_middleTimer >= owner->m_status.guardBreakTime)
 		{
 			m_state = GuardBreakState::End;
-			owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownEnd"), false,0.5f);
+			owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownEnd"), false, 0.5f * owner->GetAnimSpeed("KnockDownEnd"));
 		}
 		break;
 	case GuardBreakState::End:

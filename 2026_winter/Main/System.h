@@ -34,6 +34,9 @@ enum class AsyncData : int
 	EnemyBazookaWeaponModel,//バズーカ兵のRPG7
 	//ボス
 	BossModel,
+	BossArmLModel,//背中の左腕(ボスのモデルから切り出したもの)
+	BossArmRModel,//背中の右腕
+	BossPirateSwordModel,//海賊のボスの剣(カトラス)
 	BossAttackHadouEffect,
 	BossAttackFireEffect,
 	BossSummonEffect,

@@ -1,0 +1,58 @@
+﻿#pragma once
+#include "Character/Enemy/EnemyBase.h"
+#include <memory>
+
+//ボスの背中から生える腕
+//EnemyBaseを継承して、被弾・打ち上げなどの敵のステートを使えるようにする
+//EnemyManagerが持ち、ボスはweak_ptrで持つ
+//モデルはボスから切り出したもので、フレームの並びがボスと同じ//アニメはボスのモデルのものを当てる
+class BossArm :
+    public EnemyBase
+{
+public:
+    enum class Side
+    {
+        Left,
+        Right,
+    };
+
+    BossArm(std::weak_ptr<Player> player, std::weak_ptr<EnemyBase> boss, int bossModelHandle, Side side);
+    virtual ~BossArm();
+
+    void Init()override;
+    void Update()override;
+    void Draw()override;
+    void DebugDraw()override;
+
+    bool IsTargetable()const override { return false; }//今は当たり判定が無いので対象にしない
+
+    //ImGuiで付け根・ずらし・アニメを調整する(Begin〜Endの中で呼ぶ)
+    void DrawEditor();
+    //もう片方の腕の値を左右反転して入れる
+    void SetMirrorOffset(const BossArm& other);
+
+protected:
+    //腕は歩かないので、Idleのままにする
+    std::shared_ptr<EnemyStateBase> NextAfterIdle()override;
+    std::shared_ptr<EnemyStateBase> NextAfterRecover()override;
+
+private:
+    MATRIX CalcSpineMatrix()const;//腕のモデルの背骨(spine_03)のワールド行列//ボスの付け根のフレーム＋ずらし
+
+private:
+    std::weak_ptr<EnemyBase> m_boss;//持ち主のボス
+    int m_bossModelHandle = -1;//ボスのモデル//付け根のフレーム・アニメを使う
+    Side m_side = Side::Left;
+
+    int m_rootFrame = -1;//付け根にするボスのフレーム(背骨)
+    int m_armSpineFrame = -1;//腕のモデルの背骨//ここを上書きすると、鎖骨から先がついてくる
+
+    //付け根からのずれ//向きはボスの体の向き//付け根を中心に回す・大きくする
+    Vector3 m_offsetPos;
+    Vector3 m_offsetRotDeg;
+    float m_scale = 1.0f;
+
+    //デバッグ用//ImGuiで選んだアニメ
+    int m_debugAnimIndex = 0;
+    bool m_isDebugAnimLoop = true;
+};

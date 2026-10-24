@@ -1,6 +1,6 @@
 ﻿#include "EnemyGunnerWeapon.h"
 #include "DxLib.h"
-#include "EnemyGunner.h"
+#include "Character/Enemy/Gunner/EnemyGunner.h"
 #include "Main/System.h"
 #include "Render/ModelShaderManager.h"
 

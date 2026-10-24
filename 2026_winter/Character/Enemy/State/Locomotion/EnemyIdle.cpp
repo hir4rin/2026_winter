@@ -21,7 +21,7 @@ void EnemyIdle::Enter()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 	//animationの初期化
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Idle"), true);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Idle"), true, owner->GetAnimSpeed("Idle"));
 	//移動速度を0にする
 	owner->m_rb.m_vel = Vector3(0, 0, 0);
 

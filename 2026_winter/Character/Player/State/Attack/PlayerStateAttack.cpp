@@ -304,6 +304,7 @@ void PlayerStateAttack::CheckNoLockOnTargetEnemyForAirAttack5()
 	{
 		if (!enemy)continue;
 		if (enemy->GetIsLifeZero())continue;
+		if (!enemy->IsTargetable())continue;
 		//地上の敵だけを対象にする
 		if (!enemy->IsFloor())continue;
 
@@ -347,6 +348,7 @@ bool PlayerStateAttack::SearchNearbyAirEnemy()
 	{
 		if (!enemy)continue;
 		if (enemy->GetIsLifeZero())continue;
+		if (!enemy->IsTargetable())continue;
 		if (enemy->IsFloor())continue;//地上の敵は対象外
 
 		Vector3 enemyPos = enemy->GetRigidBody().GetPos();

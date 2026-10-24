@@ -22,6 +22,7 @@ namespace
     const std::string kEnemyBazookaAttackPath = "data/Enemy/EnemyBazookaAttack.csv";
     const std::string kBossEnemyPirateAnimPath = "data/Enemy/BossEnemyPirateAnim.csv";
     const std::string kBossEnemyPirateAttackPath = "data/Enemy/BossEnemyPirateAttack.csv";
+    const std::string kBossArmAnimPath = "data/Enemy/BossArmAnim.csv";//ボスの背中の腕//アニメ名はボスのモデルのもの
     const std::string kEnemyStatusPath = "data/Enemy/EnemyStatus.csv";
 
     const std::string kBossAnimPath = "data/Enemy/Boss/BossAnim.csv";
@@ -101,6 +102,7 @@ void DataManager::LoadAll()
     LoadEnemyBazookaAttackRawData();
     LoadAnimData(kBossEnemyPirateAnimPath, m_bossEnemyPirateAnimData);
     LoadBossEnemyPirateAttackRawData();
+    LoadAnimData(kBossArmAnimPath, m_bossArmAnimData);
     LoadEnemyStatusRawData();
 
 
@@ -125,6 +127,14 @@ void DataManager::LoadAnimData(const std::string& filePath, AnimData& animData)
 
         std::string key = line.substr(0, comma);
         std::string value = line.substr(comma + 1);
+        //3列目(animSpeed)//空欄なら1.0のまま
+        auto speedComma = value.find(',');
+        if (speedComma != std::string::npos)
+        {
+            std::string speed = value.substr(speedComma + 1);
+            value = value.substr(0, speedComma);
+            if (!speed.empty())animData.animSpeeds[key] = std::stof(speed);
+        }
         animData.animNames[key] = value;
     }
 }
@@ -146,6 +156,13 @@ void DataManager::LoadEnemyGunnerAttackRawData()
 void DataManager::LoadEnemyBazookaAttackRawData()
 {
     LoadRawCsv(kEnemyBazookaAttackPath, m_enemyBazookaAttackRawData);
+}
+
+void DataManager::ReloadBossEnemyPirateAnimData()
+{
+    //LoadAnimDataは追加するだけなので、消した行が残らないように空にしてから読む
+    m_bossEnemyPirateAnimData = AnimData();
+    LoadAnimData(kBossEnemyPirateAnimPath, m_bossEnemyPirateAnimData);
 }
 
 void DataManager::LoadBossEnemyPirateAttackRawData()
@@ -527,6 +544,7 @@ bool DataManager::StringToEnemyType(const std::string& str, EnemyType& outType)
     if (str == "Gunner") { outType = EnemyType::Gunner; return true; }
     if (str == "Bazooka") { outType = EnemyType::Bazooka; return true; }
     if (str == "BossEnemyPirate") { outType = EnemyType::BossEnemyPirate; return true; }
+    if (str == "BossEnemyPirateR0") { outType = EnemyType::BossEnemyPirateR0; return true; }
     return false;
 }
 

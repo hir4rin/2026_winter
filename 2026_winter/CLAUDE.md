@@ -561,9 +561,165 @@
 - 案2(向きの更新を緩める)・案3(スティックを倒している間は入力の基準の向きを固定)はやっていない。
 - MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
 
+### 2026-10-24 ボスの背中の腕(BossArm) Step1: 背中に付けて描くだけ
+- ボスの設計(会話で決めた方針): 妖怪の四本腕。上の2本=本体の腕、**背中の2本=別モデルの `BossArm`(EnemyBase 継承)**。
+  腕を EnemyBase にするのは、ガードブレイク→打ち上げ→空中コンボ・ロックオン・吸い寄せ・被弾処理を敵と同じに使うため。
+  打ち上げは「腕の RigidBody=手の位置として物理で飛ばし、肩から腕の長さで制限、モデルは手の方を向ける」予定(Step2)。
+- `Character/Enemy/BossArm.h/.cpp` を追加し、vcxproj/filters に登録。左右2本(`BossArm::Side`)。
+  - モデルは仮でガンナーの盾なしの左腕(`EnemyGunnerPartLeftArmModel`、右も同じモデル)。骨・アニメ無し。当たり判定・ステートもまだ無い(CollisionManager に登録されない)。
+  - 位置: Draw で「ボスの体の向き(MV1GetMatrix の回転だけ)＋付け根フレームの位置」×ずらし。ずらしの軸はボスのモデルの軸。背骨の曲がりには追従しない。
+  - 付け根のフレームは `spine_03 → spine_05 → spine_02 → spine_01` の順に探し、無ければ0(BossPirate.mv1 のフレーム名はまだ確認していない)。
+  - ボスが消えたら `m_isVanished` を立てて EnemyManager に消してもらう。ボスの `SetOpacity` で腕も消える。
+- `EnemyBase::CreateChildEnemies()`(標準は空)。ボスが上書きして腕を作って Init し、weak_ptr を持つ。
+  `EnemyManager::StartPhase` でボスの直後に `m_enemies` に追加(ボスの後に更新される)。`m_phaseEnemies` には入れない。
+- `EnemyBase::IsTargetable()`(標準 true、腕は false)。`LockOnManager::CollectEnemiesRange`・`PlayerStateAttack` の2か所・`PlayerStateAttackBase` で見る。
+- **調整**: ボスの `DebugDraw`(F3 表示中＋F2 の ImGui 表示中)で「Boss Arm Editor」。腕ごとに Root Frame(番号とフレーム名)・Pos・Rot・Scale。
+  「Mirror Left -> Right」で左の値を左右反転して右へ。「Copy Constants」でクリップボードに定数の形で出るので、`BossArm.cpp` 先頭の定数(左腕の値)に貼る。右腕はコンストラクタで左を反転して作る。
+  F3 中は付け根に緑の球と「BossArm L/R」。
+- (追記) 右腕は左腕のモデルを `CalcArmMatrix` のスケールXをマイナスにして鏡写しにする(ずらしの反転だけでは形が左腕のままだった)。
+  面の向きが逆になるので、右腕だけ全メッシュを `DX_CULLING_RIGHT` にしている。本物の左右の腕モデルができたらこの反転は外す。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(F4 でボスの手前へ)。
+
+### 2026-10-24 ボスの腕のモデル(ボスから切り出し)とアニメ
+- **モデル**: `data/Enemy/BossPirate/BossArmL.mv1` / `BossArmR.mv1`(`AsyncData::BossArmLModel / BossArmRModel`)。ボスの mv1 から clavicle_l / clavicle_r 以下の腕だけを切り出したもの。
+  - 作り方: `tools/BossArmExtract/`(extract.cpp・verify.cpp・build.bat。DxLib のコンソールなしツール)。`extract.exe ボス.mv1 出力フォルダ l|r 0.5`。
+    各骨を少し平行移動して参照メッシュの頂点がどれだけついてくるかでウェイトを求め、clavicle 以下のウェイトが3頂点とも0.5以上の三角形だけ残す。
+    骨の階層・行列・テクスチャ(`Texture/〜.png`)・アルファテストはボスと同じにして .x に書き、DxLib で読み直して mv1 に保存。.x は保存していない(ツールで作り直せる)。
+  - **フレームはボスの87個全部を同じ順番で持つ**(メッシュは腕だけ。Pirate_Body フレームに入れている)。
+    骨の名前だけ合わせた腕のモデルに `MV1AttachAnim(腕, 番号, ボス, TRUE)`(名前で当てる)をしても動かなかったため、フレーム番号で当てる(`FALSE`)ようにした。
+  - Pirate.FBX(Unity の Assets/Pirate/Mesh)は DxLib で読めなかった(-1)。Blender(Steam 版 5.2.3)は使っていない。
+- **Animation**: `SetAnimSourceModel(handle)` を追加(-1 なら今まで通り自分のモデル)。設定すると、アニメ番号・総フレームはそのモデルから取り、
+  アタッチは `MV1AttachAnim(model, no, src, FALSE)`(`AttachAnim()`)。プレイヤー・普通の敵は変化なし。
+- **BossArm** をこのモデルに差し替え(仮のガンナーの腕・右腕の反転・カリング変更は削除)。
+  - 描画: モデル全体はボスと同じ行列、腕のモデルの `spine_03` だけ `MV1SetFrameUserLocalWorldMatrix` で「ボスの付け根フレーム(spine_03)＋ずらし」に上書き。鎖骨から先はアニメで動く。背骨の曲がりにもついてくる。
+  - ずらしは付け根を中心に、ボスの体の軸で 大きさ→回転→移動。**全部0・倍率1でボスの腕にぴったり重なる**(定数をこの値に戻した。前の仮モデル用の値は使えない)。
+  - アニメ名はボスのアニメCSV。`EnemyIdle` に入れ、`m_status.idleTime = FLT_MAX` と `NextAfterIdle / NextAfterRecover`→Idle で歩き出さない。
+  - ImGui の Boss Arm Editor に Anim(ボスのアニメ一覧)・Loop・Play・Idle(Idle に戻す)・今のフレームを追加。F3 中の文字にステート名。
+- MSBuild(Debug x64)でビルド・リンクは通った。ツールの画像で、ボスと同じアニメを当てた腕がボスの腕にぴったり重なること、背骨の上書きで腕がついてくることは確認。**ゲームでの確認はまだ**。
+- (追記) 腕のアニメ名の割り当てを `data/Enemy/BossArmAnim.csv` に分けた(最初はボスの `BossEnemyPirateAnim.csv` のコピー)。
+  `DataManager::GetBossArmAnimData()`、BossArm のコンストラクタで使う。**animName はボスのモデル(BossPirate.mv1)にあるアニメ名**にすること(腕はボスのアニメを借りるため)。
+  敵のステートが使う key(Idle / Hit / BlockLoop など)は消さないこと。起動時に1回読むだけ(Q では読み直さない)。
+
+### 2026-10-24 一時的な上からのライト(TempTopLight)
+- ゲーム内が暗くて見づらいので、真上から照らすディレクショナルライトを足した。`Render/TempTopLight.h/.cpp`(vcxproj/filters に登録)。
+  - SceneMain のメンバー `m_tempTopLight`、`SceneMain::Init` の最初のライト作成の直後で `Init()`。解放はデストラクタ。
+  - 値は .cpp 先頭: 向き(0,-1,0)、ディフューズ0.6、スペキュラ0、アンビエント0.25。
+- **オフ**: `TempTopLight.h` の `#define TEMP_TOP_LIGHT_ENABLE 1` を 0。**完全に消す**: ファイル2つを削除して `[TempTopLight]` で検索した行を消す(SceneMain.h 2行・SceneMain.cpp 1行)＋ vcxproj/filters。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの明るさの確認はまだ。
+
+### 2026-10-24 第一ラウンドのボス(BossEnemyPirateR0)
+- 方針: ボス戦は2ラウンド。**第一ラウンド = `BossEnemyPirateR0`(腕なしの海賊剣士)**、**第二ラウンド = `BossEnemyPirate`(背中の腕 BossArm あり)**。
+  切り替えはフェーズで行う予定(R0 が AllDead → 変身の演出イベント → 第二ラウンドを出す)。
+- `Character/Enemy/BossEnemyPirateR0.h/.cpp`: BossEnemyPirate のコピーから、背中の腕(CreateChildEnemies・Boss Arm Editor の DebugDraw・SetOpacity の腕・メンバー)を外したもの。vcxproj/filters に登録。
+  - ステータス(EnemyStatus.csv の `BossEnemyPirate` 行)・攻撃CSV・アニメCSV・Q の読み直しは**第二ラウンドと共有**。分けたくなったら行・ファイルを足して差し替える。
+- `EnemyType::BossEnemyPirateR0` / 配置CSVの type `BossEnemyPirateR0`(`StringToEnemyType`、`EnemyManager::CreateEnemy`)。Unity の EnemySpawnType にも足すこと。
+- F4(`PhaseManager::DebugSkipToBossPrevPhase`)は、BossEnemyPirate / R0 のうちフェーズ番号が小さいほうの手前へ飛ぶようにした。
+- MSBuild(Debug x64)でビルドは通った。
+- (追記) 配置: `Enemies003.csv` でフェーズ7に `BossEnemyPirateR0`、フェーズ8に `BossEnemyPirate`(どちらも 0,-1170,31500・180度・Idle・group Boss)。
+  遷移 `PhaseStage003.csv`: `7 AllDead→8 / None`、`8 AllDead→-1 / GameClear`。**Unity から配置を書き出し直すと消える**。
+  - R0 の死体が同じ場所に残ったまま第二ラウンドが出る(死体は上限5体まで残る)。変身の演出を作るときに、R0 を消す(StartVanish)か隠す処理を入れること。ゲームでの確認はまだ。
+
+### 2026-10-24 Character/Enemy を敵ごとのフォルダに整理
+- **これより前のログに出てくる敵のファイルのパスは整理前のもの**。今の構成(「敵の名前/」に本体、「敵の名前/Part/」に部位・武器):
+  - `Character/Enemy/` 直下: EnemyBase, EnemyManager, EnemyPart(全敵共通)と `State/`(変更なし)
+  - `Swordman/` EnemySwordman
+  - `Gunner/` EnemyGunner、`Gunner/Part/` EnemyGunnerWeapon
+  - `Bazooka/` EnemyBazooka、`Bazooka/Part/` EnemyBazookaWeapon
+  - `BossPirate/` BossEnemyPirate(第二ラウンド), BossEnemyPirateR0(第一ラウンド)、`BossPirate/Part/` BossArm
+- include はプロジェクト基準に直した(例 `"Character/Enemy/BossPirate/Part/BossArm.h"`、`"Character/Enemy/EnemyBase.h"`)。同じフォルダはファイル名だけ。
+  移したファイルの `../../Math/〜` `../../DataLoader/〜` も `Math/〜` `DataLoader/〜` にした。EnemyManager.cpp・SceneMain.cpp の include も変更。
+- vcxproj/filters のパスを変更(filters のフィルタ名は今まで通り「ソース ファイル」「ヘッダー ファイル」)。MSBuild(Debug x64)でビルドは通った。
+- **新しい敵を足すときも、このフォルダ分けに合わせる**。
+
+### 2026-10-24 海賊のボスに剣(カトラス)を持たせた
+- モデル: `data/Enemy/BossPirate/PirateSword.mv1`(`AsyncData::BossPirateSwordModel`)。元は Unity の `Assets/Pirate/Mesh/Pirate_Sword.FBX`。
+  - Blender(Steam 版)で .x に書き出し(`tools/PirateSword/sword2x.py`。ボスの mv1 と同じ軸 x=x, y=Blenderのz, z=Blenderのy、×100 で cm。原点は FBX のまま=握り)、DxLib で読み直して mv1 に保存(`tools/PirateSword/sword.cpp`)。全長約106、刃は +Y。
+  - テクスチャは **`Texture/PirateSword_Albedo.png`(剣専用、アルファなしの RGB)**。`Pirate_Details_Albedo.png` はアルファが全部0(Unity の滑らかさ)で、.x から読むと半透明扱いになって剣が見えなくなったため、RGB だけ写したコピーを作った。
+- `Character/Enemy/BossPirate/Part/BossPirateWeapon.h/.cpp`(EnemyGunnerWeapon と同じ作り)。持ち主は**モデルのハンドル**で受け取る(第一・第二ラウンドの両方で使うため)。vcxproj/filters に登録。
+  - 右手 `hand_r` の行列 × ずらし。値は .cpp 先頭。Tポーズで「刃が前、護拳が指の側、握りが手のひら」になるようにツールで計算した(オフセット -6.12,-3.64,0.05 / 回転 -99.73,4.00,-92.40)。Idle・攻撃・ガードの画像で確認済み。
+- BossEnemyPirate / BossEnemyPirateR0 の両方: Init の最後で生成、Update の最後(アニメ・首の後)で `Update`、Draw で描画(血殺中は黒)、SetOpacity で一緒に消える。
+- ボスのモデルには元から腰の剣(フレーム `Pirate_Sword_In_Belt`)があるので、今は腰と手に1本ずつ見える。消すなら `MV1SetFrameVisible`。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-10-24 敵のアニメCSVに animSpeed(再生速度)
+- 敵のアニメCSV 5つ(EnemySwordman / EnemyGunner / EnemyBazooka / BossEnemyPirate / BossArm の `〜Anim.csv`)を `key,animName,animSpeed` にした。最初は全部 1.0。
+  - 3列目は省略・空欄なら 1.0(プレイヤーのアニメCSVは2列のままで変化なし)。数字以外を書くと `std::stof` の例外で止まる。
+- (変更後の作り)Animation で自動で掛けるのはやめて、**プレイヤーと同じく ChangeAnim の引数で速度を渡す**形にした。
+  - 読み込み: `DataManager::LoadAnimData` で `AnimData::animSpeeds`(**キーは key**。GetAnimName と同じ)に入れる。
+  - `CharacterBase::m_animSpeeds` / `GetAnimSpeed(key)`(無ければ1.0)。各敵のコンストラクタ(`m_animNames` の直後)と BossArm、ボスの I キーの読み直しで `m_animSpeeds` を入れる。
+  - 各ステートの ChangeAnim の timescale に `owner->GetAnimSpeed("Idle")` などを渡す。**もともと速度を書いていた所は掛け算**(例 `0.5f * owner->GetAnimSpeed("BlockLoop")`)なので、CSV が1.0なら今まで通り。
+    対象: Idle / Patrol / Chase / Caution / Back / HitAir / HitGround / HitDrop / Die / Guard / GuardBreak / Parry、各敵の Init(Idle)。
+  - **使っていない所**: EnemyAttack / EnemyAttackPre(攻撃CSVの再生速度を使う)、EnemyAssasined / AirAssasined / PartBrokenKilled(プレイヤーのアニメと速さを合わせている)、BossArm の ImGui の Play。
+  - 新しくステートを作ってアニメを流すときも `owner->GetAnimSpeed(key)` を渡すこと。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+- (追記) **I キーでボスのアニメCSV(`BossEnemyPirateAnim.csv`)を読み直す**。BossEnemyPirate / R0 の Update(Q の読み直しの直後)。
+  `DataManager::ReloadBossEnemyPirateAnimData()`(空にしてから読む)→ `m_animNames` と速度の表を入れ直す。今流れているアニメの速度は変わらず、次にアニメが切り替わったときから効く。
+  - **I は EnemyManager の「敵をずっと Idle にする」切り替えと同じキー**なので、押すと両方が起きる。背中の腕(BossArmAnim.csv)は読み直さない。
+
+### 2026-10-24 BossPirate.mv1 の更新(アニメ追加)に合わせた作業
+- ユーザーが BossPirate.mv1 を新しくした(アニメ 45→60)。フレーム87個の名前・並び・行列、メッシュ、マテリアルは前と同じ(ツールで比較済み)
+  → **背中の腕(BossArmL/R)・剣はそのまま使える**(作り直し不要)。
+- **テクスチャ**: 新しい mv1 にはテクスチャが無かったので、前の mv1(git の HEAD)から、マテリアルごとにテクスチャ・アルファテスト・色を写して上書き保存した。
+  ツールは `tools/BossPirateRetex/retex.cpp`(作業フォルダを `data/Enemy/BossPirate` にして `retex.exe 前のmv1 ログ` で実行)。31個とも前と同じ割り当て(髪/服/体/小物)になったのを確認、画像でも確認。
+  - `MV1AddTexture` の戻り値はテクスチャの番号ではない(成功で0)。番号は足した後の `MV1GetTextureNum - 1`。
+  - **次に mv1 を更新したときも、マテリアルの並びが同じならこのツールで貼り直せる**。
+- **アニメCSV**: 増えた15個を `BossEnemyPirateAnim.csv` と `BossArmAnim.csv` の最後に追加(animSpeed は 1.0)。
+  key: `DodgeB/F/L/R`(Dodge_Combat_〜)、`Combo02_01` `Combo02_04` `Combo03_01〜04` `Combo04_02〜04`(Combo_Attack_〜)、`ComboWave05_03`、`AttackUp01`(Attack_Up_01)。
+  CSV のアニメ名がすべて mv1 にあること、mv1 のアニメがすべて CSV にあることを確認した。まだどの攻撃CSV・ステートからも使っていない。
+
+### 2026-10-24 敵の攻撃の終わり(attackFinishFrame が空欄のとき)を修正
+- `EnemyAttack::Update`: `attackFinishFrame` が負(CSV で空欄 = -1)のときは `m_anim.GetAnimEndFlag()`(animEndFrame を考えたアニメの終わり)で終える。
+  前は `今のフレーム >= -1` で比べていたので、空欄の攻撃は始まった瞬間に終わっていた。数字が入っている攻撃は今まで通り。
+- MSBuild(Debug x64)でビルドは通った。
+
+### 2026-10-24 敵の連続攻撃(AttackEnd の後に nextAttack でつなぐ)
+- 流れ: AttackPre → Attack → AttackEnd →(nextAttack があれば)Attack → AttackEnd → … → Back。攻撃の流れのステートの間なので攻撃権は最後まで持ったまま。
+- `EnemyBase::NextAfterAttackEnd`: 今の攻撃の `nextAttack` が0以上なら `m_currentAttackIndex` をそれにして `EnemyAttack(owner, true)`、無ければ今まで通り `EnemyBack`。行数を超える番号は assert。
+- `EnemyAttack` のコンストラクタに `isChain`(初期値 false。AttackPre から来る1撃目は false)。`Enter` の最初(アニメ・判定を作る前)で、isChain なら踏み込み先を決め直す:
+  - `IsChainAttackLookAtPlayer()` が true: `m_targetPos` = プレイヤーの位置、`ToPlayerLook()`。判定の位置・踏み込みはすぐプレイヤーの方、モデルは数フレームかけて回る。
+  - false(普通の敵): 向きはそのまま、`m_targetPos` = 今の位置 + 向き × 1000(`kChainForwardDistance`)。1撃目で通り過ぎた踏み込み先へ戻らないように。
+- `EnemyBase::IsChainAttackLookAtPlayer()`(標準 false)。BossEnemyPirate / BossEnemyPirateR0 で true。
+- F3 の Attack の情報に `#攻撃の番号` と連撃なら「連」。
+- **CSV の書き方**: 1撃目の行の `nextAttack` に2撃目の番号、`attackEndTimeFrame` を短く(5〜15F)、`attackFinishFrame` を振り終わりのフレームに(AttackEnd の間もアニメの残りが流れる)。
+  2撃目の行は `attackRange` を0(単体では選ばれない)、`nextAttack` を-1。
+- AttackEnd 中は「弱攻撃でもガードしない」ままなので、連撃の間に攻撃を当てられると被弾して連撃が止まる。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(CSV にまだ連撃の行が無い)。
+- (追記) ボスの攻撃の分岐用に、BossEnemyPirate / BossEnemyPirateR0 に `SelectAttackIndex()` の override(protected)を足した。中身は **ユーザーが実装する**。今は `EnemyBase::SelectAttackIndex()` を呼ぶだけ(TODO コメントあり)。
+  - 呼ばれるのは `NextAfterIdle` / `NextOnArrived`(攻撃を選べたら攻撃権を頼んで AttackPre へ)と、Chase の「出せる攻撃があるか」の確認。-1 を返すと攻撃しない。
+  - 敵共通の版がしていること: クールタイム中なら-1、`attackRange <= 0`(連撃の2撃目など)は選ばない、プレイヤーとの水平距離が attackRange 以内の攻撃からランダム。
+
+### 2026-10-24 ImGui を docking 版にして、ウィンドウの外に出せるようにした
+- `imgui/` を公式の `v1.92.9-docking` に入れ替えた(前の master 版 1.92.9 は公式から手を加えていなかったので、ファイルを上書きしただけ)。
+- `imguiApp::Init`: `ImGuiConfigFlags_DockingEnable` / `ViewportsEnable`、角を丸めない・背景を不透明に。
+  メイリオ(`C:\Windows\Fonts\meiryo.ttc`、無ければ標準フォント)を読むので日本語も出る。
+- `imguiApp::Render`: `UpdatePlatformWindows` / `RenderPlatformWindowsDefault` の前後で DxLib の描画先(RTV/DSV・ビューポート)を覚えて戻す。
+- `Application::Init` で `SetAlwaysRunFlag(TRUE)`(外のウィンドウを触るとゲームが非アクティブになって止まるため)。
+- **日本語の文字列は `imguiApp::ToUtf8()` を通して出す**(プロジェクトは MultiByte・`/utf-8` なしなので、ソースの日本語も CSV も Shift-JIS)。
+- ImGui のウィンドウを外に出すとゲームのウィンドウが非アクティブになるので、その間はキー入力(CheckHitKey)がゲームに入らないかも。
+
+### 2026-10-24 ボスのデバッグウィンドウ(Enemy Debug)
+- `Character/Enemy/EnemyBaseDebugWindow.cpp`(EnemyBase のメンバー。EnemyBase.cpp が長いので分けた)。vcxproj/filters に登録。
+- `EnemyBase::HasDebugWindow()`(標準 false)。BossEnemyPirate / R0 で true。`EnemyManager::DrawDebugWindows()` を SceneMain の `#ifdef _DEBUG` で、**F2(ImGui 表示)中だけ**呼ぶ(F3 とは関係なし)。
+- 中身:
+  - Status: ステート名＋情報、HPバー、位置、プレイヤーとの距離(最大の攻撃距離)、攻撃のCT、最後の攻撃、確定ヒット、ガードゲージ、攻撃権・発見・接地・死亡など。
+  - Control: **Stop AI**(この敵だけ Idle から動かない。移動系のステートは Idle に戻す。攻撃はウィンドウから出せる)、Lock HP、Reset HP / CT、ステートを直接変える(Idle/Chase/Caution/Back/Guard)。
+  - Attack: 攻撃CSVの一覧(クリックで選ぶ・**ダブルクリックか Execute で出す**)。Skip Pre で予備動作を飛ばす。Loop で Idle に戻ってから間隔をあけて同じ攻撃を繰り返す(Stop AI と一緒に使う)。
+    出している攻撃は一覧で赤。攻撃権・クールタイムは見ずに出す。連撃(nextAttack)はそのままつながる。
+  - 選んだ攻撃の詳細・Status Edit: その場で値を変えられる(**Q で CSV を読み直すと元に戻る**)。
+- `SetDebugIdle` を変えた: `m_isDebugIdle` = I キー(全体)|| Stop AI。攻撃中を Idle に戻すのは I キーのときだけ。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(外に出したウィンドウの描画・入力、デバッグウィンドウの動き)。
+
 ---
 
 ## TODO / 次にやること
+- [ ] ImGui のウィンドウをゲームの外に出してみる(描画が崩れないか・ゲームが止まらないか・キー入力)。Enemy Debug ウィンドウで攻撃を出して確認
+- [ ] ボスの連続攻撃: コードはできた。BossEnemyPirateAttack.csv に1撃目・2撃目の行を書いてゲームで確認(向き・間の長さ・連撃中の被弾で止まってよいか)
+- [ ] 追加したボスのアニメ(回避・コンボ)を攻撃CSV・ステートで使う
+- [ ] ボスの剣をゲームで確認(握り・向き)。腰の剣(Pirate_Sword_In_Belt)を消すか決める
+- [ ] ボスのラウンド切り替えの演出(7→8 のイベント。R0 の死体を消す・変身エフェクト・カメラ)
+- [ ] 一時ライト(TempTopLight)を本番のライト調整ができたら消す
+- [ ] BossArm: ゲームで付け根のずらしを ImGui で決めて定数に書き写す(今は0＝ボスの腕に重なる)。Anim の Play で腕だけ違うアニメが流れるか確認
+- [ ] BossArm Step2: 当たり判定・ステータス行・腕の長さで手の位置を制限、敵のステート(Hit/HitAir/AirStay/AirFall)を腕で通す。本物の腕モデル(骨・アニメ入り)
 - [ ] BattleSmoothCamera の戻る条件をゲームで確認(30F / 800 / 100 の調整)
 - [ ] 落下禁止をゲームで確認(縁で止まる・辺に沿って滑る・角で止まる・攻撃・回避の後に歩けば落ちる)
 - [ ] カメラとステージの当たり判定(案A)をゲームで確認。めり込みが気になれば案B(MV1CollCheck_Sphere の二分探索)へ

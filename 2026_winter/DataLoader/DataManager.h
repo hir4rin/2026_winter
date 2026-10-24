@@ -45,6 +45,10 @@ public:
 	/// </summary>
 	void ReloadBossEnemyPirateAttackRawData() { LoadBossEnemyPirateAttackRawData(); }
 	/// <summary>
+	/// BossEnemyPirateAnim.csvを読み込み直す(デバッグ用)
+	/// </summary>
+	void ReloadBossEnemyPirateAnimData();
+	/// <summary>
 	/// EnemyStatus.csvを読み込み直す(デバッグ用)
 	/// </summary>
 	void ReloadEnemyStatusRawData() { LoadEnemyStatusRawData(); }
@@ -58,6 +62,7 @@ public:
 	const std::vector<std::vector<std::string>>& GetEnemyBazookaAttackRawData() const { return m_enemyBazookaAttackRawData; }//敵(バズーカ兵)の攻撃の生データ
 	const AnimData& GetBossEnemyPirateAnimData() const { return m_bossEnemyPirateAnimData; }
 	const std::vector<std::vector<std::string>>& GetBossEnemyPirateAttackRawData() const { return m_bossEnemyPirateAttackRawData; }//ボス(海賊)の攻撃の生データ
+	const AnimData& GetBossArmAnimData() const { return m_bossArmAnimData; }//ボスの背中の腕のアニメデータ
 	const std::vector<std::vector<std::string>>& GetEnemyStatusRawData() const { return m_enemyStatusRawData; }//敵のステータスの生データ(1行=1種類)//解釈はEnemyBase::InitializeStatus
 	const AnimData& GetBossAnimData() const { return m_bossAnimData;}
 	const std::vector<std::vector<std::string>>& GetComboRawData() const { return m_comboRawData;}
@@ -157,6 +162,7 @@ private:
 	std::vector<std::vector<std::string>> m_enemyBazookaAttackRawData;//敵(バズーカ兵)の攻撃の生データ
 	AnimData m_bossEnemyPirateAnimData;//ボス(海賊)のアニメデータ
 	std::vector<std::vector<std::string>> m_bossEnemyPirateAttackRawData;//ボス(海賊)の攻撃の生データ
+	AnimData m_bossArmAnimData;//ボスの背中の腕のアニメデータ
 	std::vector<std::vector<std::string>> m_enemyStatusRawData;//敵のステータスの生データ
 	AnimData m_bossAnimData;//ボスのアニメーションデータ
 	std::vector<std::vector<std::string>> m_comboRawData;//コンボの生データ

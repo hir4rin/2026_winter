@@ -23,7 +23,7 @@ void EnemyBack::Enter()
 	auto player = owner->m_player.lock();
 	if (!player)return;
 	//animationの初期化
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Back"), false);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Back"), false, owner->GetAnimSpeed("Back"));
 }
 
 void EnemyBack::Update()

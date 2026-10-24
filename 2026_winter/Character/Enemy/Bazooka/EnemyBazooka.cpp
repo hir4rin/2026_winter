@@ -1,11 +1,11 @@
 ﻿#include "EnemyBazooka.h"
-#include "EnemyBazookaWeapon.h"
-#include "../../DataLoader/DataManager.h"
+#include "Character/Enemy/Bazooka/Part/EnemyBazookaWeapon.h"
+#include "DataLoader/DataManager.h"
 #include "Main/System.h"
-#include "../../Math/Matrix4x4.h"
+#include "Math/Matrix4x4.h"
 #include "Collision/SphereShape.h"
 #include "Collision/CapsuleShape.h"
-#include "EnemyPart.h"
+#include "Character/Enemy/EnemyPart.h"
 #include "Collision/HitCol.h"
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
 #include "Render/ModelShaderManager.h"
@@ -53,6 +53,7 @@ EnemyBazooka::EnemyBazooka(std::weak_ptr<Player> player, Vector3 startPos):Enemy
 	const auto& animData = DataManager::GetInstance().GetEnemyBazookaAnimData();
 
 	m_animNames = animData.animNames;
+	m_animSpeeds = animData.animSpeeds;//アニメCSVの再生速度
 }
 
 EnemyBazooka::~EnemyBazooka()
@@ -69,7 +70,7 @@ EnemyBazooka::~EnemyBazooka()
 void EnemyBazooka::Init()
 {
 	//初期状態をIdleにする//アニメーションの初期化
-	m_anim.Init(m_modelHandle, GetAnimName("Idle"), true);
+	m_anim.Init(m_modelHandle, GetAnimName("Idle"), true, GetAnimSpeed("Idle"));
 
 	//当たり判定の初期化
 	ColInit({

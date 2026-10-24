@@ -4,7 +4,7 @@
 #include <cmath>
 #include <unordered_map>
 #include "Character/Player/Player.h"
-#include "Character/Enemy/EnemySwordman.h"
+#include "Character/Enemy/Swordman/EnemySwordman.h"
 #include "Character/Enemy/EnemyManager.h"
 #include "Camera/Camera.h"
 #include "Camera/CameraManager.h"
@@ -103,6 +103,7 @@ void SceneMain::Init()
 	SetLightDifColorHandle(m_lightHandle, GetColorF(kLightDifColorValue, kLightDifColorValue, kLightDifColorValue, 1.0f));
 	SetLightSpcColorHandle(m_lightHandle, GetColorF(kLightSpcColorValue, kLightSpcColorValue, kLightSpcColorValue, 1.0f));
 	SetLightAmbColorHandle(m_lightHandle, GetColorF(kLightAmbColorValue, kLightAmbColorValue, kLightAmbColorValue, 1.0f));
+	m_tempTopLight.Init();//[TempTopLight]
 
 	//CSVデータ(アニメーション名・コンボ)の読み込み
 	DataManager::GetInstance().LoadAll();
@@ -369,6 +370,8 @@ void SceneMain::NormalDraw()
 	CollisionManager::GetInstance().DebugDraw();
 	//敵のデバッグ表示(頭の上の文字)//2Dの文字は後から描く3Dに上書きされるので、UIの後に描く
 	m_enemyManager->DebugDraw();
+	//ボスのデバッグウィンドウ(F2で表示/非表示)
+	if (imguiApp::GetInstance().IsDebugUIVisible())m_enemyManager->DrawDebugWindows();
 	m_phaseManager->DebugDraw();
 	m_player->GetLockOnManager()->DebugDraw();
 	//ステージ編集中はエディタ側で(選択中を白にして)描く

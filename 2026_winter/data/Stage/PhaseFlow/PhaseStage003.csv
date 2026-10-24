@@ -6,4 +6,5 @@
 4,AllDead,,5,None,,
 5,AllDead,,6,None,,
 6,EnterArea,Area_Boss,7,BossAppear,,
-7,AllDead,,-1,GameClear,,
+7,AllDead,,8,None,,
+8,AllDead,,-1,GameClear,,

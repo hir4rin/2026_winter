@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <windows.h>
 #include <vector>
+#include <string>
 #include "Math/Vector3.h"
 #include "Camera/CameraState/CameraStateBase.h"
 
@@ -98,6 +99,9 @@ public:
 	//再生中の補間結果の注視点を返す(同上)
 	const Vector3& GetAnimatorCameraTarget()const { return m_animatorCamTarget; }
 
+	//Shift-JISの文字列(CSVの名前・ソースの日本語)をImGuiで出せるUTF-8に直す
+	static std::string ToUtf8(const std::string& sjis);
+
 	//DxLibのウィンドウプロシージャに割り込ませるためのハンドラ関数
 	//マウス移動・クリック・キー入力などのメッセージが来るたびにWindowsから呼ばれる
 	static LRESULT CALLBACK WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -117,6 +121,7 @@ private:
 private:
 	bool m_initialized = false;//Init()済みかどうかのフラグ(二重初期化やUninit漏れによる誤動作を防ぐ)
 	WNDPROC m_prevWndProc = nullptr;//乗っ取る前の、DxLib本来のウィンドウプロシージャ(呼び出しを引き継ぐために保存)
+	ID3D11DeviceContext* m_context = nullptr;//外のウィンドウを描いた後に、DxLibの描画先を戻すために使う
 
 	//デバッグウィンドウの表示/非表示(F2キーでトグル)。
 	//Debugビルドは今まで通りずっと表示された状態から始まり、Releaseビルドは非表示から始まる(F2で初めて使える)

@@ -58,6 +58,10 @@ namespace
 
 	constexpr float kChaseRateMin = 0.01f;//追いかけ率の最小値
 	constexpr float kChaseRateMax = 1.0f;//追いかけ率の最大値(1.0だと追いかけずにイージングの点そのまま)
+
+	const char* const kJapaneseFontPath = "C:\\Windows\\Fonts\\meiryo.ttc";//日本語を出すためのフォント
+	constexpr float kJapaneseFontSize = 15.0f;
+	constexpr UINT kShiftJisCodePage = 932;
 }
 
 //ImGuiを使えるようにする初期化処理。ここで「ImGuiの入れ物を作る」→「入力と描画の係(バックエンド)を登録する」→
@@ -70,11 +74,25 @@ void imguiApp::Init(HWND hwnd, ID3D11Device* device, ID3D11DeviceContext* contex
 	ImGui::CreateContext();//ImGuiが内部で使うデータ(フォント、各ウィンドウの状態など)の入れ物を新しく作る
 	ImGuiIO& io = ImGui::GetIO();//入出力まわりの設定を取得する
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;//キーボードだけでもImGuiのUIを操作できるようにする設定
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;//ウィンドウ同士をくっつけられるようにする(docking版の機能)
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;//ゲームのウィンドウの外にもImGuiのウィンドウを出せるようにする(docking版の機能)
 
 	ImGui::StyleColorsDark();//見た目のテーマをダーク(黒っぽい配色)にする
 
+	//外に出したウィンドウはOSのウィンドウになるので、角を丸めず背景を不透明にする(imguiのサンプルと同じ設定)
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.WindowRounding = 0.0f;
+	style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+
+	//日本語を出せるようにメイリオを使う(無ければImGuiの標準フォントのまま)
+	if (GetFileAttributesA(kJapaneseFontPath) != INVALID_FILE_ATTRIBUTES)
+	{
+		io.Fonts->AddFontFromFileTTF(kJapaneseFontPath, kJapaneseFontSize);
+	}
+
 	ImGui_ImplWin32_Init(hwnd);//「このウィンドウのマウス/キーボード入力を見るよ」とImGuiに教える(入力係の登録)
 	ImGui_ImplDX11_Init(device, context);//「この描画デバイスを使って絵を出すよ」とImGuiに教える(描画係の登録)
+	m_context = context;
 
 	//DxLibが内部で作ったウィンドウプロシージャに、ImGuiの入力処理を割り込ませる
 	//SetWindowLongPtrで「次からこのウィンドウ宛てのメッセージはWndProcHandlerに先に渡してね」と入れ替えている
@@ -116,6 +134,28 @@ void imguiApp::Render()
 
 	ImGui::Render();//ここまでに組み立てたUIを、描画用のデータ(頂点情報)に変換する
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());//その頂点情報を実際にDirectX11でGPUに描かせる
+
+	//ゲームのウィンドウの外に出したImGuiのウィンドウを描く
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		//外のウィンドウを描くときに描画先が切り替わるので、DxLibの描画先を覚えておいて最後に戻す
+		ID3D11DeviceContext* context = m_context;
+		ID3D11RenderTargetView* prevRtv = nullptr;
+		ID3D11DepthStencilView* prevDsv = nullptr;
+		UINT viewportNum = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+		D3D11_VIEWPORT prevViewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+		context->OMGetRenderTargets(1, &prevRtv, &prevDsv);
+		context->RSGetViewports(&viewportNum, prevViewports);
+
+		ImGui::UpdatePlatformWindows();//外のウィンドウを作る・動かす・消す
+		ImGui::RenderPlatformWindowsDefault();//外のウィンドウを描いて表示する
+
+		context->OMSetRenderTargets(1, &prevRtv, prevDsv);
+		context->RSSetViewports(viewportNum, prevViewports);
+		//OMGetRenderTargetsで参照カウントが増えているので減らす
+		if (prevRtv)prevRtv->Release();
+		if (prevDsv)prevDsv->Release();
+	}
 }
 
 //カメラ調整用のデバッグウィンドウの中身を組み立てる関数
@@ -311,7 +351,7 @@ void imguiApp::DrawCameraKeyframeEditorWindow()
 	//インデックスが範囲外(未選択、または選択後に削除された)なら、その旨だけ表示して終わる
 	if (m_selectedKeyframeIndex < 0 || m_selectedKeyframeIndex >= static_cast<int>(m_cameraKeyframes.size()))
 	{
-		ImGui::Text("Camera Animator側でSelectを押して、編集したいキーフレームを選んでください");
+		ImGui::TextUnformatted(ToUtf8("Camera Animator側でSelectを押して、編集したいキーフレームを選んでください").c_str());
 		ImGui::End();
 		ImGui::PopStyleVar();
 		return;
@@ -480,6 +520,22 @@ void imguiApp::RecalcAngleDistanceFromPos()
 	//asinf/atan2fで、ベクトルの向きから角度(ラジアン)を求め、kRadToDegを掛けて度に変換している
 	m_angleVDeg = asinf(std::clamp(diff.y / m_distance, -1.0f, 1.0f)) * kRadToDeg;
 	m_angleHDeg = atan2f(diff.x, -diff.z) * kRadToDeg;
+}
+
+//Shift-JIS→(ワイド文字)→UTF-8の順に変換する
+std::string imguiApp::ToUtf8(const std::string& sjis)
+{
+	if (sjis.empty())return {};
+
+	const int wideLen = MultiByteToWideChar(kShiftJisCodePage, 0, sjis.c_str(), -1, nullptr, 0);
+	std::wstring wide(wideLen, L'\0');
+	MultiByteToWideChar(kShiftJisCodePage, 0, sjis.c_str(), -1, wide.data(), wideLen);
+
+	const int utf8Len = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, nullptr, 0, nullptr, nullptr);
+	std::string utf8(utf8Len, '\0');
+	WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, utf8.data(), utf8Len, nullptr, nullptr);
+	utf8.pop_back();//終端の\0の分
+	return utf8;
 }
 
 //DxLibのウィンドウにマウス/キーボードのメッセージが届くたびにWindowsから呼ばれる関数

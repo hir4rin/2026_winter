@@ -105,6 +105,9 @@
     <ClCompile Include="Render\BloodKillFog.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Render\TempTopLight.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Stage\SkyBox.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -312,22 +315,31 @@
     <ClCompile Include="Character\Enemy\State\Locomotion\EnemyIdle.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Character\Enemy\EnemySwordman.cpp">
+    <ClCompile Include="Character\Enemy\Swordman\EnemySwordman.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Character\Enemy\EnemyGunner.cpp">
+    <ClCompile Include="Character\Enemy\Gunner\EnemyGunner.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Character\Enemy\EnemyGunnerWeapon.cpp">
+    <ClCompile Include="Character\Enemy\Gunner\Part\EnemyGunnerWeapon.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Character\Enemy\EnemyBazooka.cpp">
+    <ClCompile Include="Character\Enemy\Bazooka\EnemyBazooka.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Character\Enemy\BossEnemyPirate.cpp">
+    <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirate.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Character\Enemy\EnemyBazookaWeapon.cpp">
+    <ClCompile Include="Character\Enemy\BossPirate\Part\BossArm.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR0.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\Bazooka\Part\EnemyBazookaWeapon.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\State\Defence\EnemyGuard.cpp">
@@ -394,6 +406,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\EnemyManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\EnemyBaseDebugWindow.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\State\Defence\PlayerStateJustDodge.cpp">
@@ -552,6 +567,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Render\BloodKillFog.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TempTopLight.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\SkyBox.h">
@@ -767,22 +785,31 @@
     <ClInclude Include="Character\Enemy\State\Locomotion\EnemyIdle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Character\Enemy\EnemySwordman.h">
+    <ClInclude Include="Character\Enemy\Swordman\EnemySwordman.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Character\Enemy\EnemyGunner.h">
+    <ClInclude Include="Character\Enemy\Gunner\EnemyGunner.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Character\Enemy\EnemyGunnerWeapon.h">
+    <ClInclude Include="Character\Enemy\Gunner\Part\EnemyGunnerWeapon.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Character\Enemy\EnemyBazooka.h">
+    <ClInclude Include="Character\Enemy\Bazooka\EnemyBazooka.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Character\Enemy\BossEnemyPirate.h">
+    <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirate.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Character\Enemy\EnemyBazookaWeapon.h">
+    <ClInclude Include="Character\Enemy\BossPirate\Part\BossArm.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR0.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\Bazooka\Part\EnemyBazookaWeapon.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\State\Defence\EnemyGuard.h">

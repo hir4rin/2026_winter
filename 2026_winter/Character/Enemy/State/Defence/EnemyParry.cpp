@@ -27,7 +27,7 @@ void EnemyParry::Enter()
 	if (!owner)return;
 
 	//TODO:弾き用のアニメーションが決まったら差し替える//仮でガードで受けるアニメーション
-	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), false, kParryAnimRate);
+	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), false, kParryAnimRate * owner->GetAnimSpeed("BlockHit"));
 
 	//その場で止まり、プレイヤーの方を向く
 	owner->m_rb.m_vel = Vector3(0, 0, 0);

@@ -144,3 +144,10 @@ const std::string& CharacterBase::GetAnimName(const std::string& key) const
 	assert(it != m_animNames.end() && "指定されたキーが見つかりませんでした");
 	return it->second;
 }
+
+float CharacterBase::GetAnimSpeed(const std::string& key) const
+{
+	auto it = m_animSpeeds.find(key);
+	if (it == m_animSpeeds.end())return 1.0f;
+	return it->second;
+}

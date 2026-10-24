@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "EnemyBase.h"
-#include "EnemyPart.h"
+#include "Character/Enemy/EnemyBase.h"
+#include "Character/Enemy/EnemyPart.h"
 #include <memory>
 class EnemyBazookaWeapon;
 class EnemyBazooka :

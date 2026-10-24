@@ -14,7 +14,7 @@ void EnemyDie::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Death"), false);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Death"), false, owner->GetAnimSpeed("Death"));
 	owner->m_rb.m_vel = Vector3(0, 0, 0);
 	owner->m_isLifeZero = true;
 	//やられ判定を消す(死体に攻撃が当たらないようにする)

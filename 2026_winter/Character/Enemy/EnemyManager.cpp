@@ -1,9 +1,10 @@
 ﻿#include "EnemyManager.h"
 #include "EnemyBase.h"
-#include "EnemySwordman.h"
-#include "EnemyGunner.h"
-#include "EnemyBazooka.h"
-#include "BossEnemyPirate.h"
+#include "Character/Enemy/Swordman/EnemySwordman.h"
+#include "Character/Enemy/Gunner/EnemyGunner.h"
+#include "Character/Enemy/Bazooka/EnemyBazooka.h"
+#include "Character/Enemy/BossPirate/BossEnemyPirate.h"
+#include "Character/Enemy/BossPirate/BossEnemyPirateR0.h"
 #include "Character/Player/Player.h"
 #include "Main/Input.h"
 #include "Main/System.h"
@@ -120,6 +121,16 @@ void EnemyManager::DebugDraw()
 	}
 }
 
+void EnemyManager::DrawDebugWindows()
+{
+	for (auto& enemy : m_enemies)
+	{
+		if (!enemy->HasDebugWindow())continue;
+		if (enemy->GetIsVanishing())continue;//消えている死体は出さない
+		enemy->DrawDebugWindow();
+	}
+}
+
 void EnemyManager::SpawnEnemy()
 {
 
@@ -142,6 +153,11 @@ void EnemyManager::StartPhase(int phase)
 		if (!enemy)continue;
 		m_enemies.push_back(enemy);
 		m_phaseEnemies.push_back(enemy);
+		//ボスの腕など//親の後ろに並べて、親の後に更新する//フェーズの全滅判定には入れない
+		for (auto& child : enemy->CreateChildEnemies())
+		{
+			m_enemies.push_back(child);
+		}
 	}
 }
 
@@ -179,6 +195,9 @@ std::shared_ptr<EnemyBase> EnemyManager::CreateEnemy(const EnemySpawnData& data)
 		break;
 	case EnemyType::BossEnemyPirate:
 		enemy = std::make_shared<BossEnemyPirate>(m_player, data.position);
+		break;
+	case EnemyType::BossEnemyPirateR0:
+		enemy = std::make_shared<BossEnemyPirateR0>(m_player, data.position);
 		break;
 	default:
 		return nullptr;

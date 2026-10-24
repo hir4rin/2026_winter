@@ -130,6 +130,8 @@ protected:
 	Animation m_anim;//アニメーション(アニメーションブレンド、アニメーション再生など)//今回はフレームで管理するように後で修正がいる
 	std::unordered_map<std::string, std::string> m_animNames;//アニメーションの名前を管理
 	const std::string& GetAnimName(const std::string& key)const;//アニメーションの名前を取得する
+	std::unordered_map<std::string, float> m_animSpeeds;//アニメーションの再生速度(アニメCSVの3列目)//キーはGetAnimNameと同じ
+	float GetAnimSpeed(const std::string& key)const;//アニメーションの再生速度を取得する//無ければ1.0//ChangeAnimのtimescaleに渡す
 
 	std::shared_ptr<HitCol> m_hitCol;//やられ判定
 

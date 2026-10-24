@@ -294,6 +294,13 @@ public:
 	bool GetIsVanished()const { return m_isVanished; }//消え終わったかどうか//trueならEnemyManagerが削除する
 	virtual void SetOpacity(float rate);//モデルの不透明度を設定する(1.0で不透明、0.0で透明)
 
+	//ロックオン・攻撃の吸い寄せの対象にするか
+	virtual bool IsTargetable()const { return true; }
+	//連撃の2撃目以降で、プレイヤーの方を向き直すか(EnemyAttack::Enter)//falseなら向きはそのまま
+	virtual bool IsChainAttackLookAtPlayer()const { return false; }
+	//一緒に出す敵(ボスの腕など)を作る//Initの後にEnemyManagerが呼んで登録する
+	virtual std::vector<std::shared_ptr<EnemyBase>> CreateChildEnemies() { return {}; }
+
 	//巡回ルートの設定//routeIdはPatrolRouteX.csvのXの番号
 	void SetPatrolRoute(int routeId);
 
@@ -313,6 +320,10 @@ public:
 
 	//デバッグ用//trueの間はIdleのままにする//被弾のStateには遷移するが、IdleからChaseなどには遷移しない
 	void SetDebugIdle(bool isDebugIdle);
+
+	//デバッグ用のImGuiウィンドウ(攻撃を選んで出す・ステータスを見る)//HasDebugWindowがtrueの敵だけEnemyManagerが呼ぶ
+	virtual bool HasDebugWindow()const { return false; }
+	void DrawDebugWindow();
 
 
 
@@ -396,6 +407,14 @@ private:
 	//影付きで中央に文字を描く
 	void DrawDebugTextCenter(int x, int y, const std::string& text, unsigned int color);
 
+	//デバッグウィンドウ(EnemyBaseDebugWindow.cpp)
+	void DrawDebugWindowStatus();//今の状態を見る
+	void DrawDebugWindowControl();//AIを止める・ステートを変える
+	void DrawDebugWindowAttack();//攻撃を選んで出す・攻撃のデータを変える
+	void DrawDebugWindowStatusEdit();//ステータスを変える
+	void DebugExecuteAttack(int index);//indexの攻撃を出す
+	void UpdateDebugLoopAttack();//Idleに戻ったら選んだ攻撃をもう一度出す
+
 protected:
 	std::shared_ptr<EnemyStateBase> m_currentState;
 	std::shared_ptr<EnemyStateBase> m_prevState;
@@ -446,6 +465,16 @@ protected:
 	bool m_isLookAtPlayer = false;//頭をプレイヤーの方に向けるか
 
 	bool m_isDebugIdle = false;//デバッグ用//trueならIdleから他のStateに遷移しない
+	bool m_isDebugIdleGlobal = false;//EnemyManagerのI(全部の敵をIdle)がオンか
+
+	//デバッグウィンドウ
+	bool m_isDebugStopAI = false;//trueならこの敵だけIdleから動かない(選んだ攻撃は出せる)
+	bool m_isDebugLockHp = false;//trueなら毎フレームHPを最大に戻す
+	bool m_isDebugSkipPre = false;//trueなら予備動作を飛ばして攻撃する
+	bool m_isDebugLoopAttack = false;//trueならIdleに戻ってから選んだ攻撃をもう一度出す
+	int m_debugSelectedAttack = 0;//ウィンドウで選んでいる攻撃のindex
+	float m_debugLoopInterval = 60.0f;//繰り返すまでの間隔(実フレーム)
+	float m_debugLoopTimer = 0.0f;//Idleに戻ってからの時間
 
 
 

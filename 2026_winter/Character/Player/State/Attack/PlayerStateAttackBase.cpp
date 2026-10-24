@@ -191,6 +191,7 @@ void PlayerStateAttackBase::CheckNoLockOnTargetEnemy()
 	{
 		if (!enemy)continue;
 		if (enemy->GetIsLifeZero())continue;
+		if (!enemy->IsTargetable())continue;
 		//プレイヤーが空中なら空中の敵だけ、地上なら地上の敵だけを対象にする
 		if (isPlayerAir == enemy->IsFloor())continue;
 

@@ -1,6 +1,6 @@
 ﻿#include "EnemyBazookaWeapon.h"
 #include "DxLib.h"
-#include "EnemyBazooka.h"
+#include "Character/Enemy/Bazooka/EnemyBazooka.h"
 #include "Main/System.h"
 #include "Render/ModelShaderManager.h"
 

@@ -1,11 +1,11 @@
 ﻿#include "EnemyGunner.h"
-#include "EnemyGunnerWeapon.h"
-#include "../../DataLoader/DataManager.h"
+#include "Character/Enemy/Gunner/Part/EnemyGunnerWeapon.h"
+#include "DataLoader/DataManager.h"
 #include "Main/System.h"
-#include "../../Math/Matrix4x4.h"
+#include "Math/Matrix4x4.h"
 #include "Collision/SphereShape.h"
 #include "Collision/CapsuleShape.h"
-#include "EnemyPart.h"
+#include "Character/Enemy/EnemyPart.h"
 #include "Collision/HitCol.h"
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
 #include "Render/ModelShaderManager.h"
@@ -53,6 +53,7 @@ EnemyGunner::EnemyGunner(std::weak_ptr<Player> player, Vector3 startPos):EnemyBa
 	const auto& animData = DataManager::GetInstance().GetEnemyGunnerAnimData();
 
 	m_animNames = animData.animNames;
+	m_animSpeeds = animData.animSpeeds;//アニメCSVの再生速度
 }
 
 EnemyGunner::~EnemyGunner()
@@ -69,7 +70,7 @@ EnemyGunner::~EnemyGunner()
 void EnemyGunner::Init()
 {
 	//初期状態をIdleにする//アニメーションの初期化
-	m_anim.Init(m_modelHandle, GetAnimName("Idle"), true);
+	m_anim.Init(m_modelHandle, GetAnimName("Idle"), true, GetAnimSpeed("Idle"));
 
 	//当たり判定の初期化
 	ColInit({

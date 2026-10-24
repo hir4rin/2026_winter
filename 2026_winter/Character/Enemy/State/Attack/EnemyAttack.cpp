@@ -8,9 +8,11 @@
 
 namespace
 {
+	constexpr float kChainForwardDistance = 1000.0f;//連撃で向き直さない敵の踏み込み先(今の向きの前方)
 }
 
-EnemyAttack::EnemyAttack(std::weak_ptr<EnemyBase> owner):EnemyStateBase(owner)
+EnemyAttack::EnemyAttack(std::weak_ptr<EnemyBase> owner, bool isChain):EnemyStateBase(owner),
+	m_isChain(isChain)
 {
 }
 
@@ -29,6 +31,22 @@ void EnemyAttack::Enter()
 
 
 	const auto& node = owner->GetAttackNode(owner->m_currentAttackIndex);
+
+	//連撃の2撃目以降は踏み込み先を決め直す//判定の位置はこの後の向きで決まるので、先にする
+	if (m_isChain)
+	{
+		if (owner->IsChainAttackLookAtPlayer())
+		{
+			//プレイヤーの方を向いて、プレイヤーの位置へ踏み込む
+			owner->m_targetPos = player->GetRigidBody().GetPos();
+			owner->ToPlayerLook();
+		}
+		else
+		{
+			//向きはそのまま//1撃目で通り過ぎた踏み込み先へ戻らないように、前方に置き直す
+			owner->m_targetPos = owner->m_rb.m_pos + owner->GetTargetVec() * kChainForwardDistance;
+		}
+	}
 
 	//animationの初期化
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(node.animName), false,node.animTimeScale,node.animEndFrame,0.0f,node.blendFrame);
@@ -66,7 +84,11 @@ void EnemyAttack::Update()
 
 	AttackMove();
 
-	if (owner->m_anim.GetNowAnimFrame() >= node.attackFinishFrame)
+	//attackFinishFrameが負(空欄)ならアニメの終わりまで
+	const bool isFinish = (node.attackFinishFrame < 0.0f)
+		? owner->m_anim.GetAnimEndFlag()
+		: owner->m_anim.GetNowAnimFrame() >= node.attackFinishFrame;
+	if (isFinish)
 	{
 		owner->m_attackCoolTime = node.coolTime;//攻撃のクールタイムをリセット
 		owner->ChangeState(owner->NextAfterAttack());
@@ -98,7 +120,8 @@ std::string EnemyAttack::GetDebugInfo() const
 	auto owner = m_owner.lock();
 	if (!owner)return {};
 	const char* colText = (m_attackCol && m_attackCol->GetIsActive()) ? " 判定ON" : "";
-	return std::format("rate {:.2f}{}", owner->m_anim.GetAnimRate(), colText);
+	const char* chainText = m_isChain ? " 連" : "";
+	return std::format("#{}{} rate {:.2f}{}", owner->m_currentAttackIndex, chainText, owner->m_anim.GetAnimRate(), colText);
 }
 
 void EnemyAttack::AttackMove()

@@ -24,7 +24,7 @@ void EnemyHitGround::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false, owner->GetAnimSpeed("Hit"));
 }
 
 void EnemyHitGround::Update()

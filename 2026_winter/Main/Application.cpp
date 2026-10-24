@@ -34,6 +34,8 @@ bool Application::Init()
 	SetGraphMode(Game::kScreenWidth, Game::kScreenHeight, Game::kColorBitNum);
 	//DirectInputのジョイパッド列挙で約20秒止まるため、DirectInputを使わない(XInputのコントローラーは使える)
 	SetUseDirectInputFlag(false);
+	//ウィンドウの外に出したImGuiを触るとゲームのウィンドウが非アクティブになるので、非アクティブでも止めない
+	SetAlwaysRunFlag(TRUE);
 
 
 	// DirectX11を使用するようにする。(DirectX9も可、一部機能不可)

@@ -17,7 +17,7 @@ void EnemyHitAir::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false, owner->GetAnimSpeed("Hit"));
 	//縦の速度は初速(m_info.knockBackVel.y)と重力の累積(m_gravity)から作る
 	m_gravity = 0.0f;
 }

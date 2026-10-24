@@ -20,7 +20,7 @@ void EnemyChase::Enter()
 	auto player = owner->m_player.lock();
 	if (!player)return;
 	//animationの初期化
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("RunMain"), true,0.5f);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("RunMain"), true, 0.5f * owner->GetAnimSpeed("RunMain"));
 	owner->m_targetPos = player->GetRigidBody().GetPos();
 	//Playerを見る
 	owner->ToPlayerLook();

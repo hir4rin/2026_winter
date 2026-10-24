@@ -140,18 +140,23 @@ void EnemyBase::OnAlerted()
 
 void EnemyBase::SetDebugIdle(bool isDebugIdle)
 {
-	m_isDebugIdle = isDebugIdle;
+	//デバッグウィンドウでAIを止めているときも同じ扱い
+	m_isDebugIdleGlobal = isDebugIdle;
+	m_isDebugIdle = isDebugIdle || m_isDebugStopAI;
 	if (!m_isDebugIdle)return;
 	if (m_isLifeZero || m_isExecuted)return;
 
-	//巡回・追跡・警戒・攻撃・後退中ならIdleにする//被弾中のStateはそのまま(終わったら自分でIdleに戻る)
+	//巡回・追跡・警戒・後退中ならIdleにする//被弾中のStateはそのまま(終わったら自分でIdleに戻る)
 	if (std::dynamic_pointer_cast<EnemyPatrol>(m_currentState) ||
 		std::dynamic_pointer_cast<EnemyChase>(m_currentState) ||
 		std::dynamic_pointer_cast<EnemyCaution>(m_currentState) ||
-		std::dynamic_pointer_cast<EnemyAttack>(m_currentState) ||
-		std::dynamic_pointer_cast<EnemyAttackPre>(m_currentState) ||
-		std::dynamic_pointer_cast<EnemyAttackEnd>(m_currentState) ||
 		std::dynamic_pointer_cast<EnemyBack>(m_currentState))
+	{
+		ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
+		return;
+	}
+	//攻撃中もIdleにする//デバッグウィンドウで止めているだけなら、選んだ攻撃を出せるように残す
+	if (isDebugIdle && IsAttackFlowState(m_currentState))
 	{
 		ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
 	}
@@ -786,6 +791,14 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterAttack()
 
 std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterAttackEnd()
 {
+	//連撃//今の攻撃にnextAttackがあれば、予備動作なしで次の攻撃へ
+	const int next = GetAttackNode(m_currentAttackIndex).nextAttack;
+	if (next >= 0)
+	{
+		assert(next < static_cast<int>(m_attackList.size()) && "nextAttackが攻撃CSVの行数を超えています");
+		m_currentAttackIndex = next;
+		return std::make_shared<EnemyAttack>(GetWeakPtr(), true);
+	}
 	//距離を取る
 	return std::make_shared<EnemyBack>(GetWeakPtr());
 }

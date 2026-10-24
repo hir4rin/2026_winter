@@ -11,6 +11,7 @@
 - `testModel_Ninja/` — Blenderモデル（`player_color.blend`）とアニメーション素材
 - `Xbox Series/` — コントローラーアイコン素材
 - `進捗/` — 企画書（.pptx）、コスト表（.xlsx）、進捗メモなどのドキュメント類
+- `tools/` — 作業用ツール（`BossArmExtract/`: ボスのmv1から腕を切り出すDxLibツール）
 
 ## 運用ルール
 

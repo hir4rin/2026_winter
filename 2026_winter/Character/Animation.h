@@ -42,7 +42,9 @@ public:
 	void ChangeAnimWithModelHandle(int modelHandle,std::string name,bool isRoop,float timescale = 1.0f,float endFrame = -1.0f,float startFrame = 0.0f,float blendFrame = -1.0f);
 	//モデルハンドルの取得//確認用
 	int GetModelHandleForCheck() { return m_modelHandle; }
-	//アニメーションを再生するのを止める
+	//アニメーションを持っている別のモデルを設定する(-1なら自分のモデル)//Initより前に呼ぶ
+	//フレームの番号で当てるので、フレームの並びが同じモデルにすること(ボスの腕など)
+	void SetAnimSourceModel(int animSrcHandle) { m_animSrcHandle = animSrcHandle; }	//アニメーションを再生するのを止める
 	void StopAnim();
 
 
@@ -85,8 +87,11 @@ public:
 private:
 	void ApplyRootMotionCancel();//ルートフレームが基準の高さより上に行かないように上書きする
 	MATRIX GetParentChainMatrix(int frameIndex);//親フレームをたどって、フレームのローカル座標をモデル空間に変換する行列を返す
+	int GetAnimOwnerHandle()const { return m_animSrcHandle >= 0 ? m_animSrcHandle : m_modelHandle; }//アニメーションを持っているモデル
+	int AttachAnim(int animNo);//アニメーションをアタッチする//別のモデルのアニメーションならそちらから
 
 	int m_modelHandle;//モデルのハンドル
+	int m_animSrcHandle = -1;//アニメーションを持っている別のモデル(-1なら自分)
 	int m_currentAnimHandle;//現在のアニメーションのハンドル
 	int m_prevAnimHandle;//前のアニメーションのハンドル
 

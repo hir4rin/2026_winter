@@ -472,6 +472,7 @@ std::vector<std::shared_ptr<EnemyBase>> LockOnManager::CollectEnemiesRange(float
 		//同じだったら除外
 		if (enemy == exclude)continue;
 		if (enemy->GetIsLifeZero())continue;
+		if (!enemy->IsTargetable())continue;
 
 		float distance = (enemy->GetRigidBody().GetPos() - playerPos).Magnitude();
 		//範囲内の敵をすべて入れる

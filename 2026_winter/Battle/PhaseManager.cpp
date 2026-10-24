@@ -153,13 +153,12 @@ bool PhaseManager::IsConditionFulfilled(const PhaseTransition& trans) const
 
 void PhaseManager::DebugSkipToBossPrevPhase()
 {
-	//ボスがいるフェーズ
+	//ボスがいるフェーズ//第一ラウンド・第二ラウンドのうち早いほう
 	int bossPhase = -1;
 	for (const auto& data : DataManager::GetInstance().GetEnemySpawnData())
 	{
-		if (data.type != EnemyType::BossEnemyPirate)continue;
-		bossPhase = data.phase;
-		break;
+		if (data.type != EnemyType::BossEnemyPirate && data.type != EnemyType::BossEnemyPirateR0)continue;
+		if (bossPhase < 0 || data.phase < bossPhase)bossPhase = data.phase;
 	}
 	if (bossPhase <= 0)return;
 

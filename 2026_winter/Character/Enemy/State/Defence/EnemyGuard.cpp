@@ -23,7 +23,7 @@ void EnemyGuard::Enter()
 	auto owner = m_owner.lock();
 	if (!owner)return;
 
-	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockLoop"), true,0.5f);
+	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockLoop"), true, 0.5f * owner->GetAnimSpeed("BlockLoop"));
 }
 
 void EnemyGuard::Update()
@@ -45,7 +45,7 @@ void EnemyGuard::Update()
 	//ガード喰らい状態が終わったら、またアニメーションを元に戻す
 	if (owner->m_anim.GetAnimEndFlag())
 	{
-		owner->m_anim.ChangeAnim(owner->GetAnimName("BlockLoop"), true,0.5f); 
+		owner->m_anim.ChangeAnim(owner->GetAnimName("BlockLoop"), true, 0.5f * owner->GetAnimSpeed("BlockLoop")); 
 	}
 }
 
@@ -98,6 +98,6 @@ void EnemyGuard::OnGuardHit()
 		return;
 	}
 
-	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), true,0.5f);
+	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), true, 0.5f * owner->GetAnimSpeed("BlockHit"));
 
 }
