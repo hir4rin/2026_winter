@@ -12,6 +12,10 @@
 #include "Main/Input.h"
 #include "Render/ModelShaderManager.h"
 #include "Character/Enemy/BossPirate/Part/BossPirateWeapon.h"
+#include "Battle/BattleManager.h"
+#include "Battle/AttackTokenManager.h"
+
+
 
 namespace
 {
@@ -31,6 +35,17 @@ namespace
 
 
 	constexpr float kEnemyDistance = 50.0f;
+
+	constexpr int kNormalAttackIndex = 0;//横斬り
+	constexpr int kLargeRangedAttackIndex = 1;
+	constexpr int kComboAttackIndex = 3;//コンボの1撃目
+	constexpr int kSweepAttackIndex = 2;//周囲薙ぎ払い
+	constexpr int kRushAttackIndex = 6;//とびかかり(突進)
+
+	constexpr int kLargeAttackInterval = 10;//この回数攻撃したら全体攻撃
+	constexpr float kBackDot = -0.5f;//正面との内積がこれより小さければ背後(120度より後ろ)
+	constexpr float kRushMinDistance = 400.0f;//この距離より遠ければ突進
+	constexpr float kRushMaxDistance = 1000.0f;//突進を出す最大の距離
 
 }
 
@@ -207,6 +222,24 @@ void BossEnemyPirateR0::Update()
 		m_attackCoolTime -= System::GetInstance().GetTimeScale() * m_ownTimeScale;
 	}
 
+	//もし被弾中で攻撃のクールタイムが上がったら攻撃に移行
+	if (std::dynamic_pointer_cast<EnemyHitGround>(m_currentState))
+	{
+		if (m_attackCoolTime <= 0.0f)
+		{
+			//ランダムでChaseかCautionに遷移する
+			const int attackIndex = SelectAttackIndex();
+			//攻撃できて攻撃権が取れたら予備動作へ
+			auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock();
+			if (attackIndex >= 0 && tokenMgr && tokenMgr->Request(*this))
+			{
+				m_currentAttackIndex = attackIndex;
+				ChangeState(std::make_shared<EnemyAttackPre>(GetWeakPtr()));
+				return;
+			}
+		}
+	}
+
 	//しばらく被弾しなければ確定ヒットを解除
 	m_forceHitTimer += System::GetInstance().GetTimeScale() * m_ownTimeScale;
 	if (m_forceHitTimer > m_status.forceHitResetTime)
@@ -245,27 +278,43 @@ int BossEnemyPirateR0::SelectAttackIndex()
 	//クールタイム中は攻撃しない
 	if (m_attackCoolTime > 0.0f)return -1;
 
-	//個々の攻撃ランダムをどうするか、、
-	//攻撃を選んだその範囲に移動とかのほうがいい気がするが
-
-
-	return 6;
-
+	//return 6;
 
 	//プレイヤーとの距離(XZ)
 	Vector3 toPlayer = TargetPlayerPos() - m_rb.m_pos;
 	toPlayer.y = 0.0f;
 	const float distance = toPlayer.Magnitude();
 
-	//距離に入っている攻撃を集める
-	std::vector<int> candidates;
-	for (const auto& node : m_attackList)
+	//上から順に条件を見て、当てはまったらその攻撃
+	//何回か攻撃したら全体攻撃
+	if (m_attackCountSinceLarge >= kLargeAttackInterval &&
+		distance <= GetAttackNode(kLargeRangedAttackIndex).attackRange)
 	{
-		if (node.index < 0)continue;//CSVで抜けているindex(空の要素)
-		if (node.attackRange <= 0.0f)continue;//単体では選ばない攻撃
-		if (distance <= node.attackRange)
+		return kLargeRangedAttackIndex;
+	}
+	//背後にいたら薙ぎ払い
+	Vector3 front = m_targetVec;
+	front.y = 0.0f;
+	if (distance > 0.0f && front.Magnitude() > 0.0f &&
+		distance <= GetAttackNode(kSweepAttackIndex).attackRange &&
+		front.Normalize().Dot(toPlayer.Normalize()) < kBackDot)
+	{
+		return kSweepAttackIndex;
+	}
+	//遠かったら突進
+	if (distance >= kRushMinDistance && distance <= kRushMaxDistance)
+	{
+		return kRushAttackIndex;
+	}
+
+	//どれにも当てはまらなければ、横斬りかコンボを半分ずつ(距離に入っているものだけ)
+	std::vector<int> candidates;
+	//横きり、コンボ1の攻撃のどちらか
+	for (const int index : { kNormalAttackIndex, kComboAttackIndex })
+	{
+		if (distance <= GetAttackNode(index).attackRange)
 		{
-			candidates.push_back(node.index);
+			candidates.push_back(index);
 		}
 	}
 	if (candidates.empty())return -1;
@@ -273,6 +322,23 @@ int BossEnemyPirateR0::SelectAttackIndex()
 	//ランダムで1つ選ぶ//GetRand(n)は0〜nを返す
 	const int pick = GetRand(static_cast<int>(candidates.size()) - 1);
 	return candidates[pick];
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyPirateR0::NextAfterAttackEnd()
+{
+	//連撃が終わったら攻撃の回数を数える//全体攻撃なら0に戻す
+	if (GetAttackNode(m_currentAttackIndex).nextAttack < 0)
+	{
+		if (m_currentAttackIndex == kLargeRangedAttackIndex)
+		{
+			m_attackCountSinceLarge = 0;
+		}
+		else
+		{
+			++m_attackCountSinceLarge;
+		}
+	}
+	return EnemyBase::NextAfterAttackEnd();
 }
 
 void BossEnemyPirateR0::OnDamage(Collider& other, AttackData& data)
@@ -290,6 +356,24 @@ void BossEnemyPirateR0::OnDamage(Collider& other, AttackData& data)
 
 	//データの保存
 	m_attackData = data;
+
+	//攻撃中だったら//スタン値がたまるなどしない限りボスの攻撃は止まらない
+	const bool isAttacking = IsAttackFlowState(m_currentState);
+	if (isAttacking)
+	{
+		//ダメージとエフェクトだけ出す//ガード・ヒットステートには行かない
+		m_hp -= static_cast<int>(data.attackPower);
+		m_isPlayerFound = true;
+		PlayBloodSplash(other);
+
+		//倒れたらその場で死ぬ
+		if (m_hp <= 0)
+		{
+			m_hp = 0;
+			ChangeState(std::make_shared<EnemyDie>(GetWeakPtr()));
+		}
+		return;
+	}
 
 	//OnCollision中はIsFloor()がfalseのままなので前フレームの接地状態を見る
 	const bool isFloor = WasFloor();

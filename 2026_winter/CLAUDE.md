@@ -725,6 +725,32 @@
   - 目標はプレイヤーの位置(予備動作の途中まで追う)なので、プレイヤーがそこにいればぶつかって押し戻しで止まる。
 - MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。プレイヤーに当たっている間の揺れ(押し合い)が残っていれば、別の対策が要る。
 
+### 2026-10-25 第一ラウンドのボスは攻撃中に怯まない
+- `BossEnemyPirateR0::OnDamage`: `isAttacking = IsAttackFlowState(m_currentState)`(AttackPre/Attack/AttackEnd)なら、ダメージ・発見・血しぶきだけ出して return(ガード・ヒットステートに行かない)。HP0ならその場で `EnemyDie`。
+  - 確定ヒットの回数・吸い寄せは攻撃中は処理しない。スタンを入れるときは isAttacking の条件に足す。第二ラウンド(BossEnemyPirate)にはまだ入れていない。
+- MSBuild(Debug x64)でエラーなし。ゲームでの確認はまだ。
+
+### 2026-10-25 第一ラウンドのボスの技の選び方(状況ルール)
+- `BossEnemyPirateR0::SelectAttackIndex`: クールタイム中は-1。その後、上から順に当てはまったらその技(定数は .cpp 先頭)。
+  1. 前の全体攻撃から `kLargeAttackInterval`(3)回攻撃した＋全体攻撃(1)の attackRange 以内 → 全体攻撃
+  2. 背後(正面との内積 < `kBackDot` -0.5)＋薙ぎ払い(2)の attackRange 以内 → 薙ぎ払い。正面は `m_targetVec`
+  3. 距離が `kRushMinDistance`(400)〜`kRushMaxDistance`(1000) → 突進(6)。CSV の attackRange は見ない
+  4. どれでもなければ、横斬り(0)かコンボの1撃目(3)を1/2ずつ(attackRange 以内のものだけ)
+  - (ユーザーが kLargeAttackInterval を10に変えた)
+- 回数は `NextAfterAttackEnd` の override で数える(連撃は最後まで終わって1回)。`m_attackCountSinceLarge`。
+- Chase は「SelectAttackIndex が攻撃を返したら攻撃」なので、400〜1000 の距離だと近づかずに突進する。200〜400 は近づく。
+- MSBuild(Debug x64)でエラーなし。ゲームでの確認はまだ。第二ラウンドは EnemyBase の選び方のまま。
+
+### 2026-10-26 視野角のオフセット(戻すまでずっと足す)
+- `CameraManager::SetFovOffset(angleDeg, blendFrame)` / `ResetFovOffset(blendFrame)` / `FovOffsetUpdate()`。設計は `../進捗/note_カメラの視野角.md` の9章。
+  - 今の値から目標へ `blendFrame` かけて EaseOut(2.0)。途中で変えても今の値から続く。**実フレーム**で進む。最後に設定した人が勝ち。
+  - `Update`: `m_renderFov = GetFov() + FovOffsetUpdate() + FovPunchUpdate()` を `kFovMin/Max`(10〜120°)で clamp。
+  - 演出カメラ中は足さない: `IsFovOffsetCamera()`(PlayerCamera / LockOn / BattleSmooth だけ true)。効き具合 `m_fovOffsetWeight` を `kFovOffsetWeightFrame`(10F)で 0↔1 にするので、出入りで画面が飛ばない。パンチは今まで通りどのカメラでも足す。
+    (`IsStageCollisionCamera` は今は全部 true を返すようになっているので、別の関数にした)
+- 使っている所: `PhaseManager::ChangePhase` の `BossAppear` イベント(6→7、Area_Boss に入ったとき)で `SetFovOffset(20, 60)`(`kBossFovOffset` / `kBossFovBlendFrame`)。
+  戻す処理は無い(リザルトでシーンごと作り直すので)。F4 で飛んでもエリアに入れば広がる。BossAppearCamera 中は効かず、通常のカメラに戻ると10Fで出てくる。
+- MSBuild(Debug x64)でエラーなし。ゲームでの確認はまだ。
+
 ---
 
 ## TODO / 次にやること
@@ -740,7 +766,7 @@
 - [ ] 落下禁止をゲームで確認(縁で止まる・辺に沿って滑る・角で止まる・攻撃・回避の後に歩けば落ちる)
 - [ ] カメラとステージの当たり判定(案A)をゲームで確認。めり込みが気になれば案B(MV1CollCheck_Sphere の二分探索)へ
 - [x] FOVパンチ(ゲームで強さ・長さを確認。場面ごとの強さ・向きは note の8章の表)
-- [ ] ダッシュ/ブースト用の視野角オフセット(戻すまでずっと)を CameraManager に入れる。設計は `../進捗/note_カメラの視野角.md` の8・9章(視野角まわりの設計のまとめもここ)
+- [x] 視野角オフセット(戻すまでずっと)を CameraManager に入れた。今はボス戦で+20°だけ。ゲームで広がり方・20°が広すぎないか確認。ダッシュに使うなら FastRun の Enter/Exit で対にする
 - [ ] ブレイクの打ち上げの続き: 敵を打ち上げる処理とCSV(ユーザー)・専用カメラ・演出。ゲームで一連の流れを確認
 - [ ] **フェーズ進行の外部化**(遷移表CSV＋グループ指定＋EnterArea)。設計と手順は `../進捗/フェーズ進行_設計メモ.md`
   - [x] Step1 PhaseManagerへ移すだけ(ゲームでの確認はまだ) → [x] Step2 遷移CSV(AllDead) → [x] Step3 デバッグ表示(どちらもゲームでの確認はまだ)

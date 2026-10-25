@@ -5,6 +5,7 @@
 #include "Collision/BoxShape.h"
 #include "Battle/BattleManager.h"
 #include "Main/System.h"
+#include "Camera/CameraManager.h"
 #include "DxLib.h"
 #include <cassert>
 #include <cmath>
@@ -12,6 +13,8 @@
 namespace
 {
 	constexpr float kDebugSkipBackDistance = 300.0f;//F4で移すとき、エリアの手前どれだけ離すか
+	constexpr float kBossFovOffset = 20.0f;//ボス戦で視野角を広げる角度(度)
+	constexpr float kBossFovBlendFrame = 60.0f;//広げるのにかけるフレーム数
 }
 
 void PhaseManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player)
@@ -104,6 +107,14 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event)
 	{
 	case PhaseEvent::BossAppear:
 		//printfDx("BossAppear\n");//仮
+		//ボス戦は視野角を広げる
+		if (auto player = m_player.lock())
+		{
+			if (auto cameraMgr = player->GetCameraManager().lock())
+			{
+				cameraMgr->SetFovOffset(kBossFovOffset, kBossFovBlendFrame);
+			}
+		}
 		break;
 	case PhaseEvent::GameClear:
 		//printfDx("GameClear\n");//仮

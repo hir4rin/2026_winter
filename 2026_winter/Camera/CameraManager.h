@@ -76,6 +76,10 @@ public:
 	//Fovパンチ
 	void StartFovPunch(float angleDeg, float time, float inFrame, float outPower);//+で広げる、-で挟める
 	float FovPunchUpdate();//今フレームのずれ(ラジアン)。
+	//Fovオフセット//戻すまでずっと足す(+で広げる)
+	void SetFovOffset(float angleDeg, float blendFrame);//今の値からblendFrameかけて変える
+	void ResetFovOffset(float blendFrame);//0に戻す
+	float FovOffsetUpdate();//今フレームのずれ(ラジアン)//Updateで1回だけ呼ぶ
 
 
 	//ロックオン//Player経由で読むだけ
@@ -109,6 +113,8 @@ private:
 	Vector3 FixStageCollision(const Vector3& pos, const Vector3& target);
 	//今のカメラがステージとの当たり判定をするか
 	bool IsStageCollisionCamera() const;
+	//今のカメラにFovオフセットを足すか//演出カメラは足さない
+	bool IsFovOffsetCamera() const;
 private:
 	std::weak_ptr<Stage> m_stage;
 	float m_collisionDist = -1.0f;//補正後の注視点からの距離(-1なら補正なし)
@@ -137,6 +143,14 @@ private:
 	float m_fovPunchInFrame = 0.0f;//入りのフレーム数
 	float m_fovPunchOutPower = 0.0f;//戻りのイージングの指数
 	float m_fovPunchCoolTimer = 0.0f;//次のパンチを受け付けるまでの残り
+
+	//Fovオフセット用(ラジアン)
+	float m_fovOffset = 0.0f;//今の値
+	float m_fovOffsetStart = 0.0f;//変え始めの値
+	float m_fovOffsetGoal = 0.0f;//目標の値
+	float m_fovOffsetTimer = 0.0f;
+	float m_fovOffsetBlendFrame = 0.0f;
+	float m_fovOffsetWeight = 1.0f;//効き具合(0~1)//演出カメラ中は0へ
 
 	//フォトモード用のフリーカメラ
 	Vector3 m_photoCamPos = Vector3();

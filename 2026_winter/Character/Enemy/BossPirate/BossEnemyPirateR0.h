@@ -28,6 +28,7 @@ public:
     void SetOpacity(float rate)override;//本体に加えて、切り離したパーツの不透明度も設定する
 protected:
     int SelectAttackIndex()override;//出す攻撃を選ぶ(無ければ-1)//ボス用の分岐
+    std::shared_ptr<EnemyStateBase> NextAfterAttackEnd()override;//攻撃の回数を数える
 private:
     void SetUpBreakLeftArm();
     void SetUpBreakHead();
@@ -41,6 +42,8 @@ private:
     int m_headModelHandle = -1;//部位破壊で落ちる頭(ヘルメット)のモデル
     bool m_isBreakLeftArm = false;//左腕を部位破壊したか
     bool m_isBreakHead = false;//頭を部位破壊したか
+
+    int m_attackCountSinceLarge = 0;//前の全体攻撃から何回攻撃したか
 
     bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
     bool m_wasIPressed = false;//前のフレームにIを押していたか//デバッグ用のアニメCSV読み込み直し

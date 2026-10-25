@@ -45,6 +45,9 @@ namespace
 	constexpr float kShakeRandNormalize = 100.0f;//ランダム値を-1.0~1.0の範囲に正規化するための除数
 
 	constexpr float kFovPunchCoolTime = 80.0f;//パンチのクールタイム
+	constexpr float kFovOffsetWeightFrame = 10.0f;//演出カメラの出入りでオフセットを出し入れするフレーム数
+	constexpr float kFovMin = 10.0f * DX_PI_F / 180.0f;//視野角の下限
+	constexpr float kFovMax = 120.0f * DX_PI_F / 180.0f;//視野角の上限
 
 	constexpr float kCollisionMargin = 20.0f;//当たった位置から注視点側に離す距離
 	constexpr float kCollisionMinDist = 30.0f;//注視点に近づける限界
@@ -88,7 +91,8 @@ void CameraManager::Update()
 	renderPos += CameraShakeUpdate();
 	m_renderPos = renderPos;
 
-	m_renderFov = m_currentState->GetFov() + FovPunchUpdate();
+	m_renderFov = m_currentState->GetFov() + FovOffsetUpdate() + FovPunchUpdate();
+	m_renderFov = std::clamp(m_renderFov, kFovMin, kFovMax);
 
 	SetCameraPositionAndTarget_UpVecY(m_renderPos.ToDxLibVector(), m_currentState->GetTarget().ToDxLibVector());
 	SetupCamera_Perspective(m_renderFov);
@@ -141,6 +145,13 @@ bool CameraManager::IsStageCollisionCamera() const
 	return true;
 
 
+	auto type = m_currentState->GetCameraType();
+	return type == CameraStateBase::Type::PlayerCamera ||
+		type == CameraStateBase::Type::LockOnCamera ||
+		type == CameraStateBase::Type::BattleSmoothCamera;
+}
+bool CameraManager::IsFovOffsetCamera() const
+{
 	auto type = m_currentState->GetCameraType();
 	return type == CameraStateBase::Type::PlayerCamera ||
 		type == CameraStateBase::Type::LockOnCamera ||
@@ -341,6 +352,49 @@ float CameraManager::FovPunchUpdate()
 
 	m_fovPunchOffset = m_fovPunchAngle * rate;
 	return m_fovPunchOffset;
+}
+
+void CameraManager::SetFovOffset(float angleDeg, float blendFrame)
+{
+	//今の値から変え始める//途中で変えてもカクつかない
+	m_fovOffsetStart = m_fovOffset;
+	m_fovOffsetGoal = angleDeg * DX_PI_F / 180.0f;
+	m_fovOffsetTimer = 0.0f;
+	m_fovOffsetBlendFrame = blendFrame;
+}
+
+void CameraManager::ResetFovOffset(float blendFrame)
+{
+	SetFovOffset(0.0f, blendFrame);
+}
+
+float CameraManager::FovOffsetUpdate()
+{
+	//実フレームで進める
+	if (m_fovOffsetTimer < m_fovOffsetBlendFrame)
+	{
+		m_fovOffsetTimer += 1.0f;
+		float t = std::clamp(m_fovOffsetTimer / m_fovOffsetBlendFrame, 0.0f, 1.0f);
+		m_fovOffset = std::lerp(m_fovOffsetStart, m_fovOffsetGoal, Easing::Apply(EasingMode::EaseOut, t, 2.0f));
+	}
+	else
+	{
+		m_fovOffset = m_fovOffsetGoal;
+	}
+
+	//通常のカメラなら効き具合を1へ、演出カメラなら0へ
+	if (IsFovOffsetCamera())
+	{
+		m_fovOffsetWeight += 1.0f / kFovOffsetWeightFrame;
+	}
+	else
+	{
+		//違うならだんだん0にする
+		m_fovOffsetWeight -= 1.0f / kFovOffsetWeightFrame;
+	}
+	m_fovOffsetWeight = std::clamp(m_fovOffsetWeight, 0.0f, 1.0f);
+
+	return m_fovOffset * m_fovOffsetWeight;
 }
 
 bool CameraManager::IsLockOn()const
