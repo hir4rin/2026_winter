@@ -31,6 +31,9 @@ namespace
 	//ステージのモデル
 	const std::string kTitleStageModelPath = "data/Stage/TestStage/TestStage.mv1";
 	const std::string kDemoStageModelPath = "data/Stage/DemoStage/DemoStage.mv1";
+	const std::string kTrainStageModelPath = "data/Stage/TrainStage/TrainStage.mv1";
+	const std::string kTrainStageColModelPath = "data/Stage/TrainStage/TrainStageCol.mv1";
+	const std::string kTrainTunnelModelPath = "data/Stage/TrainTunnel/TrainTunnel.mv1";
 
 	//スキルエフェクト確認用
 	const std::string kDebugGhostDashEffectPath = "data/Effect/Skill/GhostDash.efk";
@@ -72,6 +75,9 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::BossPirateSwordModel] = MV1LoadModel(kBossPirateSwordModelPath.c_str());
 	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
 	m_asyncHandles[AsyncData::DemoStageModel] = MV1LoadModel(kDemoStageModelPath.c_str());
+	m_asyncHandles[AsyncData::TrainStageModel] = MV1LoadModel(kTrainStageModelPath.c_str());
+	m_asyncHandles[AsyncData::TrainStageColModel] = MV1LoadModel(kTrainStageColModelPath.c_str());
+	m_asyncHandles[AsyncData::TrainTunnelModel] = MV1LoadModel(kTrainTunnelModelPath.c_str());
 
 	SetUseASyncLoadFlag(FALSE);//ほかの場所の読み込みは同期に戻す
 
@@ -123,6 +129,9 @@ void System::Terminate()
 	//stage
 	MV1DeleteModel(m_asyncHandles[AsyncData::TitleStageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::DemoStageModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TrainStageModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TrainStageColModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TrainTunnelModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModelCollider]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::AreaWallEffect]);

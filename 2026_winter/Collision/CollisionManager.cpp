@@ -244,8 +244,8 @@ void CollisionManager::DebugDraw() const
 	{
 		auto collider = weakCollider.lock();
 		//アクティブなコライダーだけを描画する
-		/*if (collider && collider->GetIsActive())
-			collider->DebugDraw();*/
+		if (collider && collider->GetIsActive())
+			collider->DebugDraw();
 	}
 }
 

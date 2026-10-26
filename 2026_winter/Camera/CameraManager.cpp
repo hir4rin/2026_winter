@@ -6,12 +6,8 @@
 #include "CameraState/PlayerFollowCamera.h"
 #include "CameraState/LockOnCameraState.h"
 #include "CameraState/UltCameraState.h"
-#include "CameraState/UltStartCamera.h"
 #include "CameraState/SkillKessatuCamera.h"
-#include "CameraState/TitleCameraState.h"
-#include "CameraState/FinishingFirstCamera.h"
 #include "CameraState/FinishingSecondCamera.h"
-#include "CameraState/ResultCameraState.h"
 #include "CameraState/Assasin/AssasinCamera.h"
 #include "CameraState/Assasin/AssasinCameraStart.h"
 #include "CameraState/Assasin/AirAssasinCamera.h"
@@ -488,23 +484,11 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 	case CameraStateName::UltCamera:
 		newState = std::make_shared<UltCameraState>(shared_from_this());
 		break;
-	case CameraStateName::UltStartCamera:
-		newState = std::make_shared<UltStartCamera>(shared_from_this());
-		break;
 	case CameraStateName::SkillKessatuCamera:
 		newState = std::make_shared<SkillKessatuCamera>(shared_from_this());
 		break;
-	case CameraStateName::TitleCamera:
-		newState = std::make_shared<TitleCameraState>(shared_from_this());
-		break;
-	case CameraStateName::FinishingFirstCamera:
-		newState = std::make_shared<FinishingFirstCamera>(shared_from_this());
-		break;
 	case CameraStateName::FinishingSecondCamera:
 		newState = std::make_shared<FinishingSecondCamera>(shared_from_this());
-		break;
-	case CameraStateName::ResultCamera:
-		newState = std::make_shared<ResultCameraState>(shared_from_this());
 		break;
 	case CameraStateName::AssasinCamera:
 		newState = std::make_shared<AssasinCameraState>(shared_from_this());

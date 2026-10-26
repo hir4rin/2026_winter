@@ -1,0 +1,26 @@
+C:\Users\tsyts\GitHub\2026_winter\2026_winter\data\Enemy\Enemy.mv1 mats=4
+  [0] Paladin_MAT.001 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.87 0.87 0.87) tex=0
+  [1] Paladin_MAT.001 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.87 0.87 0.87) tex=1
+  [2] Paladin_MAT.001 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.87 0.87 0.87) tex=2
+  [3] Paladin_MAT.001 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.87 0.87 0.87) tex=3
+C:\Users\tsyts\GitHub\2026_winter\2026_winter\data\Enemy\EnemyGun.mv1 mats=2
+  [0] Paladin_MAT dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=0
+  [1] Paladin_MAT dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=1
+C:\Users\tsyts\GitHub\2026_winter\2026_winter\data\Player03.mv1 mats=23
+  [0] MAT_CYBER_NG_CLOTHES_01 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=0
+  [1] MAT_CYBER_NG_CLOTHES_01 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=0
+  [2] MAT_CYBER_NG_CLOTHES_01 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=0
+  [3] MAT_BODY_F_01_Tattoo dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=1
+  [4] MAT_BODY_F_01_Tattoo dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=1
+  [5] MAT_BODY_F_01_Tattoo dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=1
+  [6] MAT_BODY_F_01_Tattoo dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=1
+  [7] MAT_CYBER_NG_CLOTHES_01 dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=0
+C:\Users\tsyts\GitHub\2026_winter\2026_winter\data\Stage\DemoStage\DemoStage.mv1 mats=8
+  [0] M_Asphalt dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=0
+  [1] M_Concrete dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=1
+  [2] M_Neon dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=2
+  [3] M_Metal dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=3
+  [4] M_Glass dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=4
+  [5] M_WallRun dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=5
+  [6] M_Car dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=6
+  [7] M_WallKick dif=(0.10 0.10 0.10) amb=(0.90 0.90 0.90) spc=(0.10) emi=(0.00 0.00 0.00) tex=7

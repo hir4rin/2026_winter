@@ -97,8 +97,9 @@ void SceneMain::Init()
 {
 	SetupCamera_Perspective(kCameraViewAngle);
 	SetCameraNearFar(kCameraNear, kCameraFar);
-	//DxLibの標準ライトは他のライトと重なって明るくなりすぎるので無効化
-	//SetLightEnable(FALSE);
+	//DxLibの標準ライトは他のライトと重なって明るくなりすぎる(全体が白っぽくなる)ので無効化
+	//標準ライトの環境光(0.33)の分は TempTopLight の環境光に足してある
+	SetLightEnable(FALSE);
 	m_lightHandle = CreateDirLightHandle(VNorm(kLightDir));
 	SetLightDifColorHandle(m_lightHandle, GetColorF(kLightDifColorValue, kLightDifColorValue, kLightDifColorValue, 1.0f));
 	SetLightSpcColorHandle(m_lightHandle, GetColorF(kLightSpcColorValue, kLightSpcColorValue, kLightSpcColorValue, 1.0f));
@@ -120,7 +121,7 @@ void SceneMain::Init()
 	m_stage = std::make_shared<Stage>();
 	m_stage->Init();
 	const StageInfo& stageInfo = StageData::GetInfo(m_stageType);
-	m_stage->GameInit(stageInfo.model);
+	m_stage->GameInit(stageInfo);
 	CollisionManager::GetInstance().SetStage(m_stage);
 	//ステージ編集モードで保存した壁キック/壁走りゾーンを読み込む
 	m_stage->LoadWallZones(stageInfo.wallZoneNumber);

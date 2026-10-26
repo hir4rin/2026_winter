@@ -12,7 +12,7 @@ enum class EnemyType : int
 	Swordman,
 	Gunner,
 	Bazooka,
-	BossEnemyPirate,//第二ラウンド(背中の腕あり)
+	BossEnemyPirateR1,//第二ラウンド(背中の腕あり)
 	BossEnemyPirateR0,//第一ラウンド(腕なし)
 };
 

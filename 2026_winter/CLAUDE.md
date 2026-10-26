@@ -751,6 +751,95 @@
   戻す処理は無い(リザルトでシーンごと作り直すので)。F4 で飛んでもエリアに入れば広がる。BossAppearCamera 中は効かず、通常のカメラに戻ると10Fで出てくる。
 - MSBuild(Debug x64)でエラーなし。ゲームでの確認はまだ。
 
+### 2026-10-26 使っていないカメラステートを削除
+- `TitleCameraState` / `ResultCameraState` / `UltStartCamera` / `FinishingFirstCamera` のファイルと、`CameraStateName`・`CameraStateBase::Type`・`ChangeStateFromScene` の case・vcxproj/filters から削除。
+- KessatsuUI のラストヒット用の配置(`IsLastHitEvent` / `DrawLastHit`)も削除。いつも必殺技の配置(`DrawUlt`)で出す。CameraManager も受け取らなくなった(`UIManager::InGameInit` の引数は残してある)。
+- 他にも使っていない: `FinishingSecondCamera`、`BossAppearCamera` / `Stage1FazeCamera` / `Stage2FazeCamera`(どこからも生成されていない)。
+- MSBuild(Debug x64)でビルドは通った。
+
+### 2026-10-26 第二ラウンドのボスに第一ラウンドの中身を移植
+- `BossEnemyPirate.h/.cpp` を `BossEnemyPirateR0` の中身で置き換え、背中の腕(BossArm・CreateChildEnemies・Boss Arm Editor の DebugDraw・SetOpacity の腕・メンバー)だけ残した。
+  - 入ったもの: 技の選び方(`SelectAttackIndex`・`NextAfterAttackEnd` の回数、定数は .cpp 先頭)、攻撃中は怯まない `OnDamage`、被弾中にクールタイムが明けたら攻撃へ(Update)、被弾は `HitLargeHit` / `HitGround` だけ(空中・叩きつけに行かない)。
+  - 定数は R0 と別々に持っている(どちらかを変えてももう片方は変わらない)。
+- 移植前のファイルは scratchpad にだけ残してある(git の HEAD にも前の版がある)。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-10-26 第二ラウンドのボスを BossEnemyPirateR1 に改名・CSVを分けた
+- `BossEnemyPirate.h/.cpp` → `BossEnemyPirateR1.h/.cpp`(クラス名も)。`EnemyType::BossEnemyPirateR1` / 配置の type `BossEnemyPirateR1`(`Enemies003.csv` のフェーズ8の行も変更)。
+  **Unity の EnemySpawnType も `BossEnemyPirate` → `BossEnemyPirateR1` に直すこと**(古い名前のままだと書き出した行が読み込みで飛ばされる)。
+- 第二ラウンド用の CSV(最初は第一ラウンドのコピー):
+  - `data/Enemy/BossEnemyPirateR1Attack.csv` / `BossEnemyPirateR1Anim.csv`。`DataManager::GetBossEnemyPirateR1AttackRawData / GetBossEnemyPirateR1AnimData`、Q / I の読み直しもこちら。
+  - `EnemyStatus.csv` の `BossEnemyPirateR1` 行(R1 の `kStatusType`)。
+- 第一ラウンド(R0)は今まで通り `BossEnemyPirateAttack.csv` / `BossEnemyPirateAnim.csv` / ステータスの `BossEnemyPirate` 行を使う。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+- 注意: Git Bash の `sed -i` は CRLF を LF にしてしまう。ソースを sed で書き換えたら `unix2dos` で戻すこと。
+
+### 2026-10-26 全モデルのマテリアルの色を変更(拡散・反射0.1、環境0.9)
+- System.cpp で読んでいる mv1 16個(プレイヤー・刀2本、敵・ガンナー・銃・RPG7・部位、ボス・背中の腕・剣、ステージ2つ)の全マテリアルを
+  ディフューズ / スペキュラの RGB = 0.1、アンビエントの RGB = 0.9 にして上書き保存した(アルファはそのまま)。
+- ツール: `tools/ModelMaterialColor/`(`matcolor.exe ログ mv1 mv1 ...`、作業フォルダは 2026_winter/2026_winter。値は .cpp 先頭)。保存は圧縮なし(法線・位置・アニメを縮めない)なのでファイルが2〜4割大きくなった。
+  マテリアル数・アニメ数・テクスチャ数が保存前と同じことは確認した。
+- 元の色はバラバラだった(ボス dif1.0/amb0.2、プレイヤー dif1.0/amb0、Enemy・部位・TestStage は dif0 など)。`red_katana_ult` の赤いマテリアル(dif 0.8,0,0)も灰色になった。元に戻すなら git の HEAD から。
+- アンビエントはライトのアンビエントと掛け算になる。ゲームでの明るさの確認はまだ。
+- (追記) 武器5つ(katana_blend / red_katana_ult / AK74 / RPG7 / PirateSword)は元の色に戻した(git の HEAD と同じ)。色を変えたのは体・ステージの11個だけ。
+- (追記) 一時ライト `TempTopLight` を一度削除したが、やっぱり要るので元に戻した(git の HEAD と同じ)。今も上から照らしている。
+
+### 2026-10-26 ライトの見直し(全体が白っぽいのを直す)
+- 原因: DxLibの標準ライト(拡散1.0・反射1.0・環境0.33)が有効のままで、カメラ方向(1.0)・SceneMain(0.4)・TempTopLight(0.6)と重なり、拡散光の合計が約3倍になっていた。
+- 変更: `SceneMain::Init` で `SetLightEnable(FALSE)`(標準ライトを切る。デストラクタで TRUE に戻すのは前から)。
+  カメラのライト 拡散1.0→0.6・反射0.5→0.3(`Camera.cpp`)。TempTopLight 拡散0.6→0.5、環境0.25→0.58(切った標準ライトの環境光0.33の分を足した)。
+- キャラ・ステージのモデルはマテリアルが「拡散0.1・環境0.9」なので、環境光の合計を保てば明るさはほぼ変わらない(プレビューで確認)。拡散光が効く武器や列車ステージは暗め・くっきりになる。
+- **TempTopLight を消すときは環境光(0.58)の分をどこかに移すこと**(消すとキャラが暗くなる)。ゲームでの確認はまだ。
+
+### 2026-10-26 第二ラウンドのボスがガードしたら背中の腕もガードする
+- 方針(会話で決めた): キャラは `EnemyBase → BossBase(予定、R0/R1 の共通部分) → R0 / R1`、腕は EnemyBase のまま。
+  ステートは `EnemyStateBase` をそのまま使い、ボス専用の動きは**共通のステートを継承したボス用のステート**で書く(EnemyBase に OnStateChanged のような通知は足さない)。腕は言われたアニメを流すだけ。
+- `Character/Enemy/BossPirate/State/BossGuard.h/.cpp`(`EnemyGuard` 継承)。vcxproj/filters に登録。
+  Enter で親の Enter の後に腕へ `BlockLoop`(0.5倍、ボスと同じ)、Exit で親の Exit の後に腕を Idle に戻す。
+- `BossArm::PlayAnim(key, isLoop, timeScale)`(BossArmAnim.csv の key、速度は CSV の animSpeed を掛ける) / `ReturnToIdle()`(EnemyIdle へ)。
+- `BossEnemyPirateR1::GetLeftBackArm / GetRightBackArm`(lock して返す)。`OnDamage` のガードへの移行を `BossGuard` にした。
+- ガードブレイク・弾きは EnemyGuard の中で `EnemyGuardBreak` / `EnemyParry` を直接作るので、今は Exit で腕が Idle に戻るだけ。
+  ブレイクで腕を切り離して打ち上げるときは、EnemyGuard に次のステートを作る virtual を足して BossGuard で上書きする予定。
+- デバッグウィンドウの Guard ボタンは普通の `EnemyGuard` を作るので腕は動かない。確認は実際に攻撃してガードさせる。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(背中の腕の Block_Loop が「前に出す」形に見えるか)。
+
+### 2026-10-26 背中の腕の切り離し Step1(ガードブレイクをボス用に差し替える入口)
+- 方針(会話で決めた): 見た目は背骨の上書きを続けて、切り離した瞬間の背骨の行列＋移動・回転で描く(案1a)。動きは最初は決めた軌道だけ、あとで当たり判定・空中ステート(案2b)。
+  手順: Step1 ガードブレイクで腕に知らせる → Step2 `BossArmDetached` / `BossArmReturn` で上げて戻す(見た目だけ) → Step3 当たり判定・Yの打ち上げの対象・吸い寄せ。
+- `EnemyGuard::CreateGuardBreakState()`(protected virtual、標準は EnemyGuardBreak)。`OnGuardHit` のガードブレイクはこれで作る(ここまではユーザー)。
+- `BossGuard::CreateGuardBreakState` で `BossGuardBreak` を返す。`Character/Enemy/BossPirate/State/BossGuardBreak.h/.cpp`(`EnemyGuardBreak` 継承、vcxproj/filters に登録)。
+  Enter / Exit は親を呼ぶだけ。腕の `Detach()` / `RequestReturn()` の呼び出しは **TODO のコメント**(Step2 で BossArm に作ったら外す)。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ(F3 でボスのステート名が BossGuardBreak になるか)。
+
+### 2026-10-26 F4 で第一ラウンドから第二ラウンドへ飛ぶ
+- `PhaseManager::DebugSkipToBossPrevPhase`: 今のフェーズが R0 のいるフェーズなら、敵を消して R1 のフェーズへ `ChangePhase`(event は None、プレイヤーはそのまま)。それ以外は今まで通りボスの手前へ。
+- `PhaseManager::FindEnemyPhase(type)`(その種類の敵がいる一番早いフェーズ、いなければ-1)を追加。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-10-26 ボスのやられ判定をカプセルに
+- R0 / R1 の `m_hitCol` を球からカプセルにした。値は押し戻しの判定と同じ(`bodyColOffsetY` / `bodyColHeight` / `bodyColRadius`)。
+  ステータスの `hitColRadius` / `hitColOffsetY` はボスでは使っていない(普通の敵は今まで通り球)。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+---
+
+## 10/27 やること: 背中の腕の切り離し Step2〜
+**手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
+
+今の状態: Step1(ガードブレイクで `BossGuardBreak` に入る)は済み。Step2 は `BossArm.h` の public 関数3つ・friend・メンバーまで書いてある。
+
+- [ ] **Step2 腕を切り離して上げ、戻す(見た目だけ)**
+  - [ ] 1-1 `BossArm.h` の private に関数の宣言3つ(`CalcDetachedSpineMatrix` / `CalcDrawSpineMatrix` / `LerpMatrix`)
+  - [ ] 1-2 `BossArm.cpp`: include、Update の位置、Draw の背骨、ReturnToIdle、追加の関数5つ(`Detach` / `RequestReturn` / 上の3つ)
+  - [ ] 1-3 `BossArmDetached`(新規、`BossPirate/State/`): 回りながら300上がって浮く
+  - [ ] 1-4 `BossArmReturn`(新規、`BossPirate/State/`): 30Fで背中へ戻って Idle
+  - [ ] 1-5 `BossGuardBreak.cpp` の TODO のコメントを外す(Enter で `Detach`、Exit で `RequestReturn`)
+  - [ ] 1-6 ビルド → ゲームで確認(F4 を2回で R1、弱攻撃でガード → 強攻撃でブレイク。Guard ボタンでは腕は動かない)
+- [ ] **Step3 浮いている腕に当たり判定**(Step2 が動いてから)
+  - 先に決める: ブレイク後の Y の打ち上げはボスと腕のどちらを狙うか / 腕のダメージはボスの HP か別の HP か / 空中コンボ中に戻せと言われたら待つか
+  - ステータスの行 → やられ判定(切り離し中だけ) → `IsTargetable` → 空中のステート → 吸い寄せ
+- [ ] そのあと: BossBase(R0 / R1 の共通部分をまとめる) → 攻撃2種の追加
+
 ---
 
 ## TODO / 次にやること
@@ -796,3 +885,22 @@
   - 描画順の案: 背景(赤) → ステージ(赤フォグ) → キャラ → 2D斬撃 → 3D白斬撃 → 血しぶき → ビネット → 文字
 - [ ] フォグで色が濁るようなら、ステージ用のグラデーションマップシェーダーを検討
 - [ ] ルートの CLAUDE.md の記載が `2026_summer/` のままなので、`2026_winter/` に直す
+- [ ] **列車ステージ(Ch0 0-1)をゲームで確認**(ステージセレクトの3番目「列車ステージ」。StageType::Train)
+  - 見た目 `data/Stage/TrainStage/TrainStage.mv1`、当たり判定は箱とスロープだけの `TrainStageCol.mv1`(StageInfo::colModel)。トンネル `data/Stage/TrainTunnel/TrainTunnel.mv1`(13200でループ)を `Stage::DrawTunnel` でカメラの前後6000だけ描き、+Z へ流す(速さ kTunnelScrollSpeed=20/F、y=-150)
+  - 編成(前から): 機関車 / 1両目 平台車(オレンジのコンテナ) / 2両目 平台車(さびたコンテナ) / 3両目 通路の車両(中を通る) / 上りスロープ車 / 4両目 通路の車両(扉を閉めて屋根を歩く、屋根y=602、赤いさびの波板) / 下りスロープ車 / 5両目 通路の車両(中を通る) / 6両目 平台車(最後尾)。全長約235m。デモステージと同じくプレイヤーは+Zへ進む(機関車がZ=-7900、最後尾がZ=23400。組み立て後に180°回している)。幅は平台車・通路の車両とも約16m
+  - 通路の車両は宇宙船の通路(spaceship_corridor_blend)を横3倍・高さ1.9倍にしたもの(天井・入口は約6m)。トンネルは拡大率11で横だけさらに2倍(幅約44m、天井はデッキから約14.7m、1区間33m。build_all.sh と build_train_stage.py の TUNNEL_SCALE・TUNNEL_X_SCALE をそろえる)。ノードの材質は `prepare_corridor.py` で画像に焼いて `corridor_car.blend` に保存。窓はガラスを外し、外側の壁(縦の部分)と屋根に赤いさびの波板(さびたコンテナのテクスチャから切り出し)を貼ったので、窓からは赤い壁が見える。SF木箱は置いていない。床の切れ目(各車両の前後の端・平台車の左右の縁・スロープの上り口と下り口・屋根の前後の端)には黄黒のテープ(hazard.png、見た目だけ)
+  - 座標: デッキ上面 y=0、原点=スタート(1両目の前寄り)。前からの距離u(m) → Z=(u-1.5)*100、X は組み立て時の符号の逆
+  - 色: ステージとトンネルは `convert.exe flat` でキャラ・デモステージと同じ「拡散=色×0.1・環境=色×0.9・反射0.1」にしてある(ライトの向きで明るさが変わらず、敵とのなじみがデモステージと同じ)。色は build_train_stage.py の TINT_*、トンネルは build_all.sh の TUNNEL_DIF
+  - 敵配置 `Enemies004.csv`・遷移 `PhaseStage004.csv`(A:1両目 → B:2・3両目 → C:4両目の屋根と5両目 → D:6両目 → GameClear)は仮。エリートは今 Swordman
+  - 列車の左右の縁(x=±800)と前後の端に、高さ1200の見えない壁を立てて外へ出られないようにしている。連結部のすき間に落ちると線路の高さ(y=-170)の見えない床に立つ
+  - 作り直し: `tools/TrainStage/build_all.sh 素材フォルダ [--corridor]`(Git Bash)。中身は prepare_corridor.py → build_train_stage.py → build_tunnel.py → `tools/FbxToMv1/export_x.py`(.x) → `convert.exe`(mv1)。ゲームのDxLibはFBXを読めないので .x 経由。`preview.exe` でゲームと同じライトの見た目を PNG に、`probe.exe` で当たり判定の高さ・法線を調べられる
+  - **Unityで調整する(今後はこちらが本番)**: Unityプロジェクト `Desktop/programm/ninja_motion` の `Assets/Editor/TrainStageTool.cs`。
+    `Tools > Train Stage > 1. Import From Game Data (Setup Scene)` で `data/Stage/TrainStage/TrainStage_Unity.fbx`・tex・トンネルを取り込んで `Assets/Scenes/TrainStageScene.unity` を作る(作り直すと調整は消える)。
+    `TrainStage`(見た目、車両ごと・コンテナは1個ずつ)と `TrainStage_Collision`(当たり判定、箱1個ずつ・半透明の緑)を動かし・拡大・複製・Cube追加して調整し、
+    `Tools > Train Stage > 2. Export To Game (mv1)` で .x → `convert.exe flat` → ゲームの TrainStage.mv1 / TrainStageCol.mv1 を上書き。マテリアルの色・テクスチャ(Assets/TrainStage/Materials)の変更も入る。
+    `TrainTunnel_Reference` は目安(EditorOnly、書き出さない)。Unityの座標×100がそのままゲームの座標(+Zへ進む、原点の床はy=0のまま)。
+    **build_all.sh を実行すると Unity での調整が上書きされる**。Unity経由の mv1 は Blender 経由と当たり判定・見た目が一致することを確認済み
+    手順書は `tools/TrainStage/Unityでの手直し.md`。使った素材は `export_props.py` で Unity の `Assets/TrainStage/Props` にFBX化してあり、`Tools > Train Stage > 3. Setup Props` で `Props/Prefabs` にプレハブ(12個)。
+    `Add Collision Box For Selection` で選んだ物の外形の当たり判定を作れる。2. Export は敵配置(EnemySpawns)も Enemies004.csv に書き出す(1. Import で読み込む)
+  - Unity の敵配置ツールを直した: `EnemySpawnInitialState.Guard` → `Watch`(ゲームの名前。保存値は同じなのでデモの敵もそのまま)、`EnemySpawnType` に `BossEnemyPirateR1` / `BossEnemyPirateR0` を追加、
+    `Tools > Enemy Spawn > Import CSV...`(ゲームのCSVをシーンに読み込む)を追加。デモステージの Enemies003.csv も Unity から書き出し直せるようになった

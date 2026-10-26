@@ -121,8 +121,8 @@ void BossEnemyPirateR0::Init()
 	InitHitCol(GetWeakPtr());
 	m_hitCol->ColInit({
 		.pos = m_rb.m_pos,
-		.offset = Vector3(0, m_status.hitColOffsetY, 0),
-		.shape = std::make_unique<SphereShape>(m_status.hitColRadius),
+		.offset = Vector3(0, m_status.bodyColOffsetY, 0),
+		.shape = std::make_unique<CapsuleShape>(Vector3(0,m_status.bodyColHeight,0),m_status.bodyColRadius),
 		.tag = {Collider::Faction::Enemy, Collider::ColRole::Hit},
 		.isActive = true,
 		.isTrigger = true

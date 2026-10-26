@@ -47,6 +47,9 @@ enum class AsyncData : int
 	StageModel,
 	StageModelCollider,
 	DemoStageModel,//デモステージ(UnityのDemoStageBuilderで生成)
+	TrainStageModel,//列車ステージの見た目(tools/TrainStage で生成)
+	TrainStageColModel,//列車ステージの当たり判定(箱だけの軽いモデル)
+	TrainTunnelModel,//列車ステージで流し続けるトンネル(Z方向に13200でループする)
 	AreaWallEffect,
 	WallBreakEffect,
 	//デバッグ

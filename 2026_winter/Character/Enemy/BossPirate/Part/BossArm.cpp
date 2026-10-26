@@ -216,6 +216,17 @@ std::shared_ptr<EnemyStateBase> BossArm::NextAfterRecover()
 	return std::make_shared<EnemyIdle>(GetWeakPtr());
 }
 
+void BossArm::PlayAnim(const std::string& key, bool isLoop, float timeScale)
+{
+	m_anim.ChangeAnim(GetAnimName(key), isLoop, timeScale * GetAnimSpeed(key));
+}
+
+void BossArm::ReturnToIdle()
+{
+	//EnterでIdleのアニメが流れる
+	ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
+}
+
 MATRIX BossArm::CalcSpineMatrix() const
 {
 	MATRIX rootWorld = MV1GetFrameLocalWorldMatrix(m_bossModelHandle, m_rootFrame);

@@ -152,7 +152,6 @@
     <ClCompile Include="Camera\CameraManager.cpp" />
     <ClCompile Include="Camera\CameraState\BossAppearCamera.cpp" />
     <ClCompile Include="Camera\CameraState\CameraStateBase.cpp" />
-    <ClCompile Include="Camera\CameraState\FinishingFirstCamera.cpp" />
     <ClCompile Include="Camera\CameraState\FinishingSecondCamera.cpp" />
     <ClCompile Include="Camera\CameraState\LockOnCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\PlayerFollowCamera.cpp" />
@@ -160,13 +159,10 @@
     <ClCompile Include="Camera\CameraState\Assasin\AssasinCameraStart.cpp" />
     <ClCompile Include="Camera\CameraState\Assasin\AirAssasinCamera.cpp" />
     <ClCompile Include="Camera\CameraState\Assasin\AirAssasinCameraStart.cpp" />
-    <ClCompile Include="Camera\CameraState\ResultCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\Stage1FazeCamera.cpp" />
     <ClCompile Include="Camera\CameraState\Stage2FazeCamera.cpp" />
-    <ClCompile Include="Camera\CameraState\TitleCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\UltCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\BattleSmoothCamera.cpp" />
-    <ClCompile Include="Camera\CameraState\UltStartCamera.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
@@ -209,7 +205,9 @@
     <ClCompile Include="Character\Enemy\Gunner\EnemyGunner.cpp" />
     <ClCompile Include="Character\Enemy\Gunner\Part\EnemyGunnerWeapon.cpp" />
     <ClCompile Include="Character\Enemy\Bazooka\EnemyBazooka.cpp" />
-    <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirate.cpp" />
+    <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR1.cpp" />
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossGuard.cpp" />
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossGuardBreak.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossArm.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR0.cpp" />
@@ -300,7 +298,6 @@
     <ClInclude Include="Camera\CameraManager.h" />
     <ClInclude Include="Camera\CameraState\BossAppearCamera.h" />
     <ClInclude Include="Camera\CameraState\CameraStateBase.h" />
-    <ClInclude Include="Camera\CameraState\FinishingFirstCamera.h" />
     <ClInclude Include="Camera\CameraState\FinishingSecondCamera.h" />
     <ClInclude Include="Camera\CameraState\LockOnCameraState.h" />
     <ClInclude Include="Camera\CameraState\PlayerFollowCamera.h" />
@@ -308,13 +305,10 @@
     <ClInclude Include="Camera\CameraState\Assasin\AssasinCameraStart.h" />
     <ClInclude Include="Camera\CameraState\Assasin\AirAssasinCamera.h" />
     <ClInclude Include="Camera\CameraState\Assasin\AirAssasinCameraStart.h" />
-    <ClInclude Include="Camera\CameraState\ResultCameraState.h" />
     <ClInclude Include="Camera\CameraState\Stage1FazeCamera.h" />
     <ClInclude Include="Camera\CameraState\Stage2FazeCamera.h" />
-    <ClInclude Include="Camera\CameraState\TitleCameraState.h" />
     <ClInclude Include="Camera\CameraState\UltCameraState.h" />
     <ClInclude Include="Camera\CameraState\BattleSmoothCamera.h" />
-    <ClInclude Include="Camera\CameraState\UltStartCamera.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />
@@ -361,7 +355,9 @@
     <ClInclude Include="Character\Enemy\Gunner\EnemyGunner.h" />
     <ClInclude Include="Character\Enemy\Gunner\Part\EnemyGunnerWeapon.h" />
     <ClInclude Include="Character\Enemy\Bazooka\EnemyBazooka.h" />
-    <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirate.h" />
+    <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR1.h" />
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossGuard.h" />
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossGuardBreak.h" />
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossArm.h" />
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.h" />
     <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR0.h" />

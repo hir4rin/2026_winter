@@ -4,9 +4,9 @@
 namespace
 {
 	const VECTOR kLightDir = { 0.0f, -1.0f, 0.0f };//真上から
-	constexpr float kDifColorValue = 0.6f;//ディフューズ
+	constexpr float kDifColorValue = 0.5f;//ディフューズ
 	constexpr float kSpcColorValue = 0.0f;//スペキュラ//てかりは足さない
-	constexpr float kAmbColorValue = 0.25f;//アンビエント//影になる面も少し明るくする
+	constexpr float kAmbColorValue = 0.58f;//アンビエント//影になる面も少し明るくする//切った標準ライトの環境光(0.33)の分も足している(キャラはアンビエントで明るさが決まる)
 }
 
 TempTopLight::~TempTopLight()

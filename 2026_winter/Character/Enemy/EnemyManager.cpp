@@ -3,7 +3,7 @@
 #include "Character/Enemy/Swordman/EnemySwordman.h"
 #include "Character/Enemy/Gunner/EnemyGunner.h"
 #include "Character/Enemy/Bazooka/EnemyBazooka.h"
-#include "Character/Enemy/BossPirate/BossEnemyPirate.h"
+#include "Character/Enemy/BossPirate/BossEnemyPirateR1.h"
 #include "Character/Enemy/BossPirate/BossEnemyPirateR0.h"
 #include "Character/Player/Player.h"
 #include "Main/Input.h"
@@ -193,8 +193,8 @@ std::shared_ptr<EnemyBase> EnemyManager::CreateEnemy(const EnemySpawnData& data)
 	case EnemyType::Bazooka:
 		enemy = std::make_shared<EnemyBazooka>(m_player, data.position);
 		break;
-	case EnemyType::BossEnemyPirate:
-		enemy = std::make_shared<BossEnemyPirate>(m_player, data.position);
+	case EnemyType::BossEnemyPirateR1:
+		enemy = std::make_shared<BossEnemyPirateR1>(m_player, data.position);
 		break;
 	case EnemyType::BossEnemyPirateR0:
 		enemy = std::make_shared<BossEnemyPirateR0>(m_player, data.position);

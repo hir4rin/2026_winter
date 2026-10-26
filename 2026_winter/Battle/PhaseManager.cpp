@@ -164,13 +164,23 @@ bool PhaseManager::IsConditionFulfilled(const PhaseTransition& trans) const
 
 void PhaseManager::DebugSkipToBossPrevPhase()
 {
-	//ボスがいるフェーズ//第一ラウンド・第二ラウンドのうち早いほう
-	int bossPhase = -1;
-	for (const auto& data : DataManager::GetInstance().GetEnemySpawnData())
+	const int r0Phase = FindEnemyPhase(EnemyType::BossEnemyPirateR0);
+	const int r1Phase = FindEnemyPhase(EnemyType::BossEnemyPirateR1);
+
+	//第一ラウンド中なら第二ラウンドへ//プレイヤーはそのまま
+	if (r0Phase > 0 && r1Phase > 0 && m_currentPhase == r0Phase)
 	{
-		if (data.type != EnemyType::BossEnemyPirate && data.type != EnemyType::BossEnemyPirateR0)continue;
-		if (bossPhase < 0 || data.phase < bossPhase)bossPhase = data.phase;
+		if (auto enemyMgr = m_enemyManager.lock())
+		{
+			enemyMgr->DebugClearEnemies();
+		}
+		ChangePhase(r1Phase, PhaseEvent::None);
+		return;
 	}
+
+	//ボスがいるフェーズ//第一ラウンド・第二ラウンドのうち早いほう
+	int bossPhase = r0Phase;
+	if (bossPhase <= 0 || (r1Phase > 0 && r1Phase < bossPhase))bossPhase = r1Phase;
 	if (bossPhase <= 0)return;
 
 	//ボスのフェーズへ進む行
@@ -199,6 +209,18 @@ void PhaseManager::DebugSkipToBossPrevPhase()
 	float rad = area.rotYDeg * DX_PI_F / 180.0f;
 	player->SetPos(area.position + Vector3(-sinf(rad) * back, 0.0f, -cosf(rad) * back));
 	player->GetRigidBody().ResetVel();
+}
+
+int PhaseManager::FindEnemyPhase(EnemyType type) const
+{
+	//同じ種類が何体かいたら早いほう
+	int phase = -1;
+	for (const auto& data : DataManager::GetInstance().GetEnemySpawnData())
+	{
+		if (data.type != type)continue;
+		if (phase < 0 || data.phase < phase)phase = data.phase;
+	}
+	return phase;
 }
 
 bool PhaseManager::IsInArea(const PhaseArea& area, const Vector3& pos) const

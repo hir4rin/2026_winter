@@ -21,7 +21,7 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager)
 
 	//インゲームで使うUIをここで生成して登録する
 	//必殺技中の「血殺」の文字
-	Add(std::make_shared<KessatsuUI>(cameraManager));
+	Add(std::make_shared<KessatsuUI>());
 
 	//登録したUIのハンドルを生成する
 	InitAll();

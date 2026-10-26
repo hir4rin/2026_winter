@@ -2,6 +2,7 @@
 #include "Collision/Collider.h"
 #include "WallZone/WallZone.h"
 #include "Main/System.h"
+#include "StageInfo.h"
 #include <memory>
 #include <vector>
 
@@ -12,8 +13,8 @@ public:
 	~Stage();
 	void Init();
 	void TitleInit();
-	/// <summary>ゲーム用の初期化。modelにはSystemで読み込んだステージモデルの種類を渡す</summary>
-	void GameInit(AsyncData model);
+	/// <summary>ゲーム用の初期化。見た目・当たり判定のモデルやトンネルの有無はinfoから決める</summary>
+	void GameInit(const StageInfo& info);
 
 	void Update();
 	void Draw()const;
@@ -56,6 +57,11 @@ private:
 
 	int m_stageModelHandle;
 	int m_stageViewHandle;
+
+	//列車ステージのトンネル(見た目だけ。列車の進む向きと逆に流し続ける)
+	int m_tunnelHandle = -1;
+	float m_tunnelScroll = 0.0f;//流した距離(トンネル1本の長さで折り返す)
+	void DrawTunnel()const;
 
 
 	/// <summary>読み込み済みの壁ゾーンを全て破棄する(CollisionManagerからも解除する)</summary>

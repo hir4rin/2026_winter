@@ -82,7 +82,7 @@ void EnemyGuard::OnGuardHit()
 	if (owner->m_attackData.attackType == AttackType::heavyAttack)
 	{
 		owner->m_guardInfo.GurardGauge = 0.0f;//一旦ここ(毎回リセットしたくなったらExitでする
-		owner->ChangeState(std::make_shared<EnemyGuardBreak>(owner));
+		owner->ChangeState(CreateGuardBreakState());
 		return;
 	}
 
@@ -100,4 +100,9 @@ void EnemyGuard::OnGuardHit()
 
 	owner->m_anim.ChangeAnim(owner->GetAnimName("BlockHit"), true, 0.5f * owner->GetAnimSpeed("BlockHit"));
 
+}
+
+std::shared_ptr<EnemyStateBase> EnemyGuard::CreateGuardBreakState()
+{
+	return std::make_shared<EnemyGuardBreak>(m_owner);
 }

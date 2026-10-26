@@ -4,6 +4,7 @@
 #include "Main/System.h"
 #include "Collision/CollisionManager.h"
 #include "Collision/PolygonShape.h"
+#include <cmath>
 
 namespace
 {
@@ -18,6 +19,12 @@ namespace
 	constexpr float kFloorCheckStartY = 800.0f;//床を調べる線分の開始高さ(モデル座標)//以前の配置(-800)でキャラが立っていた床を拾うため
 	constexpr float kFloorCheckEndY = -100000.0f;//床を調べる線分の終了高さ(モデル座標)
 	constexpr float kGameStageDefaultPosY = -800.0f;//床が見つからなかったときのステージの高さ
+
+	//列車ステージのトンネル
+	constexpr float kTunnelLength = 13200.0f;//トンネル1本の長さ(この長さで継ぎ目なくつながる)
+	constexpr float kTunnelOffsetY = -150.0f;//トンネルのレール上面の高さ(列車のデッキの上面=0から見て)
+	constexpr float kTunnelScrollSpeed = -20.0f;//1フレームに流す距離(列車の速さ)
+	constexpr float kTunnelDrawRange = 6000.0f;//カメラから前後この距離までのトンネルを描く(SceneMainのファークリップより少し長く)
 }
 
 
@@ -48,10 +55,14 @@ void Stage::TitleInit()
 	MV1SetScale(m_stageViewHandle, VGet(kTitleStageScale, kTitleStageScale, kTitleStageScale));
 }
 
-void Stage::GameInit(AsyncData model)
+void Stage::GameInit(const StageInfo& info)
 {
-	m_stageModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(model));
-	m_stageViewHandle = MV1DuplicateModel(System::GetInstance().GetHandle(model));
+	m_stageModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(info.colModel));
+	m_stageViewHandle = MV1DuplicateModel(System::GetInstance().GetHandle(info.model));
+	if (info.useTrainTunnel)
+	{
+		m_tunnelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TrainTunnelModel));
+	}
 	// モデルのポリゴンの当たり判定を構築する(第二引数を-1にすると全てのポリゴンを対象にする)
 	MV1SetupCollInfo(m_stageModelHandle, -1);
 
@@ -87,6 +98,10 @@ Stage::~Stage()
 {
 	MV1DeleteModel(m_stageModelHandle);
 	MV1DeleteModel(m_stageViewHandle);
+	if (m_tunnelHandle != -1)
+	{
+		MV1DeleteModel(m_tunnelHandle);
+	}
 	ClearWallZones();
 }
 
@@ -94,12 +109,38 @@ void Stage::Update()
 {
 	// 毎フレーム衝突情報を更新
 	MV1RefreshCollInfo(m_stageModelHandle, -1);
+
+	if (m_tunnelHandle != -1)
+	{
+		//スローのときはトンネルもゆっくり流す
+		m_tunnelScroll += kTunnelScrollSpeed * System::GetInstance().GetTimeScale();
+		m_tunnelScroll = std::fmod(m_tunnelScroll, kTunnelLength);
+	}
 }
 
 void Stage::Draw() const
 {
 	//MV1DrawModel(m_stageModelHandle);
 	MV1DrawModel(m_stageViewHandle);
+	DrawTunnel();
+}
+
+void Stage::DrawTunnel() const
+{
+	if (m_tunnelHandle == -1) return;
+
+	//列車は-Zへ進む(機関車が-Z側、プレイヤーは+Zの最後尾へ進む)ので、トンネルは+Zへ流す
+	//列車が長い(Z=-7900〜23400)ので、カメラの近くの分だけ描く
+	const float camZ = GetCameraPosition().z - m_pos_graphic.z;
+	const float halfLength = kTunnelLength * 0.5f;
+	const int first = static_cast<int>(std::ceil((camZ - kTunnelDrawRange - halfLength - m_tunnelScroll) / kTunnelLength));
+	const int last = static_cast<int>(std::floor((camZ + kTunnelDrawRange + halfLength - m_tunnelScroll) / kTunnelLength));
+	for (int i = first; i <= last; ++i)
+	{
+		const float z = m_pos_graphic.z + i * kTunnelLength + m_tunnelScroll;
+		MV1SetPosition(m_tunnelHandle, VGet(m_pos_graphic.x, m_pos_graphic.y + kTunnelOffsetY, z));
+		MV1DrawModel(m_tunnelHandle);
+	}
 }
 
 void Stage::OnCollision(Collider& other)

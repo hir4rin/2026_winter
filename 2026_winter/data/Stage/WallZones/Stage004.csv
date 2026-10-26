@@ -1,0 +1,7 @@
+#type,name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg,isActive
+WallRunZone,Run_0,-346,223.088,270.5,341,200,100,90,1
+WallRunZone,Run_0_copy,361,223.088,321.5,355,200,100,90,1
+WallRunZone,Run_0_copy_copy,359,223.088,3644.5,399,200,100,90,1
+WallRunZone,Run_0_copy_copy_copy,-621.024,186.258,6263.6,1964,200,100,90,1
+WallRunZone,Run_0_copy_copy_copy_copy,667,186.258,6263.6,1964,200,100,90,1
+WallRunZone,Run_0_copy_copy_copy,-353,223.088,3518.5,479,200,101,90,1

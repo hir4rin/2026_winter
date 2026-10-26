@@ -3,8 +3,6 @@
 #include "Main/Game.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
-#include "../Camera/CameraManager.h"
-#include "../Camera/CameraState/CameraStateBase.h"
 
 namespace
 {
@@ -18,17 +16,9 @@ namespace
 	constexpr float kSatsuScale = 0.5f;//「殺」の拡大率
 	constexpr float kSplashScale = 1.0f;//液体の拡大率
 	constexpr float kSplashRotation = DX_PI_F / 4;//液体の回転角度
-
-	//ラストヒットイベント用の「血」の位置
-	constexpr float kLastHitChiX = 220.0f;
-	constexpr float kLastHitChiY = 220.0f;
-	//ラストヒットイベント用の「殺」の位置(「血」からのずれ)
-	constexpr float kLastHitSatsuOffsetX = 200.0f;
-	constexpr float kLastHitSatsuOffsetY = 170.0f;
 }
 
-KessatsuUI::KessatsuUI(std::weak_ptr<CameraManager> cameraManager) :
-	m_cameraManager(cameraManager)
+KessatsuUI::KessatsuUI()
 {
 }
 
@@ -58,15 +48,7 @@ void KessatsuUI::Draw()
 {
 	if (!m_isVisible) return;
 
-	//ラストヒットイベント中は配置違いで表示する
-	if (IsLastHitEvent())
-	{
-		DrawLastHit();
-	}
-	else
-	{
-		DrawUlt();
-	}
+	DrawUlt();
 }
 
 void KessatsuUI::DrawUlt()
@@ -80,31 +62,6 @@ void KessatsuUI::DrawUlt()
 	DrawDesignGraph(kScreenW / 15.0f, kScreenH - 150.0f, kSplashScale, kSplashRotation, m_splashHandle);
 	//「殺」:右下寄り
 	DrawDesignGraph(kScreenW * 3.0f / 5.0f, kScreenH - 200.0f, kSatsuScale, 0.0f, m_satsuHandle);
-}
-
-void KessatsuUI::DrawLastHit()
-{
-	constexpr float kScreenW = static_cast<float>(Game::kScreenWidth);
-	constexpr float kScreenH = static_cast<float>(Game::kScreenHeight);
-
-	//「血」:左上
-	DrawDesignGraph(kLastHitChiX, kLastHitChiY, kBloodScale, kBloodRotation, m_bloodHandle);
-	//「殺」:血の少し右下
-	DrawDesignGraph(kLastHitChiX + kLastHitSatsuOffsetX, kLastHitChiY + kLastHitSatsuOffsetY, kSatsuScale, 0.0f, m_satsuHandle);
-	//液体:右下寄り
-	DrawDesignGraph(kScreenW - kScreenW / 15.0f, kScreenH - 150.0f, kSplashScale, kSplashRotation, m_splashHandle);
-}
-
-bool KessatsuUI::IsLastHitEvent() const
-{
-	auto cameraManager = m_cameraManager.lock();
-	if (!cameraManager) return false;
-	auto camera = cameraManager->GetActiveCamera();
-	if (!camera) return false;
-
-	const auto type = camera->GetCameraType();
-	return type == CameraStateBase::Type::FinishingFirstCamera
-		|| type == CameraStateBase::Type::FinishingSecondCamera;
 }
 
 void KessatsuUI::DrawDesignGraph(float x, float y, float scale, float angle, int handle)

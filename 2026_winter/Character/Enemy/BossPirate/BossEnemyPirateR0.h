@@ -4,8 +4,8 @@
 #include "Character/Enemy/EnemyPart.h"
 #include <memory>
 class BossPirateWeapon;
-//第一ラウンドのボス(背中の腕なし)//第二ラウンドは BossEnemyPirate
-//ステータス・攻撃・アニメのCSVは今は BossEnemyPirate と同じものを使う
+//第一ラウンドのボス(背中の腕なし)//第二ラウンドは BossEnemyPirateR1
+//ステータス・攻撃・アニメのCSVは BossEnemyPirate〜 を使う(第二ラウンドは BossEnemyPirateR1〜)
 class BossEnemyPirateR0 :
     public EnemyBase
 {

@@ -1,0 +1,61 @@
+#key,animName,animSpeed
+Idle,Idle,1
+Walk,Walking,0.8
+Run,Sword And Shield Run,0.8
+StrafeRight,Sword And Shield Strafe (1),0.5
+StrafeLeft,Sword And Shield Strafe,0.5
+Back,Standing Dodge Backward,1
+Attack,Sword And Shield Attack,1
+Hit,Medium Hit To Head,1
+Kirimomi,Getting Hit Backwards,1
+Death,Falling Back Death,1
+BlockEnd,Block_End,1
+BlockHit,Block_Hit,1
+BlockBreak,Block_Hit_Break,1
+BlockLoop,Block_Loop,1
+BlockStart,Block_Start,1
+KnockDownStart,Knock_Down_Start,1
+KnockDownLoop,Knock_Down_Loop,1
+KnockDownEnd,Knock_Down_End,1
+HitB,Hit_Combat_B,1
+HitF,Hit_Combat_F,1
+HitL,Hit_Combat_L,1
+HitR,Hit_Combat_R,1
+HitDeath,Hit_Combat_Death,1
+GetUp,Get_Up_Combat,1
+HitLargeB,Hit_Large_Combat_B,1
+HitLargeF,Hit_Large_Combat_F,0.5
+HitLargeL,Hit_Large_Combat_L,0.5
+HitLargeR,Hit_Large_Combat_R,0.5
+Execute01Victim,Execution_Target_01,1
+Execute02Victim,Execution_Target_02,1
+Execute03Victim,Execution_Target_03,1
+FootPlantVictim,Ninja_Chudan_Attack_FootPlantJumpSlash_Victim,1
+RunSlashFinisher,Ninja_Chudan_Attack_RunSlashFinisher_Victim,1
+StabBehindVictim,Ninja_Chudan_Attack_StabBehind_Victim,1
+StabChestVictim,Ninja_Chudan_Attack_StabChest_Victim,1
+fromAvobeVictim,Ninja_fromAbove_Attack_StabDown_Victim,1
+fromAvobeForwardVictim,Ninja_fromAbove_Attack_StabDown_ForwardFacing_Victim,1
+SneakStabBehindVictim,Ninja_Sneak_Attack_StabBehind_Victim,1
+AttackMain,Combo_Attack_04_01,1
+AttackPre1,Combo_Attack_Wave_05_02,1
+AttackPre2,Combo_Attack_Wave_05_04,1
+RunMain,Run_Combat_Loop_F_0_RM,1
+CautionLMain,Run_Combat_Loop_F_L_45_RM,1
+CautionRRMain,Run_Combat_Loop_F_R_45_RM,1
+WalkMain,Walk_Loop_F_0_RM,1
+DodgeB,Dodge_Combat_B,1
+DodgeF,Dodge_Combat_F,1
+DodgeL,Dodge_Combat_L,1
+DodgeR,Dodge_Combat_R,1
+Combo02_01,Combo_Attack_02_01,1
+Combo02_04,Combo_Attack_02_04,1
+Combo03_01,Combo_Attack_03_01,1
+Combo03_02,Combo_Attack_03_02,1
+Combo03_03,Combo_Attack_03_03,1
+Combo03_04,Combo_Attack_03_04,1
+Combo04_02,Combo_Attack_04_02,1
+Combo04_03,Combo_Attack_04_03,1
+Combo04_04,Combo_Attack_04_04,1
+ComboWave05_03,Combo_Attack_Wave_05_03,1
+AttackUp01,Attack_Up_01,1

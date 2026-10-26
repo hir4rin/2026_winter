@@ -22,6 +22,8 @@ namespace
     const std::string kEnemyBazookaAttackPath = "data/Enemy/EnemyBazookaAttack.csv";
     const std::string kBossEnemyPirateAnimPath = "data/Enemy/BossEnemyPirateAnim.csv";
     const std::string kBossEnemyPirateAttackPath = "data/Enemy/BossEnemyPirateAttack.csv";
+    const std::string kBossEnemyPirateR1AnimPath = "data/Enemy/BossEnemyPirateR1Anim.csv";//第二ラウンド
+    const std::string kBossEnemyPirateR1AttackPath = "data/Enemy/BossEnemyPirateR1Attack.csv";//第二ラウンド
     const std::string kBossArmAnimPath = "data/Enemy/BossArmAnim.csv";//ボスの背中の腕//アニメ名はボスのモデルのもの
     const std::string kEnemyStatusPath = "data/Enemy/EnemyStatus.csv";
 
@@ -102,6 +104,8 @@ void DataManager::LoadAll()
     LoadEnemyBazookaAttackRawData();
     LoadAnimData(kBossEnemyPirateAnimPath, m_bossEnemyPirateAnimData);
     LoadBossEnemyPirateAttackRawData();
+    LoadAnimData(kBossEnemyPirateR1AnimPath, m_bossEnemyPirateR1AnimData);
+    LoadBossEnemyPirateR1AttackRawData();
     LoadAnimData(kBossArmAnimPath, m_bossArmAnimData);
     LoadEnemyStatusRawData();
 
@@ -168,6 +172,18 @@ void DataManager::ReloadBossEnemyPirateAnimData()
 void DataManager::LoadBossEnemyPirateAttackRawData()
 {
     LoadRawCsv(kBossEnemyPirateAttackPath, m_bossEnemyPirateAttackRawData);
+}
+
+void DataManager::ReloadBossEnemyPirateR1AnimData()
+{
+    //LoadAnimDataは追加するだけなので、消した行が残らないように空にしてから読む
+    m_bossEnemyPirateR1AnimData = AnimData();
+    LoadAnimData(kBossEnemyPirateR1AnimPath, m_bossEnemyPirateR1AnimData);
+}
+
+void DataManager::LoadBossEnemyPirateR1AttackRawData()
+{
+    LoadRawCsv(kBossEnemyPirateR1AttackPath, m_bossEnemyPirateR1AttackRawData);
 }
 
 void DataManager::LoadRawCsv(const std::string& filePath, std::vector<std::vector<std::string>>& rawData)
@@ -543,7 +559,7 @@ bool DataManager::StringToEnemyType(const std::string& str, EnemyType& outType)
     if (str == "Swordman") { outType = EnemyType::Swordman; return true; }
     if (str == "Gunner") { outType = EnemyType::Gunner; return true; }
     if (str == "Bazooka") { outType = EnemyType::Bazooka; return true; }
-    if (str == "BossEnemyPirate") { outType = EnemyType::BossEnemyPirate; return true; }
+    if (str == "BossEnemyPirateR1") { outType = EnemyType::BossEnemyPirateR1; return true; }
     if (str == "BossEnemyPirateR0") { outType = EnemyType::BossEnemyPirateR0; return true; }
     return false;
 }

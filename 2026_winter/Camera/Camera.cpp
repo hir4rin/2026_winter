@@ -11,8 +11,8 @@ namespace
 	constexpr float kCameraAngleSpeed = 0.03f;//カメラの回転速度
 	const Vector3 kCameraHeight = Vector3(0.0f, 150.0f, 0.0f);//カメラの高さ(Vector3)
 
-	constexpr float kLightDifColorValue = 1.0f;//ディフューズカラー(白)の明るさ
-	constexpr float kLightSpcColorValue = 0.5f;//スペキュラカラー(グレー)の明るさ
+	constexpr float kLightDifColorValue = 0.6f;//ディフューズカラー(白)の明るさ//他のライトと重なって白っぽくならないように控えめ
+	constexpr float kLightSpcColorValue = 0.3f;//スペキュラカラー(グレー)の明るさ
 	constexpr float kLightAmbColorValue = 0.3f;//アンビエントカラー(暗めのグレー)の明るさ
 
 	constexpr float kCameraViewAngle = DX_PI_F / 3.0f;//カメラの視野角

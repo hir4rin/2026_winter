@@ -28,6 +28,7 @@ public:
 	void DebugDraw()const;
 
 	//デバッグ用//ボスの一つ手前のフェーズにして、敵を消し、プレイヤーをボスのエリアの手前に移す
+	//第一ラウンド中なら第二ラウンドのフェーズへ飛ぶ
 	void DebugSkipToBossPrevPhase();
 
 	//エリア(エディタ用)-----------------------------------------------------
@@ -47,6 +48,9 @@ private:
 
 	//条件が満たされたかどうか
 	bool IsConditionFulfilled(const PhaseTransition& trans)const;
+
+	//その種類の敵がいるフェーズ(いなければ-1)
+	int FindEnemyPhase(EnemyType type)const;
 
 	//posがエリアの箱の中にあるか
 	bool IsInArea(const PhaseArea& area, const Vector3& pos)const;

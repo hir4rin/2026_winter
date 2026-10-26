@@ -2,7 +2,7 @@
 
 //海賊のボスの右手に持たせる剣(カトラス)
 //毎フレーム、右手のボーンの行列に合わせて剣のモデルを動かす
-//第一ラウンド(BossEnemyPirateR0)・第二ラウンド(BossEnemyPirate)の両方で使うので、持ち主はモデルのハンドルで受け取る
+//第一ラウンド(BossEnemyPirateR0)・第二ラウンド(BossEnemyPirateR1)の両方で使うので、持ち主はモデルのハンドルで受け取る
 class BossPirateWeapon
 {
 public:

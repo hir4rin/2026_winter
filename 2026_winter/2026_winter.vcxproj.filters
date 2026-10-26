@@ -201,9 +201,6 @@
     <ClCompile Include="Camera\CameraState\CameraStateBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Camera\CameraState\FinishingFirstCamera.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Camera\CameraState\FinishingSecondCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -225,25 +222,16 @@
     <ClCompile Include="Camera\CameraState\Assasin\AirAssasinCameraStart.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Camera\CameraState\ResultCameraState.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Camera\CameraState\Stage1FazeCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\Stage2FazeCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Camera\CameraState\TitleCameraState.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Camera\CameraState\UltCameraState.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\BattleSmoothCamera.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera\CameraState\UltStartCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp">
@@ -327,7 +315,13 @@
     <ClCompile Include="Character\Enemy\Bazooka\EnemyBazooka.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirate.cpp">
+    <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR1.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossGuard.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossGuardBreak.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossArm.cpp">
@@ -671,9 +665,6 @@
     <ClInclude Include="Camera\CameraState\CameraStateBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Camera\CameraState\FinishingFirstCamera.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Camera\CameraState\FinishingSecondCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -695,25 +686,16 @@
     <ClInclude Include="Camera\CameraState\Assasin\AirAssasinCameraStart.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Camera\CameraState\ResultCameraState.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Camera\CameraState\Stage1FazeCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\Stage2FazeCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Camera\CameraState\TitleCameraState.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Camera\CameraState\UltCameraState.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\BattleSmoothCamera.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera\CameraState\UltStartCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h">
@@ -800,7 +782,13 @@
     <ClInclude Include="Character\Enemy\Bazooka\EnemyBazooka.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirate.h">
+    <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR1.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossGuard.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossGuardBreak.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossArm.h">

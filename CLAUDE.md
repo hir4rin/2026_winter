@@ -11,7 +11,7 @@
 - `testModel_Ninja/` — Blenderモデル（`player_color.blend`）とアニメーション素材
 - `Xbox Series/` — コントローラーアイコン素材
 - `進捗/` — 企画書（.pptx）、コスト表（.xlsx）、進捗メモなどのドキュメント類
-- `tools/` — 作業用ツール（`BossArmExtract/`: ボスのmv1から腕を切り出すDxLibツール）
+- `tools/` — 作業用ツール（`BossArmExtract/`: ボスのmv1から腕を切り出すDxLibツール、`TrainTunnel/`: ループ用トンネルを作るBlenderスクリプト、`TrainStage/`: 列車ステージを作るBlenderスクリプト(調整はUnityの `ninja_motion/Assets/Editor/TrainStageTool.cs` で行う)、`FbxToMv1/`: Blender→.x→mv1 の変換とDxLibでのプレビュー）
 
 ## 運用ルール
 

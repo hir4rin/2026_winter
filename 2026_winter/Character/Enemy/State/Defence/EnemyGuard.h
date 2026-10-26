@@ -21,7 +21,8 @@ public:
 
 
     void OnGuardHit();
-
+protected:
+    virtual std::shared_ptr<EnemyStateBase> CreateGuardBreakState();//ガードブレイクのステートを作る
 
 };
 

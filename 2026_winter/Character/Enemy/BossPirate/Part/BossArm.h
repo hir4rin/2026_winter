@@ -31,6 +31,14 @@ public:
     //もう片方の腕の値を左右反転して入れる
     void SetMirrorOffset(const BossArm& other);
 
+    //ボスから頼まれたアニメを流す//keyはBossArmAnim.csvのkey
+    void PlayAnim(const std::string& key, bool isLoop, float timeScale = 1.0f);
+    void ReturnToIdle();//普段のアニメに戻す
+
+    void Detach();//ボスから切り離す
+    void RequestReturn();//切り離した腕を戻す
+    bool IsDetached()const { return m_isDetached; }
+
 protected:
     //腕は歩かないので、Idleのままにする
     std::shared_ptr<EnemyStateBase> NextAfterIdle()override;
@@ -55,4 +63,14 @@ private:
     //デバッグ用//ImGuiで選んだアニメ
     int m_debugAnimIndex = 0;
     bool m_isDebugAnimLoop = true;
+
+    friend class BossArmDetached;
+    friend class BossArmReturn;
+
+    //切り離し
+    bool m_isDetached = false;
+    MATRIX m_detachSpineMatrix = MGetIdent();//切り離した瞬間の背骨
+    Vector3 m_detachMove;//切り離した位置からの移動
+    float m_detachSpinDeg = 0.0f;//付け根を中心にした回転(Y軸)
+    float m_returnRate = 0.0f;//戻り具合(0:切り離した形 1:ボスに付いた形)
 };
