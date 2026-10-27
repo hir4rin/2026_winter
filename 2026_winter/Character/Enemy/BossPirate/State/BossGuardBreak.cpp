@@ -17,9 +17,9 @@ void BossGuardBreak::Enter()
 
 	auto boss = std::dynamic_pointer_cast<BossEnemyPirateR1>(m_owner.lock());
 	if (!boss)return;
-	//TODO:腕を切り離す(Step2でBossArm::Detachを作ったら)
-	//if (auto arm = boss->GetLeftBackArm())arm->Detach();
-	//if (auto arm = boss->GetRightBackArm())arm->Detach();
+	//腕を切り離す
+	if (auto arm = boss->GetLeftBackArm())arm->Detach();
+	if (auto arm = boss->GetRightBackArm())arm->Detach();
 }
 
 void BossGuardBreak::Exit()
@@ -29,7 +29,6 @@ void BossGuardBreak::Exit()
 	//立ち直ったら腕を戻す
 	auto boss = std::dynamic_pointer_cast<BossEnemyPirateR1>(m_owner.lock());
 	if (!boss)return;
-	//TODO:腕を戻す(Step2でBossArm::RequestReturnを作ったら)
-	//if (auto arm = boss->GetLeftBackArm())arm->RequestReturn();
-	//if (auto arm = boss->GetRightBackArm())arm->RequestReturn();
+	if (auto arm = boss->GetLeftBackArm())arm->RequestReturn();
+	if (auto arm = boss->GetRightBackArm())arm->RequestReturn();
 }

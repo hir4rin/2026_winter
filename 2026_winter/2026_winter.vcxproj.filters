@@ -324,6 +324,12 @@
     <ClCompile Include="Character\Enemy\BossPirate\State\BossGuardBreak.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossArmDetached.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossArmReturn.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossArm.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -789,6 +795,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\BossPirate\State\BossGuardBreak.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossArmDetached.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossArmReturn.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossArm.h">

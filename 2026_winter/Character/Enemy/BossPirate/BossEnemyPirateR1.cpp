@@ -16,6 +16,7 @@
 #include "Battle/AttackTokenManager.h"
 #include "Character/Enemy/BossPirate/Part/BossArm.h"
 #include "Character/Enemy/BossPirate/State/BossGuard.h"
+#include "Character/Enemy/BossPirate/State/BossGuardBreak.h"
 #include "Main/imguiApp.h"
 #include "imgui.h"
 
@@ -429,7 +430,7 @@ void BossEnemyPirateR1::OnDamage(Collider& other, AttackData& data)
 		else if (Utility::IsHitRate(static_cast<int>(m_status.guardRate)))
 		{
 			//ガードブレイク中・攻撃の後隙中はガードに移行しない
-			if (!std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState) &&
+			if (!std::dynamic_pointer_cast<BossGuardBreak>(m_currentState) &&
 				!std::dynamic_pointer_cast<EnemyAttackEnd>(m_currentState))
 			{
 				//ガード中ではないなら
@@ -443,7 +444,7 @@ void BossEnemyPirateR1::OnDamage(Collider& other, AttackData& data)
 	}
 
 	//ガード中なら
-	if (std::dynamic_pointer_cast<EnemyGuard>(m_currentState))
+	if (std::dynamic_pointer_cast<BossGuard>(m_currentState))
 	{
 		//もし、スキル攻撃や必殺技が当たったらそのままダメージ処理へ進む
 		if (data.attackType == AttackType::SkillAttack || data.attackType == AttackType::UltAttack)
@@ -453,7 +454,7 @@ void BossEnemyPirateR1::OnDamage(Collider& other, AttackData& data)
 		//それらと違うなら
 		else
 		{
-			auto currentState = std::dynamic_pointer_cast<EnemyGuard>(m_currentState);
+			auto currentState = std::dynamic_pointer_cast<BossGuard>(m_currentState);
 			//ガードしているときにHit
 			currentState->OnGuardHit();
 			return;
@@ -582,9 +583,9 @@ void BossEnemyPirateR1::OnDamage(Collider& other, AttackData& data)
 	//ガードブレイク中ならヒットステートじゃなくてガードステートのまま
 	//ガードブレイク攻撃の時はしっかり移行させる
 	bool isGuardBreakAttack = data.attackType == AttackType::GuardBreakAttack;
-	if (std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState) && !isGuardBreakAttack)
+	if (std::dynamic_pointer_cast<BossGuardBreak>(m_currentState))
 	{
-		auto state = std::dynamic_pointer_cast<EnemyGuardBreak>(m_currentState);
+		auto state = std::dynamic_pointer_cast<BossGuardBreak>(m_currentState);
 
 		//遷移がダメならリターンする
 		if (!state->CanChangeHit())return;

@@ -4,6 +4,8 @@
 #include "DataLoader/DataManager.h"
 #include "Render/ModelShaderManager.h"
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
+#include "Character/Enemy/BossPirate/State/BossArmDetached.h"
+#include "Character/Enemy/BossPirate/State/BossArmReturn.h"
 #include "imgui.h"
 #include <cstdio>
 #include <cfloat>
@@ -93,7 +95,21 @@ void BossArm::Update()
 	m_anim.Update(m_ownTimeScale);
 
 	//付け根の位置//描画はDrawで合わせ直す
-	m_rb.m_pos = Vector3::FromDxLibVector(MV1GetFramePosition(m_bossModelHandle, m_rootFrame));
+	//m_rb.m_pos = Vector3::FromDxLibVector(MV1GetFramePosition(m_bossModelHandle, m_rootFrame));
+
+	//離れているとき
+	if (m_isDetached)
+	{
+
+		const MATRIX spine = CalcDetachedSpineMatrix();
+		m_rb.m_pos = Vector3(spine.m[3][0], spine.m[3][1], spine.m[3][2]);
+	}
+	//くっついているとき
+	else
+	{
+		m_rb.m_pos = Vector3::FromDxLibVector(MV1GetFramePosition(m_bossModelHandle, m_rootFrame));
+	}
+
 }
 
 void BossArm::Draw()
@@ -106,7 +122,7 @@ void BossArm::Draw()
 	MV1SetMatrix(m_modelHandle, MV1GetMatrix(m_bossModelHandle));
 	if (m_armSpineFrame >= 0)
 	{
-		MV1SetFrameUserLocalWorldMatrix(m_modelHandle, m_armSpineFrame, CalcSpineMatrix());
+		MV1SetFrameUserLocalWorldMatrix(m_modelHandle, m_armSpineFrame, CalcDrawSpineMatrix());
 	}
 	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);//血殺中は黒く描く
 }
@@ -190,7 +206,7 @@ void BossArm::DrawEditor()
 		ImGui::SameLine();
 		if (ImGui::Button("Idle"))
 		{
-			ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
+			ReturnToIdle();//切り離し中なら背中に戻す
 		}
 		ImGui::Text("Frame: %.1f / %.1f", m_anim.GetNowAnimFrame(), m_anim.GetAnimEndFrame());
 	}
@@ -223,8 +239,31 @@ void BossArm::PlayAnim(const std::string& key, bool isLoop, float timeScale)
 
 void BossArm::ReturnToIdle()
 {
+	m_isDetached = false;
+	m_returnRate = 0.0f;
 	//EnterでIdleのアニメが流れる
 	ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
+}
+
+void BossArm::Detach()
+{
+	//もう上がっているならそのまま
+	if (std::dynamic_pointer_cast<BossArmDetached>(m_currentState))return;
+
+	//今の形から切り離す(戻り中なら途中の形から)
+	const MATRIX now = CalcDrawSpineMatrix();
+	ChangeState(std::make_shared<BossArmDetached>(GetWeakPtr()));
+	m_detachSpineMatrix = now;
+	m_detachMove = Vector3();
+	m_detachSpinDeg = 0.0f;
+	m_returnRate = 0.0f;
+	m_isDetached = true;
+}
+
+void BossArm::RequestReturn()
+{
+	if (!m_isDetached)return;
+	ChangeState(std::make_shared<BossArmReturn>(GetWeakPtr()));
 }
 
 MATRIX BossArm::CalcSpineMatrix() const
@@ -253,4 +292,48 @@ MATRIX BossArm::CalcSpineMatrix() const
 
 	//付け根のワールド行列を、体の軸の空間に移してからずらして戻す
 	return MMult(MMult(MMult(rootWorld, MInverse(body)), offset), body);
+}
+
+MATRIX BossArm::CalcDetachedSpineMatrix() const
+{
+	//付け根を原点に戻して回してから、移動分ずらす
+	const VECTOR root = VGet(m_detachSpineMatrix.m[3][0], m_detachSpineMatrix.m[3][1], m_detachSpineMatrix.m[3][2]);
+
+	MATRIX mat = MMult(m_detachSpineMatrix, MGetTranslate(VScale(root, -1.0f)));
+	//デタッチ中の回転を足す
+	mat = MMult(mat, MGetRotY(m_detachSpinDeg * kDegToRad));
+
+	//デタッチ中の移動を足す
+	return MMult(mat, MGetTranslate(VAdd(root, m_detachMove.ToDxLibVector())));
+}
+
+MATRIX BossArm::CalcDrawSpineMatrix() const
+{
+	if (!m_isDetached)return CalcSpineMatrix();
+	if (m_returnRate <= 0.0f)return CalcDetachedSpineMatrix();
+
+	//戻り中//ボスは動いているので、付いた形は毎フレーム計算する
+	return LerpMatrix(CalcDetachedSpineMatrix(), CalcSpineMatrix(), m_returnRate);
+}
+
+MATRIX BossArm::LerpMatrix(const MATRIX& a, const MATRIX& b, float t) const
+{
+	MATRIX out = MGetIdent();
+	//軸ごとに向きと長さ(大きさ)を分けて補間する
+	for (int i = 0; i < 3; ++i)
+	{
+		const VECTOR axisA = VGet(a.m[i][0], a.m[i][1], a.m[i][2]);
+		const VECTOR axisB = VGet(b.m[i][0], b.m[i][1], b.m[i][2]);
+		const float length = VSize(axisA) + (VSize(axisB) - VSize(axisA)) * t;
+		const VECTOR axis = VScale(VNorm(VAdd(VScale(axisA, 1.0f - t), VScale(axisB, t))), length);
+		out.m[i][0] = axis.x;
+		out.m[i][1] = axis.y;
+		out.m[i][2] = axis.z;
+	}
+	//位置
+	for (int i = 0; i < 3; ++i)
+	{
+		out.m[3][i] = a.m[3][i] + (b.m[3][i] - a.m[3][i]) * t;
+	}
+	return out;
 }

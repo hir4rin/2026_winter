@@ -208,6 +208,8 @@
     <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR1.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossGuard.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossGuardBreak.cpp" />
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossArmDetached.cpp" />
+    <ClCompile Include="Character\Enemy\BossPirate\State\BossArmReturn.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossArm.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR0.cpp" />
@@ -358,6 +360,8 @@
     <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR1.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossGuard.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossGuardBreak.h" />
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossArmDetached.h" />
+    <ClInclude Include="Character\Enemy\BossPirate\State\BossArmReturn.h" />
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossArm.h" />
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.h" />
     <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR0.h" />

@@ -47,6 +47,10 @@ protected:
 private:
     MATRIX CalcSpineMatrix()const;//腕のモデルの背骨(spine_03)のワールド行列//ボスの付け根のフレーム＋ずらし
 
+    MATRIX CalcDetachedSpineMatrix()const;//切り離した腕の背骨//覚えた行列を付け根中心に回してずらす
+    MATRIX CalcDrawSpineMatrix()const;//描く背骨//付いている・切り離し中・戻り中で変わる
+    MATRIX LerpMatrix(const MATRIX& a, const MATRIX& b, float t)const;//向き・大きさ・位置を補間する
+
 private:
     std::weak_ptr<EnemyBase> m_boss;//持ち主のボス
     int m_bossModelHandle = -1;//ボスのモデル//付け根のフレーム・アニメを使う
@@ -64,6 +68,7 @@ private:
     int m_debugAnimIndex = 0;
     bool m_isDebugAnimLoop = true;
 
+    //腕切り離し、引き戻しよう
     friend class BossArmDetached;
     friend class BossArmReturn;
 

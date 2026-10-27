@@ -826,18 +826,22 @@
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 
-今の状態: Step1(ガードブレイクで `BossGuardBreak` に入る)は済み。Step2 は `BossArm.h` の public 関数3つ・friend・メンバーまで書いてある。
+今の状態(10/27): 1-1〜1-5 は済み(1-1・1-2 はユーザー、1-3〜1-5 は Claude。ビルドは通った)。次は 1-6(ゲームで確認)。
 
 - [ ] **Step2 腕を切り離して上げ、戻す(見た目だけ)**
-  - [ ] 1-1 `BossArm.h` の private に関数の宣言3つ(`CalcDetachedSpineMatrix` / `CalcDrawSpineMatrix` / `LerpMatrix`)
-  - [ ] 1-2 `BossArm.cpp`: include、Update の位置、Draw の背骨、ReturnToIdle、追加の関数5つ(`Detach` / `RequestReturn` / 上の3つ)
-  - [ ] 1-3 `BossArmDetached`(新規、`BossPirate/State/`): 回りながら300上がって浮く
-  - [ ] 1-4 `BossArmReturn`(新規、`BossPirate/State/`): 30Fで背中へ戻って Idle
-  - [ ] 1-5 `BossGuardBreak.cpp` の TODO のコメントを外す(Enter で `Detach`、Exit で `RequestReturn`)
+  - [x] 1-1 `BossArm.h` の private に関数の宣言3つ(`CalcDetachedSpineMatrix` / `CalcDrawSpineMatrix` / `LerpMatrix`)
+  - [x] 1-2 `BossArm.cpp`: include、Update の位置、Draw の背骨、ReturnToIdle、追加の関数5つ(`Detach` / `RequestReturn` / 上の3つ)
+  - [x] 1-3 `BossArmDetached`(新規、`BossPirate/State/`): 回りながら300上がって浮く
+  - [x] 1-4 `BossArmReturn`(新規、`BossPirate/State/`): 30Fで背中へ戻って Idle
+    - `std::min` は windows.h の min マクロとぶつかるので `(std::min)(...)` と書く(Animation.cpp と同じ)
+    - ImGui の Boss Arm Editor の Idle ボタンを `ReturnToIdle()` にした(切り離し中に押しても背中に戻る)
+  - [x] 1-5 `BossGuardBreak.cpp` の TODO のコメントを外す
+  - [ ] (未解決)ガードブレイクのよろめき中に遷移する件。原因2つ(ガードブレイクアタックの例外・型の判定が BossGuardBreak)。手順書の「4.」(Enter で `Detach`、Exit で `RequestReturn`)
   - [ ] 1-6 ビルド → ゲームで確認(F4 を2回で R1、弱攻撃でガード → 強攻撃でブレイク。Guard ボタンでは腕は動かない)
 - [ ] **Step3 浮いている腕に当たり判定**(Step2 が動いてから)
   - 先に決める: ブレイク後の Y の打ち上げはボスと腕のどちらを狙うか / 腕のダメージはボスの HP か別の HP か / 空中コンボ中に戻せと言われたら待つか
-  - ステータスの行 → やられ判定(切り離し中だけ) → `IsTargetable` → 空中のステート → 吸い寄せ
+  - 調べた結果と案は手順書の「2.」(10/27)。要点: やられ判定(HitCol)だけ作る / 位置は腕の真ん中 / OnDamage は腕用 /
+    `m_isFloor` の初期値が true なので切り離し中は `SetIsFloor(false)` / 空中で入力なしだと地上のボスを狙い続けるのを直す / 戻ったら内部ターゲットから外す
 - [ ] そのあと: BossBase(R0 / R1 の共通部分をまとめる) → 攻撃2種の追加
 
 ---
