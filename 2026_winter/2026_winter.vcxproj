@@ -213,6 +213,7 @@
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossArm.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR0.cpp" />
+    <ClCompile Include="Character\Enemy\Kingmech\BossEnemyKingmech.cpp" />
     <ClCompile Include="Character\Enemy\Bazooka\Part\EnemyBazookaWeapon.cpp" />
     <ClCompile Include="Character\Enemy\State\Defence\EnemyGuard.cpp" />
     <ClCompile Include="Character\Enemy\State\Defence\EnemyGuardBreak.cpp" />
@@ -365,6 +366,7 @@
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossArm.h" />
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossPirateWeapon.h" />
     <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR0.h" />
+    <ClInclude Include="Character\Enemy\Kingmech\BossEnemyKingmech.h" />
     <ClInclude Include="Character\Enemy\Bazooka\Part\EnemyBazookaWeapon.h" />
     <ClInclude Include="Character\Enemy\State\Defence\EnemyGuard.h" />
     <ClInclude Include="Character\Enemy\State\Defence\EnemyGuardBreak.h" />

@@ -5,6 +5,7 @@
 #include "Character/Enemy/Bazooka/EnemyBazooka.h"
 #include "Character/Enemy/BossPirate/BossEnemyPirateR1.h"
 #include "Character/Enemy/BossPirate/BossEnemyPirateR0.h"
+#include "Character/Enemy/Kingmech/BossEnemyKingmech.h"
 #include "Character/Player/Player.h"
 #include "Main/Input.h"
 #include "Main/System.h"
@@ -198,6 +199,9 @@ std::shared_ptr<EnemyBase> EnemyManager::CreateEnemy(const EnemySpawnData& data)
 		break;
 	case EnemyType::BossEnemyPirateR0:
 		enemy = std::make_shared<BossEnemyPirateR0>(m_player, data.position);
+		break;
+	case EnemyType::BossEnemyKingmech:
+		enemy = std::make_shared<BossEnemyKingmech>(m_player, data.position);
 		break;
 	default:
 		return nullptr;

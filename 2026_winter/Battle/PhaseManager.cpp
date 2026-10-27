@@ -166,15 +166,27 @@ void PhaseManager::DebugSkipToBossPrevPhase()
 {
 	const int r0Phase = FindEnemyPhase(EnemyType::BossEnemyPirateR0);
 	const int r1Phase = FindEnemyPhase(EnemyType::BossEnemyPirateR1);
+	const int kingmechPhase = FindEnemyPhase(EnemyType::BossEnemyKingmech);
 
-	//第一ラウンド中なら第二ラウンドへ//プレイヤーはそのまま
-	if (r0Phase > 0 && r1Phase > 0 && m_currentPhase == r0Phase)
+	//ボスのフェーズ中なら、次にいるボス(R0 → R1 → Kingmech の順、配置に無いものは飛ばす)へ//プレイヤーはそのまま
+	int nextBossPhase = -1;
+	const int bossPhases[] = { r0Phase, r1Phase, kingmechPhase };
+	for (int i = 0; i < 2; ++i)
+	{
+		if (bossPhases[i] <= 0 || m_currentPhase != bossPhases[i])continue;
+		for (int j = i + 1; j < 3; ++j)
+		{
+			if (bossPhases[j] > 0) { nextBossPhase = bossPhases[j]; break; }
+		}
+		break;
+	}
+	if (nextBossPhase > 0)
 	{
 		if (auto enemyMgr = m_enemyManager.lock())
 		{
 			enemyMgr->DebugClearEnemies();
 		}
-		ChangePhase(r1Phase, PhaseEvent::None);
+		ChangePhase(nextBossPhase, PhaseEvent::None);
 		return;
 	}
 

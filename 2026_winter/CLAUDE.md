@@ -821,6 +821,56 @@
   ステータスの `hitColRadius` / `hitColOffsetY` はボスでは使っていない(普通の敵は今まで通り球)。
 - MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
 
+### 2026-10-27 ToiletMech(新しいボス候補)の mv1
+- 方針(会話で決めた): Sci-Fi ToiletMech を新しいボスにし、今の海賊ボスは中ボスに回す予定。腕が取れる部位破壊は見た目が変なのでやめる。
+  案: ガードブレイクで膝をつかせ、プレイヤーが頭(便器)の高さまで上昇して追撃(頭は被ダメ増)。部位破壊は機械の部品を消す・機能を止める形(ジェットパック・配線など)。
+- `data/Enemy/ToiletMech/ToiletMech.mv1`(Skin 3、アニメ40個)、テクスチャは `Texture/`(BaseColor の 4096 TGA を 2048 PNG に。体と便器の2枚)。まだゲームのコードからは使っていない。
+  - 骨格は UE 形式(`pelvis` / `head` / `toilet_joint` など、フレーム281)。メッシュはフレームごとに分かれている(`JetpackSpine1` など。部位を `MV1SetFrameVisible` で消せる)。
+  - 大きさは Tポーズで高さ約230(cm)。マテリアルは他の体のモデルと同じ 拡散・反射0.1 / 環境0.9。MetallGloss は使っていない。
+  - **顔のパネル(便器の正面の黄色い顔)と体の赤・黄のライトは Emissive テクスチャ**にある。DxLib の mv1 には自発光のテクスチャが無いので、
+    build_mv1 で BaseColor に Emissive を加算して焼き込んでいる。光っては見えない(ライトで暗くなる)。光らせたいなら顔の部分だけ別マテリアルにして MV1SetMaterialEmiColor か、シェーダーで。
+- 作り方: Unity(`ninja_motion`)の `Assets/Editor/ToiletMechExport.cs` → `Assets/Exported/ToiletMech.fbx`(`SkinnedAnimFbxExporter` を使う。プレハブ Skin 3 の Animator Controller の全クリップ。
+  バッチモードなら `Unity.exe -batchmode -projectPath ... -executeMethod ToiletMechExport.Run -quit`、エディタなら `Tools > ToiletMech > Export Skin3 FBX`)
+  → DxLibModelViewer(Setting.ini の `LoadAndSave=1` にしたコピーに FBX を渡す)で `ToiletMech.mv1`
+  → `tools/ToiletMech/build_mv1.exe 元のmv1 "Unityの Textures/Skin 3" 出力フォルダ` でテクスチャ・色を貼って保存(preview.png も出る)。
+  - `SkinnedAnimFbxExporter` は止まったポーズだけのクリップ(Idle1_Toilet)も書き出すようにした(前は「骨が動かない」で空になっていた)。
+  - エディタを開いたまま2回続けて書き出したら Unity が落ちた。続けて書き出すならバッチモードで。
+- (更新)**Humanoid で書き出し直した**。4スキンのモデルと40アニメを全部 Humanoid に(ToiletMechExport の `SetupHumanoid`)。
+  - ボーンの割り当てが入っていたのは Skin1 だけ(自動だと右手が見つからない)。Skin2〜4・アニメは Skin1 のアバターをコピー。アニメの移動・回転は全部ポーズに焼き込み。
+  - 書き出しは **XZ だけ消す**(root・pelvis の XZ を1フレーム目に固定)。**Y は残す**(KnockStart で膝をつく、Death で倒れるなど、腰の高さが動く)。全アニメで腰の XZ の動きが0なのを確認した。
+  - Humanoid にしたので動かなくなった骨: `spine_03` / `spine_05`(背骨の途中。割り当ては spine_01=Spine、spine_02=Chest)、左手の指先、`ball_l/r`、Turn系の `root`、
+    TransitionIdle1ToIdle3 の `toilet_joint` と配線(便器が動くのはこのアニメだけ)。気になったら Skin1 の割り当てを Chest=spine_03 / UpperChest=spine_05 にする。
+  - 前の Generic 版の mv1 は残していない(作り直すなら ToiletMechExport を Generic に戻す)。
+- (更新)**頭を便器からゴーレムの兜(メカ風に塗り直し)に替えた**。`ToiletMechExport.BuildMechWithHelmet`:
+  - 便器のメッシュ(マテリアルが `_Toilet_`)と、便器につながるケーブル(頂点の半分以上が `wiresToilet` の骨で動くメッシュ6個)を消す。顔のパネルも便器と一緒に無くなった。
+  - `Assets/StoneGolem/Prefab/StoneGolem_Armor_Helmet` を今の形で焼いて、便器の幅×0.7(`HelmetWidthRate`)に縮め、底を便器の底に合わせて `toilet_joint` の子にする(骨で動かない固い部品。mv1 ではフレーム `Helmet`)。
+    位置・回転を直すなら `HelmetOffset` / `HelmetEuler`。
+  - テクスチャ `ToiletMechHelmet_Albedo.png`(`MakeHelmetTexture`): ゴーレムの兜の Albedo の明るさを暗い金属〜明るい金属に、金色の縁をメカの黄色に、Emission を黄色の線(強さ `HelmetGlowRate` 0.35)に。マテリアル名は `M_ToiletMech_Helmet`。
+  - build_mv1 の4つ目の引数に兜の PNG を渡す(`Assets/Exported/ToiletMechHelmet_Albedo.png`)。便器のマテリアルが無いので便器のテクスチャは消える。
+  - 高さは Tポーズで約200 になった(兜は便器より低い)。
+- Unity エディタを開いたまま動かすとき: `Library/ToiletMechRun.txt` に関数名(`RunExportOnly` / `ShotAll` など)を書いてエディタを前に出すと、スクリプトの読み込み後に1回実行する。
+  `ShotAll` は兜付きのメカを撮って `Library/ToiletMechShot_*.png` に出す(プレビューシーンなので開いているシーンは写らない)。
+
+### 2026-10-27 新しいボス BossEnemyKingmech
+- `Character/Enemy/Kingmech/BossEnemyKingmech.h/.cpp`: **BossEnemyPirateR0 と同じ中身**(技の選び方・攻撃中は怯まない OnDamage・被弾中にCTが明けたら攻撃・Q/I の読み直し)。vcxproj/filters に登録。
+  - 違い: モデルは `AsyncData::KingmechModel`(`data/Enemy/ToiletMech/ToiletMech.mv1`)、`kModelScale` = 2.3(高さ約460)。剣(BossPirateWeapon)・部位破壊で落ちるパーツ・Z/X のデバッグ部位破壊は無し(`OnHeadBreak` / `OnPartBreak` はフラグだけ)。
+- CSV:
+  - `data/Enemy/BossEnemyKingmechAnim.csv`: 海賊ボスのアニメCSVと**同じ key** を全部持ち、中身を ToiletMech のアニメに割り当てた(Idle=Idle2、攻撃は Attack1〜5・Attack6_Shoot・Roar など)。
+    ガード(Block系)・処刑される側(〜Victim)・回避のアニメは ToiletMech に無いので、Idle3・GetHit・KnockDeath・Walk で代用。`Roar` / `Shoot` / `Turn90L/R` / `Turn180` の key も足した(まだ使っていない)。
+  - `data/Enemy/BossEnemyKingmechAttack.csv`: `BossEnemyPirateAttack.csv` のコピー(説明の文だけ変更)。**フレームの数字は海賊のアニメ用のまま**なので、判定の出るタイミング・止めるフレームは合っていない。ゲームで見て直す。
+  - `EnemyStatus.csv` の `BossEnemyKingmech` 行: `BossEnemyPirate` 行のコピー。体・やられ判定の半径を 75→100、leftArmFrame=20(upperarm_l)、headFrame=123(head)。ガード率は0のまま(ガードのアニメが無い)。
+- `EnemyType::BossEnemyKingmech` / 配置の type `BossEnemyKingmech`(StringToEnemyType・EnemyManager::CreateEnemy)。Unity の `EnemySpawnType` にも追加した。
+- 配置: `Enemies003.csv` のフェーズ8(海賊と同じ 0,-1170,31500・180度・Idle・group Boss)。**R1(第二ラウンド)の行は消した**。
+  遷移 `7 AllDead→8 / None`(R0 → Kingmech)、`8 AllDead→-1 / GameClear`。海賊(R0)は Kingmech の前の中ボス扱い。R1 のクラス・CSV はコードに残っている。
+- F4: ボスのフェーズ中に押すと次のボスへ(R0 → R1 → Kingmech の順で、配置に無いものは飛ばす。今は R0 → Kingmech)。
+- (追記)**海賊のボスのアニメ60個を Kingmech に足した**(Humanoid なので流せる)。mv1 のアニメは 40+60=100 個。フレームの番号は変わっていない。
+  - `ToiletMechExport.Export` で `Assets/BossAnim.controller`(BossPirate.mv1 を作ったときのコントローラー)のクリップを足す。名前がかぶるもの・Humanoid でないものは飛ばす(今回は0個)。
+  - FBX が約320MB になり、ビューアーの変換に数分かかる(待つ時間を長くすること)。
+  - アニメCSV: **最初の版(メカのアニメ)のまま、ガード(Block系の5つ)だけ海賊のアニメ**(Block_Start / Loop / Hit / Hit_Break / End)。
+    ほかの海賊のアニメは mv1 に入っているだけで、CSV からは使っていない(使うときは animName に海賊のアニメ名を書く)。攻撃CSVのフレームは海賊用のままなので、メカの攻撃アニメとは合っていない。
+  - ガードのアニメができたので、ガードさせたいならステータスの guardRate を上げればよい(今は0)。
+- MSBuild(Debug x64)でビルド・リンクは通った。アニメCSVのアニメ名が全部 mv1 にあることは確認。**ゲームでの確認はまだ**(向き・大きさ・当たり判定・攻撃のタイミング・首の向き)。
+
 ---
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜

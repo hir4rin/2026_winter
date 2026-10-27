@@ -339,6 +339,9 @@
     <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR0.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Enemy\Kingmech\BossEnemyKingmech.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\Bazooka\Part\EnemyBazookaWeapon.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -810,6 +813,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR0.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\Kingmech\BossEnemyKingmech.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\Bazooka\Part\EnemyBazookaWeapon.h">

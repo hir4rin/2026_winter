@@ -57,6 +57,14 @@ public:
 	/// </summary>
 	void ReloadBossEnemyPirateR1AnimData();
 	/// <summary>
+	/// BossEnemyKingmechAttack.csvを読み込み直す(デバッグ用)
+	/// </summary>
+	void ReloadBossEnemyKingmechAttackRawData() { LoadBossEnemyKingmechAttackRawData(); }
+	/// <summary>
+	/// BossEnemyKingmechAnim.csvを読み込み直す(デバッグ用)
+	/// </summary>
+	void ReloadBossEnemyKingmechAnimData();
+	/// <summary>
 	/// EnemyStatus.csvを読み込み直す(デバッグ用)
 	/// </summary>
 	void ReloadEnemyStatusRawData() { LoadEnemyStatusRawData(); }
@@ -72,6 +80,8 @@ public:
 	const std::vector<std::vector<std::string>>& GetBossEnemyPirateAttackRawData() const { return m_bossEnemyPirateAttackRawData; }//ボス(海賊)の攻撃の生データ
 	const AnimData& GetBossEnemyPirateR1AnimData() const { return m_bossEnemyPirateR1AnimData; }
 	const std::vector<std::vector<std::string>>& GetBossEnemyPirateR1AttackRawData() const { return m_bossEnemyPirateR1AttackRawData; }//ボス(海賊・第二ラウンド)の攻撃の生データ
+	const AnimData& GetBossEnemyKingmechAnimData() const { return m_bossEnemyKingmechAnimData; }
+	const std::vector<std::vector<std::string>>& GetBossEnemyKingmechAttackRawData() const { return m_bossEnemyKingmechAttackRawData; }//ボス(Kingmech)の攻撃の生データ
 	const AnimData& GetBossArmAnimData() const { return m_bossArmAnimData; }//ボスの背中の腕のアニメデータ
 	const std::vector<std::vector<std::string>>& GetEnemyStatusRawData() const { return m_enemyStatusRawData; }//敵のステータスの生データ(1行=1種類)//解釈はEnemyBase::InitializeStatus
 	const AnimData& GetBossAnimData() const { return m_bossAnimData;}
@@ -135,6 +145,7 @@ private:
 	void LoadEnemyBazookaAttackRawData(); //敵(バズーカ兵)の攻撃の生データを読み込む関数
 	void LoadBossEnemyPirateAttackRawData(); //ボス(海賊)の攻撃の生データを読み込む関数
 	void LoadBossEnemyPirateR1AttackRawData(); //ボス(海賊・第二ラウンド)の攻撃の生データを読み込む関数
+	void LoadBossEnemyKingmechAttackRawData(); //ボス(Kingmech)の攻撃の生データを読み込む関数
 	void LoadRawCsv(const std::string& filePath, std::vector<std::vector<std::string>>& rawData);//#の行を飛ばして1行ずつ分割する
 	void LoadEnemyStatusRawData(); //敵のステータスの生データを読み込む関数
 	void LoadBossAnimData(); //ボスのアニメーションデータを読み込む関数
@@ -175,6 +186,8 @@ private:
 	std::vector<std::vector<std::string>> m_bossEnemyPirateAttackRawData;//ボス(海賊)の攻撃の生データ
 	AnimData m_bossEnemyPirateR1AnimData;//ボス(海賊・第二ラウンド)のアニメデータ
 	std::vector<std::vector<std::string>> m_bossEnemyPirateR1AttackRawData;//ボス(海賊・第二ラウンド)の攻撃の生データ
+	AnimData m_bossEnemyKingmechAnimData;//ボス(Kingmech)のアニメデータ
+	std::vector<std::vector<std::string>> m_bossEnemyKingmechAttackRawData;//ボス(Kingmech)の攻撃の生データ
 	AnimData m_bossArmAnimData;//ボスの背中の腕のアニメデータ
 	std::vector<std::vector<std::string>> m_enemyStatusRawData;//敵のステータスの生データ
 	AnimData m_bossAnimData;//ボスのアニメーションデータ

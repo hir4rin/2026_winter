@@ -14,6 +14,7 @@ enum class EnemyType : int
 	Bazooka,
 	BossEnemyPirateR1,//第二ラウンド(背中の腕あり)
 	BossEnemyPirateR0,//第一ラウンド(腕なし)
+	BossEnemyKingmech,//新しいボス(Kingmech)
 };
 
 /// <summary>

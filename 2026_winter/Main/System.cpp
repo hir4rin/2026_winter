@@ -23,6 +23,7 @@ namespace
 	const std::string kBossArmLModelPath = "data/Enemy/BossPirate/BossArmL.mv1";//ボスの背中の左腕//フレームの並びはボスと同じ
 	const std::string kBossArmRModelPath = "data/Enemy/BossPirate/BossArmR.mv1";//ボスの背中の右腕
 	const std::string kBossPirateSwordModelPath = "data/Enemy/BossPirate/PirateSword.mv1";//海賊のボスの剣//Unity の Pirate_Sword.FBX から作った
+	const std::string kKingmechModelPath = "data/Enemy/ToiletMech/ToiletMech.mv1";//新しいボス(Kingmech)//tools/ToiletMech で作った
 
 	//部位破壊で落ちるパーツのモデル//原点はそれぞれのボーンの付け根
 	const std::string kEnemyPartLeftArmModelPath = "data/Enemy/Part/Swordman/LeftArm.mv1";
@@ -73,6 +74,7 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::BossArmLModel] = MV1LoadModel(kBossArmLModelPath.c_str());
 	m_asyncHandles[AsyncData::BossArmRModel] = MV1LoadModel(kBossArmRModelPath.c_str());
 	m_asyncHandles[AsyncData::BossPirateSwordModel] = MV1LoadModel(kBossPirateSwordModelPath.c_str());
+	m_asyncHandles[AsyncData::KingmechModel] = MV1LoadModel(kKingmechModelPath.c_str());
 	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
 	m_asyncHandles[AsyncData::DemoStageModel] = MV1LoadModel(kDemoStageModelPath.c_str());
 	m_asyncHandles[AsyncData::TrainStageModel] = MV1LoadModel(kTrainStageModelPath.c_str());
@@ -120,6 +122,7 @@ void System::Terminate()
 	MV1DeleteModel(m_asyncHandles[AsyncData::BossArmLModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::BossArmRModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::BossPirateSwordModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::KingmechModel]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BossAttackHadouEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BossAttackFireEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BossSummonEffect]);
