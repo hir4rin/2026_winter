@@ -164,46 +164,31 @@ bool PhaseManager::IsConditionFulfilled(const PhaseTransition& trans) const
 
 void PhaseManager::DebugSkipToBossPrevPhase()
 {
-	const int r0Phase = FindEnemyPhase(EnemyType::BossEnemyPirateR0);
-	const int r1Phase = FindEnemyPhase(EnemyType::BossEnemyPirateR1);
-	const int kingmechPhase = FindEnemyPhase(EnemyType::BossEnemyKingmech);
-
-	//ボスのフェーズ中なら、次にいるボス(R0 → R1 → Kingmech の順、配置に無いものは飛ばす)へ//プレイヤーはそのまま
-	int nextBossPhase = -1;
-	const int bossPhases[] = { r0Phase, r1Phase, kingmechPhase };
-	for (int i = 0; i < 2; ++i)
-	{
-		if (bossPhases[i] <= 0 || m_currentPhase != bossPhases[i])continue;
-		for (int j = i + 1; j < 3; ++j)
-		{
-			if (bossPhases[j] > 0) { nextBossPhase = bossPhases[j]; break; }
-		}
-		break;
-	}
-	if (nextBossPhase > 0)
-	{
-		if (auto enemyMgr = m_enemyManager.lock())
-		{
-			enemyMgr->DebugClearEnemies();
-		}
-		ChangePhase(nextBossPhase, PhaseEvent::None);
-		return;
-	}
-
-	//ボスがいるフェーズ//第一ラウンド・第二ラウンドのうち早いほう
-	int bossPhase = r0Phase;
-	if (bossPhase <= 0 || (r1Phase > 0 && r1Phase < bossPhase))bossPhase = r1Phase;
-	if (bossPhase <= 0)return;
-
-	//ボスのフェーズへ進む行
+	//ボスのフェーズへ進む行//遷移表の BossAppear の行
 	const PhaseTransition* toBoss = nullptr;
 	for (const auto& t : m_transitions)
 	{
-		if (t.to != bossPhase || t.from <= 0)continue;
+		if (t.event != PhaseEvent::BossAppear || t.from <= 0)continue;
 		toBoss = &t;
 		break;
 	}
 	if (!toBoss)return;
+
+	//ボスのフェーズ中なら次のフェーズへ//プレイヤーはそのまま
+	if (m_currentPhase >= toBoss->to)
+	{
+		for (const auto& t : m_transitions)
+		{
+			if (t.from != m_currentPhase || t.to <= 0)continue;
+			if (auto enemyMgr = m_enemyManager.lock())
+			{
+				enemyMgr->DebugClearEnemies();
+			}
+			ChangePhase(t.to, PhaseEvent::None);
+			return;
+		}
+		return;
+	}
 
 	//今いる敵を消す
 	if (auto enemyMgr = m_enemyManager.lock())
@@ -221,18 +206,6 @@ void PhaseManager::DebugSkipToBossPrevPhase()
 	float rad = area.rotYDeg * DX_PI_F / 180.0f;
 	player->SetPos(area.position + Vector3(-sinf(rad) * back, 0.0f, -cosf(rad) * back));
 	player->GetRigidBody().ResetVel();
-}
-
-int PhaseManager::FindEnemyPhase(EnemyType type) const
-{
-	//同じ種類が何体かいたら早いほう
-	int phase = -1;
-	for (const auto& data : DataManager::GetInstance().GetEnemySpawnData())
-	{
-		if (data.type != type)continue;
-		if (phase < 0 || data.phase < phase)phase = data.phase;
-	}
-	return phase;
 }
 
 bool PhaseManager::IsInArea(const PhaseArea& area, const Vector3& pos) const
