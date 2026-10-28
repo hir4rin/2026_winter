@@ -1,0 +1,275 @@
+load 939786240 frames 274 meshes 18 anims 100
+  0 parent  -2 mesh 0 pos(0.0 0.0 0.0) Sci-Fi ToiletMech Skin 3
+  1 parent   0 mesh 0 pos(0.0 0.0 0.0) root
+  2 parent   1 mesh 0 pos(0.0 0.0 0.0) center_of_mass
+  3 parent   1 mesh 0 pos(0.0 0.0 0.0) ik_foot_root
+  4 parent   3 mesh 0 pos(28.8 11.5 15.8) ik_foot_l
+  5 parent   3 mesh 0 pos(-28.8 11.5 15.8) ik_foot_r
+  6 parent   1 mesh 0 pos(0.0 0.0 0.0) ik_hand_root
+  7 parent   6 mesh 0 pos(-62.2 88.9 -40.8) ik_hand_gun
+  8 parent   7 mesh 0 pos(62.2 88.9 -40.8) ik_hand_l
+  9 parent   7 mesh 0 pos(-62.2 88.9 -40.8) ik_hand_r
+ 10 parent   1 mesh 0 pos(0.0 0.0 0.0) interaction
+ 11 parent   1 mesh 0 pos(-0.0 101.6 -10.9) pelvis
+ 12 parent  11 mesh 0 pos(-0.0 105.3 -10.7) spine_01
+ 13 parent  12 mesh 0 pos(-0.0 109.3 -10.4) spine_02
+ 14 parent  13 mesh 0 pos(-0.0 113.8 -10.1) spine_03
+ 15 parent  14 mesh 0 pos(-0.0 118.8 -10.1) spine_04
+ 16 parent  15 mesh 0 pos(0.0 151.0 -12.1) spine_05
+ 17 parent  16 mesh 0 pos(19.2 143.8 -15.1) clavicle_l
+ 18 parent  17 mesh 0 pos(31.0 150.0 -16.5) clavicle_out_l
+ 19 parent  17 mesh 0 pos(28.9 143.8 -6.8) clavicle_scap_l
+ 20 parent  17 mesh 0 pos(33.9 143.9 -13.6) upperarm_l
+ 21 parent  20 mesh 0 pos(59.9 99.4 -5.8) lowerarm_l
+ 22 parent  21 mesh 0 pos(62.2 88.9 -40.8) hand_l
+ 23 parent  22 mesh 0 pos(59.7 93.1 -49.5) index_metacarpal_l
+ 24 parent  23 mesh 0 pos(58.9 91.9 -54.2) index_01_l
+ 25 parent  24 mesh 0 pos(58.0 90.6 -59.3) index_02_l
+ 26 parent  25 mesh 0 pos(55.5 89.1 -64.3) index_03_l
+ 27 parent  26 mesh 0 pos(52.5 88.3 -66.4) index_04_l
+ 28 parent  22 mesh 0 pos(60.4 90.7 -47.9) middle_metacarpal_l
+ 29 parent  28 mesh 0 pos(59.7 88.7 -53.4) middle_01_l
+ 30 parent  29 mesh 0 pos(57.8 87.2 -58.9) middle_02_l
+ 31 parent  30 mesh 0 pos(54.5 85.4 -63.9) middle_03_l
+ 32 parent  31 mesh 0 pos(50.8 84.5 -65.8) middle_04_l
+ 33 parent  22 mesh 0 pos(62.5 86.2 -47.7) pinky_metacarpal_l
+ 34 parent  33 mesh 0 pos(60.8 82.4 -52.0) pinky_01_l
+ 35 parent  34 mesh 0 pos(58.5 80.7 -56.2) pinky_02_l
+ 36 parent  35 mesh 0 pos(54.9 79.2 -59.9) pinky_03_l
+ 37 parent  36 mesh 0 pos(51.5 78.6 -60.9) pinky_04_l
+ 38 parent  22 mesh 0 pos(60.6 88.4 -47.5) ring_metacarpal_l
+ 39 parent  38 mesh 0 pos(59.9 85.4 -52.6) ring_01_l
+ 40 parent  39 mesh 0 pos(58.3 83.8 -57.8) ring_02_l
+ 41 parent  40 mesh 0 pos(55.0 82.2 -62.6) ring_03_l
+ 42 parent  41 mesh 0 pos(51.5 81.3 -64.3) ring_04_l
+ 43 parent  22 mesh 0 pos(58.6 95.5 -52.2) thumb_01_l
+ 44 parent  43 mesh 0 pos(55.8 97.7 -55.5) thumb_02_l
+ 45 parent  44 mesh 0 pos(52.6 98.1 -59.2) thumb_03_l
+ 46 parent  45 mesh 0 pos(50.8 96.9 -61.6) thumb_04_l
+ 47 parent  22 mesh 0 pos(60.8 87.9 -41.5) weapon_l
+ 48 parent  22 mesh 0 pos(60.7 89.0 -39.8) wrist_inner_l
+ 49 parent  22 mesh 0 pos(64.4 89.1 -41.3) wrist_outer_l
+ 50 parent  21 mesh 0 pos(59.9 99.4 -5.8) lowerarm_correctiveRoot_l
+ 51 parent  50 mesh 0 pos(59.8 94.3 -5.1) lowerarm_bck_l
+ 52 parent  50 mesh 0 pos(59.0 102.3 -8.5) lowerarm_fwd_l
+ 53 parent  50 mesh 0 pos(56.2 97.7 -6.4) lowerarm_in_l
+ 54 parent  50 mesh 0 pos(62.8 99.2 -6.1) lowerarm_out_l
+ 55 parent  21 mesh 0 pos(61.2 94.4 -23.2) lowerarm_twist_01_l
+ 56 parent  21 mesh 0 pos(60.5 96.9 -14.5) lowerarm_twist_02_l
+ 57 parent  20 mesh 0 pos(33.9 143.9 -13.6) upperarm_correctiveRoot_l
+ 58 parent  57 mesh 0 pos(34.9 144.1 -5.8) upperarm_bck_l
+ 59 parent  57 mesh 0 pos(34.8 139.2 -21.4) upperarm_fwd_l
+ 60 parent  57 mesh 0 pos(33.0 136.0 -12.8) upperarm_in_l
+ 61 parent  57 mesh 0 pos(39.1 146.6 -13.9) upperarm_out_l
+ 62 parent  20 mesh 0 pos(38.6 136.0 -12.2) upperarm_twist_01_l
+ 63 parent  62 mesh 0 pos(38.6 136.0 -12.2) upperarm_twistCor_01_l
+ 64 parent  20 mesh 0 pos(43.2 128.2 -10.8) upperarm_twist_02_l
+ 65 parent  64 mesh 0 pos(42.1 126.0 -14.9) upperarm_bicep_l
+ 66 parent  64 mesh 0 pos(43.3 128.3 -5.8) upperarm_tricep_l
+ 67 parent  64 mesh 0 pos(43.2 128.2 -10.8) upperarm_twistCor_02_l
+ 68 parent  16 mesh 0 pos(9.3 141.4 -19.3) clavicle_pec_l
+ 69 parent  16 mesh 0 pos(-9.6 141.4 -19.5) clavicle_pec_r
+ 70 parent  16 mesh 0 pos(-19.2 143.8 -15.1) clavicle_r
+ 71 parent  70 mesh 0 pos(-31.0 150.0 -16.5) clavicle_out_r
+ 72 parent  70 mesh 0 pos(-28.9 143.8 -6.8) clavicle_scap_r
+ 73 parent  70 mesh 0 pos(-33.9 143.9 -13.6) upperarm_r
+ 74 parent  73 mesh 0 pos(-59.9 99.4 -5.8) lowerarm_r
+ 75 parent  74 mesh 0 pos(-62.2 88.9 -40.8) hand_r
+ 76 parent  75 mesh 0 pos(-59.7 93.1 -49.5) index_metacarpal_r
+ 77 parent  76 mesh 0 pos(-58.9 91.9 -54.2) index_01_r
+ 78 parent  77 mesh 0 pos(-58.0 90.6 -59.3) index_02_r
+ 79 parent  78 mesh 0 pos(-55.5 89.1 -64.3) index_03_r
+ 80 parent  79 mesh 0 pos(-52.5 88.3 -66.4) index_04_r
+ 81 parent  75 mesh 0 pos(-60.4 90.7 -47.9) middle_metacarpal_r
+ 82 parent  81 mesh 0 pos(-59.7 88.7 -53.4) middle_01_r
+ 83 parent  82 mesh 0 pos(-57.8 87.2 -58.9) middle_02_r
+ 84 parent  83 mesh 0 pos(-54.5 85.4 -63.9) middle_03_r
+ 85 parent  84 mesh 0 pos(-50.8 84.5 -65.8) middle_04_r
+ 86 parent  75 mesh 0 pos(-62.5 86.2 -47.7) pinky_metacarpal_r
+ 87 parent  86 mesh 0 pos(-60.8 82.4 -52.0) pinky_01_r
+ 88 parent  87 mesh 0 pos(-58.5 80.7 -56.2) pinky_02_r
+ 89 parent  88 mesh 0 pos(-54.9 79.2 -59.9) pinky_03_r
+ 90 parent  89 mesh 0 pos(-51.5 78.6 -60.9) pinky_04_r
+ 91 parent  75 mesh 0 pos(-60.6 88.4 -47.5) ring_metacarpal_r
+ 92 parent  91 mesh 0 pos(-59.9 85.4 -52.6) ring_01_r
+ 93 parent  92 mesh 0 pos(-58.3 83.8 -57.8) ring_02_r
+ 94 parent  93 mesh 0 pos(-55.0 82.2 -62.6) ring_03_r
+ 95 parent  94 mesh 0 pos(-51.5 81.3 -64.3) ring_04_r
+ 96 parent  75 mesh 0 pos(-58.6 95.5 -52.2) thumb_01_r
+ 97 parent  96 mesh 0 pos(-55.8 97.7 -55.5) thumb_02_r
+ 98 parent  97 mesh 0 pos(-52.6 98.1 -59.2) thumb_03_r
+ 99 parent  98 mesh 0 pos(-50.8 96.9 -61.6) thumb_04_r
+100 parent  75 mesh 0 pos(-60.8 87.9 -41.5) weapon_r
+101 parent  75 mesh 0 pos(-60.7 89.0 -39.8) wrist_inner_r
+102 parent  75 mesh 0 pos(-64.4 89.1 -41.3) wrist_outer_r
+103 parent  74 mesh 0 pos(-59.9 99.4 -5.8) lowerarm_correctiveRoot_r
+104 parent 103 mesh 0 pos(-59.8 94.3 -5.1) lowerarm_bck_r
+105 parent 103 mesh 0 pos(-59.0 102.3 -8.5) lowerarm_fwd_r
+106 parent 103 mesh 0 pos(-56.2 97.7 -6.4) lowerarm_in_r
+107 parent 103 mesh 0 pos(-62.8 99.2 -6.1) lowerarm_out_r
+108 parent  74 mesh 0 pos(-61.2 94.4 -23.2) lowerarm_twist_01_r
+109 parent  74 mesh 0 pos(-60.5 96.9 -14.5) lowerarm_twist_02_r
+110 parent  73 mesh 0 pos(-33.9 143.9 -13.6) upperarm_correctiveRoot_r
+111 parent 110 mesh 0 pos(-34.9 144.1 -5.8) upperarm_bck_r
+112 parent 110 mesh 0 pos(-34.8 139.2 -21.4) upperarm_fwd_r
+113 parent 110 mesh 0 pos(-33.0 136.0 -12.8) upperarm_in_r
+114 parent 110 mesh 0 pos(-39.1 146.6 -13.9) upperarm_out_r
+115 parent  73 mesh 0 pos(-38.6 136.0 -12.2) upperarm_twist_01_r
+116 parent 115 mesh 0 pos(-38.6 136.0 -12.2) upperarm_twistCor_01_r
+117 parent  73 mesh 0 pos(-43.2 128.2 -10.8) upperarm_twist_02_r
+118 parent 117 mesh 0 pos(-42.1 126.0 -14.9) upperarm_bicep_r
+119 parent 117 mesh 0 pos(-43.3 128.3 -5.8) upperarm_tricep_r
+120 parent 117 mesh 0 pos(-43.2 128.2 -10.8) upperarm_twistCor_02_r
+121 parent  16 mesh 0 pos(0.0 162.9 -12.8) neck_01
+122 parent 121 mesh 0 pos(-0.0 167.4 -15.1) neck_02
+123 parent 122 mesh 0 pos(-0.0 171.9 -17.2) head
+124 parent  16 mesh 0 pos(15.4 141.3 -7.0) spine_04_latissimus_l
+125 parent  16 mesh 0 pos(-15.5 141.3 -7.0) spine_04_latissimus_r
+126 parent  16 mesh 0 pos(-0.0 172.9 8.8) toilet_joint
+127 parent 126 mesh 1 pos(0.0 0.0 -0.0) Helmet  box(-24.1 117.8 -40.4)-(24.1 200.1 17.0) tri 2636 [m0 mat M_ToiletMech_Helmet]
+128 parent  16 mesh 0 pos(-0.0 137.1 -3.0) wiresToilet
+129 parent 128 mesh 0 pos(0.0 150.8 -13.7) wiresToilet1
+130 parent 129 mesh 0 pos(0.0 158.5 -17.5) wiresToilet2
+131 parent 130 mesh 0 pos(1.5 170.6 -21.8) wiresToilet3
+132 parent 131 mesh 0 pos(5.4 180.1 -18.6) wiresToilet4
+133 parent 132 mesh 0 pos(10.6 189.4 -11.8) wiresToilet5
+134 parent 133 mesh 0 pos(17.0 197.9 -2.9) wiresToilet6
+135 parent 134 mesh 0 pos(23.2 204.0 6.9) wiresToilet7
+136 parent 135 mesh 0 pos(27.4 207.1 14.2) wiresToilet8
+137 parent  16 mesh 0 pos(0.1 136.2 -5.7) wiresToilet9
+138 parent 137 mesh 0 pos(0.2 144.7 -11.2) wiresToilet10
+139 parent 138 mesh 0 pos(1.0 155.5 -18.5) wiresToilet11
+140 parent 139 mesh 0 pos(4.4 165.1 -22.3) wiresToilet12
+141 parent 140 mesh 0 pos(9.2 171.5 -21.7) wiresToilet13
+142 parent 141 mesh 0 pos(14.6 176.7 -18.2) wiresToilet14
+143 parent 142 mesh 0 pos(19.0 179.8 -12.5) wiresToilet15
+144 parent 143 mesh 0 pos(22.0 183.6 -3.1) wiresToilet16
+145 parent 144 mesh 0 pos(23.3 186.2 3.0) wiresToilet17
+146 parent 145 mesh 0 pos(24.7 191.7 8.6) wiresToilet18
+147 parent  16 mesh 0 pos(-0.5 136.5 1.8) wiresToilet19
+148 parent 147 mesh 0 pos(0.9 141.9 -2.3) wiresToilet20
+149 parent 148 mesh 0 pos(3.3 149.0 -7.9) wiresToilet21
+150 parent 149 mesh 0 pos(4.7 157.3 -14.7) wiresToilet22
+151 parent 150 mesh 0 pos(2.0 165.5 -17.6) wiresToilet23
+152 parent 151 mesh 0 pos(-3.1 173.6 -16.9) wiresToilet24
+153 parent 152 mesh 0 pos(-9.9 180.8 -14.2) wiresToilet25
+154 parent 153 mesh 0 pos(-17.5 186.3 -8.0) wiresToilet26
+155 parent 154 mesh 0 pos(-24.3 189.1 -1.2) wiresToilet27
+156 parent 155 mesh 0 pos(-27.5 189.9 3.2) wiresToilet28
+157 parent 156 mesh 0 pos(-29.5 190.5 8.7) wiresToilet29
+158 parent 157 mesh 0 pos(-30.2 190.6 15.0) wiresToilet30
+159 parent 158 mesh 0 pos(-25.9 188.3 26.3) wiresToilet31
+160 parent 159 mesh 0 pos(-21.3 183.0 30.4) wiresToilet32
+161 parent 160 mesh 0 pos(-15.6 176.1 30.9) wiresToilet33
+162 parent 161 mesh 0 pos(-10.9 172.2 28.3) wiresToilet34
+163 parent  16 mesh 0 pos(-0.9 136.2 -8.8) wiresToilet35
+164 parent 163 mesh 0 pos(-1.2 144.6 -14.5) wiresToilet36
+165 parent 164 mesh 0 pos(-1.8 152.4 -19.2) wiresToilet37
+166 parent 165 mesh 0 pos(-3.1 160.3 -22.4) wiresToilet38
+167 parent 166 mesh 0 pos(-4.1 164.2 -23.2) wiresToilet39
+168 parent 167 mesh 0 pos(-6.9 171.2 -23.1) wiresToilet40
+169 parent 168 mesh 0 pos(-11.0 177.6 -20.7) wiresToilet41
+170 parent 169 mesh 0 pos(-16.9 184.9 -14.5) wiresToilet42
+171 parent 170 mesh 0 pos(-20.6 191.5 -6.4) wiresToilet43
+172 parent 171 mesh 0 pos(-21.7 199.4 2.8) wiresToilet44
+173 parent 172 mesh 0 pos(-21.9 204.5 6.7) wiresToilet45
+174 parent 173 mesh 0 pos(-22.2 208.0 8.3) wiresToilet46
+175 parent  16 mesh 0 pos(-2.1 135.5 -4.2) wiresToilet47
+176 parent 175 mesh 0 pos(-3.1 148.4 -12.4) wiresToilet48
+177 parent 176 mesh 0 pos(-3.7 153.4 -15.4) wiresToilet49
+178 parent 177 mesh 0 pos(-5.1 162.6 -19.9) wiresToilet50
+179 parent 178 mesh 0 pos(-9.2 170.2 -19.6) wiresToilet51
+180 parent 179 mesh 0 pos(-12.2 173.5 -18.2) wiresToilet52
+181 parent 180 mesh 0 pos(-18.3 179.0 -13.6) wiresToilet53
+182 parent 181 mesh 0 pos(-21.8 184.1 -4.8) wiresToilet54
+183 parent 182 mesh 0 pos(-23.3 189.2 5.6) wiresToilet55
+184 parent 183 mesh 0 pos(-24.1 192.0 11.5) wiresToilet56
+185 parent  16 mesh 0 pos(0.5 136.5 2.1) wiresToilet57
+186 parent 185 mesh 0 pos(-1.7 144.5 -2.8) wiresToilet58
+187 parent 186 mesh 0 pos(-4.2 151.0 -7.3) wiresToilet59
+188 parent 187 mesh 0 pos(-4.8 157.3 -11.4) wiresToilet60
+189 parent 188 mesh 0 pos(-2.1 165.5 -13.7) wiresToilet61
+190 parent 189 mesh 0 pos(4.8 175.3 -14.1) wiresToilet62
+191 parent 190 mesh 0 pos(9.4 179.4 -13.0) wiresToilet63
+192 parent 191 mesh 0 pos(16.7 184.0 -8.5) wiresToilet64
+193 parent 192 mesh 0 pos(21.2 185.8 -4.8) wiresToilet65
+194 parent 193 mesh 0 pos(26.7 187.8 2.0) wiresToilet66
+195 parent 194 mesh 0 pos(29.6 189.4 11.1) wiresToilet67
+196 parent 195 mesh 0 pos(29.2 189.7 21.2) wiresToilet68
+197 parent 196 mesh 0 pos(25.9 188.3 26.3) wiresToilet69
+198 parent 197 mesh 0 pos(21.3 183.0 30.4) wiresToilet70
+199 parent 198 mesh 0 pos(15.6 176.1 30.9) wiresToilet71
+200 parent 199 mesh 0 pos(10.9 172.2 28.3) wiresToilet72
+201 parent  11 mesh 0 pos(22.3 96.4 -2.6) thigh_l
+202 parent 201 mesh 0 pos(28.9 60.1 -9.6) calf_l
+203 parent 202 mesh 0 pos(28.9 60.1 -9.6) calf_correctiveRoot_l
+204 parent 203 mesh 0 pos(29.0 55.8 -12.6) calf_knee_l
+205 parent 203 mesh 0 pos(28.5 64.6 -6.0) calf_kneeBack_l
+206 parent 202 mesh 0 pos(29.0 46.8 8.6) calf_twist_01_l
+207 parent 202 mesh 0 pos(28.9 51.7 1.7) calf_twist_02_l
+208 parent 207 mesh 0 pos(28.9 51.7 1.7) calf_twistCor_02_l
+209 parent 202 mesh 0 pos(28.9 42.3 14.9) foot_l
+210 parent 209 mesh 0 pos(29.4 45.8 15.0) ankle_bck_l
+211 parent 209 mesh 0 pos(29.2 38.2 12.3) ankle_fwd_l
+212 parent 209 mesh 0 pos(28.8 11.5 15.8) ball_l
+213 parent 212 mesh 0 pos(28.9 1.6 21.3) fingers_leg_b_l
+214 parent 212 mesh 0 pos(28.8 3.0 5.2) fingers_leg_f_l
+215 parent 201 mesh 0 pos(22.3 96.4 -2.6) thigh_correctiveRoot_l
+216 parent 215 mesh 0 pos(20.5 99.1 8.2) thigh_bck_l
+217 parent 215 mesh 0 pos(22.6 89.1 6.7) thigh_bck_lwr_l
+218 parent 215 mesh 0 pos(20.5 101.6 -8.5) thigh_fwd_l
+219 parent 215 mesh 0 pos(21.5 96.5 -10.1) thigh_fwd_lwr_l
+220 parent 215 mesh 0 pos(15.8 84.5 -5.3) thigh_in_l
+221 parent 215 mesh 0 pos(26.4 102.8 -1.1) thigh_out_l
+222 parent 201 mesh 0 pos(24.9 82.4 -5.4) thigh_twist_01_l
+223 parent 222 mesh 0 pos(24.9 82.4 -5.4) thigh_twistCor_01_l
+224 parent 201 mesh 0 pos(27.4 68.5 -8.2) thigh_twist_02_l
+225 parent 224 mesh 0 pos(27.4 68.5 -8.2) thigh_twistCor_02_l
+226 parent  11 mesh 0 pos(-22.3 96.4 -2.6) thigh_r
+227 parent 226 mesh 0 pos(-28.9 60.1 -9.6) calf_r
+228 parent 227 mesh 0 pos(-28.9 60.1 -9.6) calf_correctiveRoot_r
+229 parent 228 mesh 0 pos(-29.0 55.8 -12.6) calf_knee_r
+230 parent 228 mesh 0 pos(-28.5 64.6 -6.0) calf_kneeBack_r
+231 parent 227 mesh 0 pos(-29.0 46.8 8.6) calf_twist_01_r
+232 parent 227 mesh 0 pos(-28.9 51.7 1.7) calf_twist_02_r
+233 parent 232 mesh 0 pos(-28.9 51.7 1.7) calf_twistCor_02_r
+234 parent 227 mesh 0 pos(-28.9 42.3 14.9) foot_r
+235 parent 234 mesh 0 pos(-29.4 45.8 15.0) ankle_bck_r
+236 parent 234 mesh 0 pos(-29.2 38.2 12.3) ankle_fwd_r
+237 parent 234 mesh 0 pos(-28.8 11.5 15.8) ball_r
+238 parent 237 mesh 0 pos(-28.9 1.6 21.3) fingers_reg_b_r
+239 parent 237 mesh 0 pos(-28.8 3.0 5.2) fingers_reg_f_r
+240 parent 226 mesh 0 pos(-22.3 96.4 -2.6) thigh_correctiveRoot_r
+241 parent 240 mesh 0 pos(-20.5 99.1 8.2) thigh_bck_r
+242 parent 240 mesh 0 pos(-22.6 89.1 6.7) thigh_bck_rwr_r
+243 parent 240 mesh 0 pos(-20.5 101.6 -8.5) thigh_fwd_r
+244 parent 240 mesh 0 pos(-21.5 96.5 -10.1) thigh_fwd_rwr_r
+245 parent 240 mesh 0 pos(-15.8 84.5 -5.3) thigh_in_r
+246 parent 240 mesh 0 pos(-26.4 102.8 -1.1) thigh_out_r
+247 parent 226 mesh 0 pos(-24.9 82.4 -5.4) thigh_twist_01_r
+248 parent 247 mesh 0 pos(-24.9 82.4 -5.4) thigh_twistCor_01_r
+249 parent 226 mesh 0 pos(-27.4 68.5 -8.2) thigh_twist_02_r
+250 parent 249 mesh 0 pos(-27.4 68.5 -8.2) thigh_twistCor_02_r
+251 parent   0 mesh 0 pos(0.0 0.0 0.0) SciFi_Toilet
+252 parent 251 mesh 0 pos(-1.1 104.5 -32.9) Body
+253 parent 252 mesh 0 pos(0.0 0.0 0.0) Fingers
+254 parent 253 mesh 1 pos(-333.8 -526.9 313.5) polySurface78  box(49.5 86.9 -67.4)-(59.9 93.2 -53.7) tri 2539 [m1 mat M_SciFi_ToiletMech_Body_Skin 3]
+255 parent 253 mesh 1 pos(-296.9 -506.5 365.6) polySurface404  box(47.6 83.0 -66.7)-(60.7 90.1 -52.9) tri 2539 [m2 mat M_SciFi_ToiletMech_Body_Skin 3]
+256 parent 253 mesh 1 pos(-298.2 -513.0 369.5) polySurface405  box(48.4 80.0 -65.2)-(60.9 86.7 -52.0) tri 2539 [m3 mat M_SciFi_ToiletMech_Body_Skin 3]
+257 parent 253 mesh 1 pos(-273.6 -467.9 460.2) polySurface406  box(48.8 77.4 -61.7)-(61.6 83.6 -51.3) tri 2539 [m4 mat M_SciFi_ToiletMech_Body_Skin 3]
+258 parent 253 mesh 1 pos(-310.6 -551.2 329.5) polySurface496  box(49.5 94.2 -63.1)-(59.8 99.0 -50.9) tri 2689 [m5 mat M_SciFi_ToiletMech_Body_Skin 3]
+259 parent 252 mesh 1 pos(-63.4 -671.2 -149.3) JetpackSpine1  box(-26.0 139.5 25.2)-(26.0 182.6 46.4) tri 3224 [m6 mat M_SciFi_ToiletMech_Body_Skin 3]
+260 parent 252 mesh 0 pos(0.0 0.0 0.0) PelvisMeshes
+261 parent 260 mesh 1 pos(0.0 0.0 0.0) polySurface168  box(-14.0 79.3 -40.1)-(14.0 112.7 17.6) tri 176 [m7 mat M_SciFi_ToiletMech_Body_Skin 3]
+262 parent 260 mesh 1 pos(0.0 -534.9 77.3) polySurface793  box(-19.1 75.0 -30.9)-(19.1 111.2 4.0) tri 196 [m8 mat M_SciFi_ToiletMech_Body_Skin 3]
+263 parent 260 mesh 1 pos(0.0 -553.6 22.5) polySurface802  box(-22.2 87.4 -12.9)-(22.2 105.3 5.1) tri 592 [m9 mat M_SciFi_ToiletMech_Body_Skin 3]
+264 parent 260 mesh 1 pos(0.0 -553.7 67.5) polySurface806  box(-14.4 79.9 -40.7)-(14.4 112.9 17.2) tri 1038 [m10 mat M_SciFi_ToiletMech_Body_Skin 3]
+265 parent 260 mesh 1 pos(0.0 -546.8 217.9) polySurface831  box(-9.3 85.4 -41.0)-(9.3 105.0 -34.9) tri 536 [m11 mat M_SciFi_ToiletMech_Body_Skin 3]
+266 parent 252 mesh 1 pos(0.0 -689.4 58.0) polySurface397  box(-10.7 110.0 -22.8)-(10.7 129.3 2.7) tri 2428 [m12 mat M_SciFi_ToiletMech_Body_Skin 3]
+267 parent 252 mesh 1 pos(0.0 -327.2 1.1) polySurface409  box(-41.5 -0.3 -30.1)-(41.5 114.2 29.7) tri 12574 [m13 mat M_SciFi_ToiletMech_Body_Skin 3]
+268 parent 252 mesh 1 pos(-356.3 -527.1 153.9) polySurface497  box(51.3 77.0 -55.0)-(72.8 106.5 1.4) tri 1434 [m14 mat M_SciFi_ToiletMech_Body_Skin 3]
+269 parent 252 mesh 1 pos(239.1 -435.0 194.6) polySurface789  box(-76.5 69.8 -112.3)-(-38.3 139.0 18.9) tri 17414 [m15 mat M_SciFi_ToiletMech_Body_Skin 3]
+270 parent 252 mesh 1 pos(0.0 -756.6 34.0) polySurface834  box(-74.3 92.2 -30.1)-(74.3 171.2 18.2) tri 6766 [m16 mat M_SciFi_ToiletMech_Body_Skin 3]
+271 parent 252 mesh 1 pos(0.0 -826.8 77.8) polySurface841  box(-41.1 137.8 -19.6)-(41.1 150.0 -7.5) tri 136 [m17 mat M_SciFi_ToiletMech_Body_Skin 3]
+272 parent 252 mesh 0 pos(-1.1 104.5 -32.9) WiresMeshes
+273 parent 251 mesh 0 pos(0.0 174.2 -10.7) Toilet

@@ -1,0 +1,8 @@
+load 939786240 meshFrame 269 bone 74
+bone axis length 1.0000 1.0000 1.0000
+polys 17414 -> 16556 (drop groups 5)
+size(113.7 34.8 24.0)
+center in lowerarm_r space (offset) = VGet(-52.542f, -5.352f, 3.009f)
+reload 940048385 verts 20329 faces 16556 mats 1
+  mat[0] M15 tex 0
+save ret 0

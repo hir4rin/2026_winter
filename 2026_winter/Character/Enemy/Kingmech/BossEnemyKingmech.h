@@ -2,6 +2,9 @@
 #include "Character/Enemy/EnemyBase.h"
 #include "Math/Matrix4x4.h"
 #include <memory>
+
+class KingmechGatling;
+
 //新しいボス(Kingmech)//中身は BossEnemyPirateR0 と同じ(剣・部位破壊で落ちるパーツは無し)
 //ステータス・攻撃・アニメのCSVは BossEnemyKingmech〜 を使う
 class BossEnemyKingmech :
@@ -23,6 +26,8 @@ public:
     void OnAssasined()override;
     void OnHeadBreak()override;//落とすパーツが無いのでフラグだけ
     void OnPartBreak()override;//落とすパーツが無いのでフラグだけ
+
+    void ThrowPart()override;//ガトリングを投げ返す
 protected:
     int SelectAttackIndex()override;//出す攻撃を選ぶ(無ければ-1)//ボス用の分岐
 
@@ -36,10 +41,17 @@ protected:
     std::shared_ptr<EnemyStateBase> NextOnPlayerFound()override;//プレイヤーを見つけた
     std::shared_ptr<EnemyStateBase> NextAfterRecover()override;//被弾・ダウン・ガードなどから立ち直った
 private:
+    void CutGatling(Collider& other, AttackData& data);//切り上げでガトリングを切り落とす
+    void OnGatlingExploded();//投げ返されたガトリングが爆発した//ガトリングから呼ばれる
+
+    std::shared_ptr<KingmechGatling> m_gatling;//右腕のガトリング
 
     int m_attackCountSinceLarge = 0;//前の全体攻撃から何回攻撃したか
 
     bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
     bool m_wasIPressed = false;//前のフレームにIを押していたか//デバッグ用のアニメCSV読み込み直し
+
+    friend class BossPartThrow;
+    friend class KingmechGatling;
 };
 

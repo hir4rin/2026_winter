@@ -10,6 +10,8 @@
 #include "Render/ModelShaderManager.h"
 #include "Battle/BattleManager.h"
 #include "Battle/AttackTokenManager.h"
+#include "Character/Enemy/Kingmech/Part/KingmechGatling.h"
+#include "Character/Enemy/Kingmech/State/BossPartThrow.h"
 
 
 
@@ -35,6 +37,8 @@ namespace
 	constexpr float kBackDot = -0.5f;//正面との内積がこれより小さければ背後(120度より後ろ)
 	constexpr float kRushMinDistance = 400.0f;//この距離より遠ければ突進
 	constexpr float kRushMaxDistance = 1000.0f;//突進を出す最大の距離
+
+	constexpr int kGatlingExplodeDamage = 300;//投げ返したガトリングの爆発のダメージ
 
 }
 
@@ -75,6 +79,7 @@ BossEnemyKingmech::~BossEnemyKingmech()
 	{
 		m_currentState->Exit();//状態を抜ける
 	}
+	m_gatling.reset();
 	MV1DeleteModel(m_modelHandle);
 }
 
@@ -107,6 +112,8 @@ void BossEnemyKingmech::Init()
 		});
 	CharacterBase::ApplyPos();//座標の更新//モデルの座標を更新する
 	ChangeState(std::make_shared<EnemyIdle>(GetWeakPtr()));
+
+	m_gatling = std::make_shared<KingmechGatling>(std::static_pointer_cast<BossEnemyKingmech>(GetSharedPtr()));//右腕のガトリングの生成
 }
 
 void BossEnemyKingmech::Update()
@@ -174,11 +181,49 @@ void BossEnemyKingmech::Update()
 	m_anim.Update(m_ownTimeScale);
 	//頭をプレイヤーの方に向ける//アニメーションの姿勢に回転を足すので、アニメーションの更新の後に呼ぶ
 	UpdateLookAtPlayer(m_status.headFrame);
+
+	//ガトリング//腕の位置を使うのでアニメーションの更新の後
+	m_gatling->Update();
 }
 
 void BossEnemyKingmech::Draw()
 {
 	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);//血殺中は黒く描く
+	m_gatling->Draw();
+}
+
+void BossEnemyKingmech::ThrowPart()
+{
+	m_gatling->Throw();
+}
+
+void BossEnemyKingmech::CutGatling(Collider& other, AttackData& data)
+{
+	m_hp -= static_cast<int>(data.attackPower);
+	if (m_hp <= 0)m_hp = 1;//爆発までは死なない
+	PlayBloodSplash(other);
+
+	m_gatling->Cut();
+	m_isPartBroken = true;
+	ChangeState(std::make_shared<BossPartThrow>(GetWeakPtr()));
+
+	//プレイヤーに投げさせる//targetをセット
+	if (auto player = m_player.lock())player->RequestBossPartThrow(GetSharedPtr());
+}
+
+void BossEnemyKingmech::OnGatlingExploded()
+{
+	m_hp -= kGatlingExplodeDamage;
+	if (m_hp <= 0)
+	{
+		m_hp = 0;
+		ChangeState(std::make_shared<EnemyDie>(GetWeakPtr()));
+		return;
+	}
+	if (auto state = std::dynamic_pointer_cast<BossPartThrow>(m_currentState))
+	{
+		state->OnExploded();
+	}
 }
 
 
@@ -318,6 +363,21 @@ void BossEnemyKingmech::OnDamage(Collider& other, AttackData& data)
 
 	//データの保存
 	m_attackData = data;
+
+	//ガードブレイクの切り上げでガトリングを切り落とす
+	if (data.comboIndex == ComboIndex::GuardBreakAttack1 && m_gatling->GetPhase() == KingmechGatling::Phase::Attached)
+	{
+		CutGatling(other, data);
+		return;
+	}
+	//投げ返されるのを待っている間はダメージだけ
+	if (std::dynamic_pointer_cast<BossPartThrow>(m_currentState))
+	{
+		m_hp -= static_cast<int>(data.attackPower);
+		if (m_hp <= 0)m_hp = 1;
+		PlayBloodSplash(other);
+		return;
+	}
 
 	//攻撃中だったら//スタン値がたまるなどしない限りボスの攻撃は止まらない
 	const bool isAttacking = IsAttackFlowState(m_currentState);

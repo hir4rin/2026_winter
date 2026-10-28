@@ -26,6 +26,7 @@
 #include "Character/Player/State/Defence/PlayerAttackParried.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakChance.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakAttack.h"//以下同文
+#include "Character/Player/State/Attack/PlayerStateBossPartThrow.h"//以下同文
 #include "DataLoader/AnimData.h"
 #include <memory>
 
@@ -252,6 +253,8 @@ public:
 
 	//ブレイクの通知
 	void RequestGuardBreakChance(std::shared_ptr<EnemyBase> target) { m_guardBreakChanceTarget = target; }
+	//ボスのパーツを切り落とした通知//切り上げの後にPlayerStateBossPartThrowへ
+	void RequestBossPartThrow(std::shared_ptr<EnemyBase> target) { m_bossPartThrowTarget = target; }
 	//必殺技状態中かどうか
 	bool GetIsUltimating() { return m_isUltimating; }
 
@@ -371,6 +374,7 @@ private:
 	std::weak_ptr<EnemyBase> m_partBrokenTarget;
 	bool m_isPartBrokenKilling = false;//確殺演出中かどうか//trueの間はロックオンマネージャーが確殺対象を更新しない
 	std::weak_ptr<EnemyBase> m_guardBreakChanceTarget;//ブレイクした敵
+	std::weak_ptr<EnemyBase> m_bossPartThrowTarget;//パーツを切り落としたボス
 
 	//壁走り、壁キック用
 	//当たった壁との情報//壁走りの開始位置の判定に使う
@@ -406,6 +410,7 @@ private:
 	friend class PlayerAttackParried;
 	friend class PlayerStateGuardBreakChance;
 	friend class PlayerStateGuardBreakAttack;
+	friend class PlayerStateBossPartThrow;
 	//武器
 	friend class PlayerWeapon;
 

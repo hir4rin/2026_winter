@@ -275,6 +275,9 @@ public:
 	//部位破壊したかどうか
 	bool GetIsPartBroken() { return m_isPartBroken; }
 
+	//切り落としたパーツを投げ返す(PlayerStateBossPartThrowが投げるフレームで呼ぶ)
+	virtual void ThrowPart() {};
+
 	//頭を敵のほうに向かせる
 	void UpdateLookAtPlayer(int headFrame);
 

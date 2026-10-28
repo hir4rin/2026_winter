@@ -38,6 +38,7 @@ enum class AsyncData : int
 	BossArmRModel,//背中の右腕
 	BossPirateSwordModel,//海賊のボスの剣(カトラス)
 	KingmechModel,//新しいボス(Kingmech)//ToiletMech の頭をゴーレムの兜に替えたもの
+	KingmechGatlingModel,//Kingmechの右腕のガトリング(切り落として投げ返す)
 	BossAttackHadouEffect,
 	BossAttackFireEffect,
 	BossSummonEffect,

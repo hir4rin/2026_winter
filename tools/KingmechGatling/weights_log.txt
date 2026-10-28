@@ -1,0 +1,10 @@
+frame 269 verts 52242 polys 17414
+clavicle_r     frame  70 pos(-19.2 143.8 -15.1) hist: 0 0 0 0 0 0 0 0 0 0 52242
+upperarm_r     frame  73 pos(-33.9 143.9 -13.6) hist: 0 0 0 0 0 0 0 0 0 0 52242
+lowerarm_r     frame  74 pos(-59.9 99.4 -5.8) hist: 1644 66 54 60 0 60 0 60 48 18 50232
+hand_r         frame  75 pos(-62.2 88.9 -40.8) hist: 52242 0 0 0 0 0 0 0 0 0 0
+weapon_r       frame 100 pos(-60.8 87.9 -41.5) hist: 52242 0 0 0 0 0 0 0 0 0 0
+wrist_inner_r  frame 101 pos(-60.7 89.0 -39.8) hist: 52242 0 0 0 0 0 0 0 0 0 0
+wrist_outer_r  frame 102 pos(-64.4 89.1 -41.3) hist: 52242 0 0 0 0 0 0 0 0 0 0
+spine_05       frame  16 pos(0.0 151.0 -12.1) hist: 0 0 0 0 0 0 0 0 0 0 52242
+ik_hand_gun    frame   7 pos(-62.2 88.9 -40.8) hist: 52242 0 0 0 0 0 0 0 0 0 0

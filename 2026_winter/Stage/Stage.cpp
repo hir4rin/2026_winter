@@ -25,6 +25,13 @@ namespace
 	constexpr float kTunnelOffsetY = -150.0f;//トンネルのレール上面の高さ(列車のデッキの上面=0から見て)
 	constexpr float kTunnelScrollSpeed = -20.0f;//1フレームに流す距離(列車の速さ)
 	constexpr float kTunnelDrawRange = 6000.0f;//カメラから前後この距離までのトンネルを描く(SceneMainのファークリップより少し長く)
+
+	//列車ステージの明るさ(戦う場所を明るく、トンネルと遠くを暗くする)
+	constexpr float kTunnelColorScale = 0.45f;//トンネルの明るさ
+	constexpr float kTrainColorScale = 1.15f;//列車の明るさ
+	constexpr float kTrainFogStart = 2000.0f;//フォグがかかり始める距離
+	constexpr float kTrainFogEnd = 5000.0f;//真っ暗になる距離(SceneMainのファークリップ)
+	constexpr int kTrainFogColor = 8;//フォグの色(ほぼ黒)
 }
 
 
@@ -62,6 +69,11 @@ void Stage::GameInit(const StageInfo& info)
 	if (info.useTrainTunnel)
 	{
 		m_tunnelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TrainTunnelModel));
+		const COLOR_F tunnelScale = GetColorF(kTunnelColorScale, kTunnelColorScale, kTunnelColorScale, 1.0f);
+		MV1SetAmbColorScale(m_tunnelHandle, tunnelScale);
+		MV1SetDifColorScale(m_tunnelHandle, tunnelScale);
+		//列車はマテリアルの環境光が明るさのほとんどなので、環境光だけ上げる(拡散は血殺のフォグが使う)
+		MV1SetAmbColorScale(m_stageViewHandle, GetColorF(kTrainColorScale, kTrainColorScale, kTrainColorScale, 1.0f));
 	}
 	// モデルのポリゴンの当たり判定を構築する(第二引数を-1にすると全てのポリゴンを対象にする)
 	MV1SetupCollInfo(m_stageModelHandle, -1);
@@ -121,8 +133,25 @@ void Stage::Update()
 void Stage::Draw() const
 {
 	//MV1DrawModel(m_stageModelHandle);
+
+	//列車ステージは遠くを暗くする(血殺のフォグがかかっているときはそちらを使う)
+	const bool useTrainFog = m_tunnelHandle != -1 && !GetFogEnable();
+	if (useTrainFog)
+	{
+		SetFogEnable(TRUE);
+		SetFogMode(DX_FOGMODE_LINEAR);
+		SetFogColor(kTrainFogColor, kTrainFogColor, kTrainFogColor);
+		SetFogStartEnd(kTrainFogStart, kTrainFogEnd);
+	}
+
 	MV1DrawModel(m_stageViewHandle);
 	DrawTunnel();
+
+	//キャラやエフェクトにはかけない
+	if (useTrainFog)
+	{
+		SetFogEnable(FALSE);
+	}
 }
 
 void Stage::DrawTunnel() const

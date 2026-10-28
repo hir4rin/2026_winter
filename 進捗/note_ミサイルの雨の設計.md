@@ -105,6 +105,7 @@ void AttackCol::ApplyPos()
 	if (!owner)return;
 	m_rb.m_pos = owner->GetRigidBody().GetPos();
 	m_rb.m_pos += owner->GetTargetVec() * kAttackColOffset;
+	
 }
 ```
 

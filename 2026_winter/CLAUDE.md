@@ -913,6 +913,43 @@
   - 気をつけること: 攻撃権の全体の間隔 30F(`AttackTokenManager` の kGlobalAttackInterval)・Idle の長さ(ステータスの idleTime)・CT もサイクルの速さに効く。
     EnemyIdle はプレイヤーの方を向かない(ToPlayerLook がコメントアウト)。Update の「被弾中に CT が明けたら攻撃」は Next〜 を通らず EnemyAttackPre を直接作っている。
 
+### 2026-10-29 Kingmech のガトリング(部位破壊で落とす)のモデル
+- 方針(会話で決めた): ガードブレイクで**右腕のガトリングを切り落とし、回して投げ返して爆発**(相手の弾薬で爆発する、という納得感)。腕まるごとはやめた。
+- **モデル**: `data/Enemy/ToiletMech/KingmechGatling.mv1`(骨・アニメ無し、テクスチャは同じフォルダの `Texture/` の体のもの)。まだコードからは使っていない。
+  - 元は ToiletMech.mv1 のフレーム `polySurface789`(メッシュ1個、ガトリングだけ。腕は別のメッシュ)。骨は `lowerarm_r` にほぼ100%。肩へのケーブルは外した。
+  - 頂点は **lowerarm_r の空間(回転だけ)**、**原点はガトリングの真ん中**(回すときの中心)。大きさ 約114×35×24(倍率1のとき)。
+- **ゲームでの使い方**:
+  - ボスのガトリングを消す: `MV1SetMeshVisible(ボス, MV1GetFrameMesh(ボス, MV1SearchFrame(ボス, "polySurface789"), 0), FALSE)`(前腕は残る)。
+  - 切った瞬間の置き場所: `MV1SetMatrix(ガトリング, MMult(MGetTranslate(VGet(-52.542f, -5.352f, 3.009f)), MV1GetFrameLocalWorldMatrix(ボス, lowerarm_r)))`。
+    ボスの kModelScale(2.3)もこの行列に入っているので、そのあとも同じ倍率を掛けて描く。Idle2・Attack1・Attack6_Shoot でボスのガトリングにぴったり重なることを画像で確認した。
+- 作り方: `tools/KingmechGatling/`(build.bat で `build.bat extract` など)。`extract.exe ToiletMech.mv1 出力フォルダ` → KingmechGatling.mv1(.x は消した)。
+  オフセットは extract_log.txt の center。`verify.exe ボス.mv1 ガトリング.mv1 出力フォルダ` で重ねた画像(切り出した方を赤く)。probe / weights / shot は調べる用。
+
+### 2026-10-29 ガトリングを切り落として投げ返す(BossPartThrow)
+- 流れ(**切り上げが出てからは全部自動**): ガードブレイク → チャンス中に Y → 打ち上げ(GuardBreakAttack0) → 切り上げ(GuardBreakAttack1)が Kingmech に当たる
+  → ガトリングが切れて跳ね上がり、プレイヤーの左手へ寄って回る → 切り上げのアニメが終わったら `PlayerStateBossPartThrow`(空中で止まって空中弱5のモーション)
+  → 弱5の攻撃判定の開始フレーム(ComboChain の attackColStart の1つ目)で投げる → ボスの spine_03 へ飛んで爆発 → プレイヤーはモーションが終わったら Fall。
+- `Character/Enemy/Kingmech/Part/KingmechGatling.h/.cpp`: ボスが Init で作って持つ(shared_ptr)。ガンナーの銃と同じく持ち主のボスを weak_ptr で持ち、ボスのモデル・プレイヤーはボスから取る。爆発したらボスの `OnGatlingExploded()` を直接呼ぶ(friend)。Phase = Attached / Cut / Hold / Thrown / Gone。当たり判定なし(爆発はボスとの距離)。
+  - Cut でボスのガトリングのメッシュを消し、同じ位置・向き・大きさから始める。定数(跳ね上がり・手へ寄せる長さ・回る軸と速さ・投げる速さ・爆発の距離)は .cpp の先頭。
+  - 持たせる手は `hand_l`(右手は刀)。回す軸 `kSpinAxis` はモデルの空間の Y(見て直す)。
+  - 爆発のエフェクトは**仮でスキル3の着地(GhostSkill3ImpactEffect)**。専用の爆発を Effekseer で作る。
+- `Character/Enemy/Kingmech/State/BossPartThrow.h/.cpp`(敵): 膝をついて待つ(KnockStart → KnockLoop)。爆発したら KnockEnd で立ち上がり NextAfterRecover。
+  600F 待っても投げられなければボスが自分で投げさせる。この間の被弾はダメージだけ(HPは1残す)。
+- `BossEnemyKingmech::OnDamage`: `data.comboIndex == GuardBreakAttack1` かつガトリングが付いていたら `CutGatling`(ダメージ・部位破壊フラグ・BossPartThrow・`player->RequestBossPartThrow`)。
+  爆発で `kGatlingExplodeDamage`(300)。HP が0なら EnemyDie。
+- `EnemyBase::ThrowPart()`(仮想、標準は何もしない)。プレイヤーは `m_bossPartThrowTarget` を見て、切り上げの入力・空中コンボへの派生をせずに投げに行く。
+  `PlayerStateBossPartThrow` は無敵。途中で抜けても Exit で投げる。
+- `AsyncData::KingmechGatlingModel` を追加。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**
+  (切れる位置・手に寄る速さ・回り方・投げのタイミング・爆発の位置。ボスのガード率が0なのでブレイクさせるにはステータスの guardRate を上げる)。
+- まだ: ガトリングを失った後に銃の技(Attack6_Shoot など)を出さないようにする、専用カメラ。
+
+### 2026-10-29 列車ステージの明るさに差をつけた(コントラストが薄い・地味と言われた対策)
+- 戦う場所を明るく、トンネルと遠くを暗くした。値は `Stage.cpp` 先頭(`kTunnelColorScale` 0.45 / `kTrainColorScale` 1.15 / フォグ 2000〜5000、色 8,8,10)。
+  - `Stage::GameInit`(トンネルがあるとき): トンネルの環境光・拡散を×0.45、列車の環境光だけ×1.15(拡散は血殺のフォグが MV1SetDifColorScale で使うので触らない)。
+  - `Stage::Draw`: 列車とトンネルを描く間だけ暗いフォグ。血殺のフォグがかかっているとき(`GetFogEnable()`)はそちらを優先。キャラ・エフェクトにはかけない。
+  - mv1 は変えていないので、Unity から書き出し直しても効く。マテリアル名が M0〜 で床だけを選べないので、列車は全体を明るくしている。
+- 見た目の確認は preview.exe の改造版(scratchpad)で、ゲームと同じライトで比べた。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
 ---
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜

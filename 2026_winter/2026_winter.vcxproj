@@ -208,6 +208,9 @@
     <ClCompile Include="Character\Enemy\BossPirate\BossEnemyPirateR1.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossGuard.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossGuardBreak.cpp" />
+    <ClCompile Include="Character\Enemy\Kingmech\Part\KingmechGatling.cpp" />
+    <ClCompile Include="Character\Enemy\Kingmech\State\BossPartThrow.cpp" />
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateBossPartThrow.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossArmDetached.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossArmReturn.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\Part\BossArm.cpp" />
@@ -361,6 +364,9 @@
     <ClInclude Include="Character\Enemy\BossPirate\BossEnemyPirateR1.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossGuard.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossGuardBreak.h" />
+    <ClInclude Include="Character\Enemy\Kingmech\Part\KingmechGatling.h" />
+    <ClInclude Include="Character\Enemy\Kingmech\State\BossPartThrow.h" />
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateBossPartThrow.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossArmDetached.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossArmReturn.h" />
     <ClInclude Include="Character\Enemy\BossPirate\Part\BossArm.h" />

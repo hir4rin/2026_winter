@@ -579,23 +579,19 @@ void BossEnemyPirateR1::OnDamage(Collider& other, AttackData& data)
 	}
 
 	//Stateの切り替え//敵を吹き飛ばす攻撃かどうかで切り替える
-
 	//ガードブレイク中ならヒットステートじゃなくてガードステートのまま
 	//ガードブレイク攻撃の時はしっかり移行させる
 	bool isGuardBreakAttack = data.attackType == AttackType::GuardBreakAttack;
 	if (std::dynamic_pointer_cast<BossGuardBreak>(m_currentState))
 	{
 		auto state = std::dynamic_pointer_cast<BossGuardBreak>(m_currentState);
-
 		//遷移がダメならリターンする
 		if (!state->CanChangeHit())return;
 	}
-
 	//ボスは空中とかに行かないし、攻撃中はヒットリアクションを取らない。部位破壊もラウンド0はしない
 	//よろめいた感じとパターンは出す
 
 	//isKirimomiのような大きい攻撃は大きくのけぞる
-
 	if (hitinfo.isKirimomi)
 	{
 		ChangeState(std::make_shared<EnemyHitLargeHit>(GetWeakPtr(), hitinfo));
@@ -610,10 +606,6 @@ void BossEnemyPirateR1::OnDamage(Collider& other, AttackData& data)
 		//}
 		return;
 	}
-
-	
-
-
 
 	if (data.knockBackPower.y > 0.0f && !hitinfo.isKirimomi)
 	{
