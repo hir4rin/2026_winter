@@ -872,12 +872,13 @@ void EnemyBase::InitializeAttackList(const std::vector<std::vector<std::string>>
 		node.index = std::stoi(tokens[EnemyAttackNodeType::Index]);
 
 		//予備動作//再生速度は空欄なら1.0、止めるフレーム・ブレンドは空欄なら-1(デフォルト)
+		//アニメが空欄なら予備動作のアニメを流さない、長さ・向く時間は空欄なら0(予備動作なし)
 		node.preAnimName = tokens[EnemyAttackNodeType::PreAnimName];
 		node.preAnimTimeScale = tokens[EnemyAttackNodeType::PreAnimTimeScale].empty() ? 1.0f : std::stof(tokens[EnemyAttackNodeType::PreAnimTimeScale]);
 		node.preAnimEndFrame = tokens[EnemyAttackNodeType::PreAnimEndFrame].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::PreAnimEndFrame]);
 		node.preBlendFrame = tokens[EnemyAttackNodeType::PreBlendFrame].empty() ? -1.0f : std::stof(tokens[EnemyAttackNodeType::PreBlendFrame]);
-		node.preTime = std::stof(tokens[EnemyAttackNodeType::PreTime]);
-		node.preLookTime = std::stof(tokens[EnemyAttackNodeType::PreLookTime]);
+		node.preTime = tokens[EnemyAttackNodeType::PreTime].empty() ? 0.0f : std::stof(tokens[EnemyAttackNodeType::PreTime]);
+		node.preLookTime = tokens[EnemyAttackNodeType::PreLookTime].empty() ? 0.0f : std::stof(tokens[EnemyAttackNodeType::PreLookTime]);
 
 		//攻撃//予備動作と同じく空欄なら初期値
 		node.animName = tokens[EnemyAttackNodeType::AnimName];

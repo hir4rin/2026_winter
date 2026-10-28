@@ -25,7 +25,16 @@ public:
     void OnPartBreak()override;//落とすパーツが無いのでフラグだけ
 protected:
     int SelectAttackIndex()override;//出す攻撃を選ぶ(無ければ-1)//ボス用の分岐
-    std::shared_ptr<EnemyStateBase> NextAfterAttackEnd()override;//攻撃の回数を数える
+
+    //ステートの切り替え//今は EnemyBase と同じ
+    std::shared_ptr<EnemyStateBase> NextAfterIdle()override;//Idleの待機時間が終わった
+    std::shared_ptr<EnemyStateBase> NextOnArrived()override;//Chaseで攻撃距離に入った、または目的地に着いた
+    std::shared_ptr<EnemyStateBase> NextAfterCaution()override;//Cautionの警戒時間が終わった
+    std::shared_ptr<EnemyStateBase> NextAfterAttack()override;//攻撃のモーションが終わった
+    std::shared_ptr<EnemyStateBase> NextAfterAttackEnd()override;//攻撃の後隙が終わった//攻撃の回数を数える
+    std::shared_ptr<EnemyStateBase> NextAfterParry()override;//弾きが終わった
+    std::shared_ptr<EnemyStateBase> NextOnPlayerFound()override;//プレイヤーを見つけた
+    std::shared_ptr<EnemyStateBase> NextAfterRecover()override;//被弾・ダウン・ガードなどから立ち直った
 private:
 
     int m_attackCountSinceLarge = 0;//前の全体攻撃から何回攻撃したか

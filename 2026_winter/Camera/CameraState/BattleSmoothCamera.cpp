@@ -20,7 +20,7 @@ namespace
 	constexpr float kBlendDuration = 90.0f;//ブレンドにかけるフレーム数
 	constexpr float kBlendEasingPower = 0.8f;//ブレンドのイージング指数
 
-	constexpr int kExitMoveFrame = 30;//歩き続けたら戻るフレーム数
+	constexpr int kExitMoveFrame = 5;//歩き続けたら戻るフレーム数
 	constexpr float kExitDistance = 800.0f;//敵との水平距離がこれより遠いと戻る
 	constexpr float kExitNearDistance = 100.0f;//空中の敵との水平距離がこれより近いと戻る
 }

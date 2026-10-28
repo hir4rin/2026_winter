@@ -26,7 +26,7 @@ namespace
 	constexpr float kEnemyDistance = 50.0f;
 
 	constexpr int kNormalAttackIndex = 0;//横斬り
-	constexpr int kLargeRangedAttackIndex = 1;
+	constexpr int kLargeRangedAttackIndex = 5;
 	constexpr int kComboAttackIndex = 3;//コンボの1撃目
 	constexpr int kSweepAttackIndex = 2;//周囲薙ぎ払い
 	constexpr int kRushAttackIndex = 6;//とびかかり(突進)
@@ -237,6 +237,7 @@ int BossEnemyKingmech::SelectAttackIndex()
 std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterAttackEnd()
 {
 	//連撃が終わったら攻撃の回数を数える//全体攻撃なら0に戻す
+	//何回か攻撃したら大技を繰り出すよう
 	if (GetAttackNode(m_currentAttackIndex).nextAttack < 0)
 	{
 		if (m_currentAttackIndex == kLargeRangedAttackIndex)
@@ -248,7 +249,61 @@ std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterAttackEnd()
 			++m_attackCountSinceLarge;
 		}
 	}
-	return EnemyBase::NextAfterAttackEnd();
+
+	//連撃//今の攻撃にnextAttackがあれば、予備動作なしで次の攻撃へ
+	const int next = GetAttackNode(m_currentAttackIndex).nextAttack;
+	if (next >= 0)
+	{
+		assert(next < static_cast<int>(m_attackList.size()) && "nextAttackが攻撃CSVの行数を超えています");
+		m_currentAttackIndex = next;
+		return std::make_shared<EnemyAttack>(GetWeakPtr(), true);
+	}
+	//アイドルに戻す
+	return std::make_shared<EnemyIdle>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterIdle()
+{
+	//ボスはすぐ攻撃//出せる攻撃が無ければIdleのまま
+	//あとでSelectAttackIndexを変えないといけない
+	const int attackIndex = SelectAttackIndex();
+	auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock();
+	if (attackIndex >= 0 && tokenMgr && tokenMgr->Request(*this))
+	{
+		m_currentAttackIndex = attackIndex;
+		return std::make_shared<EnemyAttackPre>(GetWeakPtr());
+	}
+	return std::make_shared<EnemyIdle>(GetWeakPtr());
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextOnArrived()
+{
+	return EnemyBase::NextOnArrived();
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterCaution()
+{
+	return EnemyBase::NextAfterCaution();
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterAttack()
+{
+	return EnemyBase::NextAfterAttack();
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterParry()
+{
+	return EnemyBase::NextAfterParry();
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextOnPlayerFound()
+{
+	return EnemyBase::NextOnPlayerFound();
+}
+
+std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterRecover()
+{
+	return EnemyBase::NextAfterRecover();
 }
 
 void BossEnemyKingmech::OnDamage(Collider& other, AttackData& data)

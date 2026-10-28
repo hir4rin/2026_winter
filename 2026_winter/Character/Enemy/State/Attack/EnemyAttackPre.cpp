@@ -32,8 +32,11 @@ void EnemyAttackPre::Enter()
 	//m_currentAttackIndexはここに来る前(NextAfterIdleなど)で決めてある
 	const auto& node = owner->GetAttackNode(owner->m_currentAttackIndex);
 
-	//animationの初期化
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(node.preAnimName), false, node.preAnimTimeScale,node.preAnimEndFrame,0.0f,node.preBlendFrame);
+	//animationの初期化//空欄なら予備動作のアニメを流さない
+	if (!node.preAnimName.empty())
+	{
+		owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(node.preAnimName), false, node.preAnimTimeScale, node.preAnimEndFrame, 0.0f, node.preBlendFrame);
+	}
 	
 	//その場で止まる
 	owner->m_rb.m_vel = Vector3(0, 0, 0);

@@ -877,6 +877,42 @@
   - ボスの種類を変えても F4 が効く。遷移表に BossAppear が無いステージ(PhaseStage004 など)では何もしない。フェーズ番号はボス戦以降が小さくならない前提。
 - MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
 
+### 2026-10-28 敵の攻撃CSVで予備動作をなくせるようにした
+- `preAnimName` が空欄なら、EnemyAttackPre の Enter で予備動作のアニメに切り替えない(前は GetAnimName の assert で止まった)。
+- `preTime` / `preLookTime` は空欄なら0(前は数字が必須)。
+- **予備動作なしの書き方**: preAnimName〜preLookTime を全部空欄。AttackPre を1フレームだけ通り、プレイヤーの方を向いてから攻撃する(攻撃権もそのまま)。
+- CSV の2行目(説明)はまだ書き換えていない。MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-10-28 Kingmech のアニメCSVを作り直した
+- `BossEnemyKingmechAnim.csv` = **海賊の `BossEnemyPirateAnim.csv` の60行そのまま**(key・アニメ・速度とも同じ) ＋ **メカのアニメ40行(key = mv1 のアニメ名)**。
+  - コードが使う key(Idle / Walk / Hit / Block〜 / KnockDown〜 / 〜Victim など)は**海賊のアニメが流れる**(ユーザーが選んだ)。メカの動きにしたい key は animName をメカのアニメに書き換える。
+  - メカの `Run` は海賊の key `Run` と重なるので key を `Run_Mech` にした。
+  - アニメ名が全部 mv1 にあること、攻撃CSVの key が全部アニメCSVにあることは確認した。
+- 攻撃CSV `BossEnemyKingmechAttack.csv` はユーザーがメカの key に書き換えた(下の表)。予備動作はダッシュアタック以外は空欄(予備動作なし)。
+  **フレームの数字は海賊の攻撃のまま**なので、判定・止めるフレームはゲームで見て直す。
+
+### Kingmech の攻撃(10/28 決定)
+| index | 名前 | アニメ | 中身 |
+|---|---|---|---|
+| 0 | 横なぎ | Attack1 | |
+| 1 | 範囲攻撃 | Attack2 | (決定のリストには無い。残すか決める) |
+| 2 | 踏みつけ | Attack3 | |
+| 3 | 地面パンチ | Attack4 | 前方へ一直線に地面からとげ・炎が順に噴き出す(Wave)。中距離用。nextAttack=4 のまま |
+| 4 | ダッシュアタック | Attack5 | 突進。予備動作 AttackPre1(海賊のアニメ)。nextAttack=5 のまま |
+| 5 | 火炎放射 | Attack6_Shoot | **特殊**。モデルを回転させて全体攻撃 |
+| 6 | ミサイルの雨 | Roar | **特殊**。背中のパックからミサイルを撃ち、プレイヤーの周りに降らせる |
+- nextAttack(3→4→5)は海賊のコンボのコピーのまま。連撃にしないなら -1 にする。
+- **特殊攻撃の作り方(案、まだ作っていない)**: 攻撃CSVの最後に `special` 列(空欄=普通、`FlameSpin` / `MissileRain`)。
+  `EnemyAttackPre.cpp` で `EnemyAttack` を直接作っている所を `owner->CreateAttackState()`(仮想関数、標準は EnemyAttack)にし、
+  Kingmech で special を見て専用のステート(`EnemyAttack` を継承 → 攻撃の流れ・攻撃権・怯まない処理がそのまま使える)を返す。
+  予備動作・攻撃力・吹き飛ばし・後隙・CT・attackRange は今の列を使い、専用の値(回る速さ・ミサイルの数など)は最初はステートの .cpp の定数。
+- エフェクトの案(会話で出したもの): 地面パンチのとげ・炎の Wave、火炎放射、ミサイルと予告の円。Effekseer MCP で作る。
+- (10/28) Kingmech は基本追いかけない・攻撃のサイクルが速い・技の選び方も変える予定。
+  `BossEnemyKingmech.h/.cpp` に Next〜 の override を全部足した(NextAfterIdle / NextOnArrived / NextAfterCaution / NextAfterAttack / NextAfterParry / NextOnPlayerFound / NextAfterRecover。NextAfterAttackEnd は前から)。
+  **中身はまだ EnemyBase を呼ぶだけ**(動きは変わらない)。ビルドは通った。
+  - 気をつけること: 攻撃権の全体の間隔 30F(`AttackTokenManager` の kGlobalAttackInterval)・Idle の長さ(ステータスの idleTime)・CT もサイクルの速さに効く。
+    EnemyIdle はプレイヤーの方を向かない(ToPlayerLook がコメントアウト)。Update の「被弾中に CT が明けたら攻撃」は Next〜 を通らず EnemyAttackPre を直接作っている。
+
 ---
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜

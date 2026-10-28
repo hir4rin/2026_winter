@@ -240,13 +240,13 @@ void CollisionManager::Update()
 void CollisionManager::DebugDraw() const
 {
 	//登録されているすべてのコライダーのデバッグ描画を呼び出す
-	for (const auto& weakCollider : m_colliders)
-	{
-		auto collider = weakCollider.lock();
-		//アクティブなコライダーだけを描画する
-		if (collider && collider->GetIsActive())
-			collider->DebugDraw();
-	}
+	//for (const auto& weakCollider : m_colliders)
+	//{
+	//	auto collider = weakCollider.lock();
+	//	//アクティブなコライダーだけを描画する
+	//	if (collider && collider->GetIsActive())
+	//		collider->DebugDraw();
+	//}
 }
 
 std::shared_ptr<Collider> CollisionManager::GetColliderById(int id) const
