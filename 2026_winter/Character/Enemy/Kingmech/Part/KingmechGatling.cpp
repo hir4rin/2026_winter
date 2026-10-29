@@ -173,6 +173,8 @@ void KingmechGatling::Explode()
 	if (boss)boss->OnGatlingExploded();
 }
 
+
+
 Vector3 KingmechGatling::GetHandPos()const
 {
 	auto boss = m_owner.lock();
