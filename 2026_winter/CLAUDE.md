@@ -950,6 +950,22 @@
   - mv1 は変えていないので、Unity から書き出し直しても効く。マテリアル名が M0〜 で床だけを選べないので、列車は全体を明るくしている。
 - 見た目の確認は preview.exe の改造版(scratchpad)で、ゲームと同じライトで比べた。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
 
+### 2026-10-29 ミサイルの雨のエフェクト(Effekseer MCPで制作)
+- 場所: `data/Effect/Kingmech/`(`Texture/`・`Model/`)。血しぶきと同じ **1/20 スケールで作成、ゲームでは20倍で再生**。設計は `../進捗/note_ミサイルの雨の設計.md` の段階に合わせて3つ。まだコードからは使っていない(System の AsyncData にも未登録)。
+  - `MissileWarning.efk`(Warning 45F): 着弾位置の地面に赤い予告の円。外周の輪＋目盛り、外側で回る破線、中の塗り(だんだん濃く)、**中心から広がる橙の円が45Fで外周に届く**(=着弾までの残り時間)、30F〜で3回点滅。20倍で半径約190。
+  - `MissileFall.efk`(Falling 15F): 高さ60(=1200)から速度4/Fで真下に落ち、**15Fでちょうど y=0**。自作のミサイルのモデル(先端が赤・黄の帯・灰色の胴・尾翼4枚)＋噴射の光と炎＋光の尾＋煙の柱(着弾後30Fほど残って消える)。再生位置は着弾点(地面)。
+  - `MissileExplode.efk`(Explode): 閃光(5F) → 火球(〜28F) → 黒っぽい重い煙が上がって約1秒で消える。地面に衝撃波の輪・橙の光・外へ広がる砂ぼこり・火の粉、焦げ跡(150Fで消える)。20倍で火球の半径約180。
+  - 爆発の半径(kExplodeRadius)を変えたら、3つとも同じ倍率で拡大すれば予告の円と合う(20倍で半径約200 → 例: 半径150なら15倍)。
+- 素材: テクスチャ `WarnRing / WarnFill / WarnDash / ShockRing / Scorch / SparkStreak` とモデル `Missile.efkmodel` は `tools/KingmechMissileFx/`(gen_fx_textures.ps1 / gen_missile_model.ps1、PowerShell。**BOM付きUTF-8で保存すること**)で作った。
+  `MissileSmoke / MissileFire / MissileGlow` は Effekseer 付属サンプル(01_Pierre01 の Smoke / Fire / Particle_Soft)のコピー(煙と火は2×2のシート)。
+- 編集用の `.efkefc` も同じフォルダにある。**ゲームでの確認はまだ**(大きさ・暗さ・煙が多すぎて避けにくくないか・ミサイルのモデルがDxLibで出るか)。
+- 組み込み(10/29、ビルドは通った・ゲームでは未確認):
+  - AsyncData に `KingmechMissileWarningEffect / FallEffect / ExplodeEffect` を追加して System で読み込み。
+  - `Kingmech/Part/KingmechMissile`(新規): Warning 45F → Falling 15F → Explode 4F → Finished。段階が変わるときにエフェクトを20倍で再生、着弾で予告の円を止める。タイマーはタイムスケールで進める。**攻撃判定はまだ無い**(FixedAttackCol が未作成)。
+  - ボスが `m_missiles` を持ち `FireMissile(landPos)` で追加。Update で回して終わったものを消す。ボスが消えたら残りも消す。
+  - **デバッグ: M キーでプレイヤーの足元に1発**(F は敵を出すのに使用中)。
+  - 次: ゲームで見る → FixedAttackCol で判定 → 攻撃ステート(KingmechMissileRain)で複数発。
+
 ---
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜

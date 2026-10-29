@@ -327,6 +327,9 @@
     <ClCompile Include="Character\Enemy\Kingmech\Part\KingmechGatling.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Enemy\Kingmech\Part\KingmechMissile.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\Kingmech\State\BossPartThrow.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -810,6 +813,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\Kingmech\Part\KingmechGatling.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\Kingmech\Part\KingmechMissile.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\Kingmech\State\BossPartThrow.h">

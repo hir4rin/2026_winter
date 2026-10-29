@@ -42,6 +42,9 @@ enum class AsyncData : int
 	BossAttackHadouEffect,
 	BossAttackFireEffect,
 	BossSummonEffect,
+	KingmechMissileWarningEffect,//ミサイルの雨の予告の円(45F)
+	KingmechMissileFallEffect,//上から落ちてくるミサイル(15Fで着弾)
+	KingmechMissileExplodeEffect,//ミサイルの爆発
 	//マスコット
 	MascotModel,
 	//ステージ

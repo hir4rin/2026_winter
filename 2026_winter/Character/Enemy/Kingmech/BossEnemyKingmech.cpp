@@ -11,6 +11,8 @@
 #include "Battle/BattleManager.h"
 #include "Battle/AttackTokenManager.h"
 #include "Character/Enemy/Kingmech/Part/KingmechGatling.h"
+#include "Character/Enemy/Kingmech/Part/KingmechMissile.h"
+#include <algorithm>
 #include "Character/Enemy/Kingmech/State/BossPartThrow.h"
 
 
@@ -80,6 +82,7 @@ BossEnemyKingmech::~BossEnemyKingmech()
 		m_currentState->Exit();//状態を抜ける
 	}
 	m_gatling.reset();
+	m_missiles.clear();//残りのミサイルは消す
 	MV1DeleteModel(m_modelHandle);
 }
 
@@ -143,6 +146,23 @@ void BossEnemyKingmech::Update()
 	}
 	m_wasIPressed = isIPressed;
 
+	//デバッグ用//Mを押した瞬間だけプレイヤーの足元にミサイルを1発撃つ
+	bool isMPressed = CheckHitKey(KEY_INPUT_M) != 0;
+	if (isMPressed && !m_wasMPressed)
+	{
+		if (auto player = m_player.lock())
+		{
+			FireMissile(player->GetRigidBody().GetPos());
+		}
+	}
+	m_wasMPressed = isMPressed;
+
+	for (auto& missile : m_missiles)
+	{
+		missile->Update();
+	}
+	std::erase_if(m_missiles, [](const std::unique_ptr<KingmechMissile>& missile) { return missile->IsFinished(); });
+
 	//攻撃のクールタイムを減らす
 	if (m_attackCoolTime > 0.0f)
 	{
@@ -195,6 +215,11 @@ void BossEnemyKingmech::Draw()
 void BossEnemyKingmech::ThrowPart()
 {
 	m_gatling->Throw();
+}
+
+void BossEnemyKingmech::FireMissile(const Vector3& landPos)
+{
+	m_missiles.push_back(std::make_unique<KingmechMissile>(landPos));
 }
 
 void BossEnemyKingmech::CutGatling(Collider& other, AttackData& data)
