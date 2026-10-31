@@ -1,0 +1,11 @@
+#type,name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg,isActive
+WallKickZone,Kick_Shaft,0,500,3000,125,500,400,0,1
+WallRunZone,Run_Upper1,-255,1000,5400,75,400,800,0,1
+WallRunZone,Run_Upper2,255,1000,6800,75,400,800,0,1
+WallKickZone,Kick_PlazaShaft,600,400,13600,125,400,400,0,1
+WallRunZone,Run_Broken,-95,200,30800,75,400,800,0,1
+WallRunZone,Run_Trench1,1095,200,33000,75,400,800,0,1
+WallRunZone,Run_Trench2,105,200,34500,75,400,800,0,1
+WallKickZone,Kick_Shaft2,600,300,41800,125,400,400,0,1
+WallRunZone,Run_Corridor1,305,700,44800,75,400,800,0,1
+WallRunZone,Run_Corridor2,895,700,46000,75,400,800,0,1

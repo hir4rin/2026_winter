@@ -55,6 +55,8 @@ enum class AsyncData : int
 	TrainStageModel,//列車ステージの見た目(tools/TrainStage で生成)
 	TrainStageColModel,//列車ステージの当たり判定(箱だけの軽いモデル)
 	TrainTunnelModel,//列車ステージで流し続けるトンネル(Z方向に13200でループする)
+	CyberStageModel,//ステージ1の見た目(UnityのCyberStageToolで生成)
+	CyberStageColModel,//ステージ1の当たり判定(箱だけの軽いモデル)
 	AreaWallEffect,
 	WallBreakEffect,
 	//デバッグ

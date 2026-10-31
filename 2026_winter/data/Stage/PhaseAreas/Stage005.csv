@@ -1,0 +1,7 @@
+#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg
+Area_Pylon1,-700,150,11550,300,150,150,0
+Area_Holo,600,-250,24800,800,150,200,0
+Area_Industrial,600,50,37700,300,150,200,0
+Area_Room,600,650,42400,200,150,150,0
+Area_Valley,600,150,50700,300,150,200,0
+Area_Boss,600,150,55300,800,150,250,0

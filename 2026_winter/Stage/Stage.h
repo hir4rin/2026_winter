@@ -61,6 +61,7 @@ private:
 	//列車ステージのトンネル(見た目だけ。列車の進む向きと逆に流し続ける)
 	int m_tunnelHandle = -1;
 	float m_tunnelScroll = 0.0f;//流した距離(トンネル1本の長さで折り返す)
+	bool m_useNightFog = false;//遠くを夜の色にする(StageInfo::useNightFog)
 	void DrawTunnel()const;
 
 

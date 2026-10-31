@@ -32,6 +32,13 @@ namespace
 	constexpr float kTrainFogStart = 2000.0f;//フォグがかかり始める距離
 	constexpr float kTrainFogEnd = 5000.0f;//真っ暗になる距離(SceneMainのファークリップ)
 	constexpr int kTrainFogColor = 8;//フォグの色(ほぼ黒)
+
+	//ステージ1の夜のフォグ(近くはそのまま、遠くの建物を暗い青に沈める)
+	constexpr float kNightFogStart = 1500.0f;
+	constexpr float kNightFogEnd = 9000.0f;
+	constexpr int kNightFogR = 10;
+	constexpr int kNightFogG = 12;
+	constexpr int kNightFogB = 24;
 }
 
 
@@ -66,6 +73,7 @@ void Stage::GameInit(const StageInfo& info)
 {
 	m_stageModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(info.colModel));
 	m_stageViewHandle = MV1DuplicateModel(System::GetInstance().GetHandle(info.model));
+	m_useNightFog = info.useNightFog;
 	if (info.useTrainTunnel)
 	{
 		m_tunnelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TrainTunnelModel));
@@ -143,12 +151,20 @@ void Stage::Draw() const
 		SetFogColor(kTrainFogColor, kTrainFogColor, kTrainFogColor);
 		SetFogStartEnd(kTrainFogStart, kTrainFogEnd);
 	}
+	const bool useNightFog = m_useNightFog && !GetFogEnable();
+	if (useNightFog)
+	{
+		SetFogEnable(TRUE);
+		SetFogMode(DX_FOGMODE_LINEAR);
+		SetFogColor(kNightFogR, kNightFogG, kNightFogB);
+		SetFogStartEnd(kNightFogStart, kNightFogEnd);
+	}
 
 	MV1DrawModel(m_stageViewHandle);
 	DrawTunnel();
 
 	//キャラやエフェクトにはかけない
-	if (useTrainFog)
+	if (useTrainFog || useNightFog)
 	{
 		SetFogEnable(FALSE);
 	}

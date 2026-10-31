@@ -11,6 +11,7 @@ enum class StageType : int
 	Test,//今までのテストステージ
 	Demo,//NINJA GAIDEN 4 Chapter0〜2を参考にしたデモステージ(UnityのDemoStageBuilderで生成)
 	Train,//NINJA GAIDEN 4 Chapter0 0-1 DDO列車(6両)の上で戦うステージ(tools/TrainStage で生成)
+	Cyber,//ステージ1。NINJA GAIDEN 4 Chapter1 を参考にしたサイバーパンクの街(UnityのCyberStageToolで生成)
 	Num
 };
 
@@ -27,6 +28,7 @@ struct StageInfo
 	int wallZoneNumber;//壁ゾーンのCSV番号(data/Stage/WallZones/Stage001.csv など)
 	int enemySpawnNumber;//敵配置のCSV番号(data/Stage/Enemies/Enemies003.csv など)//ファイルが無ければ今まで通りテスト用の敵を1体出す
 	                     //フェーズ進行(data/Stage/PhaseFlow/PhaseStage003.csv)とエリア(data/Stage/PhaseAreas/Stage003.csv)の番号も兼ねる(SceneMain::Init で読む)
+	bool useNightFog = false;//遠くを夜の色(暗い青)にするか(ステージ1)
 };
 
 
@@ -38,6 +40,7 @@ namespace StageData
 		{ "テストステージ", "今までの動作確認用ステージ", AsyncData::TitleStageModel, AsyncData::TitleStageModel, false, 1, 1 },
 		{ "デモステージ", "屋上 → 通り → 高架道路 → ボス広場(壁走り・壁キックで進む)", AsyncData::DemoStageModel, AsyncData::DemoStageModel, false, 3, 3 },
 		{ "列車ステージ", "トンネルを走るDDO列車の上で戦う。平台車 → 車内 → スロープで屋根 → 車内 → 最後尾", AsyncData::TrainStageModel, AsyncData::TrainStageColModel, true, 4, 4 },
+		{ "ステージ1", "雨の街 → ピラミッド前の広場 → 壁走りで溝を越える → 閉じた部屋 → ボス広場", AsyncData::CyberStageModel, AsyncData::CyberStageColModel, false, 5, 5, true },
 	} };
 
 	inline const StageInfo& GetInfo(StageType type)
