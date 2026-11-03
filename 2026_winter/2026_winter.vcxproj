@@ -166,6 +166,7 @@
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
+    <ClCompile Include="Collision\FixedAttackCol.cpp" />
     <ClCompile Include="Character\CharacterBase.cpp" />
     <ClCompile Include="Character\Enemy\EnemyBase.cpp" />
     <ClCompile Include="Collision\HitCol.cpp" />
@@ -211,6 +212,7 @@
     <ClCompile Include="Character\Enemy\Kingmech\Part\KingmechGatling.cpp" />
     <ClCompile Include="Character\Enemy\Kingmech\Part\KingmechMissile.cpp" />
     <ClCompile Include="Character\Enemy\Kingmech\State\BossPartThrow.cpp" />
+    <ClCompile Include="Character\Enemy\Kingmech\State\KingmechMissileTurn.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateBossPartThrow.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossArmDetached.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossArmReturn.cpp" />
@@ -322,6 +324,7 @@
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />
+    <ClInclude Include="Collision\FixedAttackCol.h" />
     <ClInclude Include="Collision\SkillAttackCol.h" />
     <ClInclude Include="Character\CharacterBase.h" />
     <ClInclude Include="Character\Enemy\EnemyBase.h" />
@@ -371,6 +374,7 @@
     <ClInclude Include="Character\Enemy\Kingmech\Part\KingmechGatling.h" />
     <ClInclude Include="Character\Enemy\Kingmech\Part\KingmechMissile.h" />
     <ClInclude Include="Character\Enemy\Kingmech\State\BossPartThrow.h" />
+    <ClInclude Include="Character\Enemy\Kingmech\State\KingmechMissileTurn.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateBossPartThrow.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossArmDetached.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossArmReturn.h" />

@@ -21,6 +21,7 @@ public:
     void Draw()override;
     bool IsChainAttackLookAtPlayer()const override { return true; }//連撃の2撃目でプレイヤーの方を向く
     bool HasDebugWindow()const override { return true; }//デバッグウィンドウを出す
+    void DrawDebugWindowExtra()override;//ミサイルのターンに行くボタン
 
     void OnCollision(Collider& other)override;
     void OnDamage(Collider& other, AttackData& data)override;
@@ -32,6 +33,7 @@ public:
     void ThrowPart()override;//ガトリングを投げ返す
 
     void FireMissile(const Vector3& landPos);//ミサイルを1発追加する
+    bool HasMissile()const { return !m_missiles.empty(); }//飛んでいるミサイルがあるか
 protected:
     int SelectAttackIndex()override;//出す攻撃を選ぶ(無ければ-1)//ボス用の分岐
 
@@ -52,12 +54,15 @@ private:
     std::vector<std::unique_ptr<KingmechMissile>> m_missiles;//飛んでいるミサイル
 
     int m_attackCountSinceLarge = 0;//前の全体攻撃から何回攻撃したか
+    int m_attackCountSinceMissile = 0;//前のミサイルのターンから何回攻撃したか
+    Vector3 m_arenaCenter;//闘技場の中央//ミサイルのターンで移動する
 
     bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
     bool m_wasIPressed = false;//前のフレームにIを押していたか//デバッグ用のアニメCSV読み込み直し
     bool m_wasMPressed = false;//前のフレームにMを押していたか//デバッグ用のミサイル発射
 
     friend class BossPartThrow;
+    friend class KingmechMissileTurn;
     friend class KingmechGatling;
 };
 

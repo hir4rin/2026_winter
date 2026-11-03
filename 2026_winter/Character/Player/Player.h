@@ -356,10 +356,7 @@ private:
 
 	const float kPlayerRockOnRange = 300.0f;//ロックオンする範囲//この範囲内に敵がいたらロックオンする
 
-	const float kJustAvoidRadius = 500.0f;//ジャスト回避の範囲
-
 	const int kMaxGaugeValue = 100;//スキル・必殺技ゲージの最大値
-	const int kInitialHp = 100;//プレイヤーの初期HP
 	const int kSkillAttackGaugeCost = 20;//スキル攻撃を行う際に消費するスキルゲージ量
 
 	std::weak_ptr<CameraManager> m_cameraManager;//カメラマネージャ-の弱参照

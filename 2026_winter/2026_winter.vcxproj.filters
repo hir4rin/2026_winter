@@ -285,6 +285,9 @@
     <ClCompile Include="Collision\AttackCol.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Collision\FixedAttackCol.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Collision\HitCol.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -340,6 +343,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Enemy\Kingmech\State\BossPartThrow.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\Kingmech\State\KingmechMissileTurn.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\State\Attack\PlayerStateBossPartThrow.cpp">
@@ -779,6 +785,9 @@
     <ClInclude Include="Collision\AttackCol.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Collision\FixedAttackCol.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Collision\SkillAttackCol.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -837,6 +846,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Enemy\Kingmech\State\BossPartThrow.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\Kingmech\State\KingmechMissileTurn.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\State\Attack\PlayerStateBossPartThrow.h">

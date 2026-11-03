@@ -35,18 +35,7 @@ bool CharacterLook::Load(int modelHandle, const std::string& csvPath)
 	if (!file.is_open() || modelHandle < 0) return false;
 	const std::string dir = csvPath.substr(0, csvPath.find_last_of("/\\") + 1);
 
-	//同じ画像は1回だけ読む
-	std::map<std::string, int> graphs;
-	auto loadGraph = [&](const std::string& name)
-	{
-		if (name.empty() || name == "-") return -1;
-		auto it = graphs.find(name);
-		if (it != graphs.end()) return it->second;
-		const int handle = LoadGraph((dir + name).c_str());
-		graphs[name] = handle;
-		if (handle != -1) m_graphs.push_back(handle);
-		return handle;
-	};
+	auto loadGraph = [&](const std::string& name) { return LoadCachedGraph(dir, name); };
 
 	//マテリアル名の先頭が一致する行を、そのマテリアルに当てる
 	m_materials.assign(MV1GetMaterialNum(modelHandle), MaterialLook());
@@ -179,10 +168,57 @@ void CharacterLook::DrawDebugWindow()
 #endif
 }
 
+std::map<std::string, int>& CharacterLook::GraphCache()
+{
+	static std::map<std::string, int> cache;
+	return cache;
+}
+
+int CharacterLook::LoadCachedGraph(const std::string& dir, const std::string& name)
+{
+	//同じ画像は1回だけ読む(前のシーンで読んだものも使う)
+	if (name.empty() || name == "-") return -1;
+	const std::string path = dir + name;
+	auto& graphs = GraphCache();
+	auto it = graphs.find(path);
+	if (it != graphs.end()) return it->second;
+	const int handle = LoadGraph(path.c_str());
+	graphs[path] = handle;
+	return handle;
+}
+
+void CharacterLook::PreloadGraphs(const std::string& csvPath)
+{
+	std::ifstream file(csvPath);
+	if (!file.is_open()) return;
+	const std::string dir = csvPath.substr(0, csvPath.find_last_of("/\\") + 1);
+	std::string line;
+	while (std::getline(file, line))
+	{
+		if (!line.empty() && line.back() == '\r') line.pop_back();
+		if (line.empty() || line[0] == '#') continue;
+		std::vector<std::string> tokens;
+		std::istringstream ss(line);
+		std::string token;
+		while (std::getline(ss, token, ',')) tokens.push_back(token);
+		if (tokens.size() < ColNum) continue;
+		LoadCachedGraph(dir, tokens[ColNormalTex]);
+		LoadCachedGraph(dir, tokens[ColMaskTex]);
+	}
+}
+
+void CharacterLook::ReleaseGraphCache()
+{
+	for (const auto& [path, handle] : GraphCache())
+	{
+		if (handle != -1) DeleteGraph(handle);
+	}
+	GraphCache().clear();
+}
+
 void CharacterLook::Release()
 {
-	for (int handle : m_graphs) DeleteGraph(handle);
-	m_graphs.clear();
+	//画像は使い回すのでここでは消さない(ReleaseGraphCache)
 	m_materials.clear();
 	if (m_constantBuffer != -1) DeleteShaderConstantBuffer(m_constantBuffer);
 	m_constantBuffer = -1;

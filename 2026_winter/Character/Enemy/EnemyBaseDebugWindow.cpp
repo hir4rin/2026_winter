@@ -48,6 +48,7 @@ void EnemyBase::DrawDebugWindow()
 
 	DrawDebugWindowStatus();
 	DrawDebugWindowControl();
+	DrawDebugWindowExtra();
 	DrawDebugWindowAttack();
 	DrawDebugWindowStatusEdit();
 

@@ -83,7 +83,8 @@ SceneMain::~SceneMain()
 	CollisionManager::GetInstance().Terminate();
 	m_player.reset();
 	m_stage.reset();
-	ModelShaderManager::GetInstance().Terminate();
+	//シェーダーは毎回コンパイルすると重いので消さない(Application::Terminate で消す)
+	ModelShaderManager::GetInstance().ResetSceneState();
 	if (m_lightHandle != -1)
 	{
 		DeleteLightHandle(m_lightHandle);
@@ -380,6 +381,8 @@ void SceneMain::NormalDraw()
 	
 	m_uiManager->Draw();
 	FrameProfiler::GetInstance().Mark("Draw:UI");
+	//カクつきの切り分け(F2。Release でも出す)
+	if (imguiApp::GetInstance().IsDebugUIVisible())m_cameraManager->DrawDebugWindow();
 #ifdef _DEBUG
 	CollisionManager::GetInstance().DebugDraw();
 	//敵のデバッグ表示(頭の上の文字)//2Dの文字は後から描く3Dに上書きされるので、UIの後に描く

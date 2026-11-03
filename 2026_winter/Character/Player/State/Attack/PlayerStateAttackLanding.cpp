@@ -15,7 +15,7 @@ namespace
 	//強攻撃(空中強攻撃)の着地硬直
 	constexpr float kHeavyDodgeCancelFrame = 15.0f;//回避でキャンセルできるフレーム
 	constexpr float kHeavyActionCancelFrame = 25.0f;//攻撃・ジャンプ・確殺・移動でキャンセルできるフレーム
-	constexpr float kHeavyLandingAnimTimeScale = 1.6f;//着地モーションの再生速度
+	constexpr float kHeavyLandingAnimTimeScale = 0.8f;//着地モーションの再生速度
 	constexpr float kHeavyLandingAnimEndFrame = 19.0f;//着地モーションの終了フレーム
 }
 
@@ -40,7 +40,7 @@ void PlayerStateAttackLanding::Enter()
 	{
 		m_dodgeCancelFrame = kHeavyDodgeCancelFrame;
 		m_actionCancelFrame = kHeavyActionCancelFrame;
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("HeavyAttackLanding"), false, kHeavyLandingAnimTimeScale, kHeavyLandingAnimEndFrame);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("HeavyAttackLanding"), false, kHeavyLandingAnimTimeScale, kHeavyLandingAnimEndFrame,0.0f,5.0f);
 	}
 	else if (m_attackType == AttackType::lightAttack)
 	{

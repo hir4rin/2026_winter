@@ -2,16 +2,22 @@
 #include "Main/System.h"
 #include "Render/EffectManager.h"
 #include "EffekseerForDXLib.h"
+#include "Collision/FixedAttackCol.h"
+#include "Collision/SphereShape.h"
 
 namespace
 {
 	constexpr float kWarningTime = 45.0f;//予告の円の長さ
 	constexpr float kFallTime = 15.0f;//落ちてくる長さ//エフェクトも15Fで地面に届く
-	constexpr float kExplodeTime = 4.0f;//爆発の長さ
+	constexpr float kExplodeTime = 4.0f;//爆発の長さ//判定もこの長さだけ出す
 	constexpr float kEffectScale = 20.0f;//エフェクトは1/20で作っている//20倍で半径約200
+
+	constexpr float kExplodeRadius = 190.0f;//爆発の判定の半径//予告の円に合わせる//中心は地面
+	constexpr float kExplodePower = 30.0f;//爆発の攻撃力
 }
 
-KingmechMissile::KingmechMissile(const Vector3& landPos) :
+KingmechMissile::KingmechMissile(std::weak_ptr<CharacterBase> owner, const Vector3& landPos) :
+	m_owner(owner),
 	m_landPos(landPos)
 {
 	m_warningEffect = EffectManager::GetInstance().Play(AsyncData::KingmechMissileWarningEffect, m_landPos, 0.0f, kEffectScale);
@@ -57,8 +63,33 @@ void KingmechMissile::ChangePhase(Phase next)
 		StopEffekseer3DEffect(m_warningEffect);
 		m_warningEffect = -1;
 		EffectManager::GetInstance().Play(AsyncData::KingmechMissileExplodeEffect, m_landPos, 0.0f, kEffectScale);
+		CreateExplodeCol();
 		break;
 	default:
 		break;
 	}
+}
+
+void KingmechMissile::CreateExplodeCol()
+{
+	CharacterBase::AttackData data = {
+		.attackPower = kExplodePower,
+		.brokenRate = 0.0f,
+		.knockBackPower = Vector3(0.0f, 0.0f, 0.0f),
+		.knockBackFrame = 0.0f,
+		.hitStopTime = 0.0f,
+		.kAttackColOffset = 0.0f,
+		.isKirimomi = false
+	};
+	//プレイヤーの着地の衝撃と同じ作り//寿命で消える
+	m_explodeCol = std::make_shared<FixedAttackCol>(m_owner, data, m_landPos);
+	m_explodeCol->ColInit({
+		.pos = m_landPos,
+		.offset = Vector3(0.0f, 0.0f, 0.0f),
+		.shape = std::make_unique<SphereShape>(kExplodeRadius),
+		.tag = {Collider::Faction::Enemy, Collider::ColRole::Attack},
+		.isActive = true,
+		.isTrigger = true,
+		.lifeTime = kExplodeTime
+		});
 }

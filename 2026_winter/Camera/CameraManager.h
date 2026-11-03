@@ -95,6 +95,17 @@ public:
 	//プレイヤーの攻撃がヒットしたとき//PlayerCamera中だけBattleSmoothCameraに遷移する
 	void OnPlayerAttackHit();
 
+	//カクつきの切り分け用のスイッチ(F2 の「Camera Check」。シーンをまたいで残る)
+	struct CheckSwitch
+	{
+		bool isStageCollision = true;//ステージとの当たり判定で寄る
+		bool isShake = true;//カメラシェイク
+		bool isFovPunch = true;//FOVパンチ
+		bool isLog = true;//Log/CameraEvents.txt に書く
+	};
+	static CheckSwitch& Switch();
+	void DrawDebugWindow();
+
 public:
 	void ChangeState(std::shared_ptr<CameraStateBase> newState);
 	void InitState(std::shared_ptr<CameraStateBase> newState);
@@ -111,9 +122,21 @@ private:
 	bool IsStageCollisionCamera() const;
 	//今のカメラにFovオフセットを足すか//演出カメラは足さない
 	bool IsFovOffsetCamera() const;
+	//カメラが前のフレームの動きから急に変わったら記録する
+	void CheckCameraJump(const Vector3& target);
+	static const char* GetCameraTypeName(int type);
 private:
 	std::weak_ptr<Stage> m_stage;
 	float m_collisionDist = -1.0f;//補正後の注視点からの距離(-1なら補正なし)
+	float m_collisionSnap = 0.0f;//このフレームに当たり判定で一瞬で寄った距離
+
+	//カクつきの記録用(前のフレームのカメラ)
+	bool m_hasLastCamera = false;
+	Vector3 m_lastRenderPos = Vector3();
+	Vector3 m_lastMove = Vector3();
+	Vector3 m_lastDir = Vector3();
+	float m_lastTurn = 0.0f;//前のフレームに向きが回った角度(度)
+	int m_jumpCount = 0;
 
 	//必要な情報
 	std::shared_ptr<CameraContext> m_context;

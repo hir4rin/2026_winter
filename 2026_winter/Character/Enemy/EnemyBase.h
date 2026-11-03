@@ -328,6 +328,7 @@ public:
 	//デバッグ用のImGuiウィンドウ(攻撃を選んで出す・ステータスを見る)//HasDebugWindowがtrueの敵だけEnemyManagerが呼ぶ
 	virtual bool HasDebugWindow()const { return false; }
 	void DrawDebugWindow();
+	virtual void DrawDebugWindowExtra() {}//敵ごとのデバッグの項目(専用のステートに行くボタンなど)
 
 
 

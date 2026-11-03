@@ -1,6 +1,8 @@
 ﻿#include "FrameProfiler.h"
 #include "imgui.h"
 #include <algorithm>
+#include <cmath>
+#include <cstdarg>
 #include <cstdio>
 #include <filesystem>
 
@@ -8,13 +10,35 @@ namespace
 {
 	const char* const kSpikeLogPath = "Log/FrameSpikes.txt";
 	const char* const kStatLogPath = "Log/FrameStats.txt";
+	const char* const kEventLogPath = "Log/CameraEvents.txt";
+}
+
+void FrameProfiler::LogEvent(const char* format, ...)
+{
+	//起動して最初の記録のときにファイルを作り直す
+	if (!m_isEventFileStarted) std::filesystem::create_directories("Log");
+	FILE* file = nullptr;
+	if (fopen_s(&file, kEventLogPath, m_isEventFileStarted ? "a" : "w") != 0 || file == nullptr) return;
+	m_isEventFileStarted = true;
+	fprintf(file, "frame %d ", m_frameCount);
+	va_list args;
+	va_start(args, format);
+	vfprintf(file, format, args);
+	va_end(args);
+	fprintf(file, "\n");
+	fclose(file);
 }
 
 void FrameProfiler::BeginFrame()
 {
 	const LONGLONG now = GetNowHiPerformanceCount();
 	//前のフレームの始まりからの間隔(待ちも含む。60fps なら 16.7ms で、ばらつくとカクついて見える)
-	if (m_frameStart != 0) AddStat("PERIOD", static_cast<float>(now - m_frameStart) / 1000.0f);
+	if (m_frameStart != 0)
+	{
+		const float periodMs = static_cast<float>(now - m_frameStart) / 1000.0f;
+		AddStat("PERIOD", periodMs);
+		if (std::abs(periodMs - m_expectedPeriodMs) >= kPeriodJitterMs) WritePeriodJitter(periodMs);
+	}
 	m_frameStart = now;
 	m_lastMark = m_frameStart;
 	m_sections.clear();
@@ -88,6 +112,26 @@ void FrameProfiler::WriteSpike(float totalMs)
 	fclose(file);
 }
 
+void FrameProfiler::WritePeriodJitter(float periodMs)
+{
+	++m_jitterCount;
+	//m_lastSections はまだ前のフレームの内訳
+	if (!m_isFileStarted) std::filesystem::create_directories("Log");
+	FILE* file = nullptr;
+	if (fopen_s(&file, kSpikeLogPath, m_isFileStarted ? "a" : "w") != 0 || file == nullptr) return;
+	m_isFileStarted = true;
+	fprintf(file, "frame %d period %.1fms%s:", m_frameCount - 1, periodMs, m_isHighPriority ? " (high)" : "");
+	for (const auto& section : m_lastSections) fprintf(file, " %s=%.1f", section.name, section.ms);
+	fprintf(file, "\n");
+	fclose(file);
+}
+
+void FrameProfiler::SetHighPriority(bool isHigh)
+{
+	m_isHighPriority = isHigh;
+	SetThreadPriority(GetCurrentThread(), isHigh ? THREAD_PRIORITY_HIGHEST : THREAD_PRIORITY_NORMAL);
+}
+
 void FrameProfiler::SetRefreshIndex(LONGLONG refreshIndex)
 {
 	if (m_lastRefreshIndex >= 0)
@@ -116,7 +160,9 @@ void FrameProfiler::DrawDebugWindow()
 	float worst = 0.0f;
 	for (float ms : m_history) worst = (std::max)(worst, ms);
 	ImGui::Text("Last %.1f ms / Worst(3s) %.1f ms / Spikes(>%.0fms) %d", m_lastTotalMs, worst, kSpikeMs, m_spikeCount);
-	ImGui::Text("Refresh miss %d", m_refreshMissCount);
+	ImGui::Text("Refresh miss %d / Period jitter(>%.0fms) %d", m_refreshMissCount, kPeriodJitterMs, m_jitterCount);
+	bool isHigh = m_isHighPriority;
+	if (ImGui::Checkbox("High thread priority", &isHigh)) SetHighPriority(isHigh);
 	ImGui::PlotLines("##history", m_history.data(), kHistoryNum, m_historyIndex, nullptr, 0.0f, 40.0f, ImVec2(0, 60));
 	for (const auto& section : m_lastSections) ImGui::Text("%-14s %5.2f ms", section.name, section.ms);
 	ImGui::End();

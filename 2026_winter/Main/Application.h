@@ -30,6 +30,7 @@ private:
 		WaitVSync,//WaitVSync でモニターの更新を待ってから出す
 		Dwm,//出した後に DwmFlush で Windows の画面の合成を待つ(ウィンドウモード用)
 		VBlank,//DXGI の WaitForVBlank でモニターの更新を待ってから出す(WaitVSync はたまに更新を見逃すため)
+		None,//待たない(重さを測る用。GPU の時間もフレームの間隔に出る)
 	};
 	PaceMode m_paceMode = PaceMode::Busy;
 

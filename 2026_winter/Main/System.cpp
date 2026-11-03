@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "EffekseerForDXLib.h"
 #include "Battle/BattleManager.h"
+#include "Render/CharacterLook.h"
 #include <cassert>
 
 namespace
@@ -9,6 +10,7 @@ namespace
 	//プレイヤーのモデル
 	//const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
 	//const std::string kPlayerModelPath = "data/Player02.mv1";
+	const std::string kPlayerLookCsvPath = "data/Player/Look/PlayerLook.csv";//Player.cpp の kLookCsvPath と同じにする
 	const std::string kPlayerModelPath = "data/Player03.mv1";	const std::string kPlayerWeaponModelPath = "data/Player_Weapon/katana_blend.mv1";//プレイヤーの刀
 	//必殺技中の刀身の長い刀
 	const std::string kPlayerUltWeaponModelPath = "data/Player_Weapon/red_katana_ult.mv1";
@@ -89,6 +91,8 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::TrainTunnelModel] = MV1LoadModel(kTrainTunnelModelPath.c_str());
 	m_asyncHandles[AsyncData::CyberStageModel] = MV1LoadModel(kCyberStageModelPath.c_str());
 	m_asyncHandles[AsyncData::CyberStageColModel] = MV1LoadModel(kCyberStageColModelPath.c_str());
+	//プレイヤーの法線マップ・マスク画像(重いので先に読む。Player の Load はこれを使い回す)
+	CharacterLook::PreloadGraphs(kPlayerLookCsvPath);
 
 	SetUseASyncLoadFlag(FALSE);//ほかの場所の読み込みは同期に戻す
 

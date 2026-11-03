@@ -16,9 +16,9 @@ namespace
 	constexpr int kLockOnCheckNum = 3;//ロックオン対象を探すとき、範囲を広げる回数
 	constexpr float kLockOnRangeExpandMult = 3.0f;//切り替え・再取得時の範囲の倍率
 
-	constexpr float kAssasinRange = 400.0f;//暗殺できる距離
-	constexpr float kAirAssasinRange = 800.0f;//空中暗殺できる距離(プレイヤーが空中のとき)
-	constexpr float kPartBrokenRange = 400.0f;//確殺できる距離
+	constexpr float kAssasinRange = 500.0f;//暗殺できる距離
+	constexpr float kAirAssasinRange = 1000.0f;//空中暗殺できる距離(プレイヤーが空中のとき)
+	constexpr float kPartBrokenRange = 700.0f;//確殺できる距離
 	constexpr float kExecuteReleaseMargin = 50.0f;//暗殺・確殺の対象を外す距離の余裕(境目でのちらつき防止)
 
 	constexpr float kDebugSphereRadius = 20.0f;//デバッグ描画の球の半径

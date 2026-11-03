@@ -30,6 +30,8 @@ namespace
 	constexpr float kPlayerOffset = 40.0f;//かプセルの足のオフセット
 	constexpr float kPlayerHead = 120.0f;//カプセルの頭の高さ
 
+	constexpr int kInitialHp = 100;//プレイヤーの初期HP
+
 	constexpr float kArea1MaxZ = 1197;//エリア1のz座標の範囲//上側
 	constexpr float kArea2MaxZ = 5275;//エリア2のz座標の範囲//右側
 

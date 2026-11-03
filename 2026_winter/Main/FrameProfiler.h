@@ -34,6 +34,13 @@ public:
 	/// 前のフレームから2回以上進んだ = 同じ絵が2回出た、0回 = 出なかった絵がある(どちらも見た目のカクッ)
 	/// </summary>
 	void SetRefreshIndex(LONGLONG refreshIndex);
+	/// <summary>出来事を Log/CameraEvents.txt に書く(printf と同じ書き方)。フレーム番号は FrameSpikes.txt と同じ</summary>
+	void LogEvent(const char* format, ...);
+	int GetFrameCount()const { return m_frameCount; }
+	/// <summary>モニターの1回の更新の長さ(ms)。フレームの間隔がこれから kPeriodJitterMs 以上ずれたら記録する</summary>
+	void SetExpectedPeriod(float ms) { m_expectedPeriodMs = ms; }
+	/// <summary>ゲームのスレッドの優先度を上げる(待ちから戻るのが遅れるのを防げるか試す用。F2 の「Frame Time」か起動の引数 -prio=high)</summary>
+	void SetHighPriority(bool isHigh);
 
 private:
 	struct Section
@@ -52,8 +59,10 @@ private:
 	static constexpr float kSpikeMs = 20.0f;//これより長いフレームを記録する(60fps は 16.7ms)
 	static constexpr int kHistoryNum = 180;//グラフに出すフレーム数(3秒)
 	static constexpr int kStatFrame = 60;
+	static constexpr float kPeriodJitterMs = 3.0f;//フレームの間隔がこれ以上ずれたら記録する
 
 	void WriteSpike(float totalMs);
+	void WritePeriodJitter(float periodMs);
 	void AddStat(const char* name, float ms);
 	void WriteStats();
 
@@ -73,4 +82,8 @@ private:
 	bool m_isFileStarted = false;
 	LONGLONG m_lastRefreshIndex = -1;
 	int m_refreshMissCount = 0;//モニターの更新と1対1にならなかった回数
+	bool m_isEventFileStarted = false;
+	float m_expectedPeriodMs = 1000.0f / 60.0f;
+	int m_jitterCount = 0;//間隔がずれた回数
+	bool m_isHighPriority = false;//ゲームのスレッドの優先度を上げているか(待ちから戻るのが遅れるのを防ぐ)
 };

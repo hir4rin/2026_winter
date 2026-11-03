@@ -27,6 +27,8 @@
 #include "Main/Input.h"
 #include "../Math/Matrix4x4.h"
 #include "Main/imguiApp.h"
+#include "Main/FrameProfiler.h"
+#include "imgui.h"
 #include <algorithm>
 #include <cmath>
 
@@ -48,6 +50,11 @@ namespace
 	constexpr float kCollisionMargin = 20.0f;//当たった位置から注視点側に離す距離
 	constexpr float kCollisionMinDist = 30.0f;//注視点に近づける限界
 	constexpr float kCollisionReturnRate = 0.1f;//離れるときの戻る速さ
+
+	//カクつきの記録
+	constexpr float kSnapLogDist = 5.0f;//当たり判定でこれ以上一瞬で寄ったら記録する
+	constexpr float kJumpMoveChange = 20.0f;//カメラの1フレームの移動が前のフレームからこれ以上変わったら記録する
+	constexpr float kJumpTurnChange = 2.0f;//カメラの向きの1フレームの回転(度)が前のフレームからこれ以上変わったら記録する
 }
 
 CameraManager::CameraManager()
@@ -89,6 +96,7 @@ void CameraManager::Update()
 
 	m_renderFov = m_currentState->GetFov() + FovOffsetUpdate() + FovPunchUpdate();
 	m_renderFov = std::clamp(m_renderFov, kFovMin, kFovMax);
+	CheckCameraJump(m_currentState->GetTarget());
 
 	SetCameraPositionAndTarget_UpVecY(m_renderPos.ToDxLibVector(), m_currentState->GetTarget().ToDxLibVector());
 	SetupCamera_Perspective(m_renderFov);
@@ -98,8 +106,9 @@ void CameraManager::Update()
 
 Vector3 CameraManager::FixStageCollision(const Vector3& pos, const Vector3& target)
 {
+	m_collisionSnap = 0.0f;
 	auto stage = m_stage.lock();
-	if (!stage || !IsStageCollisionCamera())
+	if (!stage || !IsStageCollisionCamera() || !Switch().isStageCollision)
 	{
 		m_collisionDist = -1.0f;
 		return pos;
@@ -123,6 +132,12 @@ Vector3 CameraManager::FixStageCollision(const Vector3& pos, const Vector3& targ
 	//今の判定よりステージとのほうが短いときは寄る
 	if (m_collisionDist < 0.0f || goalDist < m_collisionDist)
 	{
+		const float prevDist = m_collisionDist < 0.0f ? rawDist : m_collisionDist;
+		if (hit.HitFlag && prevDist - goalDist >= kSnapLogDist)
+		{
+			m_collisionSnap = prevDist - goalDist;
+			if (Switch().isLog) FrameProfiler::GetInstance().LogEvent("collision snap %.0f -> %.0f (raw %.0f)", prevDist, goalDist, rawDist);
+		}
 		m_collisionDist = goalDist;
 	}
 	else
@@ -153,6 +168,81 @@ bool CameraManager::IsFovOffsetCamera() const
 		type == CameraStateBase::Type::LockOnCamera ||
 		type == CameraStateBase::Type::BattleSmoothCamera;
 }
+CameraManager::CheckSwitch& CameraManager::Switch()
+{
+	static CheckSwitch checkSwitch;
+	return checkSwitch;
+}
+
+void CameraManager::CheckCameraJump(const Vector3& target)
+{
+	const Vector3 toTarget = target - m_renderPos;
+	if (toTarget.Magnitude() <= 0.0f)return;
+	const Vector3 dir = toTarget.Normalize();
+	if (!m_hasLastCamera)
+	{
+		m_hasLastCamera = true;
+		m_lastRenderPos = m_renderPos;
+		m_lastDir = dir;
+		return;
+	}
+
+	//1フレームの移動と回転が、前のフレームから急に変わったら記録する(なめらかに動いているなら差は小さい)
+	const Vector3 move = m_renderPos - m_lastRenderPos;
+	const float turn = std::acos(std::clamp(dir.Dot(m_lastDir), -1.0f, 1.0f)) * 180.0f / DX_PI_F;
+	const float moveChange = (move - m_lastMove).Magnitude();
+	const float turnChange = std::abs(turn - m_lastTurn);
+	if (Switch().isLog && (moveChange >= kJumpMoveChange || turnChange >= kJumpTurnChange))
+	{
+		++m_jumpCount;
+		FrameProfiler::GetInstance().LogEvent("JUMP move %.0f (prev %.0f, change %.0f) turn %.1f (prev %.1f) | %s snap %.0f shake %.1f punch %.1f timescale %.2f",
+			move.Magnitude(), m_lastMove.Magnitude(), moveChange, turn, m_lastTurn,
+			GetCameraTypeName(static_cast<int>(m_currentState->GetCameraType())), m_collisionSnap,
+			m_shakeTimer > 0.0f ? m_shakePower : 0.0f, m_fovPunchOffset * 180.0f / DX_PI_F, System::GetInstance().GetTimeScale());
+	}
+	m_lastRenderPos = m_renderPos;
+	m_lastMove = move;
+	m_lastDir = dir;
+	m_lastTurn = turn;
+}
+
+const char* CameraManager::GetCameraTypeName(int type)
+{
+	switch (static_cast<CameraStateBase::Type>(type))
+	{
+	case CameraStateBase::Type::PlayerCamera: return "PlayerCamera";
+	case CameraStateBase::Type::UltCamera: return "UltCamera";
+	case CameraStateBase::Type::LockOnCamera: return "LockOnCamera";
+	case CameraStateBase::Type::FinishingSecondCamera: return "FinishingSecondCamera";
+	case CameraStateBase::Type::AssasinCamera: return "AssasinCamera";
+	case CameraStateBase::Type::AssasinCameraStart: return "AssasinCameraStart";
+	case CameraStateBase::Type::PartBrokenCameraA: return "PartBrokenCameraA";
+	case CameraStateBase::Type::PartBrokenCameraAStart: return "PartBrokenCameraAStart";
+	case CameraStateBase::Type::PartBrokenCameraAEnd: return "PartBrokenCameraAEnd";
+	case CameraStateBase::Type::PartBrokenCameraB: return "PartBrokenCameraB";
+	case CameraStateBase::Type::PartBrokenCameraBStart: return "PartBrokenCameraBStart";
+	case CameraStateBase::Type::SkillKessatuCamera: return "SkillKessatuCamera";
+	case CameraStateBase::Type::AirAssasinCamera: return "AirAssasinCamera";
+	case CameraStateBase::Type::AirAssasinCameraStart: return "AirAssasinCameraStart";
+	case CameraStateBase::Type::BattleSmoothCamera: return "BattleSmoothCamera";
+	default: return "Other";
+	}
+}
+
+void CameraManager::DrawDebugWindow()
+{
+	CheckSwitch& s = Switch();
+	ImGui::Begin("Camera Check");
+	ImGui::Checkbox("Stage Collision", &s.isStageCollision);
+	ImGui::Checkbox("Shake", &s.isShake);
+	ImGui::Checkbox("FOV Punch", &s.isFovPunch);
+	ImGui::Checkbox("Log (Log/CameraEvents.txt)", &s.isLog);
+	ImGui::Text("Jump %d / Frame %d", m_jumpCount, FrameProfiler::GetInstance().GetFrameCount());
+	ImGui::Text("State %s", GetCameraTypeName(static_cast<int>(m_currentState->GetCameraType())));
+	ImGui::Text("Collision dist %.0f", m_collisionDist);
+	ImGui::End();
+}
+
 void CameraManager::Draw()
 {
 }
@@ -275,6 +365,8 @@ void CameraManager::SetPhotoCamera()
 
 void CameraManager::StartCameraShake(float power, float time)
 {
+	if (!Switch().isShake)return;
+	if (Switch().isLog) FrameProfiler::GetInstance().LogEvent("shake power %.1f time %.0f", power, time);
 	m_shakePower = power;
 	m_shakeTimer = time;
 	m_shakeTimerMax = time;
@@ -304,11 +396,13 @@ Vector3 CameraManager::CameraShakeUpdate()
 
 void CameraManager::StartFovPunch(float angleDeg, float time, float inFrame, float outPower)
 {
+	if (!Switch().isFovPunch)return;
 	float angle = angleDeg * DX_PI_F / 180.0f;
 	//クールタイム中は無視
 	if (m_fovPunchCoolTimer > 0.0f)return;
 	//今より弱いなら無視
 	if (std::abs(angle) < std::abs(m_fovPunchOffset))return;
+	if (Switch().isLog) FrameProfiler::GetInstance().LogEvent("fov punch %.1f deg time %.0f in %.0f", angleDeg, time, inFrame);
 
 	m_fovPunchAngle = angle;
 	m_fovPunchTimer = 0.0f;
@@ -426,6 +520,12 @@ void CameraManager::ChangeState(std::shared_ptr<CameraStateBase> newState)
 		m_currentState->GetCameraType() == newState->GetCameraType())
 	{
 		return;
+	}
+
+	if (Switch().isLog)
+	{
+		const int prevType = m_currentState ? static_cast<int>(m_currentState->GetCameraType()) : -1;
+		FrameProfiler::GetInstance().LogEvent("state %s -> %s", GetCameraTypeName(prevType), GetCameraTypeName(static_cast<int>(newState->GetCameraType())));
 	}
 
 	// 保持

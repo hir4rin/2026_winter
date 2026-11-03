@@ -80,6 +80,12 @@ void ModelShaderManager::Terminate()
 	m_isInit = false;
 }
 
+void ModelShaderManager::ResetSceneState()
+{
+	m_isBlackMode = false;
+	SetStageLights({}, 0.0f, 0.0f, 0.0f);
+}
+
 void ModelShaderManager::DrawModel(int modelHandle)
 {
 	if (!m_isInit)

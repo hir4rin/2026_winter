@@ -26,8 +26,10 @@ public:
 
 	//シェーダーのコンパイル・読み込み
 	void Init();
-	//シェーダーの解放
+	//シェーダーの解放(アプリの終わりに1回)
 	void Terminate();
+	//シーンを出るときに、黒モード・明かりを戻す(シェーダーは次のシーンでも使うので消さない)
+	void ResetSceneState();
 
 	//trueの間、DrawModelで描くモデルを真っ黒にする(血殺中の敵用)
 	void SetBlackMode(bool isBlack) { m_isBlackMode = isBlack; }

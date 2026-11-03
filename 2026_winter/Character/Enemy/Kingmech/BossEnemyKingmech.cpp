@@ -13,7 +13,9 @@
 #include "Character/Enemy/Kingmech/Part/KingmechGatling.h"
 #include "Character/Enemy/Kingmech/Part/KingmechMissile.h"
 #include <algorithm>
+#include "imgui.h"
 #include "Character/Enemy/Kingmech/State/BossPartThrow.h"
+#include "Character/Enemy/Kingmech/State/KingmechMissileTurn.h"
 
 
 
@@ -36,6 +38,7 @@ namespace
 	constexpr int kRushAttackIndex = 6;//とびかかり(突進)
 
 	constexpr int kLargeAttackInterval = 10;//この回数攻撃したら全体攻撃
+	constexpr int kMissileTurnInterval = 6;//この回数攻撃したらミサイルのターン
 	constexpr float kBackDot = -0.5f;//正面との内積がこれより小さければ背後(120度より後ろ)
 	constexpr float kRushMinDistance = 400.0f;//この距離より遠ければ突進
 	constexpr float kRushMaxDistance = 1000.0f;//突進を出す最大の距離
@@ -54,6 +57,7 @@ BossEnemyKingmech::BossEnemyKingmech(std::weak_ptr<Player> player, Vector3 start
 	InitializeAttackList(DataManager::GetInstance().GetBossEnemyKingmechAttackRawData());
 
 	m_rb.m_pos = startPos;
+	m_arenaCenter = startPos;//出てくる位置を闘技場の中央とする
 	m_hp = m_status.hp;
 
 	m_modelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::KingmechModel));
@@ -219,7 +223,23 @@ void BossEnemyKingmech::ThrowPart()
 
 void BossEnemyKingmech::FireMissile(const Vector3& landPos)
 {
-	m_missiles.push_back(std::make_unique<KingmechMissile>(landPos));
+	m_missiles.push_back(std::make_unique<KingmechMissile>(GetSharedPtr(), landPos));
+}
+
+void BossEnemyKingmech::DrawDebugWindowExtra()
+{
+	ImGui::SeparatorText("Kingmech");
+	//死亡・処刑中は変えない
+	const bool canChange = !m_isLifeZero && !m_isExecuted;
+	if (!canChange)ImGui::BeginDisabled();
+	if (ImGui::Button("Missile Turn"))
+	{
+		m_attackCountSinceMissile = 0;
+		ChangeState(std::make_shared<KingmechMissileTurn>(GetWeakPtr()));
+	}
+	if (!canChange)ImGui::EndDisabled();
+	ImGui::SameLine();
+	ImGui::Text("Count %d / %d", m_attackCountSinceMissile, kMissileTurnInterval);
 }
 
 void BossEnemyKingmech::CutGatling(Collider& other, AttackData& data)
@@ -318,6 +338,7 @@ std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterAttackEnd()
 		{
 			++m_attackCountSinceLarge;
 		}
+		++m_attackCountSinceMissile;
 	}
 
 	//連撃//今の攻撃にnextAttackがあれば、予備動作なしで次の攻撃へ
@@ -334,6 +355,13 @@ std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterAttackEnd()
 
 std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterIdle()
 {
+	//何回か攻撃したらミサイルのターン
+	if (m_attackCountSinceMissile >= kMissileTurnInterval)
+	{
+		m_attackCountSinceMissile = 0;
+		return std::make_shared<KingmechMissileTurn>(GetWeakPtr());
+	}
+
 	//ボスはすぐ攻撃//出せる攻撃が無ければIdleのまま
 	//あとでSelectAttackIndexを変えないといけない
 	const int attackIndex = SelectAttackIndex();

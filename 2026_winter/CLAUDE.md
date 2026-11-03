@@ -966,6 +966,27 @@
   - **デバッグ: M キーでプレイヤーの足元に1発**(F は敵を出すのに使用中)。
   - 次: ゲームで見る → FixedAttackCol で判定 → 攻撃ステート(KingmechMissileRain)で複数発。
 
+### 2026-11-03 Kingmech のミサイルのターン(KingmechMissileTurn)
+- 方針(会話で決めた): ミサイルは攻撃CSVの1行ではなく、**中央へ移動 → 撃ちまくる → 後隙** の専用ステート。`EnemyAttack` は継承しない(アニメ1本で終わる作りに合わないため)。`BossPartThrow` と同じ作り。
+- `Kingmech/State/KingmechMissileTurn.h/.cpp`(vcxproj/filters に登録)。Phase = Move / Fire / Wait / Recover。定数は .cpp 先頭。
+  - Move: `ChaseTarget(m_arenaCenter, 50, 8)`、アニメ `Run_Mech`。着くか300Fで Fire。落下禁止オン。
+  - Fire: `Roar` のループ、プレイヤーの方を向いて撃つ(撃ち方は下の追記)。着弾の高さは中央の y。
+  - Wait: `HasMissile()` が false(全部落ちた)まで。Recover: `Idle` で90F → `NextAfterRecover`。
+- ボス: `m_arenaCenter` = 出てくる位置(startPos)。`m_attackCountSinceMissile` を `NextAfterAttackEnd` で数え(連撃は最後まで終わって1回)、`kMissileTurnInterval`(6)以上なら `NextAfterIdle` の最初でこのステートへ(0に戻す)。攻撃権は取らない。
+- **まだ**: ターン中に攻撃されると `OnDamage` で HitGround に移って止まる(BossPartThrow と同じく「ダメージだけ」の分岐に入れる)。ガードブレイクの切り上げでガトリングが切れて中断する。
+  攻撃CSVの6番(表ではミサイルの雨)は、コードでは突進(`kRushAttackIndex`)。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(移動の速さ・Roar のループ・撃つ数と間隔)。
+- (追記)デバッグ: F2 の Enemy Debug に「Kingmech」の欄。**Missile Turn ボタンですぐこのステートへ**(数も0に戻す)。横に今の数 / 間隔。
+  `EnemyBase::DrawDebugWindowExtra()`(仮想、標準は空。Control と Attack の間で呼ぶ)を Kingmech が上書き。
+- (追記)撃ち方を変えた: **プレイヤーの足元に1発を30Fおきに5回 × 3セット、セットの間は90F休憩**(`kShotNum` / `kSetNum` / `kFireInterval` / `kSetRestTime`)。輪・ランダムの撃ち方は消した。
+  3セット目の後は今まで通り Wait(全部落ちるまで、最後の1発から約64F)→ Recover(90F)。撃ち始めは Fire に入って30F後。
+- (追記)**ミサイルの当たり判定**: プレイヤーの着地の衝撃(`m_burstAttackCol`)と同じ作り。
+  - `Collision/FixedAttackCol.h/.cpp`(vcxproj/filters に登録): `AttackCol` を継承して `ApplyPos` だけ「決めた位置に置く」に変えたもの(AttackCol は毎フレーム持ち主の位置へ動くため)。
+  - `KingmechMissile`: コンストラクタで撃ったボス(weak_ptr)を受け取る。Explode に入ったとき `CreateExplodeCol` で着弾位置に球(半径 `kExplodeRadius` 190、中心は地面)、`{Enemy, Attack}`、`lifeTime` = `kExplodeTime`(4F)。攻撃力 `kExplodePower`(150、仮)。
+  - CollisionManager は判定を weak_ptr で持つので、ミサイルが `m_explodeCol`(shared_ptr)で持つ。寿命かミサイルが消えたときに一覧から外れる。
+  - 何もしていないのでジャスト回避もできる。プレイヤーは被弾でノックバックの値を使わないので、吹き飛ばしは無い(ダメージ＋被弾のモーション)。
+  - MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(F3 で赤い球が4F出るか、当たる範囲が予告の円と合うか、ジャンプでよけられるか)。
+
 ### 2026-10-31 ステージ1(Ch1、Cyberpunk Megapolis)
 - **設計・作り方・直し方は `../tools/CyberStage/ステージ1_設計.md`**。Ch1 の間取り図の順番で21区画・全長約490m。フック(ワイヤー)の3か所は壁走りの連続・壁蹴りの縦穴に置き換えた。
 - Unity(`ninja_motion`)に Cyberpunk Megapolis(Built-in 版のみ、HDRP/URP のサブパッケージは入れていない)を入れ、`Assets/Editor/CyberStageTool.cs` で組み立て → 書き出し。
@@ -1079,6 +1100,31 @@
   - `-bench=3600`(フレーム数を指定)で60秒ずつ測ると、WaitVSync・WaitForVBlank とも Refresh miss 0・20ms超え 0〜2回で、はっきりした差は無かった。
   - **次**: ゲームでカクッとした瞬間に「Refresh miss」が増えるかを見る。増えない → 画面に出す所ではなく、ゲームの動き(カメラ・アニメ・スロー・敵の出現など)が原因。
   - ヒットストップの時間(`hitStopTime`)は攻撃のデータにあるが、どこからも使われていない(ヒットストップは今は無い)。
+
+### 2026-11-03 列車ステージが重い気がする件・ステージに入るときの待ち
+- ベンチに `-stage=番号`(StageType。列車=2)と `-pace=none`(待たない。GPU の時間も PERIOD に出る)を足した。例: `2026_winter.exe -bench=1500 -stage=2 -pace=none`。
+- 遊んでいる間の重さ(Release、スタート地点の1フレームの間隔): デモ 0.35ms / 列車 0.47ms / ステージ1 0.40ms。**処理は重くない**。
+  重く感じるのは、トンネルが +Z へ 20/F で流れ、プレイヤーも +Z へ進む(歩き12・ダッシュ18)ので壁に対して後ろへ下がって見えるせいだと思う。直し方(進む向きを逆にする / 流す速さを落とす)は未定。
+- **ステージに入るときの待ち(約0.6秒)**: SceneMain::Init を測った(どのステージでも同じ)。
+  プレイヤーの生成 約425ms(CharacterLook が `data/Player/Look/` の PNG 8枚・約29MB を毎回 LoadGraph している分がほとんどと思われる)、シェーダー 約175ms(`ModelShaderManager::Init` が毎回 D3DCompileFromFile。SceneMain のデストラクタで Terminate するので入るたびにコンパイルし直す)。
+  ステージの MV1DuplicateModel・当たり判定の準備は 0.3〜0.6ms、データの読み込み 1.3ms、カメラ・UI 11ms。**MV1DuplicateModel が原因ではない**。
+  - **対策した(SceneMain::Init 約620ms → 約16ms)**:
+    - シェーダー: `Application::Init` のモデル読み込みの後で1回だけ `ModelShaderManager::Init`、解放は `Application::Terminate`。SceneMain のデストラクタは `ResetSceneState()`(黒モード・明かりを戻すだけ)。
+    - 画像: `CharacterLook` が読んだ画像をパスごとに覚えて使い回す(`GraphCache`、解放は `ReleaseGraphCache` をアプリの終わりに)。
+      `System::LoadAll` の非同期読み込みの中で `CharacterLook::PreloadGraphs("data/Player/Look/PlayerLook.csv")`(モデルと一緒に読む)。System.cpp の `kPlayerLookCsvPath` は Player.cpp の `kLookCsvPath` と同じにすること(違っても Load のときに読むだけ)。
+    - 起動はシェーダーの分(約175ms)だけ長くなる。**ゲームでプレイヤーの見た目が前と同じかはまだ見ていない**。
+- **戦闘中に少しカクつく(ステージ1)**: 5分のプレイの記録では、処理は0.1〜0.3ms・画面の更新の取りこぼし0回。フレームは落ちていないので、絵の動き(カメラ)を疑っている。
+  - 切り分け用に、カメラの出来事を `Log/CameraEvents.txt`(起動ごとに作り直し、フレーム番号は FrameSpikes.txt と同じ)に書くようにした(`FrameProfiler::LogEvent`)。
+    - `collision snap A -> B`: ステージとの当たり判定で一瞬で寄った(5以上)。`shake` / `fov punch`: 入ったとき。`state A -> B`: カメラのステートが変わった。
+    - `JUMP`: カメラの1フレームの移動が前のフレームから20以上、または向きの回転が2°以上変わった。そのときのステート・寄った距離・シェイク・パンチ・タイムスケールも書く。
+  - F2 の「Camera Check」(Release でも出る): Stage Collision / Shake / FOV Punch を個別に切れる、Log のオン・オフ、JUMP の回数。スイッチはシーンをまたいで残る(`CameraManager::Switch()`)。
+  - 何もしないときは誤検知が出ないことだけ確認した。
+  - (追記)ユーザーによると、カクッとしたときに F2 の「Frame Time」のグラフが乱れる → カメラではなくフレームの間隔のずれ。
+    - `Flip` を `Wait`(WaitForVBlank の待ち)と `Flip`(ScreenFlip)に分けた。
+    - フレームの間隔がモニターの1回分(`SetExpectedPeriod`、1000/リフレッシュレート)から3ms以上ずれたら、前のフレームの内訳を `Log/FrameSpikes.txt` に `frame N period Xms:` で書く。F2 に回数(Period jitter)。
+    - F2「Frame Time」の「High thread priority」(または起動の引数 `-prio=high`)で、ゲームのスレッドの優先度を上げられる(待ちから戻るのが遅れるのを防げるか試す用)。
+    - ベンチ(立っているだけ・60秒)ではずれは2〜3回だけで、優先度を上げても差は無かった。1回、`Update`(SceneMain の区切りの後: カメラ・UI・エフェクトなど)が20msかかったフレームがあった(frame 3539)。
+    - **次: 戦闘してカクッとしたときの `period` の行で、どこが長いか(Upd:〜 / Draw:〜 / Wait / Flip)を見る**。
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。

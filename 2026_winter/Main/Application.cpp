@@ -3,11 +3,14 @@
 #include "Game.h"
 #include "Scene/StageSelectScene.h"
 #include "Scene/SceneMain.h"
+#include <algorithm>
 #include <cstring>
 #include "Scene/SceneController.h"
 #include "System.h"
 #include "imguiApp.h"
 #include "FrameProfiler.h"
+#include "Render/ModelShaderManager.h"
+#include "Render/CharacterLook.h"
 #include <d3d11.h>
 #include <dxgi.h>
 #include <dwmapi.h>
@@ -57,6 +60,8 @@ bool Application::Init()
 	}
 	//60fps の合わせ方を決める
 	InitFramePacing();
+	FrameProfiler::GetInstance().SetExpectedPeriod(1000.0f / (std::max)(GetRefreshRate(), 1));
+	if (strstr(GetCommandLineA(), "-prio=high")) FrameProfiler::GetInstance().SetHighPriority(true);
 	//乱数の種を起動時の時刻にする(GetRandが起動ごとに違う並びになる)
 	SRand(GetNowCount());
 	// Effekseerを初期化する。
@@ -103,6 +108,8 @@ bool Application::Init()
 			return false;
 		}
 	}
+	//モデル用のシェーダーは起動時に1回だけコンパイルする(シーンをまたいで使う)
+	ModelShaderManager::GetInstance().Init();
 
 	return true;
 }
@@ -111,13 +118,16 @@ void Application::Run()
 {
 	SceneController sceneController;
 	//起動の引数に -bench を付けると、ステージ1にそのまま入って kBenchFrame フレーム動かして終わる(重さを測る用。Log/FrameStats.txt)
-	//-bench=3600 のようにフレーム数も変えられる
+	//-bench=3600 のようにフレーム数も変えられる。-stage=2 でステージの番号(StageType)を選べる
 	const char* benchArg = strstr(GetCommandLineA(), "-bench");
 	const bool isBench = benchArg != nullptr;
 	const int benchFrame = (isBench && benchArg[6] == '=') ? atoi(benchArg + 7) : kBenchFrame;
 	if (isBench)
 	{
-		sceneController.ResetScene<SceneMain>(StageType::Cyber);
+		const char* stageArg = strstr(GetCommandLineA(), "-stage=");
+		const int stageNo = stageArg ? atoi(stageArg + 7) : static_cast<int>(StageType::Cyber);
+		const bool isValidStage = stageNo >= 0 && stageNo < static_cast<int>(StageType::Num);
+		sceneController.ResetScene<SceneMain>(isValidStage ? static_cast<StageType>(stageNo) : StageType::Cyber);
 	}
 	else
 	{
@@ -163,7 +173,7 @@ void Application::Run()
 		FrameProfiler::GetInstance().Mark("ImGui");
 		//描画した内容を画面に反映する
 		//モニターの更新を待ってから出す
-		bool isWaited = false;
+		bool isWaited = m_paceMode == PaceMode::None;
 		if (m_paceMode == PaceMode::WaitVSync)
 		{
 			WaitVSync(1);
@@ -178,6 +188,7 @@ void Application::Run()
 				isWaited = true;
 			}
 		}
+		FrameProfiler::GetInstance().Mark("Wait");
 		ScreenFlip();
 		//画面の合成を待つ(フルスクリーンなどで使えないときは自前の待ちにする)
 		if (m_paceMode == PaceMode::Dwm && !m_isFullScreen)
@@ -206,6 +217,9 @@ void Application::Terminate()
 
 	//読み込んだモデル・エフェクトを解放する(Effekseer・DxLibの終了より前に行う)
 	System::GetInstance().Terminate();
+	//シーンをまたいで使い回しているシェーダー・キャラの画像
+	ModelShaderManager::GetInstance().Terminate();
+	CharacterLook::ReleaseGraphCache();
 
 	// Effekseerを終了する。
 	Effkseer_End();
@@ -227,6 +241,7 @@ void Application::InitFramePacing()
 	else if (strstr(commandLine, "-pace=wait")) m_paceMode = PaceMode::WaitVSync;
 	else if (strstr(commandLine, "-pace=dwm")) m_paceMode = PaceMode::Dwm;
 	else if (strstr(commandLine, "-pace=vblank")) m_paceMode = PaceMode::VBlank;
+	else if (strstr(commandLine, "-pace=none")) m_paceMode = PaceMode::None;
 	else m_paceMode = m_isVSyncPacing ? PaceMode::VBlank : PaceMode::Busy;
 	//ScreenFlip の VSync 待ちは前のやり方(both)のときだけ
 	SetWaitVSyncFlag(m_paceMode == PaceMode::VSyncAndBusy ? TRUE : FALSE);

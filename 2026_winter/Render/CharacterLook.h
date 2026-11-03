@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "DxLib.h"
+#include <map>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,10 @@ public:
 	void Draw(int modelHandle);
 	/// <summary>光の設定の ImGui ウィンドウ(F2 の表示中)</summary>
 	static void DrawDebugWindow();
+	/// <summary>CSV の画像だけ先に読んでおく(起動時の非同期読み込みの間に呼ぶ。Load ではこれを使い回す)</summary>
+	static void PreloadGraphs(const std::string& csvPath);
+	/// <summary>使い回している画像を解放する(アプリの終わりに1回)</summary>
+	static void ReleaseGraphCache();
 
 private:
 	//1マテリアル分
@@ -67,9 +72,11 @@ private:
 
 	void Release();
 	void SetMaterialConstant(const MaterialLook& look);
+	//読んだ画像(パス→ハンドル)。読み込みが重いのでシーンをまたいで使い回す
+	static std::map<std::string, int>& GraphCache();
+	static int LoadCachedGraph(const std::string& dir, const std::string& name);
 
 	std::vector<MaterialLook> m_materials;//添え字はモデルのマテリアル番号
-	std::vector<int> m_graphs;//読んだ画像(解放用)
 	int m_constantBuffer = -1;
 	bool m_isLoaded = false;
 };
