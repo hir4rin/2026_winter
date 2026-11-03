@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11月1〜2日の作業ノート</title>
+<style>
+:root{
+  --bg:#f7f6f2; --card:#ffffff; --ink:#1f2328; --sub:#5b6270; --line:#d8d6cf;
+  --warm:#e8862a; --warm-soft:#fbe6cf; --cool:#2a9fd6; --cool-soft:#d6eefa;
+  --bad:#d2453b; --bad-soft:#fadcd8; --good:#2e9a5a; --good-soft:#d7f0e0;
+  --dim:#8a93a6; --code:#f0eee8; --accent:#6a4fc4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171c; --card:#1d2027; --ink:#e7e9ee; --sub:#a3a9b6; --line:#343844;
+    --warm:#f39a45; --warm-soft:#4a3320; --cool:#4db8ec; --cool-soft:#1d3a4a;
+    --bad:#f0675c; --bad-soft:#4a2421; --good:#4fc47f; --good-soft:#1f3f2c;
+    --dim:#7d8597; --code:#262a33; --accent:#9b84f0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171c; --card:#1d2027; --ink:#e7e9ee; --sub:#a3a9b6; --line:#343844;
+  --warm:#f39a45; --warm-soft:#4a3320; --cool:#4db8ec; --cool-soft:#1d3a4a;
+  --bad:#f0675c; --bad-soft:#4a2421; --good:#4fc47f; --good-soft:#1f3f2c;
+  --dim:#7d8597; --code:#262a33; --accent:#9b84f0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic UI","Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.75;font-size:15.5px}
+main{max-width:920px;margin:0 auto;padding:32px 16px 80px}
+h1{font-size:1.75rem;margin:0 0 4px}
+h2{font-size:1.3rem;margin:56px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+h3{font-size:1.08rem;margin:28px 0 8px}
+p{margin:8px 0}
+.lead{color:var(--sub)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.toc a{color:var(--accent);text-decoration:none}
+.toc ol{margin:4px 0;padding-left:1.4em}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-family:Consolas,"BIZ UDGothic",monospace;font-size:.9em;word-break:break-all}
+pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;font-size:.86em;line-height:1.55}
+pre code{background:none;padding:0}
+table{border-collapse:collapse;width:100%;font-size:.93em;margin:10px 0}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+.tablewrap{overflow-x:auto}
+.tag{display:inline-block;font-size:.78em;padding:1px 8px;border-radius:99px;margin-right:4px;font-weight:bold}
+.t-bad{background:var(--bad-soft);color:var(--bad)}
+.t-good{background:var(--good-soft);color:var(--good)}
+.t-wait{background:var(--warm-soft);color:var(--warm)}
+.note{border-left:4px solid var(--warm);padding:8px 12px;background:var(--warm-soft);border-radius:0 8px 8px 0;margin:12px 0}
+.point{border-left:4px solid var(--cool);padding:8px 12px;background:var(--cool-soft);border-radius:0 8px 8px 0;margin:12px 0}
+figure{margin:16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:.86em;color:var(--sub);margin-top:6px}
+svg text{fill:var(--ink);font-family:"Yu Gothic UI","Hiragino Sans",sans-serif}
+svg .sub{fill:var(--sub)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.timeline{list-style:none;padding:0;margin:0}
+.timeline li{position:relative;padding:4px 0 10px 22px;border-left:2px solid var(--line);margin-left:6px}
+.timeline li::before{content:"";position:absolute;left:-7px;top:10px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+
+<h1>11月1〜2日の作業ノート</h1>
+<p class="lead">ステージ1の連続壁走り・ステージの明かり・プレイヤーの見た目・カクつき・床のちかちか、までの全部のまとめ。<br>
+<span class="tag t-wait">未確認</span>が付いているものは、ビルドとテスト用プログラムでは確かめたが、ゲームの中ではまだ確かめていないもの。</p>
+
+<div class="card toc">
+<b>目次</b>
+<ol>
+<li><a href="#s1">全体の地図</a></li>
+<li><a href="#s2">ステージ1(Unity 側)の追加</a></li>
+<li><a href="#s3">壁走りから次の壁へ張り付けなかったバグ</a></li>
+<li><a href="#s4">ステージの明かり ― 3回作り直した話</a></li>
+<li><a href="#s5">今のシェーダー(LitModelPS)の中身</a></li>
+<li><a href="#s6">プレイヤーの見た目(CharacterLook)</a></li>
+<li><a href="#s7">カクつき対策</a></li>
+<li><a href="#s8">変えたファイルの一覧</a></li>
+<li><a href="#s9">調整のつまみ・確認のしかた</a></li>
+<li><a href="#s10">まだ残っていること</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1">1. 全体の地図</h2>
+<p>2日間でやったことは、大きく分けて「<b>ステージを作る(Unity)</b>」「<b>ゲームで光らせる(シェーダー)</b>」「<b>なめらかに動かす(カクつき)</b>」の3つ。</p>
+
+<figure>
+<svg viewBox="0 0 860 330" role="img" aria-label="Unityからゲームまでのデータの流れ">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--sub)"/></marker>
+  </defs>
+  <!-- Unity -->
+  <rect x="10" y="20" width="230" height="290" rx="12" fill="var(--code)" stroke="var(--line)"/>
+  <text x="125" y="46" text-anchor="middle" font-weight="bold">Unity (ninja_motion)</text>
+  <rect x="28" y="62" width="194" height="46" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="125" y="82" text-anchor="middle" font-size="13">CyberStagePalette</text>
+  <text x="125" y="99" text-anchor="middle" font-size="11" class="sub">日本語の部品パレット</text>
+  <rect x="28" y="118" width="194" height="46" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="125" y="138" text-anchor="middle" font-size="13">連続壁走り・ボス</text>
+  <text x="125" y="155" text-anchor="middle" font-size="11" class="sub">溝・縦穴・キングメカ</text>
+  <rect x="28" y="174" width="194" height="46" rx="8" fill="var(--warm-soft)" stroke="var(--warm)"/>
+  <text x="125" y="194" text-anchor="middle" font-size="13">明かり・街灯</text>
+  <text x="125" y="211" text-anchor="middle" font-size="11" class="sub">StageLight / StreetLamp</text>
+  <rect x="28" y="240" width="194" height="52" rx="8" fill="var(--card)" stroke="var(--accent)"/>
+  <text x="125" y="262" text-anchor="middle" font-size="13" font-weight="bold">Export(書き出し)</text>
+  <text x="125" y="280" text-anchor="middle" font-size="11" class="sub">シーンは作り直さない</text>
+
+  <!-- files -->
+  <rect x="300" y="60" width="210" height="60" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="405" y="84" text-anchor="middle" font-size="13">CyberStage.mv1 / Col.mv1</text>
+  <text x="405" y="104" text-anchor="middle" font-size="11" class="sub">見た目 + 当たり判定</text>
+  <rect x="300" y="140" width="210" height="60" rx="8" fill="var(--warm-soft)" stroke="var(--warm)"/>
+  <text x="405" y="164" text-anchor="middle" font-size="13">Lights/Stage005.csv</text>
+  <text x="405" y="184" text-anchor="middle" font-size="11" class="sub">明かりの位置・色・届く距離</text>
+  <rect x="300" y="220" width="210" height="60" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="405" y="244" text-anchor="middle" font-size="13">Enemies / WallZones 等の CSV</text>
+  <text x="405" y="264" text-anchor="middle" font-size="11" class="sub">敵・壁走りゾーン・エリア</text>
+  <path d="M222 266 C260 266 260 90 298 90" fill="none" stroke="var(--sub)" marker-end="url(#ar)"/>
+  <path d="M222 266 C262 266 262 170 298 170" fill="none" stroke="var(--sub)" marker-end="url(#ar)"/>
+  <path d="M222 266 L298 250" fill="none" stroke="var(--sub)" marker-end="url(#ar)"/>
+
+  <!-- game -->
+  <rect x="570" y="20" width="280" height="290" rx="12" fill="var(--code)" stroke="var(--line)"/>
+  <text x="710" y="46" text-anchor="middle" font-weight="bold">ゲーム (DxLib C++)</text>
+  <rect x="588" y="62" width="244" height="46" rx="8" fill="var(--warm-soft)" stroke="var(--warm)"/>
+  <text x="710" y="82" text-anchor="middle" font-size="13">StageLights</text>
+  <text x="710" y="99" text-anchor="middle" font-size="11" class="sub">近い明かり16個を選ぶ</text>
+  <rect x="588" y="118" width="244" height="46" rx="8" fill="var(--cool-soft)" stroke="var(--cool)"/>
+  <text x="710" y="138" text-anchor="middle" font-size="13">ModelShaderManager + LitModelPS</text>
+  <text x="710" y="155" text-anchor="middle" font-size="11" class="sub">ステージ・敵を1回で光らせて描く</text>
+  <rect x="588" y="174" width="244" height="46" rx="8" fill="var(--cool-soft)" stroke="var(--cool)"/>
+  <text x="710" y="194" text-anchor="middle" font-size="13">CharacterLook</text>
+  <text x="710" y="211" text-anchor="middle" font-size="11" class="sub">プレイヤーを法線マップ・光沢で描く</text>
+  <rect x="588" y="230" width="244" height="64" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="710" y="252" text-anchor="middle" font-size="13">Application + FrameProfiler</text>
+  <text x="710" y="270" text-anchor="middle" font-size="11" class="sub">60fps の合わせ方・重さの計測</text>
+  <text x="710" y="286" text-anchor="middle" font-size="11" class="sub">(F2「Frame Time」)</text>
+  <path d="M510 90 L586 140" fill="none" stroke="var(--sub)" marker-end="url(#ar)"/>
+  <path d="M510 170 L586 86" fill="none" stroke="var(--warm)" marker-end="url(#ar)"/>
+  <path d="M710 108 L710 116" fill="none" stroke="var(--sub)" marker-end="url(#ar)"/>
+  <path d="M710 164 L710 172" fill="none" stroke="var(--sub)" marker-end="url(#ar)"/>
+</svg>
+<figcaption>オレンジ = 明かり関係、水色 = シェーダー関係。Unity で置いた明かりが CSV になってゲームに渡り、シェーダーで本当に周りを照らす。</figcaption>
+</figure>
+
+<div class="card">
+<b>2日間の流れ</b>
+<ul class="timeline">
+<li><b>11/01</b> ステージ1に連続壁走りを追加 → ゲーム側の「張り付けない」バグを修正 → ボスをキングメカに</li>
+<li><b>11/01</b> 導線の明かり・街灯を Unity に置く → DxLib のライトで試す(<span class="tag t-bad">ほぼ効かない</span>)→ 自作シェーダーで「重ね描き」</li>
+<li><b>11/01</b> 日本語の部品パレット(CyberStagePalette)を作る(ステージはユーザーが自分で作る方針に)</li>
+<li><b>11/02</b> プレイヤーを Unity っぽく描く CharacterLook(重い外部の一式はやめて自作)</li>
+<li><b>11/02</b> カクつき調査 → 計測ツール FrameProfiler → 画面に出すタイミングを WaitVSync に</li>
+<li><b>11/02</b> 床のちかちか → 重ね描きをずらす(<span class="tag t-bad">後ろが透けた</span>)→ <b>1回で描くシェーダー LitModelPS</b> に作り直し</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2">2. ステージ1(Unity 側)の追加</h2>
+<div class="note"><b>約束:</b> シーンはユーザーが Unity で調整済み。<b>Build / BuildShotsExport で作り直さない</b>(調整が消える)。追加は「開いているシーンに足す → <code>CyberStageTool.Export()</code>」だけ。未保存の変更があるときは勝手に保存しない。</div>
+
+<h3>2-1. 連続壁走り</h3>
+<p>足場を消して、左右の壁を少しずつずらして並べた。壁を走る → 蹴る → 反対の壁に張り付く、をくり返さないと渡れない。</p>
+<figure>
+<svg viewBox="0 0 860 250" role="img" aria-label="連続壁走りの上から見た図">
+  <defs>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--warm)"/></marker>
+  </defs>
+  <text x="20" y="22" font-size="13" font-weight="bold">上から見た図(ボス前 23_FinalRun:4枚・蹴り3回)</text>
+  <!-- trench -->
+  <rect x="80" y="70" width="700" height="110" fill="var(--code)" stroke="var(--line)" stroke-dasharray="5 4"/>
+  <text x="430" y="130" text-anchor="middle" font-size="12" class="sub">溝(落ちたら斜面で手前に戻る)</text>
+  <!-- floor -->
+  <rect x="20" y="70" width="60" height="110" fill="var(--good-soft)" stroke="var(--good)"/>
+  <text x="50" y="200" text-anchor="middle" font-size="11" class="sub">床</text>
+  <rect x="780" y="70" width="60" height="110" fill="var(--good-soft)" stroke="var(--good)"/>
+  <text x="810" y="200" text-anchor="middle" font-size="11" class="sub">ボス広場へ</text>
+  <!-- walls -->
+  <rect x="90" y="56" width="230" height="12" fill="var(--cool)"/>
+  <rect x="250" y="182" width="230" height="12" fill="var(--cool)"/>
+  <rect x="410" y="56" width="230" height="12" fill="var(--cool)"/>
+  <rect x="570" y="182" width="200" height="12" fill="var(--cool)"/>
+  <text x="205" y="48" text-anchor="middle" font-size="11">左の壁 z538〜558</text>
+  <text x="365" y="212" text-anchor="middle" font-size="11">右 z550〜570</text>
+  <text x="525" y="48" text-anchor="middle" font-size="11">左 z562〜582</text>
+  <text x="670" y="212" text-anchor="middle" font-size="11">右 z574〜590</text>
+  <!-- path -->
+  <path d="M60 125 L110 78 L280 78 L330 172 L450 172 L500 78 L610 78 L660 172 L760 172 L800 125" fill="none" stroke="var(--warm)" stroke-width="3" marker-end="url(#ar2)"/>
+  <circle cx="280" cy="78" r="5" fill="var(--warm)"/><text x="292" y="98" font-size="11" fill="var(--warm)">蹴る</text>
+  <circle cx="450" cy="172" r="5" fill="var(--warm)"/><text x="400" y="160" font-size="11" fill="var(--warm)">蹴る</text>
+  <circle cx="610" cy="78" r="5" fill="var(--warm)"/><text x="622" y="98" font-size="11" fill="var(--warm)">蹴る</text>
+  <text x="20" y="240" font-size="12" class="sub">壁は前後に約12m ずつ重ねてある(蹴った先にもう次の壁がある)。進むのは左 → 右の方向(+Z)。</text>
+</svg>
+</figure>
+<div class="tablewrap"><table>
+<tr><th>場所</th><th>中身</th><th>使った関数(1回だけ適用済み)</th></tr>
+<tr><td>ぬれた通りの先 z168〜190</td><td>壁走り2連続</td><td><code>AddWetWallRun</code></td></tr>
+<tr><td>溝の区画 14_Trench</td><td>右の壁 → 蹴る → 左の壁(2枚・蹴り1回)</td><td><code>ReworkTrenchInScene</code></td></tr>
+<tr><td>鉄格子の通路 20_IronCorridor</td><td>左 → 右 → 左(3枚・蹴り2回)</td><td><code>ReworkCorridorInScene</code></td></tr>
+<tr><td>ボス前 23_FinalRun</td><td>4枚・蹴り3回。場所を空けるため社④〜ボスを52m奥へ</td><td><code>AddFinalRun</code></td></tr>
+</table></div>
+<p>ボスは海賊 R1 から<b>キングメカ(BossEnemyKingmech)</b>に変えた(位置 z624・フェーズ13)。</p>
+
+<h3>2-2. 明かりと街灯</h3>
+<div class="grid2">
+<div class="card">
+<b>StageLight(明かり)</b>
+<ul>
+<li>床の光のたまり(半透明の板)＋ Unity の点光源</li>
+<li>色: <span style="color:var(--warm)">■ Warm(進む道)</span> / <span style="color:var(--cool)">■ Cool(壁走りの入口)</span> / <span style="color:var(--dim)">■ Dim(戦う場所)</span> / Red</li>
+<li>縦穴3か所にオレンジを2つずつ</li>
+</ul>
+</div>
+<div class="card">
+<b>StreetLamp(街灯)</b>
+<ul>
+<li>アセットの <code>CP_Street_Lamp_02</code> の頭に StageLight を子として付ける</li>
+<li>進むルートに29本。腕が道の外を向いたものは消す/向きを直した</li>
+<li>戦う場所の街灯は淡い白(Dim)</li>
+</ul>
+</div>
+</div>
+<p>書き出すと、名前が <code>StageLight_</code> で始まるライトだけが <code>data/Stage/Lights/Stage005.csv</code> に出る(アセットに元から入っているライトは出さない)。今は Warm15・Dim20・Cool3 の<b>38〜41灯</b>。</p>
+<pre><code>#kind,posX,posY,posZ,colorR,colorG,colorB,range,intensity
+Warm,-280,490,1800,1,0.55,0.18,720,2      ← 位置はゲームの cm、range は届く距離</code></pre>
+
+<h3>2-3. 部品パレット(CyberStagePalette)</h3>
+<p>ステージはユーザーが自分で作る方針になったので、Unity に <code>Window &gt; Cyber Stage Palette</code> を作った。アセットを日本語の分類・サムネイル・検索・お気に入りで置ける。ゲーム用の部品(床・壁走りの壁・縦穴・明かり・街灯・敵・エリアなど)はボタンで置ける。使い方は <code>tools/CyberStage/自分で作るときの使い方.md</code>。当たり判定は見た目の物の子なので、見た目を動かすと一緒に付いてくる。</p>
+
+<!-- ============================================================ -->
+<h2 id="s3">3. 壁走りから次の壁へ張り付けなかったバグ</h2>
+<p>連続壁走りを置いても、ゲームでは<b>蹴った後に次の壁へ一度も張り付けなかった</b>。原因は条件の数字。</p>
+<figure>
+<svg viewBox="0 0 860 210" role="img" aria-label="アニメのフレームと張り付けるタイミングの比較">
+  <text x="20" y="22" font-size="13" font-weight="bold">壁走りキック(PlayerStateWallRunKick)のアニメのフレーム</text>
+  <!-- axis -->
+  <line x1="60" y1="70" x2="820" y2="70" stroke="var(--line)" stroke-width="2"/>
+  <g font-size="11" class="sub">
+    <text x="60" y="90" text-anchor="middle" class="sub">0</text>
+    <text x="216" y="90" text-anchor="middle" class="sub">6</text>
+    <text x="620" y="90" text-anchor="middle" class="sub">21.6</text>
+    <text x="658" y="90" text-anchor="middle" class="sub">23</text>
+  </g>
+  <rect x="60" y="54" width="560" height="32" fill="var(--cool-soft)" stroke="var(--cool)"/>
+  <text x="340" y="75" text-anchor="middle" font-size="12">ジャンプアップのアニメ(21.6 で止まる)</text>
+  <line x1="658" y1="40" x2="658" y2="100" stroke="var(--bad)" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="664" y="50" font-size="11" fill="var(--bad)">前の条件: ≥ 23</text>
+  <text x="664" y="64" font-size="11" fill="var(--bad)">→ 絶対に届かない</text>
+
+  <line x1="60" y1="150" x2="820" y2="150" stroke="var(--line)" stroke-width="2"/>
+  <rect x="60" y="134" width="156" height="32" fill="var(--code)" stroke="var(--line)"/>
+  <text x="138" y="155" text-anchor="middle" font-size="11">蹴った直後</text>
+  <rect x="216" y="134" width="604" height="32" fill="var(--good-soft)" stroke="var(--good)"/>
+  <text x="518" y="155" text-anchor="middle" font-size="12">張り付ける(状態に入ってからのフレーム数で数える)</text>
+  <text x="216" y="186" text-anchor="middle" font-size="11" fill="var(--good)">6 フレーム後から(kWallRunRegrabFrame)</text>
+  <text x="20" y="128" font-size="12" font-weight="bold">今</text>
+  <text x="20" y="48" font-size="12" font-weight="bold">前</text>
+</svg>
+<figcaption>計算では、右の壁から蹴ると約20フレーム・前に約3.5m で左の壁に届く。</figcaption>
+</figure>
+<p>あわせて<b>落下中(PlayerStateFall)</b>でも、壁走りゾーンの壁に当たってスティックを倒していれば壁走りへ移れるようにした。蹴った勢いの上昇は10フレームで終わるので、次の壁に届くのは落下中になるため。</p>
+
+<!-- ============================================================ -->
+<h2 id="s4">4. ステージの明かり ― 3回作り直した話</h2>
+<p>「Unity で置いた明かりで、ゲームの中の床・壁・キャラを本当に照らす」のが目的。3つのやり方を試した。</p>
+
+<div class="tablewrap"><table>
+<tr><th></th><th>やり方</th><th>結果</th></tr>
+<tr><td>案A</td><td>DxLib の標準のライト(<code>CreatePointLightHandle</code>)</td><td><span class="tag t-bad">ダメ</span> ほとんど明るくならない</td></tr>
+<tr><td>案B</td><td>いつも通り描いた上に、光だけを<b>もう1回加算で描く</b>(重ね描き)</td><td><span class="tag t-bad">ダメ</span> 床がちかちか → 直そうとして後ろが透けた</td></tr>
+<tr><td>案C(今)</td><td>いつもの光と明かりを<b>1回でまとめて計算</b>する自作シェーダー</td><td><span class="tag t-good">採用</span> ずれが原理的に起きない <span class="tag t-wait">未確認</span></td></tr>
+</table></div>
+
+<h3>4-1. 案A がダメだった理由</h3>
+<p>このゲームのモデルは「拡散 0.1・環境光 0.9」にしてある(ライトの向きで明るさが変わりすぎないように)。DxLib のライトの明るさは <b>ライトの色 × 材質の拡散</b> で、しかも合計が 1 で頭打ちになる。</p>
+<figure>
+<svg viewBox="0 0 860 200" role="img" aria-label="案Aでライトが効かない理由">
+  <text x="20" y="22" font-size="13" font-weight="bold">ライトをどれだけ強くしても…</text>
+  <g font-size="12">
+    <text x="20" y="62">ライトの強さ</text>
+    <rect x="160" y="46" width="640" height="22" fill="var(--warm-soft)" stroke="var(--warm)"/>
+    <text x="480" y="62" text-anchor="middle">25 倍にしても</text>
+    <text x="20" y="102">1 で頭打ち</text>
+    <rect x="160" y="86" width="100" height="22" fill="var(--warm-soft)" stroke="var(--warm)"/>
+    <text x="270" y="102" class="sub">← DxLib が合計を 1 に抑える</text>
+    <text x="20" y="142">× 拡散 0.1</text>
+    <rect x="160" y="126" width="10" height="22" fill="var(--warm)"/>
+    <text x="180" y="142" class="sub">← 画面に出るのはこれだけ(しかも白っぽく、円の縁がくっきり)</text>
+  </g>
+  <text x="20" y="185" font-size="12" class="sub">→ 材質の拡散を使わず「テクスチャの色 × 明かりの色」で光を作る、自作シェーダーが必要になった。</text>
+</svg>
+</figure>
+
+<h3>4-2. 案B(重ね描き)で起きた2つの問題</h3>
+<p>案B は「① いつも通り描く ② 同じモデルを光だけのシェーダーでもう1回、加算で描く」というやり方。見た目を変えずに光だけ足せる……はずだった。</p>
+
+<div class="grid2">
+<figure>
+<svg viewBox="0 0 400 270" role="img" aria-label="深さのずれでちかちかする">
+  <text x="10" y="20" font-size="13" font-weight="bold" fill="var(--bad)">問題1: 床がちかちか</text>
+  <text x="10" y="40" font-size="11" class="sub">横から見た床と、それぞれの描画が出した深さ</text>
+  <!-- camera -->
+  <polygon points="20,150 50,135 50,165" fill="var(--sub)"/>
+  <text x="14" y="185" font-size="10" class="sub">カメラ</text>
+  <!-- surfaces -->
+  <line x1="80" y1="150" x2="380" y2="150" stroke="var(--ink)" stroke-width="3"/>
+  <text x="300" y="140" font-size="11">1回目(DxLib 標準)</text>
+  <path d="M80 151 L130 154 L180 147 L230 153 L280 146 L330 154 L380 148" fill="none" stroke="var(--warm)" stroke-width="2"/>
+  <text x="250" y="178" font-size="11" fill="var(--warm)">2回目(自作 VS)</text>
+  <!-- pixels -->
+  <g>
+    <rect x="80" y="200" width="300" height="26" fill="var(--code)"/>
+    <rect x="80" y="200" width="25" height="26" fill="var(--warm)"/>
+    <rect x="130" y="200" width="25" height="26" fill="var(--warm)"/>
+    <rect x="155" y="200" width="25" height="26" fill="var(--warm)"/>
+    <rect x="230" y="200" width="25" height="26" fill="var(--warm)"/>
+    <rect x="280" y="200" width="25" height="26" fill="var(--warm)"/>
+    <rect x="330" y="200" width="25" height="26" fill="var(--warm)"/>
+  </g>
+  <text x="10" y="246" font-size="11" class="sub">2回目が1回目より奥に出たピクセルは「隠れている」と判定 → 光が乗らない。</text>
+  <text x="10" y="262" font-size="11" class="sub">カメラが動くたびに場所が変わる = ちかちか(約17万ピクセル抜けていた)</text>
+</svg>
+</figure>
+<figure>
+<svg viewBox="0 0 400 270" role="img" aria-label="ずらしで後ろが透ける">
+  <text x="10" y="20" font-size="13" font-weight="bold" fill="var(--bad)">問題2: ずらしたら後ろが透けた</text>
+  <text x="10" y="40" font-size="11" class="sub">2回目を手前に -4000 ずらして抜けをふさいだ結果</text>
+  <polygon points="20,150 50,135 50,165" fill="var(--sub)"/>
+  <text x="14" y="185" font-size="10" class="sub">カメラ</text>
+  <!-- front wall -->
+  <rect x="170" y="80" width="14" height="140" fill="var(--ink)"/>
+  <text x="145" y="72" font-size="11">手前の壁</text>
+  <!-- back object -->
+  <rect x="300" y="110" width="60" height="80" fill="var(--warm-soft)" stroke="var(--warm)"/>
+  <text x="300" y="104" font-size="11">後ろの物</text>
+  <!-- shifted -->
+  <rect x="140" y="110" width="60" height="80" fill="none" stroke="var(--bad)" stroke-dasharray="4 3"/>
+  <path d="M298 150 L204 150" stroke="var(--bad)" stroke-width="2" marker-end="url(#ar3)"/>
+  <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--bad)"/></marker></defs>
+  <text x="210" y="236" font-size="11" fill="var(--bad)">深さだけ手前に来る</text>
+  <text x="10" y="252" font-size="11" class="sub">本当は壁の陰の物の光が、壁より手前と判定されて</text>
+  <text x="10" y="266" font-size="11" class="sub">壁の上に描かれる = ステージの後ろの物が映る</text>
+</svg>
+</figure>
+</div>
+<div class="point"><b>学んだこと:</b> 同じ物を2回描いて重ねるなら、2回とも<b>全く同じ計算</b>で深さを出さないといけない。DxLib 標準の頂点シェーダーと自作のものは、数学的には同じでも細かい計算順が違って、ほんの少しずれる。ずらしで隠すと別の物が見えてしまう。→ <b>そもそも2回描かない</b>のが正解。</div>
+
+<h3>4-3. 案C:1回でまとめて描く</h3>
+<figure>
+<svg viewBox="0 0 860 220" role="img" aria-label="重ね描きと1回で描く方式の比較">
+  <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--sub)"/></marker></defs>
+  <text x="20" y="24" font-size="13" font-weight="bold">前(案B)</text>
+  <rect x="20" y="36" width="190" height="50" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="115" y="58" text-anchor="middle" font-size="12">1回目: MV1DrawModel</text>
+  <text x="115" y="76" text-anchor="middle" font-size="11" class="sub">DxLib の標準 VS・PS</text>
+  <text x="225" y="66" font-size="20" class="sub">+</text>
+  <rect x="245" y="36" width="210" height="50" rx="8" fill="var(--bad-soft)" stroke="var(--bad)"/>
+  <text x="350" y="58" text-anchor="middle" font-size="12">2回目: 光だけ加算で</text>
+  <text x="350" y="76" text-anchor="middle" font-size="11" class="sub">自作 VS・StageLightPS</text>
+  <text x="475" y="66" font-size="12" fill="var(--bad)">深さがずれる・ステージ47万三角形を2回</text>
+
+  <text x="20" y="128" font-size="13" font-weight="bold">今(案C)</text>
+  <rect x="20" y="140" width="435" height="60" rx="8" fill="var(--good-soft)" stroke="var(--good)"/>
+  <text x="237" y="164" text-anchor="middle" font-size="12">1回だけ: 自作 VS ＋ LitModelPS</text>
+  <text x="237" y="184" text-anchor="middle" font-size="11" class="sub">DxLib のいつもの光(b0) ＋ ステージの明かり(b4) ＋ フォグ を全部この中で</text>
+  <text x="475" y="168" font-size="12" fill="var(--good)">ずれようがない・描く回数が半分</text>
+  <text x="475" y="186" font-size="11" class="sub">明かりが0個のときは今まで通り MV1DrawModel</text>
+</svg>
+</figure>
+<p>テスト用のプログラム(<code>preview_lit</code>)で確かめたこと:</p>
+<ul>
+<li>明かりが無いとき、DxLib の標準の描画とほぼ同じ見た目(平均の差 2.5 / 765)</li>
+<li>同じ絵を2回描いても差がゼロ(ちかちかしない)</li>
+<li>縦穴の壁にオレンジの光が乗る。Draw:Stage は CPU で約 0.15ms</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="s5">5. 今のシェーダー(LitModelPS.hlsl)の中身</h2>
+<h3>5-1. シェーダーの基本(おさらい)</h3>
+<figure>
+<svg viewBox="0 0 860 170" role="img" aria-label="頂点シェーダーとピクセルシェーダーの流れ">
+  <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--sub)"/></marker></defs>
+  <rect x="20" y="40" width="150" height="70" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="95" y="70" text-anchor="middle" font-size="13">モデルの頂点</text>
+  <text x="95" y="90" text-anchor="middle" font-size="11" class="sub">位置・法線・UV・骨</text>
+  <rect x="210" y="40" width="190" height="70" rx="8" fill="var(--cool-soft)" stroke="var(--cool)"/>
+  <text x="305" y="64" text-anchor="middle" font-size="13">頂点シェーダー(VS)</text>
+  <text x="305" y="82" text-anchor="middle" font-size="11" class="sub">MV1VertexShader.hlsl</text>
+  <text x="305" y="98" text-anchor="middle" font-size="11" class="sub">頂点ごとに1回</text>
+  <rect x="440" y="40" width="150" height="70" rx="8" fill="var(--code)" stroke="var(--line)"/>
+  <text x="515" y="70" text-anchor="middle" font-size="13">三角形の中で</text>
+  <text x="515" y="90" text-anchor="middle" font-size="11" class="sub">なめらかに混ぜる</text>
+  <rect x="630" y="40" width="210" height="70" rx="8" fill="var(--warm-soft)" stroke="var(--warm)"/>
+  <text x="735" y="64" text-anchor="middle" font-size="13">ピクセルシェーダー(PS)</text>
+  <text x="735" y="82" text-anchor="middle" font-size="11" class="sub">LitModelPS.hlsl</text>
+  <text x="735" y="98" text-anchor="middle" font-size="11" class="sub">ピクセルごとに色を決める</text>
+  <path d="M170 75 L208 75" stroke="var(--sub)" marker-end="url(#ar5)"/>
+  <path d="M400 75 L438 75" stroke="var(--sub)" marker-end="url(#ar5)"/>
+  <path d="M590 75 L628 75" stroke="var(--sub)" marker-end="url(#ar5)"/>
+  <text x="20" y="145" font-size="12" class="sub">VS の出力(VS_OUTPUT)と PS の入力(PS_INPUT)は<b>並びを全く同じ</b>にする。ノーマルマップ付きのモデル(BUMPMAP)は途中に接線が入って並びが変わるので、</text>
+  <text x="20" y="162" font-size="12" class="sub">PS も BUMPMAP 付きと無しの2つをコンパイルしている(m_litPixelShader / m_litBumpPixelShader)。</text>
+</svg>
+</figure>
+
+<h3>5-2. 1ピクセルの色ができるまで</h3>
+<figure>
+<svg viewBox="0 0 860 250" role="img" aria-label="LitModelPSの計算の順番">
+  <defs><marker id="ar6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--sub)"/></marker></defs>
+  <g font-size="12">
+  <rect x="20" y="20" width="180" height="80" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="110" y="44" text-anchor="middle" font-weight="bold">① テクスチャ</text>
+  <text x="110" y="64" text-anchor="middle" font-size="11" class="sub">tex = 画像の色</text>
+  <text x="110" y="82" text-anchor="middle" font-size="11" class="sub">透明な所は clip で描かない</text>
+
+  <rect x="230" y="20" width="190" height="80" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="325" y="44" text-anchor="middle" font-weight="bold">② いつもの光</text>
+  <text x="325" y="64" text-anchor="middle" font-size="11" class="sub">平行光の拡散＋光沢＋環境光</text>
+  <text x="325" y="82" text-anchor="middle" font-size="11" class="sub">値は DxLib の b0 から読む</text>
+
+  <rect x="450" y="20" width="190" height="80" rx="8" fill="var(--warm-soft)" stroke="var(--warm)"/>
+  <text x="545" y="44" text-anchor="middle" font-weight="bold">③ ステージの明かり</text>
+  <text x="545" y="64" text-anchor="middle" font-size="11" class="sub">最大16個を足していく</text>
+  <text x="545" y="82" text-anchor="middle" font-size="11" class="sub">値は b4(StageLights が入れる)</text>
+
+  <rect x="670" y="20" width="170" height="80" rx="8" fill="var(--code)" stroke="var(--line)"/>
+  <text x="755" y="44" text-anchor="middle" font-weight="bold">④ フォグ</text>
+  <text x="755" y="64" text-anchor="middle" font-size="11" class="sub">VS が計算済みの Fog.x×Fog.y</text>
+  <text x="755" y="82" text-anchor="middle" font-size="11" class="sub">遠いほど夜の青に</text>
+  <path d="M200 60 L228 60" stroke="var(--sub)" marker-end="url(#ar6)"/>
+  <path d="M420 60 L448 60" stroke="var(--sub)" marker-end="url(#ar6)"/>
+  <path d="M640 60 L668 60" stroke="var(--sub)" marker-end="url(#ar6)"/>
+  </g>
+  <rect x="20" y="125" width="820" height="110" rx="8" fill="var(--code)"/>
+  <text x="36" y="150" font-size="12.5" font-family="Consolas,monospace">color  = tex × saturate(拡散 × 材質の拡散 + 環境光) + 光沢 × 材質の反射     ← ②(DxLib の標準と同じ式)</text>
+  <text x="36" y="175" font-size="12.5" font-family="Consolas,monospace">color += tex × 明かりの色 × (1 − 距離/届く距離)² × 面の向き         ← ③ を明かりの数だけ</text>
+  <text x="36" y="200" font-size="12.5" font-family="Consolas,monospace">color  = lerp(フォグの色, color, フォグの係数)                     ← ④</text>
+  <text x="36" y="224" font-size="11.5" class="sub">③ は材質の拡散 0.1 を使わないので、赤レンガにオレンジ → 赤っぽいオレンジ、灰色の床に水色 → 水色っぽい灰、とちゃんと色が出る。</text>
+</svg>
+</figure>
+
+<h3>5-3. 明かりの「距離の減り方」と「面の向き」</h3>
+<div class="grid2">
+<figure>
+<svg viewBox="0 0 400 240" role="img" aria-label="距離による減衰のグラフ">
+  <text x="10" y="20" font-size="13" font-weight="bold">(1 − 距離/届く距離)²</text>
+  <line x1="50" y1="190" x2="370" y2="190" stroke="var(--line)" stroke-width="2"/>
+  <line x1="50" y1="190" x2="50" y2="40" stroke="var(--line)" stroke-width="2"/>
+  <path d="M50 50 Q 130 150 210 155 T 370 190" fill="none" stroke="var(--warm)" stroke-width="0"/>
+  <!-- y=(1-x)^2 sampled -->
+  <polyline fill="none" stroke="var(--warm)" stroke-width="3" points="50,50 82,76 114,100 146,121 178,139 210,155 242,168 274,178 306,184 338,189 370,190"/>
+  <line x1="50" y1="155" x2="210" y2="155" stroke="var(--sub)" stroke-dasharray="3 3"/>
+  <line x1="210" y1="155" x2="210" y2="190" stroke="var(--sub)" stroke-dasharray="3 3"/>
+  <text x="40" y="54" text-anchor="end" font-size="11" class="sub">1.0</text>
+  <text x="40" y="159" text-anchor="end" font-size="11" class="sub">0.25</text>
+  <text x="40" y="194" text-anchor="end" font-size="11" class="sub">0</text>
+  <text x="50" y="208" text-anchor="middle" font-size="11" class="sub">0</text>
+  <text x="210" y="208" text-anchor="middle" font-size="11" class="sub">半分</text>
+  <text x="370" y="208" text-anchor="middle" font-size="11" class="sub">届く距離</text>
+  <text x="10" y="232" font-size="11" class="sub">端でちょうど0になるので、円の縁がくっきり出ない。</text>
+</svg>
+</figure>
+<figure>
+<svg viewBox="0 0 400 240" role="img" aria-label="面の向きとwrapライティング">
+  <text x="10" y="20" font-size="13" font-weight="bold">面の向き(wrap 0.2)</text>
+  <circle cx="200" cy="60" r="14" fill="var(--warm)"/>
+  <text x="222" y="64" font-size="11">明かり</text>
+  <!-- surfaces -->
+  <line x1="60" y1="170" x2="120" y2="170" stroke="var(--ink)" stroke-width="4"/>
+  <line x1="90" y1="170" x2="90" y2="140" stroke="var(--cool)" stroke-width="2"/>
+  <text x="90" y="192" text-anchor="middle" font-size="11">正面 1.0</text>
+  <line x1="200" y1="140" x2="200" y2="200" stroke="var(--ink)" stroke-width="4"/>
+  <line x1="200" y1="170" x2="230" y2="170" stroke="var(--cool)" stroke-width="2"/>
+  <text x="200" y="218" text-anchor="middle" font-size="11">横 0.2</text>
+  <line x1="290" y1="150" x2="350" y2="150" stroke="var(--ink)" stroke-width="4"/>
+  <line x1="320" y1="150" x2="320" y2="180" stroke="var(--cool)" stroke-width="2"/>
+  <text x="320" y="200" text-anchor="middle" font-size="11">裏 0</text>
+  <text x="10" y="232" font-size="11" class="sub">面の向き × 0.8 + 0.2。背を向けた面も真っ黒にならない。</text>
+</svg>
+</figure>
+</div>
+
+<h3>5-4. 誰がこのシェーダーで描かれるか</h3>
+<div class="tablewrap"><table>
+<tr><th>描く物</th><th>呼ぶ関数</th><th>使うシェーダー</th></tr>
+<tr><td>ステージ</td><td><code>Stage::Draw</code> → <code>ModelShaderManager::DrawModel</code></td><td>LitModelPS</td></tr>
+<tr><td>敵・敵の武器・部位・ガトリング</td><td><code>DrawModel</code></td><td>LitModelPS(血殺中は黒い PS)</td></tr>
+<tr><td>プレイヤーの刀</td><td><code>DrawModel</code></td><td>LitModelPS</td></tr>
+<tr><td>プレイヤー</td><td><code>CharacterLook::Draw</code></td><td>CharacterLookPS(明かりも中で足す)</td></tr>
+</table></div>
+<p><code>DrawModel</code> の分かれ道: 黒くするモード → 黒い PS / 近くに明かりが0個 → いつもの <code>MV1DrawModel</code> / それ以外 → LitModelPS。</p>
+
+<!-- ============================================================ -->
+<h2 id="s6">6. プレイヤーの見た目(CharacterLook)</h2>
+<p>最初は外部の一式(Mv1LikeUnity)を入れたが、4096の画像19枚・毎フレーム画面をまるごとコピー…で<b>とても重く</b>、光の当たり方もおかしくなったので外した。代わりに Unity らしさの要点だけを<b>自作の軽いシェーダー</b>で作った。</p>
+<figure>
+<svg viewBox="0 0 860 200" role="img" aria-label="CharacterLookの合成">
+  <defs><marker id="ar7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--sub)"/></marker></defs>
+  <g font-size="12">
+  <rect x="20" y="30" width="140" height="90" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <text x="90" y="56" text-anchor="middle" font-weight="bold">色(t0)</text>
+  <text x="90" y="78" text-anchor="middle" font-size="11" class="sub">いつものテクスチャ</text>
+  <text x="90" y="96" text-anchor="middle" font-size="11" class="sub">× 色味</text>
+  <rect x="180" y="30" width="140" height="90" rx="8" fill="var(--cool-soft)" stroke="var(--cool)"/>
+  <text x="250" y="56" text-anchor="middle" font-weight="bold">法線マップ(t1)</text>
+  <text x="250" y="78" text-anchor="middle" font-size="11" class="sub">細かい凹凸</text>
+  <text x="250" y="96" text-anchor="middle" font-size="11" class="sub">向きは ddx/ddy から</text>
+  <rect x="340" y="30" width="140" height="90" rx="8" fill="var(--code)" stroke="var(--line)"/>
+  <text x="410" y="56" text-anchor="middle" font-weight="bold">マスク(t2)</text>
+  <text x="410" y="76" text-anchor="middle" font-size="11" class="sub">G 遮蔽(すき間を暗く)</text>
+  <text x="410" y="93" text-anchor="middle" font-size="11" class="sub">A なめらかさ / R 金属</text>
+  <rect x="500" y="30" width="140" height="90" rx="8" fill="var(--warm-soft)" stroke="var(--warm)"/>
+  <text x="570" y="56" text-anchor="middle" font-weight="bold">光</text>
+  <text x="570" y="74" text-anchor="middle" font-size="11" class="sub">平行光(拡散+GGX光沢)</text>
+  <text x="570" y="90" text-anchor="middle" font-size="11" class="sub">空と地面の環境光・ふち</text>
+  <text x="570" y="106" text-anchor="middle" font-size="11" class="sub">＋ ステージの明かり</text>
+  <rect x="680" y="30" width="160" height="90" rx="8" fill="var(--good-soft)" stroke="var(--good)"/>
+  <text x="760" y="70" text-anchor="middle" font-weight="bold">1回で描く</text>
+  <text x="760" y="92" text-anchor="middle" font-size="11" class="sub">不透明 → 髪・まつげ</text>
+  <path d="M640 75 L678 75" stroke="var(--sub)" marker-end="url(#ar7)"/>
+  </g>
+  <text x="20" y="150" font-size="12" class="sub">Player03 には接線のデータが無いので、法線マップの向きは隣のピクセルとの差(ddx/ddy)から作っている。</text>
+  <text x="20" y="170" font-size="12" class="sub">設定は data/Player/Look/PlayerLook.csv(マテリアル名の先頭で一致)。髪・目は法線マップ無し(付けると毛の向きが乱れて暗くまだらになった)。</text>
+  <text x="20" y="190" font-size="12" class="sub">F2「Character Look」で光の設定を変えられる。読めなかったとき・オフのときは今まで通り DrawModel。1回の描画の CPU は約0.15ms。</text>
+</svg>
+</figure>
+
+<!-- ============================================================ -->
+<h2 id="s7">7. カクつき対策</h2>
+<h3>7-1. まず測った(FrameProfiler)</h3>
+<p>1フレームのどこに時間がかかっているかを測る道具を作った。</p>
+<figure>
+<svg viewBox="0 0 860 150" role="img" aria-label="FrameProfilerの区切り">
+  <text x="20" y="22" font-size="13" font-weight="bold">1フレーム(16.67ms)の中身 ― 処理は平均 約1.6ms しかない</text>
+  <rect x="20" y="40" width="40" height="36" fill="var(--cool)"/>
+  <rect x="60" y="40" width="50" height="36" fill="var(--warm)"/>
+  <rect x="110" y="40" width="12" height="36" fill="var(--accent)"/>
+  <rect x="122" y="40" width="718" height="36" fill="var(--code)" stroke="var(--line)"/>
+  <text x="480" y="63" text-anchor="middle" font-size="12" class="sub">待ち(モニターの更新を待つ)</text>
+  <g font-size="11">
+  <rect x="20" y="92" width="12" height="12" fill="var(--cool)"/><text x="38" y="103">Update(Player / Enemy / Collision…)</text>
+  <rect x="290" y="92" width="12" height="12" fill="var(--warm)"/><text x="308" y="103">Draw(Stage / Enemy / Player / Effect / UI)</text>
+  <rect x="590" y="92" width="12" height="12" fill="var(--accent)"/><text x="608" y="103">ImGui・Flip</text>
+  </g>
+  <text x="20" y="136" font-size="12" class="sub">→ 重さの問題ではなかった。F2「Frame Time」でグラフ、Log/FrameSpikes.txt(20ms 超え)・Log/FrameStats.txt(60フレームごと)。</text>
+</svg>
+</figure>
+<p>起動の引数に <code>-bench</code> を付けると、ステージ1にそのまま入って11秒動かして終わる(毎回同じ条件で測れる)。</p>
+
+<h3>7-2. 本当の原因:画面に出すタイミングのずれ</h3>
+<p>このPC(RTX 4060・モニター59Hz)では <code>ScreenFlip</code> の VSync 待ちが効いていなかった。前は自前の待ちだけで回っていて、1フレームが <b>16.70ms</b>。モニターは <b>16.67ms</b> なので少しずつずれていく。</p>
+<figure>
+<svg viewBox="0 0 860 230" role="img" aria-label="フレームのずれの図">
+  <text x="20" y="22" font-size="13" font-weight="bold">前: 自前の待ちだけ(16.70ms)</text>
+  <g stroke="var(--line)">
+    <line x1="60" y1="40" x2="60" y2="90"/><line x1="160" y1="40" x2="160" y2="90"/><line x1="260" y1="40" x2="260" y2="90"/>
+    <line x1="360" y1="40" x2="360" y2="90"/><line x1="460" y1="40" x2="460" y2="90"/><line x1="560" y1="40" x2="560" y2="90"/>
+    <line x1="660" y1="40" x2="660" y2="90"/><line x1="760" y1="40" x2="760" y2="90"/>
+  </g>
+  <text x="20" y="54" font-size="11" class="sub">モニター</text>
+  <g fill="var(--cool)">
+    <rect x="66" y="64" width="86" height="20" rx="3"/><rect x="172" y="64" width="86" height="20" rx="3"/>
+    <rect x="278" y="64" width="86" height="20" rx="3"/><rect x="384" y="64" width="86" height="20" rx="3"/>
+    <rect x="490" y="64" width="86" height="20" rx="3"/><rect x="596" y="64" width="86" height="20" rx="3"/>
+  </g>
+  <text x="20" y="80" font-size="11" class="sub">ゲーム</text>
+  <rect x="560" y="40" width="100" height="50" fill="var(--bad)" opacity=".18"/>
+  <text x="610" y="108" text-anchor="middle" font-size="11" fill="var(--bad)">同じ絵が2回 = カクッ</text>
+  <text x="700" y="80" font-size="11" class="sub">約9秒に1回 +ティアリング</text>
+
+  <text x="20" y="148" font-size="13" font-weight="bold">今: WaitVSync(1) で更新を待ってから出す</text>
+  <g stroke="var(--line)">
+    <line x1="60" y1="160" x2="60" y2="210"/><line x1="160" y1="160" x2="160" y2="210"/><line x1="260" y1="160" x2="260" y2="210"/>
+    <line x1="360" y1="160" x2="360" y2="210"/><line x1="460" y1="160" x2="460" y2="210"/><line x1="560" y1="160" x2="560" y2="210"/>
+    <line x1="660" y1="160" x2="660" y2="210"/><line x1="760" y1="160" x2="760" y2="210"/>
+  </g>
+  <g fill="var(--good)">
+    <rect x="66" y="184" width="86" height="20" rx="3"/><rect x="166" y="184" width="86" height="20" rx="3"/>
+    <rect x="266" y="184" width="86" height="20" rx="3"/><rect x="366" y="184" width="86" height="20" rx="3"/>
+    <rect x="466" y="184" width="86" height="20" rx="3"/><rect x="566" y="184" width="86" height="20" rx="3"/>
+    <rect x="666" y="184" width="86" height="20" rx="3"/>
+  </g>
+  <text x="20" y="200" font-size="11" class="sub">ゲーム</text>
+</svg>
+<figcaption>図は分かりやすくずれを大きく描いている。実際は1フレームに 0.03ms ずつずれる。</figcaption>
+</figure>
+<ul>
+<li>モニターが 58〜62Hz なら <code>WaitVSync(1)</code> → <code>ScreenFlip</code>。それ以外(120/144Hz など)は今まで通り自前の待ち。</li>
+<li>確認用に <code>-pace=busy / both / wait / dwm</code> で待ち方を切り替えられる。<code>dwm</code>(Windows の画面の合成を待つ)も試したが WaitVSync とほぼ同じだったので、既定は WaitVSync のまま。</li>
+<li>測った結果: 間隔 平均 16.68ms・最短約14.5・最長約19ms、<b>33ms のフレーム(飛び)は無し</b>。</li>
+</ul>
+<h3>7-3. ついでに軽くしたこと</h3>
+<ul>
+<li>ステージを2回描くのをやめた(4-3 の LitModelPS)。GPU の負担が半分近くになる。</li>
+<li>毎フレーム配列を作り直していたのをやめ、使い回すようにした(StageLights の m_nearBuffer / m_paramBuffer など)。</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="s8">8. 変えたファイルの一覧(ゲーム側)</h2>
+<div class="tablewrap"><table>
+<tr><th>ファイル</th><th></th><th>中身</th></tr>
+<tr><td><code>Render/Shader/LitModelPS.hlsl</code></td><td>新規</td><td>いつもの光＋ステージの明かり＋フォグを1回で計算</td></tr>
+<tr><td><code>Render/Shader/CharacterLookPS.hlsl</code></td><td>新規</td><td>プレイヤー用(法線マップ・遮蔽・光沢)</td></tr>
+<tr><td><code>Render/Shader/StageLightPS.hlsl</code></td><td>削除</td><td>重ね描き用(案B)。もう使わない</td></tr>
+<tr><td><code>Render/ModelShaderManager.h/.cpp</code></td><td>変更</td><td>シェーダーの読み込み、b4 の定数バッファ、<code>DrawModel</code> の分かれ道、<code>DrawModelWithShader</code>(BUMPMAP 用 PS)</td></tr>
+<tr><td><code>Render/CharacterLook.h/.cpp</code></td><td>新規</td><td>CSV を読んで画像を用意、メッシュごとに b5 を書いて描く</td></tr>
+<tr><td><code>Stage/StageLights.h/.cpp</code></td><td>新規</td><td>明かりの CSV を読み、近い16個を選んで渡す。F2「Stage Lights」</td></tr>
+<tr><td><code>Stage/Stage.h/.cpp</code></td><td>変更</td><td>明かりを持つ、<code>DrawModel</code> で描く、ナイトフォグ</td></tr>
+<tr><td><code>Scene/SceneMain.cpp</code></td><td>変更</td><td>毎フレーム明かりの Update、描く順番、計測の区切り</td></tr>
+<tr><td><code>Character/Player/Player.*</code>・<code>PlayerWeapon.cpp</code></td><td>変更</td><td>CharacterLook で描く / 刀は DrawModel</td></tr>
+<tr><td><code>Character/Player/State/Locomotion/PlayerStateWallRunKick.*</code>・<code>PlayerStateFall.cpp</code></td><td>変更</td><td>6フレーム後から張り付ける / 落下中も壁走りへ</td></tr>
+<tr><td><code>Main/FrameProfiler.h/.cpp</code></td><td>新規</td><td>1フレームの区切りごとの時間を測る</td></tr>
+<tr><td><code>Main/Application.h/.cpp</code></td><td>変更</td><td>60fps の合わせ方(PaceMode)、<code>-bench</code>、<code>-pace=</code></td></tr>
+<tr><td><code>data/Stage/Lights/Stage005.csv</code>・<code>data/Player/Look/</code></td><td>新規</td><td>明かりのデータ・プレイヤーの画像と設定</td></tr>
+</table></div>
+<p>Unity 側: <code>ninja_motion/Assets/Editor/CyberStageTool.cs</code>・<code>CyberStagePalette.cs</code>。</p>
+
+<!-- ============================================================ -->
+<h2 id="s9">9. 調整のつまみ・確認のしかた</h2>
+<div class="tablewrap"><table>
+<tr><th>何を</th><th>どこで</th><th>今の値</th></tr>
+<tr><td>明かりの強さ全体</td><td>F2「Stage Lights」Color Scale / <code>m_colorScale</code></td><td>3(6は強すぎた)</td></tr>
+<tr><td>使う明かりの範囲</td><td>Active Distance / <code>m_activeDistance</code></td><td>4000(40m)</td></tr>
+<tr><td>遠い端で薄くする幅</td><td>Fade Distance / <code>m_fadeDistance</code></td><td>1000(10m)</td></tr>
+<tr><td>背を向けた面の明るさ</td><td>Wrap / <code>m_wrap</code></td><td>0.2</td></tr>
+<tr><td>同時に使う明かりの数</td><td><code>kStageLightMax</code> と hlsl の <code>LIGHT_MAX</code>(<b>2つ同時に変える</b>)</td><td>16</td></tr>
+<tr><td>明かりごとの色・強さ・距離</td><td>Unity の Light → Export → CSV</td><td>Warm / Cool / Dim</td></tr>
+<tr><td>プレイヤーの見た目</td><td>F2「Character Look」/ <code>PlayerLook.csv</code></td><td>—</td></tr>
+<tr><td>重さ・カクつき</td><td>F2「Frame Time」/ <code>-bench</code></td><td>—</td></tr>
+</table></div>
+<div class="point"><b>まだカクつくとき:</b> F2「Frame Time」のグラフがカクついた瞬間に<b>跳ねる</b> → 本当にフレームが遅れている(Log/FrameSpikes.txt に内訳)。<b>跳ねない</b> → カメラ・アニメ・ヒットストップなど、動き方そのものが原因。</div>
+
+<!-- ============================================================ -->
+<h2 id="s10">10. まだ残っていること</h2>
+<ul>
+<li><span class="tag t-wait">未確認</span> ゲームの中で: 縦穴の床のちかちかが消えたか / ステージの後ろの物が映らないか / カクつきが減ったか</li>
+<li><span class="tag t-wait">未確認</span> 連続壁走りで本当に溝を渡れるか(9回とも)</li>
+<li><span class="tag t-wait">未確認</span> プレイヤーの見た目(アニメ中・光の強さ・重さ)、血殺中の見た目</li>
+<li>明かりは壁を通り抜けて向こう側も照らす(影は無い)。16個を超えるほど密に置かないこと。</li>
+<li>何もコミットしていない。Unity のシーンには未保存の変更があるかもしれない(保存はユーザーが Ctrl+S)。</li>
+</ul>
+<p class="lead" style="margin-top:32px">前のノート <code>note_ステージの明かりとシェーダー.md</code> は「重ね描き(案B)」の時点のもの。シェーダー入門の部分は今も役に立つが、描き方は このノートの 4〜5 章が最新。</p>
+
+</main>
+</body>
+</html>

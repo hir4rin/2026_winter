@@ -16,4 +16,5 @@ public:
 private:
 	float m_gravity = 0.0f;
 	Vector3 m_InitVel = Vector3(0, 0, 0);
+	int m_frame = 0;//このステートに入ってからのフレーム数
 };

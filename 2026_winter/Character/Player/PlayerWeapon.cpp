@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "Player.h"
 #include "Main/System.h"
+#include "Render/ModelShaderManager.h"
 
 namespace
 {
@@ -83,5 +84,5 @@ void PlayerWeapon::Draw()
 {
 	int modelHandle = GetCurrentModelHandle();
 	if (modelHandle < 0)return;
-	MV1DrawModel(modelHandle);
+	ModelShaderManager::GetInstance().DrawModel(modelHandle);//ステージの明かりの光も足す
 }

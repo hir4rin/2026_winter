@@ -20,6 +20,7 @@
 #include "Battle/PhaseManager.h"
 #include "Main/Game.h"
 #include "Main/imguiApp.h"
+#include "Main/FrameProfiler.h"
 #include "Scene/PauseScene.h"
 #include "Scene/ResultScene.h"
 #include "Stage/WallZone/WallZoneEditor.h"
@@ -51,7 +52,6 @@ namespace
 	constexpr float kLightDifColorValue = 0.4f;//ディフューズ
 	constexpr float kLightSpcColorValue = 0.2f;//スペキュラ
 	constexpr float kLightAmbColorValue = 0.0f;//アンビエント(カメラ側で設定済み)
-
 	//フェードにかけるフレーム数
 	constexpr int kFadeFrame = 30;
 
@@ -261,13 +261,19 @@ void SceneMain::NormalUpdate()
 		return;
 	}
 
+	FrameProfiler::GetInstance().Mark("Upd:Before");
 	m_player->Update(*m_camera);
+	FrameProfiler::GetInstance().Mark("Upd:Player");
 	m_enemyManager->Update();
 	m_phaseManager->Update();
+	FrameProfiler::GetInstance().Mark("Upd:Enemy");
 	m_stage->Update();
 	CollisionManager::GetInstance().Update();
+	FrameProfiler::GetInstance().Mark("Upd:Collision");
 	System::GetInstance().Update();
 	m_battleManager->Update();//Systemでタイムスケールを戻した後に更新する
+	//押し戻しの後のプレイヤーの位置で、近い明かりを点ける
+	m_stage->GetLights().Update(m_player->GetRigidBody().GetPos());
 
 	m_cameraManager->Update();
 
@@ -347,32 +353,43 @@ void SceneMain::NormalDraw()
 	m_bloodKillFog.DrawBackground();//[BloodKillFog]
 
 	DrawGrid();
+	FrameProfiler::GetInstance().Mark("Draw:Bg");
 
+	//ステージを先に描く(明かりの光の重ね描きは深さを少し手前にずらしているので、キャラを後に描いて足元へのはみ出しを上書きする)
+	m_bloodKillFog.BeginStage(m_stage->GetStageViewHandle());//[BloodKillFog]
+	m_stage->Draw();
+	m_bloodKillFog.EndStage(m_stage->GetStageViewHandle());//[BloodKillFog]
+	FrameProfiler::GetInstance().Mark("Draw:Stage");
 	//血殺中は敵を真っ黒にする
 	ModelShaderManager::GetInstance().SetBlackMode(System::GetInstance().GetBattleMgr()->GetIsUltimating());
 	m_enemyManager->Draw();
 	ModelShaderManager::GetInstance().SetBlackMode(false);
-	m_bloodKillFog.BeginStage(m_stage->GetStageViewHandle());//[BloodKillFog]
-	m_stage->Draw();
-	m_bloodKillFog.EndStage(m_stage->GetStageViewHandle());//[BloodKillFog]
+	FrameProfiler::GetInstance().Mark("Draw:Enemy");
 
 	//2DのUIは深度を書かないので、後から描いた3Dに上書きされる
 	//プレイヤーより後ろに出したいUI(血殺
 	m_uiManager->DrawBack();
 	m_player->Draw();
+	FrameProfiler::GetInstance().Mark("Draw:Player");
 
 	//DxLibのカメラ設定をEffekseerに反映してからエフェクトを描画する
 	Effekseer_Sync3DSetting();
 	DrawEffekseer3D();
+	FrameProfiler::GetInstance().Mark("Draw:Effect");
 
 	
 	m_uiManager->Draw();
+	FrameProfiler::GetInstance().Mark("Draw:UI");
 #ifdef _DEBUG
 	CollisionManager::GetInstance().DebugDraw();
 	//敵のデバッグ表示(頭の上の文字)//2Dの文字は後から描く3Dに上書きされるので、UIの後に描く
 	m_enemyManager->DebugDraw();
 	//ボスのデバッグウィンドウ(F2で表示/非表示)
 	if (imguiApp::GetInstance().IsDebugUIVisible())m_enemyManager->DrawDebugWindows();
+	//ステージの明かりの調整(F2で表示/非表示。明かりの無いステージでは出ない)
+	if (imguiApp::GetInstance().IsDebugUIVisible())m_stage->GetLights().DrawDebugWindow();
+	//キャラの見た目(光の色・ふちの光など)の調整
+	if (imguiApp::GetInstance().IsDebugUIVisible())CharacterLook::DrawDebugWindow();
 	m_phaseManager->DebugDraw();
 	m_player->GetLockOnManager()->DebugDraw();
 	//ステージ編集中はエディタ側で(選択中を白にして)描く

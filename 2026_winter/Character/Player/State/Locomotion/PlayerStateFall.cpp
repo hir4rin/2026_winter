@@ -85,6 +85,13 @@ void PlayerStateFall::Update()
 	//	}
 	//}
 
+	//壁走りゾーンの壁に当たったら壁走り(壁走りから蹴って反対側の壁に移るとき)
+	if (IsInWallZone(Collider::ColRole::WallRunZone) && CheckWall() && input.IsLeftStickInput())
+	{
+		player->ChangeState(std::make_shared<PlayerStateWallRun>(m_owner));
+		return;
+	}
+
 	//コヨーテタイム//歩いて地面から離れた直後の数フレームはジャンプを受け付ける
 	m_frame++;
 	if (m_canCoyoteJump && m_frame <= kCoyoteFrame && input.IsTriggered("A"))

@@ -28,6 +28,7 @@
 #include "Character/Player/State/Attack/PlayerStateGuardBreakAttack.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateBossPartThrow.h"//以下同文
 #include "DataLoader/AnimData.h"
+#include "Render/CharacterLook.h"
 #include <memory>
 
 class PlayerState;
@@ -340,6 +341,8 @@ private:
 
 	int m_attackModelHandle = -1;//攻撃のモデルのハンドル
 	int m_whiteHandle;
+
+	CharacterLook m_look;//法線マップ・遮蔽・光沢つきで描く(CharacterLookPS.hlsl)
 
 
 	//エフェクトマネージャー作るからいったん表示させる

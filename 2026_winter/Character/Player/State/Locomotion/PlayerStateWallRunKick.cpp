@@ -10,7 +10,7 @@ namespace
 
 	constexpr float kJumpInitVel = 10.0f;//ジャンプの初速//上方向の速度
 
-	constexpr float kJumpForWallStayFrame = 23.0f;//壁に沿う状態に遷移するまでのフレーム数
+	constexpr int kWallRunRegrabFrame = 6;//蹴ってから次の壁に張り付けるまでのフレーム数
 }
 
 PlayerStateWallRunKick::PlayerStateWallRunKick(std::weak_ptr<Player> player) : PlayerState(player)
@@ -76,8 +76,9 @@ void PlayerStateWallRunKick::Update()
 
 
 
-	//animationFrameで経過時間を取る
-	if (player->m_anim.GetNowAnimFrame() >= kJumpForWallStayFrame)
+	//蹴ってから少したったら、反対側の壁に張り付ける(アニメは21.6Fで止まるのでフレーム数で数える)
+	m_frame++;
+	if (m_frame >= kWallRunRegrabFrame)
 	{
 		//壁走りゾーンの中で壁と当たったら、また壁走りにする
 		if (IsInWallZone(Collider::ColRole::WallRunZone) && CheckWall())

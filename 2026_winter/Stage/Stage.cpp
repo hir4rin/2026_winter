@@ -4,6 +4,7 @@
 #include "Main/System.h"
 #include "Collision/CollisionManager.h"
 #include "Collision/PolygonShape.h"
+#include "Render/ModelShaderManager.h"
 #include <cmath>
 
 namespace
@@ -112,6 +113,10 @@ void Stage::GameInit(const StageInfo& info)
 	MV1SetMatrix(m_stageModelHandle, Matrix4x4::ToDxLibMatrix(trans));
 	MV1SetMatrix(m_stageViewHandle, transmat_graphic);
 	MV1RefreshCollInfo(m_stageModelHandle, -1);//ずらした位置で当たり判定を作り直す
+
+	//明かりのCSV(番号は敵配置と同じ。無いステージは何もしない)
+	m_lights.Load(info.enemySpawnNumber, m_pos_graphic);
+	if (m_useNightFog) m_lights.SetFogRange(kNightFogStart, kNightFogEnd);
 }
 
 Stage::~Stage()
@@ -160,7 +165,8 @@ void Stage::Draw() const
 		SetFogStartEnd(kNightFogStart, kNightFogEnd);
 	}
 
-	MV1DrawModel(m_stageViewHandle);
+	//いつもの光＋明かりを1回で描く(明かりの無いステージはいつもの描画)
+	ModelShaderManager::GetInstance().DrawModel(m_stageViewHandle);
 	DrawTunnel();
 
 	//キャラやエフェクトにはかけない

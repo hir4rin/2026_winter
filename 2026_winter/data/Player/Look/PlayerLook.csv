@@ -1,0 +1,8 @@
+#material,normalTex,maskTex,normalStrength,aoStrength,smoothStrength,metalStrength,specStrength,alphaClip,tintR,tintG,tintB,drawLast
+#マテリアル名の先頭,法線マップ(無しは-),マスク画像(R金属 G遮蔽 Aなめらかさ。無しは-),法線の強さ,遮蔽の強さ,なめらかさの強さ,金属の強さ,光沢の強さ,切り抜きのしきい値,色に掛ける R,G,B,後で描く(半透明は1)
+MAT_CYBER_NG_CLOTHES,T_CYBER_NG_CLOTHES_Normal.png,T_CYBER_NG_CLOTHES_MaskMap.png,1.0,1.15,1.0,1.0,1.0,0.43,1,1,1,0
+MAT_BODY,T_BODY_Normal_01.png,T_BODY_MaskMap.png,1.0,1.0,1.0,0.3,1.0,0.01,1,1,1,0
+MAT_HEAD,T_HEAD_Normal_01.png,T_HEAD_F_MaskMap.png,1.0,1.0,1.0,0.3,1.0,0.01,1,1,1,0
+MAT_EYES,-,T_EYES_MaskMap.png,1.0,1.0,0.87,0.0,1.0,0.01,1,1,1,0
+MAT_LASHES,-,-,1.0,1.0,0.0,0.0,0.0,0.13,1,1,1,1
+MAT_HAIR,-,-,0.621,1.0,0.0,0.0,0.5,0.31,1.5,1.5,1.5,1

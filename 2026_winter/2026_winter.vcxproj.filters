@@ -93,6 +93,15 @@
     <ClCompile Include="Stage\Stage.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Stage\StageLights.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\CharacterLook.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Main\FrameProfiler.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Stage\WallZone\WallZone.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -563,6 +572,9 @@
     <ClInclude Include="Stage\Stage.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Stage\StageLights.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Stage\WallZone\WallZone.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -588,6 +600,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Render\TempTopLight.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\CharacterLook.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Main\FrameProfiler.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\SkyBox.h">
@@ -965,6 +983,12 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\EnemyBlackPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\LitModelPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\CharacterLookPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\VertexShader.h">

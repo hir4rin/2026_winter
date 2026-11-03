@@ -992,15 +992,93 @@
   壁走りできる壁は全部「黒い看板＋太い水色の枠＋進む向きの矢印＞＋支柱」(`RunWall`)、溝の縁は黄色い光る線(`GapEdge`)。
 - (追記)広場の出口(z132〜140)に**壁蹴りの縦穴(高さ6m)**を足し、その先のぬれた通り〜落書きの路地〜妖魔の部屋〜水槽の通路を1段上(`WetY=6`、土台の上)にした。ファンの穴から看板の通り(y=-4)へは10mの飛び降り。縦穴は3か所。Unity が閉じていても `Unity.exe -batchmode -projectPath ninja_motion -executeMethod CyberStageTool.BuildShotsExport -quit` で書き出せる。
 - (追記)**当たり判定を見た目の物の子(〜_Col)にした**。見た目を動かす・回す・大きさを変えると当たり判定も付いてくる(168個)。見えない壁(65個)だけは今まで通り CyberStage_Collision。書き出しは緑のマテリアル(CollisionPreview)で見た目/当たり判定を見分ける。子の箱はシーンでクリックしても選ばれない(ヒエラルキーからは選べる)。古いシーンは「Attach Collision To Visuals」で移せる。
+- (追記 11/01)**シーンはユーザーが Unity で調整済み。もう Build / BuildShotsExport で作り直さない**(調整が消える)。変更は開いているシーンに足して保存 → `CyberStageTool.Export()` だけ。ぬれた通りの先(z168〜190)を壁走り2連続にした(`AddWetWallRun`。シーンにはもう入っているので2回は呼ばない。範囲の床・門②・小物を消し、溝2つ・壁走りの壁2枚・ふさぎ・戻りの斜面を置く。z168の敵はz161へ)。壁走りは9回。
+- (追記 11/01)**溝の区画(14_Trench)を連続壁走りにした**: 幅4mの通路の右の壁(z322〜342)→ 蹴る → 左の壁(z334〜353)。足場を消した(`TrenchChannel`、シーンへは `ReworkTrenchInScene` で1回だけ適用済み)。**ゲーム側も直した**: 壁走りキックから次の壁に張り付く条件がアニメのフレーム≥23 だったが、ジャンプアップのアニメは21.6Fで止まるので一度も張り付けなかった → 状態に入って6フレーム後から張り付けるようにした(PlayerStateWallRunKick)。落下中(PlayerStateFall)も壁走りゾーンの壁に当たってスティック入力があれば壁走りへ。MSBuild(Debug x64)は通った。計算では右の壁から蹴ると約20フレーム・前に約3.5mで左の壁に届く。
+- (追記 11/01)**鉄格子の通路(20_IronCorridor)も連続壁走りにし、回数を増やした**: 左(z440〜460)→ 右(z452〜472)→ 左(z464〜484)の3枚・蹴り2回(溝の区画は2枚・蹴り1回)。足場を消して溝 z444〜480(底 y1、手前に戻る斜面)。z482の敵は着地点の先の z488 へ(`CorridorChannel`、シーンへは `ReworkCorridorInScene` で1回だけ適用済み)。
+- (追記 11/01)**ボス前に連続壁走り4枚(蹴り3回)を足した**(区画 23_FinalRun、z538〜590)。左 z538〜558 → 右 z550〜570 → 左 z562〜582 → 右 z574〜590。場所を空けるため、社④・ボス広場・奥の背景のビル・Area_Boss・ボスを52m奥へずらした(社④ z590〜、ボス広場 z602〜638、ボス z624)。ずらしは位置だけなので中身の調整はそのまま。`AddFinalRun`(Build の最後でも呼ぶ。シーンへは1回だけ適用済み)。
+- (追記 11/01)ステージ1のボスを**キングメカ(BossEnemyKingmech)**にした(海賊 R1 から変更。位置 z624・フェーズ13・Idle はそのまま)。シーンの敵と Enemies005.csv、ツールの BuildValleyAndBoss を変更。
+- (追記 11/01)**導線の明かり**: ツールに `StageLight`(電球＋床の光のたまり＋Unity の点光源)と `FloorGuide`(床の誘導灯)、パレットに「明かり(導線)」「床の誘導灯」を足した。書き出しで点光源を `data/Stage/Lights/Stage005.csv`(kind,pos,色,range,intensity。単位はゲームの cm)に出す。`AddGuideLights` で 広場→縦穴・連続壁走りの入口3つ・ボス広場の入口に置いた(7灯＋誘導灯11)。**ゲーム側でライトを点ける処理はまだ**(CSV を読んで近い数個を点ける予定)。シーンは未保存の変更があったので保存していない(ユーザーが Ctrl+S)。
+- (追記 11/01)**ゲーム側の点光源(案A: DxLib の標準のライト)**: `Stage/StageLights.h/.cpp`(vcxproj/filters に登録)。`Stage::GameInit` で `Lights/Stage%03d.csv`(番号は enemySpawnNumber)を読み、
+  `SceneMain::NormalUpdate`(BattleManager の後)で `m_stage->GetLights().Update(プレイヤーの位置)`。プレイヤーに近い順に点光源へ割り当て、`m_activeDistance`(4000)の端 `m_fadeDistance`(1000)でだんだん暗くする。
+  DxLib の標準シェーダーで同時に効くライトは6個(`DX_D3D11_COMMON_CONST_LIGHT_NUM`)。平行光が3個(SceneMain・Camera・TempTopLight。**Camera のライトはステージより後に作られる**)なので、点光源は**最初の Update で「6 − 今点いている数」だけ作る**(今は3個)。
+  F2 の ImGui「Stage Lights」で Enable・Color Scale(3)・距離・Falloff を変えられる。MSBuild(Debug x64)は通った。
+  **結果: ほとんど効かない**。preview(scratchpad の preview_lights.exe、ゲームと同じライト)で比べると、拡散0.1の材質では Color Scale 25 でも少し明るくなるだけで、範囲の端で円がくっきり切れる。
+  ステージの拡散を0.4(環境0.6)にしても、壁が白っぽく照らされるだけで色はほとんど出ない(DxLib がライトの合計を1で抑えているらしい)。導線は今のところ床の光のたまり(見た目)のほうがはっきりする。
+  本物の色付きの光にするなら案B(`ModelShaderManager` に明かり用のピクセルシェーダーを足し、定数バッファで明かりを渡す。ステージ・プレイヤーも DrawModel で描く)。
+  血殺のフォグが描画のたびに `MV1SetDifColorScale(stage, 1)` に戻すので、ステージの拡散を上げるならゲームではなく書き出し(`convert.exe flat` の kFlatDifRate)で変えること。
+- (追記 11/01)**案B: 明かり用のシェーダーにした**(上の DxLib の点光源はやめた)。
+  - `Render/Shader/StageLightPS.hlsl`(vcxproj では None): テクスチャの色 × Σ(明かりの色 × (1−距離/届く距離)² × 面の向き)。面の向きは裏側も `wrap`(0.2)だけ照らす。遠くはフォグの距離に合わせて薄くする。
+    頂点シェーダーは今の `MV1VertexShader.hlsl`(WorldPosition / WorldNormal を使う)。BUMPMAP のときは入力の並びが変わるので、ピクセルシェーダーも BUMPMAP 付きを別にコンパイルしている。
+  - `ModelShaderManager`: `SetStageLights(明かり, フォグの始まり, 終わり, wrap)` で定数バッファ(b4、最大8灯 `kStageLightMax`)を更新、`DrawStageLight(model)` で**いつもの描画の上に加算でもう1回描く**(DxLib のライト・フォグはいつもの描画のまま)。
+    `SetDrawBlendMode` はモデルの描画に効かないので、全マテリアルを `MV1SetMaterialDrawBlendMode(ADD)` にして描き、戻す。Z は書かない(同じ深さに重ねる)。頂点シェーダーの無い頂点タイプのメッシュは光を足さない。
+    `DrawModel` は黒くするモードでなければ `MV1DrawModel` → `DrawStageLight`(敵・敵の武器・部位)。ステージ(`Stage::Draw`)・プレイヤー・プレイヤーの武器も呼ぶようにした(Player / PlayerWeapon の `MV1DrawModel` を `DrawModel` に)。
+  - `StageLights`: CSV を読み、プレイヤーから `m_activeDistance`(4000)以内の近い順に最大8灯を `SetStageLights` に渡す。ナイトフォグのステージはフォグの距離(1500〜9000)を渡す。F2 の「Stage Lights」で Enable / Color Scale(3) / 距離 / Wrap。
+  - 明かりが無いステージ(CSV が無い)は何もしない(`m_stageLightNum` が0なら `DrawStageLight` は何もしない)。
+  - (追記)壁蹴りの縦穴3か所すべてにオレンジの明かりを2つずつ(`AddShaftLights`、シーンへは1回だけ適用済み・Build の最後でも呼ぶ)。明かりは9灯(暖色)＋3灯(水色)の12灯。シーンは未保存のまま(ユーザーが Ctrl+S)。
+  - (追記)**進むルートに街灯を29本**(新しく26本＋スタートの路地・広場の今ある3本に明かり)。`StreetLamp(根元, 腕の向き)` はアセットの `CP_Street_Lamp_02` を置いて、頭(根元から腕の向きに2.6m・高さ4.9m、プレハブのライトの位置)に暖色の StageLight(半径4.5)を街灯の子として付ける。
+    プレハブには Unity のライトが元から入っているので、明かりの有無は子の `StageLight_` で見る(書き出しも `StageLight_` だけ)。明かりは全部で41灯。**シェーダーに渡す数を8→16にした**(`kStageLightMax` と StageLightPS.hlsl の `LIGHT_MAX`)。シーンは保存済み。MSBuild(Debug x64)は通った。
+  - (追記)街灯の見直し(`RetuneStreetLamps`、1回だけ適用済み): 街灯の頭の電球の箱(Bulb)を消した(`StageLight(..., bulb:false)`。アセットに電球があるため)、腕が道の外を向いた4本(スタートの路地 z8・広場2本・ぬれた通り z143 の元からある街灯)を削除(**スタートの路地 z8 の1本はその後、同じ根元(3.9,0,8)で腕を道の内側に向けて置き直した**)、
+    柱＋箱の明かり(ぬれた通り z142・ボス広場の入口2本)を街灯に置き換え、**戦う場所の街灯を `Dim`(淡い白 0.65,0.75,0.95・強さ0.9)**にした(`BattleSections`。ぬれた通りの z150 より手前は導線なので暖色のまま)。明かりは Warm15・Dim20・Cool3。シーンは未保存(ユーザーが作業中だったため)。
+  - preview(scratchpad の preview_shader.exe、同じシェーダー)で、ちらつき無し・溝の入口の壁と床に水色、縦穴のレンガにオレンジの光が乗ることを確認(強さ3。6は強すぎ)。MSBuild(Debug x64)は通った。**ゲームでの確認はまだ**(重さ: ステージ約47万三角形をもう1回描く、キャラが照らされる見え方、血殺中)。
 - (追記)**ステージはユーザーが自分で作ることになった**。Unity に日本語の部品パレット `Assets/Editor/CyberStagePalette.cs`(`Window > Cyber Stage Palette`)を作った:
   アセットを日本語の分類・サムネイル・検索・お気に入りで置く、ゲーム用の部品(床・壁走りの壁・縦穴・見えない壁・斜面・階段・溝の縁・コンテナ・ピラミッド・敵・エリア)をボタンで置く、表示切り替え・当たり判定・書き出し。
   使い方は `../tools/CyberStage/自分で作るときの使い方.md`。CyberStageTool の部品の関数は internal にしてパレットから呼んでいる(`PrepareEditing` で区画を選ぶ)。`New Empty Stage Scene` で空のシーンから始められる。
+- (追記 11/02)**高架から広場への階段(z78〜92)で横に落ちる**のを直した: 左右の当たり判定の壁が y4 から上だけで、階段の下の半分(z約86〜91)では横に抜けていた。
+  `CyberStageTool.FixUpperStairsWalls`(1回だけ適用済み)で x±3.6・y-1〜4.5・z76〜92 に壁を足した。Unity が閉じていたので batchmode で保存済みのシーンに足して保存 → Export。
+  DxLib で水平の線を引いて、z87〜90 でも左右 ±310 で壁に当たることを確認(scratchpad の preview/probe_side)。
 - ゲーム: `StageType::Cyber`(ステージセレクトの4番目「ステージ1」)、`AsyncData::CyberStageModel / CyberStageColModel`(System で読み込み・解放)、
   データは `data/Stage/CyberStage/`・`Enemies005.csv`・`WallZones/Stage005.csv`・`PhaseAreas/Stage005.csv`・`PhaseFlow/PhaseStage005.csv`。
 - 確認: MSBuild(Debug x64)でビルドは通った。DxLib で mv1 を描いてテクスチャが出ること、probe で床の高さ(原点 0・上の足場 800・着地 -200/-500 など)は確認。
   **ゲームでの確認はまだ**(壁走りで本当に溝を渡れるか・敵の位置・エリアの位置・重さ。見た目は約59万三角形)。
 
 ---
+
+### 2026-11-02 プレイヤーを法線マップ・遮蔽・光沢つきで描く(CharacterLook)
+- 最初は `Downloads/LooksLikeUnity_IdaFaber_Dxlib.zip` の Mv1LikeUnity(IdaFaber の SK_VEX を Unity HDRP と同じ見た目で描く一式)を入れたが、**とても重く**(4096 の画像19枚・毎フレーム画面をまるごとコピー・HDRP の光の計算)、
+  骨を写すやり方(SK_VEX_01.mv1 に Player03 の骨の行列を写す)では**光の当たり方が原点から引っ張られる**ようになったので、**外した**(Mv1LikeUnity.h・シェーダー・SK_VEX_01 のフォルダは削除)。
+- 代わりに**自作の軽いシェーダー**で、Unity らしさの要点(法線マップ・遮蔽・光沢)だけを作った。今の `Player03.mv1` をそのまま描く(骨を写さない)。
+  - `Render/Shader/CharacterLookPS.hlsl`(1回で描く): テクスチャの色 × 色味 → 法線マップ → マスク画像(G 遮蔽・A なめらかさ・R 金属)→ 平行光(拡散＋GGX の光沢)＋空と地面の環境光＋ふちの光＋ステージの明かり。
+    **Player03 には接線のデータが無い**ので、法線マップの向きは ddx/ddy(隣のピクセルとの差)から作っている(ApplyNormalMap)。Player03 と SK_VEX は同じメッシュなので UV も同じで、zip の画像がそのまま合う。
+  - `Render/CharacterLook.h/.cpp`: `Load(モデル, CSV)` でマテリアル名の先頭が一致する行の画像(t1 法線・t2 マスク)と強さを用意、`Draw(モデル)` でメッシュごとに b5(光とマテリアルの値)を書いて描く。不透明 → 半透明(髪・まつげ)の順。
+    読めなかったとき・`Settings().isEnable` が false のときは今まで通り `ModelShaderManager::DrawModel`。光の設定は `CharacterLook::Settings()`(全キャラ共通)、F2 の「Character Look」で変えられる。
+  - `ModelShaderManager`: `CharacterLookPS.hlsl` を2つ(BUMPMAP 有り/無し)読む、`BindStageLights()`(明かりの定数バッファを b4 に)、`IsInit()`。Init で明かりの数を0で入れておく。
+  - データ: `data/Player/Look/`(zip の法線・マスク画像8枚を2048に縮めたもの、約29MB)と `PlayerLook.csv`(Shift-JIS。マテリアル名の先頭・画像・強さ・切り抜き・色に掛ける・後で描く)。強さは zip の `SK_VEX_01_Materials.txt` の値。
+    髪は法線マップ無し(付けると毛の向きが乱れて暗くまだらになった)・色を1.5倍(元の明るさに近づける)。目は法線マップ無し。
+  - `Player`: `m_look`(CharacterLook)を持ち、コンストラクタで `Load`、Draw で `m_look.Draw(m_modelHandle)`。ステージの明かりはシェーダーの中で足す(重ね描きはしない)。
+- preview(scratchpad の preview_look.exe。ゲームの ModelShaderManager.cpp / CharacterLook.cpp をそのままビルドしたもの)で、夜の路地・街灯の下で確認。街灯の光の位置はずれない。1回の描画の CPU は約0.15ms。MSBuild(Debug x64)は通った。
+  **ゲームでの確認はまだ**(重さ・アニメ中の見た目・光の強さ)。ほかのキャラにも同じ CSV を作れば使える。
+
+### 2026-11-02 カクつき対策
+- **計測**: `Main/FrameProfiler`(シングルトン)。`BeginFrame` → `Mark(名前)` → `EndFrame`。20ms を超えたフレームは内訳を `Log/FrameSpikes.txt`、60フレームごとに区切りごとの平均/最短/最長を `Log/FrameStats.txt`(どちらも起動ごとに作り直し)。
+  `PERIOD` は前のフレームの始まりからの間隔(待ちも含む)。F2 の「Frame Time」でグラフと今のフレームの内訳。
+  区切り: Application(Update / Draw(rest) / ImGui / Flip)、SceneMain の更新(Upd:Before / Player / Enemy / Collision)と描画(Draw:Bg / Stage / Enemy / Player / Effect / UI)。
+  **起動の引数 `-bench`** でステージ1にそのまま入り、660フレーム(11秒)動かして終わる。測った結果: 1フレームの処理は Debug・Release とも平均約1.6ms(重さの問題ではなかった)。
+- **戦闘中のカクつき = 画面に出すタイミングのずれ**: このPC(RTX 4060・59Hz)では **ScreenFlip の VSync 待ちが効いていない**(SetWaitVSyncFlag(TRUE) でも1フレーム約5ms で回った)。
+  前の「VSync＋自前の16.67msの待ち」は実際には自前の待ちだけで、間隔は 16.70ms(少し長い)。モニターは 16.67ms なので約9秒に1回フレームが飛び、ティアリングも出ていた。
+  → `Application`: モニターが 58〜62Hz なら **`WaitVSync(1)` でモニターの更新を待ってから ScreenFlip**(間隔が 16.67ms にそろう)。それ以外のリフレッシュレートなら今まで通り自前の待ち。ScreenFlip の VSync 待ちは切った。
+  確認用に `-pace=busy`(自前の待ちだけ) / `-pace=both`(前のやり方) / `-pace=wait` で切り替えられる(`Application::PaceMode`)。処理が16.7msを超えると次の更新まで待つので、そのフレームは33msになる。
+- **縦穴の床(オレンジの光)がちかちかする = 明かりの重ね描きの深さのずれ**: 2回目(自作の頂点シェーダー)と1回目(DxLib の標準)で深さの計算がほんの少し違い、光が乗ったり乗らなかったりしていた(ずらし0で約17万ピクセル抜けていた)。
+  → 重ね描きのときだけ `MV1SetZBias(モデル, -4000)`(`m_lightPassZBias`。ふだんのカメラ ニア100 で抜けが無くなる値)と `MV1SetWriteZBuffer(FALSE)`、終わったら戻す。
+  少し手前の物(足元)にも光がはみ出すので、**SceneMain の描く順番を「ステージ → 敵 → プレイヤー」にした**(前は敵 → ステージ。キャラを後に描いて上書きする)。
+- **明かりの重ね描きを、明かりが届く所だけにした**: 前はステージ全体(約47万三角形)を毎フレーム2回描いていた。
+  `Stage::GameInit` でメッシュごとの範囲(`MV1GetMeshMin/MaxPosition` ＋ずらし)を覚え、`Stage::Draw` で `ModelShaderManager::IsNearStageLight`(箱と明かりの球の判定)が通るメッシュだけ `DrawStageLightMeshes`。
+  キャラの `DrawStageLight` は、モデルの位置の周り(半径400)に明かりが無ければ描かない。
+- 毎フレームの配列の作り直しをやめた(`ModelShaderManager` の m_blendBuffer / m_meshBuffer、`StageLights` の m_nearBuffer / m_paramBuffer、`Stage` の m_litMeshes)。
+- Debug・Release(x64)ともビルドは通った。**ゲームでの確認はまだ**(カクつき・床のちかちかが消えたか)。
+- **(更新)重ね描きをやめて1回で描くようにした**: ずらし(-4000)でも床のちかちかが残り、さらに**ステージの後ろの物が透けて見える**ようになったため。
+  - `Render/Shader/LitModelPS.hlsl`(vcxproj では None): DxLib のいつもの光(b0 の共通の定数バッファから、平行光・マテリアル・フォグ)＋ステージの明かり(b4)を1回で計算する。
+    フォグは頂点シェーダーが計算した `Fog.x * Fog.y` を使う。1回で描くので深さのずれ・ずらしは無い。
+  - `ModelShaderManager::DrawModel`: 黒くするモード → 黒い PS、明かりが0個 → `MV1DrawModel`、それ以外 → `LitModelPS`(ノーマルマップの頂点タイプは BUMPMAP 版)。`DrawModelWithShader` に bump 用の PS の引数を足した。
+  - `Stage::Draw` は `DrawModel(見た目のモデル)` だけ。`DrawStageLight` / `DrawStageLightMeshes` / `IsNearStageLight` / ずらし / メッシュの範囲 / `StageLightPS.hlsl` は削除。
+  - preview(scratchpad の preview_lit.exe)で、明かりが無いときの見た目が DxLib の標準の描画とほぼ同じ(平均の差 2.5/765)、同じ絵を2回描いて差が出ないことを確認。CPU は Draw:Stage 約0.15ms。
+- **(更新)待ち方**: `-pace=dwm`(ScreenFlip の後に `DwmFlush`)を足して比べたが、`WaitVSync` とほぼ同じ(間隔 平均16.68・最短約14.5・最長約19ms、33ms のフレームは無し)なので、既定は WaitVSync のまま。
+  CPU 側で見る限りフレームは飛んでいない。まだカクつくなら F2 の「Frame Time」でスパイクが出ているか、それとも絵の動き(カメラ・アニメ・ヒットストップ)かを見て切り分ける。
+- **(更新)「たまにカクッと止まる」**: ユーザーのプレイ(57秒)の記録では処理は約2〜3ms、20ms を超えたのは2回だけで、どちらも待ち(WaitVSync)が更新から約4ms 遅れて返ったもの(処理は軽い)。
+  - 既定の待ちを **DXGI の `IDXGIOutput::WaitForVBlank`** にした(`PaceMode::VBlank`、`-pace=vblank`。ウィンドウがあるモニターの出力を `MonitorFromWindow` で探し、移ったら取り直す。取れなければ WaitVSync)。`-pace=wait` で前の WaitVSync。
+  - **画面の更新との対応を数える**: `FrameProfiler::SetRefreshIndex`(`DwmGetCompositionTimingInfo` の cRefresh ＋ 経過時間から今の更新の番号)。1フレームで更新が1回以外進んだら「Refresh miss」(F2「Frame Time」)と `Log/FrameSpikes.txt` に `refresh +N`、FrameStats に REFRESH。
+  - `-bench=3600`(フレーム数を指定)で60秒ずつ測ると、WaitVSync・WaitForVBlank とも Refresh miss 0・20ms超え 0〜2回で、はっきりした差は無かった。
+  - **次**: ゲームでカクッとした瞬間に「Refresh miss」が増えるかを見る。増えない → 画面に出す所ではなく、ゲームの動き(カメラ・アニメ・スロー・敵の出現など)が原因。
+  - ヒットストップの時間(`hitStopTime`)は攻撃のデータにあるが、どこからも使われていない(ヒットストップは今は無い)。
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
@@ -1026,7 +1104,7 @@
 ---
 
 ## TODO / 次にやること
-- [ ] **ステージ1(StageType::Cyber)をゲームで確認**: 8mの溝を壁走りで渡れるか、縦穴3か所を壁蹴りで登れるか(広場の出口の縦穴は6m)、10mの飛び降りで困らないか、駅の階段・斜面(約27〜30°)を登れるか、駅の見張りを暗殺できるか、エリア・敵の位置、フレームレート
+- [ ] **ステージ1(StageType::Cyber)をゲームで確認**: 8mの溝を壁走りで渡れるか(ぬれた通りの先の2連続も)、溝の区画(2枚)と鉄格子の通路(3枚)・ボス前(4枚)で続けて壁走りできるか(落下中に壁走りゾーンの壁へ張り付くようにしたので、ほかの所で意図せず張り付かないかも)、縦穴3か所を壁蹴りで登れるか(広場の出口の縦穴は6m)、10mの飛び降りで困らないか、駅の階段・斜面(約27〜30°)を登れるか、駅の見張りを暗殺できるか、エリア・敵の位置、フレームレート
 - [ ] ImGui のウィンドウをゲームの外に出してみる(描画が崩れないか・ゲームが止まらないか・キー入力)。Enemy Debug ウィンドウで攻撃を出して確認
 - [ ] ボスの連続攻撃: コードはできた。BossEnemyPirateAttack.csv に1撃目・2撃目の行を書いてゲームで確認(向き・間の長さ・連撃中の被弾で止まってよいか)
 - [ ] 追加したボスのアニメ(回避・コンボ)を攻撃CSV・ステートで使う

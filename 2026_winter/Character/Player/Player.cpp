@@ -8,6 +8,7 @@
 #include "Camera/LockOnManager.h"
 #include "DataLoader/DataManager.h"
 #include "Character/Enemy/EnemyBase.h"
+#include "Render/ModelShaderManager.h"
 #include "Main/System.h"
 #include "Math/Matrix4x4.h"
 #include "Camera/Camera.h"
@@ -59,6 +60,8 @@ namespace
 
 	const char* const kHeadFrameName = "head";//頭のボーン//敵やカメラの方に向ける
 	constexpr float kHeadLookCameraDistance = 1000.0f;//カメラの向きを見るときに、前方のどれくらい先の点を見るか
+
+	const char* const kLookCsvPath = "data/Player/Look/PlayerLook.csv";//マテリアルごとの法線マップ・マスク画像と強さ(CharacterLook が読む)
 }
 
 
@@ -96,6 +99,9 @@ Player::Player()
 	//必殺技状態の翼の付け根のボーン
 	m_bloodWingFrame = MV1SearchFrame(m_modelHandle, kBloodWingFrameName);
 	m_bloodWingAttackFrame = MV1SearchFrame(m_attackModelHandle, kBloodWingFrameName);
+
+	//法線マップ・遮蔽・光沢の画像と強さ(マテリアルの名前で当てる)
+	m_look.Load(m_modelHandle, kLookCsvPath);
 }
 
 Player::~Player()
@@ -271,13 +277,14 @@ void Player::Draw()
 	if (!m_isSkillInvisible)
 	{
 		//モデルの描画
+		//ステージの明かりの光も足す
 		if (m_anim.GetModelHandleForCheck() == m_modelHandle)
 		{
-			MV1DrawModel(m_modelHandle);
+			m_look.Draw(m_modelHandle);//読めていなければ今まで通りの描き方になる
 		}
 		else
 		{
-			MV1DrawModel(m_attackModelHandle);
+			ModelShaderManager::GetInstance().DrawModel(m_attackModelHandle);
 		}
 
 		m_weapon->Draw();//武器

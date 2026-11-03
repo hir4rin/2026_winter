@@ -286,6 +286,9 @@
     <ClCompile Include="Render\TempTopLight.cpp" />
     <ClCompile Include="Stage\SkyBox.cpp" />
     <ClCompile Include="Stage\Stage.cpp" />
+    <ClCompile Include="Stage\StageLights.cpp" />
+    <ClCompile Include="Render\CharacterLook.cpp" />
+    <ClCompile Include="Main\FrameProfiler.cpp" />
     <ClCompile Include="Stage\WallZone\WallZone.cpp" />
     <ClCompile Include="Stage\WallZone\WallZoneEditor.cpp" />
     <ClCompile Include="Stage\Phase\PhaseAreaEditor.cpp" />
@@ -442,8 +445,10 @@
     <ClInclude Include="Collision\PolygonShape.h" />
     <ClInclude Include="Render\BloodKillFog.h" />
     <ClInclude Include="Render\TempTopLight.h" />
-    <ClInclude Include="Stage\SkyBox.h" />
+    <ClInclude Include="Render\CharacterLook.h" />
+    <ClInclude Include="Main\FrameProfiler.h" />    <ClInclude Include="Stage\SkyBox.h" />
     <ClInclude Include="Stage\Stage.h" />
+    <ClInclude Include="Stage\StageLights.h" />
     <ClInclude Include="Stage\WallZone\WallZone.h" />
     <ClInclude Include="Stage\WallZone\WallZoneData.h" />
     <ClInclude Include="Stage\Phase\EnemySpawnData.h" />
@@ -462,10 +467,12 @@
     <!-- 実行時にD3DCompileFromFileでコンパイルするので、ビルドではコンパイルしない(Noneにしておく) -->
     <None Include="Render\Shader\MV1VertexShader.hlsl" />
     <None Include="Render\Shader\EnemyBlackPS.hlsl" />
+    <None Include="Render\Shader\LitModelPS.hlsl" />
     <None Include="Render\Shader\VertexShader.h" />
     <None Include="Render\Shader\DataType.h" />
     <None Include="Render\Shader\DxShader_Common_D3D11.h" />
     <None Include="Render\Shader\DxShader_VS_D3D11.h" />
+    <None Include="Render\Shader\CharacterLookPS.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

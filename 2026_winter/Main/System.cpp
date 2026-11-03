@@ -9,8 +9,7 @@ namespace
 	//プレイヤーのモデル
 	//const std::string kPlayerModelPath = "data/2026_winter_Player_noY.mv1";
 	//const std::string kPlayerModelPath = "data/Player02.mv1";
-	const std::string kPlayerModelPath = "data/Player03.mv1";
-	const std::string kPlayerWeaponModelPath = "data/Player_Weapon/katana_blend.mv1";//プレイヤーの刀
+	const std::string kPlayerModelPath = "data/Player03.mv1";	const std::string kPlayerWeaponModelPath = "data/Player_Weapon/katana_blend.mv1";//プレイヤーの刀
 	//必殺技中の刀身の長い刀
 	const std::string kPlayerUltWeaponModelPath = "data/Player_Weapon/red_katana_ult.mv1";
 
@@ -68,8 +67,7 @@ void System::LoadAll()
 
 	SetUseASyncLoadFlag(TRUE);//ここから下の読み込みは非同期になる
 
-	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath.c_str());
-	m_asyncHandles[AsyncData::PlayerWeaponModel] = MV1LoadModel(kPlayerWeaponModelPath.c_str());
+	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath.c_str());	m_asyncHandles[AsyncData::PlayerWeaponModel] = MV1LoadModel(kPlayerWeaponModelPath.c_str());
 	m_asyncHandles[AsyncData::PlayerUltWeaponModel] = MV1LoadModel(kPlayerUltWeaponModelPath.c_str());
 	m_asyncHandles[AsyncData::EnemyModel] = MV1LoadModel(kEnemyModelpath.c_str());
 	m_asyncHandles[AsyncData::EnemyPartLeftArmModel] = MV1LoadModel(kEnemyPartLeftArmModelPath.c_str());
@@ -112,8 +110,7 @@ void System::LoadAll()
 void System::Terminate()
 {
 
-	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerModel]);
-	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerWeaponModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerModel]);	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerWeaponModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerUltWeaponModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::PlayerWingModel]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::PlayerEffectSkill]);

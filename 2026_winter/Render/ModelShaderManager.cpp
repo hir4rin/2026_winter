@@ -1,4 +1,5 @@
 ﻿#include "ModelShaderManager.h"
+#include <algorithm>
 #include <cassert>
 
 #pragma comment(lib, "d3dcompiler")//D3DCompileFromFileを使うため
@@ -7,6 +8,8 @@ namespace
 {
 	const std::wstring kModelVertexShaderPath = L"Render/Shader/MV1VertexShader.hlsl";
 	const std::wstring kBlackPixelShaderPath = L"Render/Shader/EnemyBlackPS.hlsl";
+	const std::wstring kLitPixelShaderPath = L"Render/Shader/LitModelPS.hlsl";
+	const std::wstring kLookPixelShaderPath = L"Render/Shader/CharacterLookPS.hlsl";
 	const char* const kShaderEntryPoint = "main";
 	const char* const kVertexShaderTarget = "vs_5_0";
 	const char* const kPixelShaderTarget = "ps_5_0";
@@ -39,8 +42,15 @@ void ModelShaderManager::Init()
 		{ {"SKINMESH",""}, {"BONE8",""}, {"BUMPMAP",""}, {nullptr,nullptr} }, true);
 
 	m_blackPixelShader = LoadShaderWithMacro(kBlackPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
+	//明かり用はノーマルマップのあり/なしで VS_OUTPUT の並びが違うので2つ
+	m_litPixelShader = LoadShaderWithMacro(kLitPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
+	m_litBumpPixelShader = LoadShaderWithMacro(kLitPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
+	m_lightConstantBuffer = CreateShaderConstantBuffer(sizeof(StageLightConstant));
+	m_lookPixelShader = LoadShaderWithMacro(kLookPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
+	m_lookBumpPixelShader = LoadShaderWithMacro(kLookPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 
 	m_isInit = true;
+	SetStageLights({}, 0.0f, 0.0f, 0.0f);//明かりの数を0で入れておく(明かりの無いステージでも CharacterLook が b4 を読むため)
 }
 
 void ModelShaderManager::Terminate()
@@ -54,6 +64,17 @@ void ModelShaderManager::Terminate()
 	}
 	if (m_blackPixelShader != -1)DeleteShader(m_blackPixelShader);
 	m_blackPixelShader = -1;
+	if (m_litPixelShader != -1)DeleteShader(m_litPixelShader);
+	m_litPixelShader = -1;
+	if (m_litBumpPixelShader != -1)DeleteShader(m_litBumpPixelShader);
+	m_litBumpPixelShader = -1;
+	if (m_lightConstantBuffer != -1)DeleteShaderConstantBuffer(m_lightConstantBuffer);
+	m_lightConstantBuffer = -1;
+	if (m_lookPixelShader != -1)DeleteShader(m_lookPixelShader);
+	m_lookPixelShader = -1;
+	if (m_lookBumpPixelShader != -1)DeleteShader(m_lookBumpPixelShader);
+	m_lookBumpPixelShader = -1;
+	m_stageLightNum = 0;
 
 	m_isBlackMode = false;
 	m_isInit = false;
@@ -61,12 +82,45 @@ void ModelShaderManager::Terminate()
 
 void ModelShaderManager::DrawModel(int modelHandle)
 {
-	if (!m_isBlackMode || !m_isInit)
+	if (!m_isInit)
 	{
 		MV1DrawModel(modelHandle);
 		return;
 	}
-	DrawModelWithShader(modelHandle, m_blackPixelShader);
+	if (m_isBlackMode)
+	{
+		DrawModelWithShader(modelHandle, m_blackPixelShader);
+		return;
+	}
+	//明かりが無ければいつもの描画
+	if (m_stageLightNum <= 0 || m_litPixelShader == -1)
+	{
+		MV1DrawModel(modelHandle);
+		return;
+	}
+	BindStageLights();
+	DrawModelWithShader(modelHandle, m_litPixelShader, m_litBumpPixelShader);
+}
+
+void ModelShaderManager::SetStageLights(const std::vector<StageLightParam>& lights, float fogStart, float fogEnd, float wrap)
+{
+	if (!m_isInit || m_lightConstantBuffer == -1)return;
+	auto* buffer = static_cast<StageLightConstant*>(GetBufferShaderConstantBuffer(m_lightConstantBuffer));
+	m_stageLightNum = (std::min)(static_cast<int>(lights.size()), kStageLightMax);
+	for (int i = 0; i < m_stageLightNum; ++i)
+	{
+		const auto& light = lights[i];
+		buffer->posRange[i] = { light.pos.x, light.pos.y, light.pos.z, light.range };
+		buffer->color[i] = { light.color.r, light.color.g, light.color.b, 0.0f };
+	}
+	buffer->param = { static_cast<float>(m_stageLightNum), fogStart, fogEnd, wrap };
+	UpdateShaderConstantBuffer(m_lightConstantBuffer);
+}
+
+void ModelShaderManager::BindStageLights()
+{
+	if (m_lightConstantBuffer == -1)return;
+	SetShaderConstantBuffer(m_lightConstantBuffer, DX_SHADERTYPE_PIXEL, kStageLightSlot);
 }
 
 int ModelShaderManager::GetVertexShader(int vertexType)const
@@ -119,8 +173,14 @@ int ModelShaderManager::LoadShaderWithMacro(const std::wstring& path, const char
 	return handle;
 }
 
-void ModelShaderManager::DrawModelWithShader(int modelHandle, int pixelShader)
+bool ModelShaderManager::IsBumpType(int vertexType)
 {
+	return vertexType == DX_MV1_VERTEX_TYPE_NMAP_1FRAME || vertexType == DX_MV1_VERTEX_TYPE_NMAP_4FRAME || vertexType == DX_MV1_VERTEX_TYPE_NMAP_8FRAME;
+}
+
+void ModelShaderManager::DrawModelWithShader(int modelHandle, int pixelShader, int bumpPixelShader)
+{
+	if (bumpPixelShader == -1)bumpPixelShader = pixelShader;
 	//モデル全体が同じ頂点タイプかどうか
 	const int tListNum = MV1GetTriangleListNum(modelHandle);
 	if (tListNum <= 0)return;
@@ -135,14 +195,13 @@ void ModelShaderManager::DrawModelWithShader(int modelHandle, int pixelShader)
 		}
 	}
 
-	SetUsePixelShader(pixelShader);
-
 	if (isSameType)
 	{
 		//まとめて描く
 		const int vs = GetVertexShader(firstType);
 		MV1SetUseOrigShader(vs != -1);//対応するシェーダーが無い頂点タイプは標準シェーダーで描く
 		SetUseVertexShader(vs);
+		SetUsePixelShader(IsBumpType(firstType) ? bumpPixelShader : pixelShader);
 		MV1DrawModel(modelHandle);
 	}
 	else
@@ -153,9 +212,11 @@ void ModelShaderManager::DrawModelWithShader(int modelHandle, int pixelShader)
 		{
 			if (MV1GetMeshTListNum(modelHandle, mesh) <= 0)continue;
 			const int tList = MV1GetMeshTList(modelHandle, mesh, 0);
-			const int vs = GetVertexShader(MV1GetTriangleListVertexType(modelHandle, tList));
+			const int type = MV1GetTriangleListVertexType(modelHandle, tList);
+			const int vs = GetVertexShader(type);
 			MV1SetUseOrigShader(vs != -1);
 			SetUseVertexShader(vs);
+			SetUsePixelShader(IsBumpType(type) ? bumpPixelShader : pixelShader);
 			MV1DrawMesh(modelHandle, mesh);
 		}
 	}
