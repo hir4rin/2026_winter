@@ -115,6 +115,9 @@ void SceneMain::Init()
 	//モデル用のシェーダー(頂点タイプごとの頂点シェーダー・敵を黒くするピクセルシェーダー)
 	ModelShaderManager::GetInstance().Init();
 
+	//このステージのモデル・敵を読む(前に入ったステージと同じなら何もしない)
+	System::GetInstance().LoadStage(m_stageType);
+
 	//エネミーマネージャー
 	m_enemyManager = std::make_shared<EnemyManager>();
 
@@ -170,7 +173,7 @@ void SceneMain::Init()
 
 	//インゲーム用のUIを生成する(プレイヤーなどを参照するUIがあるので最後に行う)
 	m_uiManager = std::make_unique<UIManager>();
-	m_uiManager->InGameInit(m_cameraManager);
+	m_uiManager->InGameInit(m_cameraManager, m_player);
 }
 
 void SceneMain::Update()

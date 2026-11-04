@@ -38,8 +38,8 @@ struct PS_INPUT
 // ステージの明かり(ModelShaderManager が b4 に入れる)
 cbuffer StageLightBuffer : register(b4)
 {
-	float4 g_LightPosRange[LIGHT_MAX];	// xyz:位置 w:届く距離
-	float4 g_LightColor[LIGHT_MAX];		// rgb:色×強さ
+	float4 g_LightPosRange[LIGHT_MAX];	// xyz:位置 w:届く距離の2乗
+	float4 g_LightColor[LIGHT_MAX];		// rgb:色×強さ w:1/届く距離
 	float4 g_Param;						// x:数 y,z:(使っていない) w:裏側への回り込み
 };
 
@@ -70,19 +70,22 @@ float4 main(PS_INPUT input) : SV_TARGET
 	}
 	float3 color = tex.rgb * saturate(diffuse * input.Diffuse.rgb + ambient) + specular * input.Specular.rgb;
 
-	// ステージの明かり(テクスチャの色 × 明かりの色 × 距離の減り方 × 面の向き)
+	// ステージの明かり(明かりの色 × 距離の減り方 × 面の向き を足してから、テクスチャの色を1回掛ける)
 	float3 worldNormal = normalize(input.WorldNormal);
+	float3 lightSum = float3(0.0f, 0.0f, 0.0f);
 	int count = (int)g_Param.x;
 	for (int k = 0; k < count; ++k)
 	{
 		float3 toPoint = g_LightPosRange[k].xyz - input.WorldPosition;
-		float dist = length(toPoint);
-		float atten = saturate(1.0f - dist / g_LightPosRange[k].w);
+		float distSq = dot(toPoint, toPoint);
+		if (distSq >= g_LightPosRange[k].w) continue;	// 届かない明かりは計算しない
+		float invDist = rsqrt(max(distSq, 1e-6f));		// 平方根と割り算の代わり
+		float atten = saturate(1.0f - distSq * invDist * g_LightColor[k].w);
 		atten *= atten;
-		float ndl = dot(worldNormal, toPoint / max(dist, 0.001f));
-		ndl = saturate(ndl * (1.0f - g_Param.w) + g_Param.w);
-		color += tex.rgb * g_LightColor[k].rgb * atten * ndl;
+		float ndl = saturate(dot(worldNormal, toPoint * invDist) * (1.0f - g_Param.w) + g_Param.w);
+		lightSum += g_LightColor[k].rgb * (atten * ndl);
 	}
+	color += tex.rgb * lightSum;
 
 	// フォグ(頂点シェーダーが Fog.x に計算済み。フォグが無いときは 1)
 	color = lerp(g_Common.Fog.Color.rgb, color, saturate(input.Fog.x * input.Fog.y));

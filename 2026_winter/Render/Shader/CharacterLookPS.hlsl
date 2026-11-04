@@ -32,8 +32,8 @@ struct PS_INPUT
 // ステージの明かり(LitModelPS.hlsl と同じ。ModelShaderManager が b4 に入れる)
 cbuffer StageLightBuffer : register(b4)
 {
-	float4 g_LightPosRange[LIGHT_MAX];	// xyz:位置 w:届く距離
-	float4 g_LightColor[LIGHT_MAX];		// rgb:色×強さ
+	float4 g_LightPosRange[LIGHT_MAX];	// xyz:位置 w:届く距離の2乗
+	float4 g_LightColor[LIGHT_MAX];		// rgb:色×強さ w:1/届く距離
 	float4 g_Param;						// x:数 y:フォグの始まり z:フォグの終わり w:裏側への回り込み
 };
 
@@ -114,7 +114,9 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float distribution = rough * rough / (PI * denom * denom);
 	float k = rough * 0.5f;
 	float visibility = 0.25f / ((nl * (1.0f - k) + k) * (nv * (1.0f - k) + k));
-	float3 fresnel = f0 + (1.0f - f0) * pow(1.0f - saturate(dot(toCamera, halfVec)), 5.0f);
+	float fc = 1.0f - saturate(dot(toCamera, halfVec));
+	float fc2 = fc * fc;
+	float3 fresnel = f0 + (1.0f - f0) * (fc2 * fc2 * fc);	// 5乗(pow を使わない)
 	float3 color = (diffuseColor + distribution * visibility * fresnel * g_Mat1.w) * nl * g_KeyColor.rgb;
 
 	// 環境光(上は空、下は地面の色)。光沢の分も少しだけ
@@ -122,20 +124,23 @@ float4 main(PS_INPUT input) : SV_TARGET
 	color += (diffuseColor + f0 * smooth * 0.5f) * ambient * ao;
 
 	// ふちの光(夜でも形が分かるように)
-	color += pow(1.0f - nv, g_Rim.w) * g_Rim.rgb * ao;
+	color += pow(saturate(1.0f - nv), g_Rim.w) * g_Rim.rgb * ao;	// nv は 1 を少し超えることがあり、負の数の pow は NaN になる
 
-	// ステージの明かり
+	// ステージの明かり(LitModelPS.hlsl と同じ。足してから色と遮蔽を1回掛ける)
+	float3 lightSum = float3(0.0f, 0.0f, 0.0f);
 	int count = (int)g_Param.x;
 	for (int i = 0; i < count; ++i)
 	{
 		float3 toLight = g_LightPosRange[i].xyz - pos;
-		float dist = length(toLight);
-		float atten = saturate(1.0f - dist / g_LightPosRange[i].w);
+		float distSq = dot(toLight, toLight);
+		if (distSq >= g_LightPosRange[i].w) continue;	// 届かない明かりは計算しない
+		float invDist = rsqrt(max(distSq, 1e-6f));
+		float atten = saturate(1.0f - distSq * invDist * g_LightColor[i].w);
 		atten *= atten;
-		float ndl = dot(normal, toLight / max(dist, 0.001f));
-		ndl = saturate(ndl * (1.0f - g_Param.w) + g_Param.w);
-		color += albedo * g_LightColor[i].rgb * atten * ndl * ao;
+		float ndl = saturate(dot(normal, toLight * invDist) * (1.0f - g_Param.w) + g_Param.w);
+		lightSum += g_LightColor[i].rgb * (atten * ndl);
 	}
+	color += albedo * lightSum * ao;
 
 	return float4(color, alpha);
 }

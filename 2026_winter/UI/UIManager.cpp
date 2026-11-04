@@ -1,6 +1,7 @@
 ﻿#include "UIManager.h"
 #include "DxLib.h"
 #include "KessatsuUI.h"
+#include "PlayerHUD.h"
 
 void UIManager::TitleInit()
 {
@@ -14,7 +15,7 @@ void UIManager::TitleInit()
 	InitAll();
 }
 
-void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager)
+void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak_ptr<Player> player)
 {
 	//前の場面のUIが残らないようにする
 	Clear();
@@ -22,6 +23,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager)
 	//インゲームで使うUIをここで生成して登録する
 	//必殺技中の「血殺」の文字
 	Add(std::make_shared<KessatsuUI>());
+	//HP・スキル・必殺技ゲージ
+	Add(std::make_shared<PlayerHUD>(player));
 
 	//登録したUIのハンドルを生成する
 	InitAll();

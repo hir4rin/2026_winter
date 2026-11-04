@@ -76,8 +76,8 @@ private:
 	//LitModelPS.hlsl の cbuffer と同じ並び
 	struct StageLightConstant
 	{
-		FLOAT4 posRange[kStageLightMax];//xyz:位置 w:届く距離
-		FLOAT4 color[kStageLightMax];
+		FLOAT4 posRange[kStageLightMax];//xyz:位置 w:届く距離の2乗
+		FLOAT4 color[kStageLightMax];//rgb:色×強さ w:1/届く距離
 		FLOAT4 param;//x:数 y:フォグの始まり z:フォグの終わり w:裏側への回り込み
 	};
 	static constexpr int kStageLightSlot = 4;//定数バッファのスロット(LitModelPS.hlsl の register(b4))

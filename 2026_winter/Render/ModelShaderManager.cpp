@@ -116,8 +116,9 @@ void ModelShaderManager::SetStageLights(const std::vector<StageLightParam>& ligh
 	for (int i = 0; i < m_stageLightNum; ++i)
 	{
 		const auto& light = lights[i];
-		buffer->posRange[i] = { light.pos.x, light.pos.y, light.pos.z, light.range };
-		buffer->color[i] = { light.color.r, light.color.g, light.color.b, 0.0f };
+		//2乗と逆数はここで計算しておく(シェーダーでピクセルごとにしないため)
+		buffer->posRange[i] = { light.pos.x, light.pos.y, light.pos.z, light.range * light.range };
+		buffer->color[i] = { light.color.r, light.color.g, light.color.b, light.range > 0.0f ? 1.0f / light.range : 0.0f };
 	}
 	buffer->param = { static_cast<float>(m_stageLightNum), fogStart, fogEnd, wrap };
 	UpdateShaderConstantBuffer(m_lightConstantBuffer);

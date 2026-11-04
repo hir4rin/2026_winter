@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Scene.h"
+#include "UI/MenuUI.h"
 
 /// <summary>
 /// ステージセレクトシーン
@@ -25,9 +26,16 @@ public:
 private:
 	//フェード用の黒い板を描画する
 	void DrawFade();
+	//「Now Loading」を出してからステージに入る
+	void LoadingUpdate();
+	void LoadingDraw();
 
 	//選択中のステージ(StageTypeのint値)
 	//シーンを作り直しても前回選んだステージにカーソルを合わせておく
 	static int s_cursor;
 	int m_fadeFrame = 0;//フェードの経過フレーム
+	//NG4風のメニュー
+	MenuUI m_menu;
+	//右のパネルに今のステージの説明を入れる
+	void ApplyCursor();
 };

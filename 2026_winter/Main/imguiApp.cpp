@@ -75,7 +75,8 @@ void imguiApp::Init(HWND hwnd, ID3D11Device* device, ID3D11DeviceContext* contex
 	ImGuiIO& io = ImGui::GetIO();//入出力まわりの設定を取得する
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;//キーボードだけでもImGuiのUIを操作できるようにする設定
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;//ウィンドウ同士をくっつけられるようにする(docking版の機能)
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;//ゲームのウィンドウの外にもImGuiのウィンドウを出せるようにする(docking版の機能)
+	//ゲームのウィンドウの外に出す機能(ViewportsEnable)は最初は切る(外のウィンドウを出す Present がたまに1フレーム近く止まってカクつくため)
+	//F2 の「Frame Time」の「ImGui windows outside」で入れられる
 
 	ImGui::StyleColorsDark();//見た目のテーマをダーク(黒っぽい配色)にする
 

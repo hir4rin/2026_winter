@@ -15,6 +15,7 @@
 #include <dxgi.h>
 #include <dwmapi.h>
 #include <cstdlib>
+#include <cmath>
 
 #pragma comment(lib, "dwmapi")//DwmFlushを使うため
 
@@ -50,6 +51,8 @@ bool Application::Init()
 	SetUseDirectInputFlag(false);
 	//ウィンドウの外に出したImGuiを触るとゲームのウィンドウが非アクティブになるので、非アクティブでも止めない
 	SetAlwaysRunFlag(TRUE);
+	//画像の元データをメモリに残さない(デバイスロスト時の復元用。残すとテクスチャの分だけメモリが約0.8GB増える)
+	SetUseGraphBaseDataBackup(FALSE);
 
 	// DirectX11を使用するようにする。(DirectX9も可、一部機能不可)
 	// Effekseerを使用するには必ず設定する。
@@ -98,9 +101,8 @@ bool Application::Init()
 		const_cast<ID3D11Device*>(static_cast<const ID3D11Device*>(GetUseDirect3D11Device())),
 		const_cast<ID3D11DeviceContext*>(static_cast<const ID3D11DeviceContext*>(GetUseDirect3D11DeviceContext())));
 
-	//モデル・エフェクトの読み込み
-	System::GetInstance().LoadAll();
-	//TODO:ローディングシーンができたら、そちらで待つようにする
+	//どのステージでも使うもの(プレイヤー・エフェクト)の読み込み。ステージの分は入るときに読む(System::LoadStage)
+	System::GetInstance().LoadCommon();
 	while (GetASyncLoadNum() > 0)
 	{
 		if (ProcessMessage() == -1)
@@ -287,18 +289,21 @@ void Application::UpdateVBlankOutput()
 	dxgiDevice->Release();
 }
 
-long long Application::GetRefreshIndex()const
+long long Application::GetRefreshIndex()
 {
 	DWM_TIMING_INFO info = {};
 	info.cbSize = sizeof(info);
 	if (FAILED(DwmGetCompositionTimingInfo(nullptr, &info)) || info.qpcRefreshPeriod == 0) return -1;
-	//最後の更新の回数 + そこから今までに過ぎた更新の数
+	//前に呼んでからの時間 ÷ 更新1回分の時間 で数える
+	//(cRefresh は画面の合成の回数なので、モニターが2台点いていると1回の更新で2つ進む)
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);
-	const long long elapsed = static_cast<long long>(now.QuadPart) - static_cast<long long>(info.qpcVBlank);
-	long long index = static_cast<long long>(info.cRefresh);
-	if (elapsed > 0) index += elapsed / static_cast<long long>(info.qpcRefreshPeriod);
-	return index;
+	if (m_lastRefreshQpc >= 0)
+	{
+		m_refreshIndex += std::llround(static_cast<double>(now.QuadPart - m_lastRefreshQpc) / static_cast<double>(info.qpcRefreshPeriod));
+	}
+	m_lastRefreshQpc = now.QuadPart;
+	return m_refreshIndex;
 }
 
 void Application::ReleaseVBlankOutput()

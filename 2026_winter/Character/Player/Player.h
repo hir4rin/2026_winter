@@ -211,6 +211,8 @@ public:
 	//ゲージの取得
 	int GetSkillGauge()const { return m_comboInfo.SkillGauge; }//スキルゲージの取得
 	int GetUltGauge()const { return m_comboInfo.UltGauge; }//必殺技ゲージの取得
+	int GetMaxGauge()const { return kMaxGaugeValue; }//スキル・必殺技ゲージの最大値
+	int GetMaxHp()const;//最大HP
 	//血殺(必殺技ゲージ)を最大にする//ラストヒットイベント演出用
 	void MaxUltGauge() { m_comboInfo.UltGauge = kMaxGaugeValue; }
 
@@ -292,7 +294,7 @@ private:
 	static MATRIX GetRotationOnly(const MATRIX& mat);//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
 	static MATRIX GetFrameBaseModelMatrix(int modelHandle, int frameIndex);//アニメーションが付いていない初期姿勢での、フレームのモデル空間の行列
 	void ApplyPos()override;//座標の適用//Playerクラスでは、座標に加えて、首のボーンの回転も適用する
-	void ApplyPosWithAttackModel();//アタックモデルにも適用
+	void UpdateRotAngle();//移動の向きへ回す
 
 	bool CanSkillAttack(bool changeGauge = true);//スキル攻撃ができるかどうか//trueならゲージを減らす
 	bool CanUltAttack();//必殺技攻撃ができるかどうか//trueならゲージを減らす
@@ -336,10 +338,8 @@ private:
 	int m_headFrame = -1;//頭のボーンのフレーム番号(通常のモデル)//見つからなければ-1で頭を向けない
 	int m_bloodWingPlayingHandle = -1;//必殺技状態の翼エフェクト(再生中)のハンドル//再生していなければ-1
 	int m_bloodWingFrame = -1;//翼の付け根にする背中(肩甲骨の高さ)のボーン//通常のモデル用
-	int m_bloodWingAttackFrame = -1;//同じボーンの攻撃のモデル用
 	std::shared_ptr<PlayerWeapon> m_weapon;//武器
 
-	int m_attackModelHandle = -1;//攻撃のモデルのハンドル
 	int m_whiteHandle;
 
 	CharacterLook m_look;//法線マップ・遮蔽・光沢つきで描く(CharacterLookPS.hlsl)

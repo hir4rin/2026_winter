@@ -7,9 +7,9 @@
 namespace
 {
 	//画像のパス
-	const char* const kBloodPath = "data/UI/blood_UI.png";
-	const char* const kSplashPath = "data/UI/splash2_UI.png";
-	const char* const kSatsuPath = "data/UI/satu_UI.png";
+	const char* const kBloodPath = "data/UI/bloodUI/blood_UI.png";
+	const char* const kSplashPath = "data/UI/bloodUI/splash2_UI.png";
+	const char* const kSatsuPath = "data/UI/bloodUI/satu_UI.png";
 
 	constexpr float kBloodScale = 0.8f;//「血」の拡大率
 	constexpr float kBloodRotation = -DX_PI_F / 12;//「血」の回転角度

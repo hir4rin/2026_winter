@@ -5,6 +5,7 @@
 #include "Collision/CollisionManager.h"
 #include "Collision/PolygonShape.h"
 #include "Render/ModelShaderManager.h"
+#include <algorithm>
 #include <cmath>
 
 namespace
@@ -68,6 +69,7 @@ void Stage::TitleInit()
 
 	MV1SetMatrix(m_stageViewHandle, transmat_graphic);
 	MV1SetScale(m_stageViewHandle, VGet(kTitleStageScale, kTitleStageScale, kTitleStageScale));
+	BuildMeshBoxes();
 }
 
 void Stage::GameInit(const StageInfo& info)
@@ -113,6 +115,7 @@ void Stage::GameInit(const StageInfo& info)
 	MV1SetMatrix(m_stageModelHandle, Matrix4x4::ToDxLibMatrix(trans));
 	MV1SetMatrix(m_stageViewHandle, transmat_graphic);
 	MV1RefreshCollInfo(m_stageModelHandle, -1);//ずらした位置で当たり判定を作り直す
+	BuildMeshBoxes();
 
 	//明かりのCSV(番号は敵配置と同じ。無いステージは何もしない)
 	m_lights.Load(info.enemySpawnNumber, m_pos_graphic);
@@ -166,6 +169,7 @@ void Stage::Draw() const
 	}
 
 	//いつもの光＋明かりを1回で描く(明かりの無いステージはいつもの描画)
+	CullMeshes();
 	ModelShaderManager::GetInstance().DrawModel(m_stageViewHandle);
 	DrawTunnel();
 
@@ -191,6 +195,41 @@ void Stage::DrawTunnel() const
 		const float z = m_pos_graphic.z + i * kTunnelLength + m_tunnelScroll;
 		MV1SetPosition(m_tunnelHandle, VGet(m_pos_graphic.x, m_pos_graphic.y + kTunnelOffsetY, z));
 		MV1DrawModel(m_tunnelHandle);
+	}
+}
+
+void Stage::BuildMeshBoxes()
+{
+	m_meshBoxes.assign(MV1GetMeshNum(m_stageViewHandle), MeshBox{});
+	for (int frame = 0; frame < MV1GetFrameNum(m_stageViewHandle); ++frame)
+	{
+		const MATRIX mat = MV1GetFrameLocalWorldMatrix(m_stageViewHandle, frame);
+		for (int i = 0; i < MV1GetFrameMeshNum(m_stageViewHandle, frame); ++i)
+		{
+			const int mesh = MV1GetFrameMesh(m_stageViewHandle, frame, i);
+			const VECTOR localMin = MV1GetMeshMinPosition(m_stageViewHandle, mesh);
+			const VECTOR localMax = MV1GetMeshMaxPosition(m_stageViewHandle, mesh);
+			//8つの角をワールドに直して、それを囲む箱にする
+			MeshBox box = { VTransform(localMin, mat), VTransform(localMin, mat) };
+			for (int corner = 1; corner < 8; ++corner)
+			{
+				const VECTOR local = VGet((corner & 1) ? localMax.x : localMin.x, (corner & 2) ? localMax.y : localMin.y, (corner & 4) ? localMax.z : localMin.z);
+				const VECTOR world = VTransform(local, mat);
+				box.min = VGet((std::min)(box.min.x, world.x), (std::min)(box.min.y, world.y), (std::min)(box.min.z, world.z));
+				box.max = VGet((std::max)(box.max.x, world.x), (std::max)(box.max.y, world.y), (std::max)(box.max.z, world.z));
+			}
+			m_meshBoxes[mesh] = box;
+		}
+	}
+}
+
+void Stage::CullMeshes()const
+{
+	//今のカメラの視界に箱が少しでも入っていれば描く
+	for (int mesh = 0; mesh < static_cast<int>(m_meshBoxes.size()); ++mesh)
+	{
+		const bool isOutside = CheckCameraViewClip_Box(m_meshBoxes[mesh].min, m_meshBoxes[mesh].max) != FALSE;
+		MV1SetMeshVisible(m_stageViewHandle, mesh, isOutside ? FALSE : TRUE);
 	}
 }
 

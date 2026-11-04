@@ -11,12 +11,8 @@ namespace
 {
 	constexpr int kFadeFrame = 30;//フェードにかけるフレーム数
 
-	constexpr int kTitleX = 300;//見出しのX座標
-	constexpr int kTitleY = 200;//見出しのY座標
-	constexpr int kItemX = 320;//ステージ名のX座標
-	constexpr int kItemY = 280;//最初のステージ名のY座標
-	constexpr int kItemLineHeight = 60;//ステージ名の行間
-	constexpr int kDescOffsetY = 24;//ステージ名から説明までの距離
+	constexpr int kLoadingTextOffsetX = 200;//「Now Loading...」の位置(画面の右下から)
+	constexpr int kLoadingTextOffsetY = 50;
 }
 
 int StageSelectScene::s_cursor = 0;
@@ -30,6 +26,24 @@ StageSelectScene::StageSelectScene(SceneController& controller) :Scene(controlle
 
 	m_updateFunc = static_cast<UpdateFunc_t>(&StageSelectScene::FadeInUpdate);
 	m_drawFunc = static_cast<DrawFunc_t>(&StageSelectScene::FadeInDraw);
+
+	m_menu.Init();
+	m_menu.SetTitle("ステージセレクト");
+	m_menu.SetListHeader("ステージ一覧");
+	std::vector<std::string> items;
+	for (int i = 0; i < static_cast<int>(StageType::Num); ++i)
+	{
+		items.push_back(StageData::GetInfo(static_cast<StageType>(i)).name);
+	}
+	m_menu.SetItems(items);
+	ApplyCursor();
+}
+
+void StageSelectScene::ApplyCursor()
+{
+	const StageInfo& info = StageData::GetInfo(static_cast<StageType>(s_cursor));
+	m_menu.SetCursor(s_cursor);
+	m_menu.SetDetail("詳細", info.name, info.description);
 }
 
 StageSelectScene::~StageSelectScene()
@@ -38,6 +52,7 @@ StageSelectScene::~StageSelectScene()
 
 void StageSelectScene::Update()
 {
+	m_menu.Update();
 	(this->*m_updateFunc)();
 }
 
@@ -68,6 +83,7 @@ void StageSelectScene::NormalUpdate()
 	{
 		s_cursor = (s_cursor + 1) % stageNum;
 	}
+	ApplyCursor();
 
 	//Aで決定してフェードアウト
 	if (input.IsTriggered("A"))
@@ -83,10 +99,22 @@ void StageSelectScene::FadeOutUpdate()
 	m_fadeFrame++;
 	if (m_fadeFrame >= kFadeFrame)
 	{
-		//このシーンはここで破棄されるので、呼んだ後は何もしない
-		m_controller.ResetScene<SceneMain>(static_cast<StageType>(s_cursor));
-		return;
+		//真っ黒になったら「Now Loading」を1回出す(読み込みは次のフレームの SceneMain::Init で行う)
+		m_updateFunc = static_cast<UpdateFunc_t>(&StageSelectScene::LoadingUpdate);
+		m_drawFunc = static_cast<DrawFunc_t>(&StageSelectScene::LoadingDraw);
 	}
+}
+
+void StageSelectScene::LoadingUpdate()
+{
+	//このシーンはここで破棄されるので、呼んだ後は何もしない
+	m_controller.ResetScene<SceneMain>(static_cast<StageType>(s_cursor));
+}
+
+void StageSelectScene::LoadingDraw()
+{
+	DrawBox(0, 0, Game::GetScreenWidth(), Game::GetScreenHeight(), GetColor(0, 0, 0), TRUE);
+	DrawFormatString(Game::GetScreenWidth() - kLoadingTextOffsetX, Game::GetScreenHeight() - kLoadingTextOffsetY, GetColor(255, 255, 255), "Now Loading...");
 }
 
 void StageSelectScene::Draw()
@@ -102,20 +130,7 @@ void StageSelectScene::FadeInDraw()
 
 void StageSelectScene::NormalDraw()
 {
-	const unsigned int white = GetColor(255, 255, 255);
-	const unsigned int yellow = GetColor(255, 255, 0);
-	const unsigned int gray = GetColor(160, 160, 160);
-
-	DrawFormatString(kTitleX, kTitleY, white, "StageSelect  (上下:選択 A:決定)");
-
-	for (int i = 0; i < static_cast<int>(StageType::Num); ++i)
-	{
-		const StageInfo& info = StageData::GetInfo(static_cast<StageType>(i));
-		const bool isSelected = (i == s_cursor);
-		const int y = kItemY + kItemLineHeight * i;
-		DrawFormatString(kItemX, y, isSelected ? yellow : white, "%s %s", isSelected ? ">" : " ", info.name);
-		DrawFormatString(kItemX + 20, y + kDescOffsetY, gray, "%s", info.description);
-	}
+	m_menu.Draw();
 }
 
 void StageSelectScene::FadeOutDraw()

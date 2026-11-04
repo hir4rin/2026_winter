@@ -79,8 +79,6 @@ Player::Player()
 	//m_modelHandle = MV1LoadModel("data/Player/Player_true.mv1");
 	//m_modelHandle = MV1LoadModel("data/Player/1danme.mv1");
 
-	//攻撃のモデルの読み込み
-	m_attackModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::PlayerAttackModel));
 	m_whiteHandle = LoadGraph("data/UI/white.png");
 
 	m_rb.m_pos = Vector3(0, 0, 0);
@@ -100,7 +98,6 @@ Player::Player()
 
 	//必殺技状態の翼の付け根のボーン
 	m_bloodWingFrame = MV1SearchFrame(m_modelHandle, kBloodWingFrameName);
-	m_bloodWingAttackFrame = MV1SearchFrame(m_attackModelHandle, kBloodWingFrameName);
 
 	//法線マップ・遮蔽・光沢の画像と強さ(マテリアルの名前で当てる)
 	m_look.Load(m_modelHandle, kLookCsvPath);
@@ -114,7 +111,6 @@ Player::~Player()
 	}
 	if (m_bloodWingPlayingHandle != -1)StopEffekseer3DEffect(m_bloodWingPlayingHandle);
 	MV1DeleteModel(m_modelHandle);
-	MV1DeleteModel(m_attackModelHandle);
 	DeleteGraph(m_whiteHandle);
 }
 
@@ -280,14 +276,7 @@ void Player::Draw()
 	{
 		//モデルの描画
 		//ステージの明かりの光も足す
-		if (m_anim.GetModelHandleForCheck() == m_modelHandle)
-		{
-			m_look.Draw(m_modelHandle);//読めていなければ今まで通りの描き方になる
-		}
-		else
-		{
-			ModelShaderManager::GetInstance().DrawModel(m_attackModelHandle);
-		}
+		m_look.Draw(m_modelHandle);//読めていなければ今まで通りの描き方になる
 
 		m_weapon->Draw();//武器
 	}
@@ -510,6 +499,11 @@ void Player::AddUltGauge(int value)
 	}
 }
 
+int Player::GetMaxHp()const
+{
+	return kInitialHp;
+}
+
 bool Player::IsLockOn()const
 {
 	//trueでロックオン中
@@ -723,10 +717,9 @@ void Player::BloodWingUpdate()
 		SetScalePlayingEffekseer3DEffect(m_bloodWingPlayingHandle, kBloodWingScale, kBloodWingScale, kBloodWingScale);
 	}
 
-	//今描画しているモデルの背中(肩甲骨の高さ)のボーンに付ける//アニメーションで体が動いても背中についてくる
-	bool isNormalModel = m_anim.GetModelHandleForCheck() == m_modelHandle;
-	int modelHandle = isNormalModel ? m_modelHandle : m_attackModelHandle;
-	int frame = isNormalModel ? m_bloodWingFrame : m_bloodWingAttackFrame;
+	//背中(肩甲骨の高さ)のボーンに付ける//アニメーションで体が動いても背中についてくる
+	int modelHandle = m_modelHandle;
+	int frame = m_bloodWingFrame;
 	//ボーンが見つからなかったときはカプセルの頭の高さにする
 	Vector3 rootPos = (frame >= 0) ? Vector3(MV1GetFramePosition(modelHandle, frame)) : m_rb.m_pos + Vector3(0.0f, kPlayerHead, 0.0f);
 
@@ -801,8 +794,8 @@ void Player::ApplyPos()
 {
 	//モデルの座標を更新する
 	CharacterBase::ApplyPos();
-	//攻撃モデルの座標を更新する
-	ApplyPosWithAttackModel();
+	//移動の向きへ回す
+	UpdateRotAngle();
 	////移動制限
 	//for (int i = 0; i < static_cast<int>(WaveNumForPlayer::WaveSize); ++i)
 	//{
@@ -965,7 +958,7 @@ void Player::ApplyPos()
 	m_weapon->Update();//武器の更新
 }
 
-void Player::ApplyPosWithAttackModel()
+void Player::UpdateRotAngle()
 {
 	float targetAngle = 0.0f;//目標の角度
 	if (m_targetVec.Magnitude() > 0.0f)//最初の入力されないとき以外、ここを通り、モデルの向きを変える
@@ -982,14 +975,6 @@ void Player::ApplyPosWithAttackModel()
 		//targetAngle + DX_PI_F
 		m_rotAngleY += difference * kRotationLerpFactor;//回転角度を少しずつ目標の角度に近づける//ほぼlerp
 	}
-	//モデルは、座標の位置のcenter分下で表示
-
-	Matrix4x4 rotY = Matrix4x4::MakeRotationY(m_rotAngleY);
-	MATRIX transmat = MGetTranslate(m_rb.m_pos.ToDxLibVector());
-	Matrix4x4 trans = Matrix4x4::FromDxLibMatrix(transmat);
-
-	Matrix4x4 mtx = trans * rotY;
-	MV1SetMatrix(m_attackModelHandle, Matrix4x4::ToDxLibMatrix(mtx));
 }
 
 bool Player::CanSkillAttack(bool changeGauge)

@@ -3,6 +3,8 @@
 #include "EffekseerForDXLib.h"
 #include "Battle/BattleManager.h"
 #include "Render/CharacterLook.h"
+#include "DataLoader/DataManager.h"
+#include "Stage/StageInfo.h"
 #include <cassert>
 
 namespace
@@ -59,9 +61,9 @@ namespace
 	const std::string kKingmechMissileExplodeEffectPath = "data/Effect/Kingmech/MissileExplode.efk";
 }
 
-void System::LoadAll()
+void System::LoadCommon()
 {
-	//まだ無いもの(攻撃モデル・羽・武器・エフェクト)は-1にしておく
+	//まだ無いもの(羽・エフェクト・ステージの分)は-1にしておく
 	for (int i = static_cast<int>(AsyncData::PlayerModel); i <= static_cast<int>(AsyncData::Goal); ++i)
 	{
 		m_asyncHandles[static_cast<AsyncData>(i)] = -1;
@@ -71,26 +73,6 @@ void System::LoadAll()
 
 	m_asyncHandles[AsyncData::PlayerModel] = MV1LoadModel(kPlayerModelPath.c_str());	m_asyncHandles[AsyncData::PlayerWeaponModel] = MV1LoadModel(kPlayerWeaponModelPath.c_str());
 	m_asyncHandles[AsyncData::PlayerUltWeaponModel] = MV1LoadModel(kPlayerUltWeaponModelPath.c_str());
-	m_asyncHandles[AsyncData::EnemyModel] = MV1LoadModel(kEnemyModelpath.c_str());
-	m_asyncHandles[AsyncData::EnemyPartLeftArmModel] = MV1LoadModel(kEnemyPartLeftArmModelPath.c_str());
-	m_asyncHandles[AsyncData::EnemyPartHeadModel] = MV1LoadModel(kEnemyPartHeadModelPath.c_str());
-	m_asyncHandles[AsyncData::EnemyGunnerModel] = MV1LoadModel(kEnemyGunnerModelPath.c_str());
-	m_asyncHandles[AsyncData::EnemyGunnerWeaponModel] = MV1LoadModel(kEnemyGunnerWeaponModelPath.c_str());
-	m_asyncHandles[AsyncData::EnemyGunnerPartLeftArmModel] = MV1LoadModel(kEnemyGunnerPartLeftArmModelPath.c_str());
-	m_asyncHandles[AsyncData::EnemyBazookaWeaponModel] = MV1LoadModel(kEnemyBazookaWeaponModelPath.c_str());
-	m_asyncHandles[AsyncData::BossModel] = MV1LoadModel(kBossModelPath.c_str());
-	m_asyncHandles[AsyncData::BossArmLModel] = MV1LoadModel(kBossArmLModelPath.c_str());
-	m_asyncHandles[AsyncData::BossArmRModel] = MV1LoadModel(kBossArmRModelPath.c_str());
-	m_asyncHandles[AsyncData::BossPirateSwordModel] = MV1LoadModel(kBossPirateSwordModelPath.c_str());
-	m_asyncHandles[AsyncData::KingmechModel] = MV1LoadModel(kKingmechModelPath.c_str());
-	m_asyncHandles[AsyncData::KingmechGatlingModel] = MV1LoadModel(kKingmechGatlingModelPath.c_str());
-	m_asyncHandles[AsyncData::TitleStageModel] = MV1LoadModel(kTitleStageModelPath.c_str());
-	m_asyncHandles[AsyncData::DemoStageModel] = MV1LoadModel(kDemoStageModelPath.c_str());
-	m_asyncHandles[AsyncData::TrainStageModel] = MV1LoadModel(kTrainStageModelPath.c_str());
-	m_asyncHandles[AsyncData::TrainStageColModel] = MV1LoadModel(kTrainStageColModelPath.c_str());
-	m_asyncHandles[AsyncData::TrainTunnelModel] = MV1LoadModel(kTrainTunnelModelPath.c_str());
-	m_asyncHandles[AsyncData::CyberStageModel] = MV1LoadModel(kCyberStageModelPath.c_str());
-	m_asyncHandles[AsyncData::CyberStageColModel] = MV1LoadModel(kCyberStageColModelPath.c_str());
 	//プレイヤーの法線マップ・マスク画像(重いので先に読む。Player の Load はこれを使い回す)
 	CharacterLook::PreloadGraphs(kPlayerLookCsvPath);
 
@@ -106,9 +88,118 @@ void System::LoadAll()
 	m_asyncHandles[AsyncData::BloodSplashEffectB] = LoadEffekseerEffect(kBloodSplashBEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodSplashEffectC] = LoadEffekseerEffect(kBloodSplashCEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodSplashEffectWhite] = LoadEffekseerEffect(kBloodSplashWhiteEffectPath.c_str());
-	m_asyncHandles[AsyncData::KingmechMissileWarningEffect] = LoadEffekseerEffect(kKingmechMissileWarningEffectPath.c_str());
-	m_asyncHandles[AsyncData::KingmechMissileFallEffect] = LoadEffekseerEffect(kKingmechMissileFallEffectPath.c_str());
-	m_asyncHandles[AsyncData::KingmechMissileExplodeEffect] = LoadEffekseerEffect(kKingmechMissileExplodeEffectPath.c_str());
+}
+
+void System::LoadStage(StageType type)
+{
+	if (m_loadedStage == static_cast<int>(type)) return;
+	ReleaseStage();
+	m_loadedStage = static_cast<int>(type);
+
+	//同期で読む(非同期は ProcessMessage を呼んだときにしか進まない処理があり、1フレームに1回だと何倍も遅い)
+	switch (type)
+	{
+	case StageType::Test:
+		LoadStageModel(AsyncData::TitleStageModel, kTitleStageModelPath);
+		break;
+	case StageType::Demo:
+		LoadStageModel(AsyncData::DemoStageModel, kDemoStageModelPath);
+		break;
+	case StageType::Train:
+		LoadStageModel(AsyncData::TrainStageModel, kTrainStageModelPath);
+		LoadStageModel(AsyncData::TrainStageColModel, kTrainStageColModelPath);
+		LoadStageModel(AsyncData::TrainTunnelModel, kTrainTunnelModelPath);
+		break;
+	case StageType::Cyber:
+		LoadStageModel(AsyncData::CyberStageModel, kCyberStageModelPath);
+		LoadStageModel(AsyncData::CyberStageColModel, kCyberStageColModelPath);
+		break;
+	default:
+		break;
+	}
+	//ソードマンはデバッグの敵出し(F)と、配置の無いステージのテスト用の敵で使うのでいつも読む
+	LoadEnemy(EnemyType::Swordman);
+	DataManager::GetInstance().LoadEnemySpawnData(StageData::GetInfo(type).enemySpawnNumber);
+	for (const auto& spawn : DataManager::GetInstance().GetEnemySpawnData())
+	{
+		LoadEnemy(spawn.type);
+	}
+}
+
+void System::LoadStageModel(AsyncData key, const std::string& path)
+{
+	if (m_asyncHandles[key] != -1) return;
+	m_asyncHandles[key] = MV1LoadModel(path.c_str());
+	m_stageModels.push_back(key);
+}
+
+void System::LoadStageEffect(AsyncData key, const std::string& path)
+{
+	if (m_asyncHandles[key] != -1) return;
+	m_asyncHandles[key] = LoadEffekseerEffect(path.c_str());
+	m_stageEffects.push_back(key);
+}
+
+void System::LoadEnemy(EnemyType type)
+{
+	switch (type)
+	{
+	case EnemyType::Swordman:
+		LoadStageModel(AsyncData::EnemyModel, kEnemyModelpath);
+		LoadStageModel(AsyncData::EnemyPartLeftArmModel, kEnemyPartLeftArmModelPath);
+		LoadStageModel(AsyncData::EnemyPartHeadModel, kEnemyPartHeadModelPath);
+		break;
+	case EnemyType::Gunner:
+		LoadStageModel(AsyncData::EnemyGunnerModel, kEnemyGunnerModelPath);
+		LoadStageModel(AsyncData::EnemyGunnerWeaponModel, kEnemyGunnerWeaponModelPath);
+		LoadStageModel(AsyncData::EnemyGunnerPartLeftArmModel, kEnemyGunnerPartLeftArmModelPath);
+		LoadStageModel(AsyncData::EnemyPartHeadModel, kEnemyPartHeadModelPath);
+		break;
+	case EnemyType::Bazooka:
+		//体・左腕・頭はガンナーと同じ
+		LoadStageModel(AsyncData::EnemyGunnerModel, kEnemyGunnerModelPath);
+		LoadStageModel(AsyncData::EnemyBazookaWeaponModel, kEnemyBazookaWeaponModelPath);
+		LoadStageModel(AsyncData::EnemyGunnerPartLeftArmModel, kEnemyGunnerPartLeftArmModelPath);
+		LoadStageModel(AsyncData::EnemyPartHeadModel, kEnemyPartHeadModelPath);
+		break;
+	case EnemyType::BossEnemyPirateR1:
+		//第二ラウンドは背中の腕も使う
+		LoadStageModel(AsyncData::BossArmLModel, kBossArmLModelPath);
+		LoadStageModel(AsyncData::BossArmRModel, kBossArmRModelPath);
+		[[fallthrough]];
+	case EnemyType::BossEnemyPirateR0:
+		LoadStageModel(AsyncData::BossModel, kBossModelPath);
+		LoadStageModel(AsyncData::BossPirateSwordModel, kBossPirateSwordModelPath);
+		LoadStageModel(AsyncData::EnemyPartLeftArmModel, kEnemyPartLeftArmModelPath);
+		LoadStageModel(AsyncData::EnemyPartHeadModel, kEnemyPartHeadModelPath);
+		break;
+	case EnemyType::BossEnemyKingmech:
+		LoadStageModel(AsyncData::KingmechModel, kKingmechModelPath);
+		LoadStageModel(AsyncData::KingmechGatlingModel, kKingmechGatlingModelPath);
+		LoadStageEffect(AsyncData::KingmechMissileWarningEffect, kKingmechMissileWarningEffectPath);
+		LoadStageEffect(AsyncData::KingmechMissileFallEffect, kKingmechMissileFallEffectPath);
+		LoadStageEffect(AsyncData::KingmechMissileExplodeEffect, kKingmechMissileExplodeEffectPath);
+		break;
+	default:
+		break;
+	}
+}
+
+void System::ReleaseStage()
+{
+	for (AsyncData key : m_stageModels)
+	{
+		MV1DeleteModel(m_asyncHandles[key]);
+		m_asyncHandles[key] = -1;
+	}
+	for (AsyncData key : m_stageEffects)
+	{
+		DeleteEffekseerEffect(m_asyncHandles[key]);
+		m_asyncHandles[key] = -1;
+	}
+	m_stageModels.clear();
+	m_stageEffects.clear();
+	m_loadedStage = -1;
 }
 
 void System::Terminate()

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 870 330" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="13">
+  <rect width="870" height="330" fill="#ffffff"/>
+  <text x="20" y="28" font-size="15" font-weight="bold">PlayerHP.png（800×200）の中にバーを描く</text>
+
+  <!-- image frame -->
+  <rect x="20" y="45" width="640" height="160" fill="none" stroke="#bbb" stroke-dasharray="4 3"/>
+  <text x="24" y="60" font-size="11" fill="#999">画像の範囲（周りは透明）</text>
+  <!-- bar body -->
+  <path d="M50,105 L92,107 L92,145 L70,150 Z" fill="#e76a6a" stroke="#000" stroke-width="2"/>
+  <rect x="70" y="105" width="460" height="45" fill="#e76a6a" stroke="#000" stroke-width="2"/>
+  <path d="M530,112 L560,95 L605,125 L560,155 L530,140 Z" fill="#e76a6a" stroke="#000" stroke-width="2"/>
+  <!-- inner -->
+  <rect x="76" y="116" width="445" height="24" fill="#4a0d0d"/>
+  <!-- fill -->
+  <rect x="76" y="116" width="290" height="24" fill="#1f8b2c"/>
+
+  <!-- dims -->
+  <line x1="76" y1="170" x2="76" y2="220" stroke="#2c6fbb"/>
+  <line x1="521" y1="170" x2="521" y2="220" stroke="#2c6fbb"/>
+  <line x1="366" y1="140" x2="366" y2="250" stroke="#c0392b" stroke-dasharray="4 3"/>
+  <line x1="78" y1="210" x2="519" y2="210" stroke="#2c6fbb" marker-start="url(#s)" marker-end="url(#e)"/>
+  <text x="30" y="235" fill="#2c6fbb">x=95</text>
+  <text x="500" y="235" fill="#2c6fbb">x=652</text>
+  <text x="250" y="204" fill="#2c6fbb" text-anchor="middle">中の幅</text>
+  <line x1="78" y1="250" x2="364" y2="250" stroke="#c0392b" marker-start="url(#s2)" marker-end="url(#e2)"/>
+  <text x="220" y="270" fill="#c0392b" text-anchor="middle">中の幅 × 割合（HP 60/100 → 0.6）</text>
+  <line x1="612" y1="116" x2="628" y2="116" stroke="#2c6fbb"/>
+  <line x1="612" y1="140" x2="628" y2="140" stroke="#2c6fbb"/>
+  <text x="632" y="120" fill="#2c6fbb" font-size="11">y=89</text>
+  <text x="632" y="144" fill="#2c6fbb" font-size="11">y=119</text>
+
+  <defs>
+    <marker id="s" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M10,0 L0,5 L10,10 z" fill="#2c6fbb"/></marker>
+    <marker id="e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2c6fbb"/></marker>
+    <marker id="s2" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M10,0 L0,5 L10,10 z" fill="#c0392b"/></marker>
+    <marker id="e2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker>
+  </defs>
+
+  <!-- order -->
+  <text x="690" y="70" font-weight="bold">描く順番</text>
+  <rect x="690" y="85" width="110" height="34" rx="5" fill="#e76a6a" stroke="#000"/>
+  <text x="745" y="107" text-anchor="middle">① 外枠</text>
+  <rect x="690" y="129" width="110" height="34" rx="5" fill="#4a0d0d"/>
+  <text x="745" y="151" text-anchor="middle" fill="#fff">② gauge_brack</text>
+  <rect x="690" y="173" width="110" height="34" rx="5" fill="#1f8b2c"/>
+  <text x="745" y="195" text-anchor="middle" fill="#fff">③ gauge_hp</text>
+  <text x="690" y="230" font-size="11" fill="#666">下から順に重ねる</text>
+  <text x="690" y="250" font-size="11" fill="#666">gauge_〜 は 1×26px なので</text>
+  <text x="690" y="266" font-size="11" fill="#666">横に伸ばして描く</text>
+  <text x="690" y="282" font-size="11" fill="#666">(DrawExtendGraphF)</text>
+</svg>

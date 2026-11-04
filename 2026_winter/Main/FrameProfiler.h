@@ -60,7 +60,11 @@ private:
 	static constexpr int kHistoryNum = 180;//グラフに出すフレーム数(3秒)
 	static constexpr int kStatFrame = 60;
 	static constexpr float kPeriodJitterMs = 3.0f;//フレームの間隔がこれ以上ずれたら記録する
+	static constexpr float kMemoryBarMaxGB = 4.0f;//メモリのバーがいっぱいになる量
 
+	//処理の重さ(1フレーム分に対して)とメモリのバー
+	void DrawLoadBar();
+	void DrawMemoryBar();
 	void WriteSpike(float totalMs);
 	void WritePeriodJitter(float periodMs);
 	void AddStat(const char* name, float ms);
@@ -85,5 +89,9 @@ private:
 	bool m_isEventFileStarted = false;
 	float m_expectedPeriodMs = 1000.0f / 60.0f;
 	int m_jitterCount = 0;//間隔がずれた回数
+	float m_lastPeriodMs = 0.0f;
+	float m_fps = 0.0f;//1秒ごとの平均
+	float m_fpsTimeMs = 0.0f;
+	int m_fpsFrameNum = 0;
 	bool m_isHighPriority = false;//ゲームのスレッドの優先度を上げているか(待ちから戻るのが遅れるのを防ぐ)
 };

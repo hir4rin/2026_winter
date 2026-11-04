@@ -4,6 +4,7 @@
 #include "UIBase.h"
 
 class CameraManager;
+class Player;
 //UIをまとめて管理するクラス
 //継承はせずにUIbaseのインスタンスとして保持する
 class UIManager
@@ -15,7 +16,7 @@ public:
 	//場面ごとの初期化
 	//使うUIを生成して登録し、各UIのInitで画像などのハンドルを生成する
 	void TitleInit();
-	void InGameInit(std::weak_ptr<CameraManager> cameraManager);
+	void InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak_ptr<Player> player);
 
 	void Add(std::shared_ptr<UIBase> ui);
 	//登録しているUIをすべて外す(ハンドルは各UIのデストラクタで解放する)

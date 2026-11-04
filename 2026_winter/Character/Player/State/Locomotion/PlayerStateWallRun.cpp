@@ -6,7 +6,7 @@
 
 namespace
 {
-	constexpr float kWallRunSpeed = 8.0f;//壁走りの速度
+	constexpr float kWallRunSpeed = 20.0f;//壁走りの速度
 	constexpr float kWallRunTilt = DX_PI_F *  1/ 6;//壁走り中のモデルの傾き//足を壁側に向ける
 	constexpr float kWallRunGap = 0.1f;//壁とカプセルの間のすき間//食い込み防止
 }

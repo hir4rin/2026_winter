@@ -68,6 +68,17 @@ private:
 	StageLights m_lights;
 	void DrawTunnel()const;
 
+	//画面に映らないメッシュは描かない(MV1DrawModel は画面の外のメッシュも全部描くため)
+	struct MeshBox
+	{
+		VECTOR min;
+		VECTOR max;
+	};
+	std::vector<MeshBox> m_meshBoxes;//メッシュごとの箱(ワールド座標。添え字はメッシュの番号)
+	/// <summary>見た目のモデルを置いた後に1回呼ぶ(ステージは動かないので箱は作り直さない)</summary>
+	void BuildMeshBoxes();
+	void CullMeshes()const;
+
 
 	/// <summary>読み込み済みの壁ゾーンを全て破棄する(CollisionManagerからも解除する)</summary>
 	void ClearWallZones();

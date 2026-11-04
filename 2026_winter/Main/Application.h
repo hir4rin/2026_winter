@@ -45,7 +45,9 @@ private:
 	void UpdateVBlankOutput();
 	void ReleaseVBlankOutput();
 	/// <summary>今がモニターの何回目の更新か(取れなければ -1。FrameProfiler でカクッを数える用)</summary>
-	long long GetRefreshIndex()const;
+	long long GetRefreshIndex();
+	long long m_refreshIndex = 0;
+	long long m_lastRefreshQpc = -1;//前に GetRefreshIndex を呼んだ時刻
 
 public:
 	~Application();
