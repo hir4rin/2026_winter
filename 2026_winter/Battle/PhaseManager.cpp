@@ -15,6 +15,7 @@ namespace
 	constexpr float kDebugSkipBackDistance = 300.0f;//F4で移すとき、エリアの手前どれだけ離すか
 	constexpr float kBossFovOffset = 20.0f;//ボス戦で視野角を広げる角度(度)
 	constexpr float kBossFovBlendFrame = 60.0f;//広げるのにかけるフレーム数
+	constexpr float kBossAttackRiseScale = 1.22f;//ボス戦の攻撃の上昇の倍率//高さは2乗で効くので約1.5倍
 }
 
 void PhaseManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player)
@@ -114,6 +115,7 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event)
 			{
 				cameraMgr->SetFovOffset(kBossFovOffset, kBossFovBlendFrame);
 			}
+			player->SetAttackRiseScale(kBossAttackRiseScale);
 		}
 		break;
 	case PhaseEvent::GameClear:

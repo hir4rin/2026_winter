@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 300" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="13">
+  <rect width="820" height="300" fill="#ffffff"/>
+  <defs>
+    <pattern id="t" width="60" height="60" patternUnits="userSpaceOnUse"><rect width="60" height="60" fill="#140810"/><path d="M0,0 L60,60 M60,0 L0,60" stroke="#c0392b"/><rect width="60" height="60" fill="none" stroke="#555" stroke-dasharray="3 3"/></pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker>
+  </defs>
+
+  <!-- 左 -->
+  <text x="20" y="26" font-weight="bold" font-size="15">繰り返し貼る(DrawTiled)</text>
+  <rect x="24" y="60" width="60" height="60" fill="url(#t)"/>
+  <text x="54" y="142" text-anchor="middle" font-size="12" fill="#666">画像1枚</text>
+  <line x1="98" y1="90" x2="150" y2="90" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="164" y="60" width="240" height="120" fill="url(#t)"/>
+  <text x="284" y="202" text-anchor="middle" font-size="12" fill="#666">四角形を1枚描くだけ。UV を 0〜4 にする</text>
+  <text x="20" y="236" font-size="12">テクスチャの繰り返しを</text>
+  <text x="20" y="256" font-size="12"><tspan font-family="Consolas, monospace">DX_TEXADDRESS_WRAP</tspan> にして <tspan font-family="Consolas, monospace">DrawPolygon2D</tspan> で描く。</text>
+  <text x="20" y="276" font-size="12" fill="#c0392b">画像は 8・64・256 のような2のべき乗の大きさにする。</text>
+
+  <line x1="430" y1="20" x2="430" y2="280" stroke="#eee"/>
+
+  <!-- 右 -->
+  <text x="450" y="26" font-weight="bold" font-size="15">流れるドット</text>
+  <g>
+    <rect x="460" y="48" width="84" height="150" fill="#140810"/>
+    <rect x="570" y="48" width="84" height="150" fill="#140810"/>
+    <rect x="680" y="48" width="84" height="150" fill="#140810"/>
+    <g fill="#e62d46">
+      <circle cx="480" cy="66" r="3"/><circle cx="480" cy="96" r="3"/><circle cx="480" cy="146" r="3"/><circle cx="520" cy="80" r="3"/><circle cx="520" cy="126" r="3"/><circle cx="520" cy="176" r="3"/>
+      <circle cx="590" cy="86" r="3"/><circle cx="590" cy="116" r="3"/><circle cx="590" cy="166" r="3"/><circle cx="630" cy="100" r="3"/><circle cx="630" cy="146" r="3"/><circle cx="630" cy="196" r="3"/>
+      <circle cx="700" cy="106" r="3"/><circle cx="700" cy="136" r="3"/><circle cx="700" cy="186" r="3"/><circle cx="740" cy="70" r="3"/><circle cx="740" cy="120" r="3"/><circle cx="740" cy="166" r="3"/>
+    </g>
+  </g>
+  <g text-anchor="middle" font-size="12" fill="#666"><text x="502" y="216">今</text><text x="612" y="216">少し後</text><text x="722" y="216">さらに後</text></g>
+  <line x1="776" y1="62" x2="776" y2="188" stroke="#c0392b" stroke-width="2" marker-end="url(#r)"/>
+  <text x="450" y="244" font-size="12">v を毎フレーム 0.004 ずつ減らすと、絵が下へ流れる。</text>
+  <text x="450" y="264" font-size="12">1フレーム約1ピクセル。約250フレームで1周する。</text>
+  <text x="450" y="284" font-size="12" fill="#666">下へ抜けた点は、繰り返しで上から戻ってくる。</text>
+</svg>

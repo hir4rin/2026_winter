@@ -398,7 +398,7 @@ protected:
 
 	void ChangeState(std::shared_ptr<EnemyStateBase> newState);//状態遷移用
 	//攻撃の流れ(予備動作・攻撃・後隙)のステートか
-	bool IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state)const;
+	virtual bool IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state)const;
 
 	//攻撃CSVの生データ(DataManagerで読み込んだもの)からm_attackListを作る//各敵のコンストラクタで呼ぶ
 	void InitializeAttackList(const std::vector<std::vector<std::string>>& rawData);

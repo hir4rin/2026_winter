@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 320" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="13">
+  <rect width="820" height="320" fill="#ffffff"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+
+  <text x="125" y="26" text-anchor="middle" font-weight="bold">frame9.png(48×48)</text>
+  <g stroke="#fff" stroke-width="2">
+    <rect x="35" y="40" width="60" height="60" fill="#c0392b"/><rect x="95" y="40" width="60" height="60" fill="#3f8fbf"/><rect x="155" y="40" width="60" height="60" fill="#c0392b"/>
+    <rect x="35" y="100" width="60" height="60" fill="#3f8f68"/><rect x="95" y="100" width="60" height="60" fill="#e8e8e8"/><rect x="155" y="100" width="60" height="60" fill="#3f8f68"/>
+    <rect x="35" y="160" width="60" height="60" fill="#c0392b"/><rect x="95" y="160" width="60" height="60" fill="#3f8fbf"/><rect x="155" y="160" width="60" height="60" fill="#c0392b"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-weight="bold"><text x="65" y="75">角</text><text x="125" y="75">横</text><text x="185" y="75">角</text><text x="65" y="135">縦</text><text x="185" y="135">縦</text><text x="65" y="195">角</text><text x="125" y="195">横</text><text x="185" y="195">角</text></g>
+  <text x="125" y="135" text-anchor="middle" fill="#777" font-size="12">描かない</text>
+  <text x="125" y="240" text-anchor="middle" font-size="12" fill="#666">角は16px、真ん中も16px</text>
+
+  <line x1="235" y1="130" x2="315" y2="130" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <text x="275" y="118" text-anchor="middle" font-size="12" fill="#555">伸ばす</text>
+
+  <text x="565" y="26" text-anchor="middle" font-weight="bold">どの大きさの枠でも線が太らない</text>
+  <g stroke="#fff" stroke-width="2">
+    <rect x="330" y="40" width="40" height="40" fill="#c0392b"/><rect x="370" y="40" width="390" height="40" fill="#3f8fbf"/><rect x="760" y="40" width="40" height="40" fill="#c0392b"/>
+    <rect x="330" y="80" width="40" height="140" fill="#3f8f68"/><rect x="370" y="80" width="390" height="140" fill="#e8e8e8"/><rect x="760" y="80" width="40" height="140" fill="#3f8f68"/>
+    <rect x="330" y="220" width="40" height="40" fill="#c0392b"/><rect x="370" y="220" width="390" height="40" fill="#3f8fbf"/><rect x="760" y="220" width="40" height="40" fill="#c0392b"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-weight="bold"><text x="350" y="65">角</text><text x="565" y="65">横にだけ伸ばす</text><text x="780" y="65">角</text><text x="350" y="155">縦</text><text x="780" y="155">縦</text><text x="350" y="245">角</text><text x="565" y="245">横にだけ伸ばす</text><text x="780" y="245">角</text></g>
+  <text x="565" y="155" text-anchor="middle" fill="#777">中は透明のまま</text>
+  <text x="410" y="292" text-anchor="middle" fill="#333">8枚を <tspan font-family="Consolas, monospace">DrawRectExtendGraph</tspan> で描く。1枚の画像を全部伸ばすと、線や角の丸まで太くなる。</text>
+</svg>

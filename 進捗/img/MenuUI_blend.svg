@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 300" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="13">
+  <rect width="820" height="300" fill="#ffffff"/>
+  <g text-anchor="middle" font-size="12" fill="#666"><text x="214" y="24">下の色</text><text x="314" y="24">重ねる色</text><text x="414" y="24">結果</text></g>
+
+  <!-- アルファ -->
+  <text x="20" y="62" font-weight="bold" font-size="15">アルファ</text>
+  <text x="20" y="84" fill="#666" font-size="12">混ぜる</text>
+  <rect x="184" y="40" width="60" height="60" fill="#3c1428"/><text x="264" y="77" text-anchor="middle" font-size="18">→</text>
+  <rect x="284" y="40" width="60" height="60" fill="#e62d46" fill-opacity="0.5" stroke="#e62d46"/><text x="364" y="77" text-anchor="middle" font-size="18">=</text>
+  <rect x="384" y="40" width="60" height="60" fill="#912037"/>
+  <text x="470" y="62">下×(1−α)＋上×α</text>
+  <text x="470" y="84" fill="#666" font-size="12">枠・帯・文字。ふつうの重ね方</text>
+
+  <line x1="20" y1="112" x2="800" y2="112" stroke="#eee"/>
+
+  <!-- 加算 -->
+  <text x="20" y="150" font-weight="bold" font-size="15">加算</text>
+  <text x="20" y="172" fill="#666" font-size="12">足す</text>
+  <rect x="184" y="126" width="60" height="60" fill="#3c1428"/><text x="264" y="163" text-anchor="middle" font-size="18">＋</text>
+  <rect x="284" y="126" width="60" height="60" fill="#8c2d32"/><text x="364" y="163" text-anchor="middle" font-size="18">=</text>
+  <rect x="384" y="126" width="60" height="60" fill="#c8415a"/>
+  <text x="470" y="150">下＋上</text>
+  <text x="470" y="172" fill="#666" font-size="12">格子・ドット・光。黒は足しても変わらない</text>
+
+  <line x1="20" y1="198" x2="800" y2="198" stroke="#eee"/>
+
+  <!-- 乗算 -->
+  <text x="20" y="236" font-weight="bold" font-size="15">乗算</text>
+  <text x="20" y="258" fill="#666" font-size="12">掛ける</text>
+  <rect x="184" y="212" width="60" height="60" fill="#c8415a"/><text x="264" y="249" text-anchor="middle" font-size="18">×</text>
+  <rect x="284" y="212" width="60" height="60" fill="#808080"/><text x="364" y="249" text-anchor="middle" font-size="18">=</text>
+  <rect x="384" y="212" width="60" height="60" fill="#64202d"/>
+  <text x="470" y="236">下×上</text>
+  <text x="470" y="258" fill="#666" font-size="12">周辺減光。白は掛けても変わらない</text>
+</svg>

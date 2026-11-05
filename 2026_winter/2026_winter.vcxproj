@@ -212,6 +212,7 @@
     <ClCompile Include="Character\Enemy\Kingmech\Part\KingmechGatling.cpp" />
     <ClCompile Include="Character\Enemy\Kingmech\Part\KingmechMissile.cpp" />
     <ClCompile Include="Character\Enemy\Kingmech\State\BossPartThrow.cpp" />
+    <ClCompile Include="Character\Enemy\Kingmech\State\KingmechGatlingSupply.cpp" />
     <ClCompile Include="Character\Enemy\Kingmech\State\KingmechMissileTurn.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateBossPartThrow.cpp" />
     <ClCompile Include="Character\Enemy\BossPirate\State\BossArmDetached.cpp" />
@@ -376,6 +377,7 @@
     <ClInclude Include="Character\Enemy\Kingmech\Part\KingmechGatling.h" />
     <ClInclude Include="Character\Enemy\Kingmech\Part\KingmechMissile.h" />
     <ClInclude Include="Character\Enemy\Kingmech\State\BossPartThrow.h" />
+    <ClInclude Include="Character\Enemy\Kingmech\State\KingmechGatlingSupply.h" />
     <ClInclude Include="Character\Enemy\Kingmech\State\KingmechMissileTurn.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateBossPartThrow.h" />
     <ClInclude Include="Character\Enemy\BossPirate\State\BossArmDetached.h" />

@@ -20,6 +20,7 @@ TempTopLight::~TempTopLight()
 
 void TempTopLight::Init()
 {
+
 #if TEMP_TOP_LIGHT_ENABLE
 	if (m_lightHandle != -1)return;
 	m_lightHandle = CreateDirLightHandle(kLightDir);

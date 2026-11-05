@@ -9,7 +9,8 @@
 
 namespace
 {
-	constexpr int kColumnNum = 9;//kind,posX,posY,posZ,colorR,colorG,colorB,range,intensity
+	//Updateする数
+	constexpr int kColumnNum = 6;//kind,posX,posY,posZ,colorR,colorG,colorB,range,intensity
 }
 
 StageLights::~StageLights()

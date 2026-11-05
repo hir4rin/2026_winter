@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 560" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="14">
+  <rect width="820" height="560" fill="#ffffff"/>
+  <defs>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#140810"/><path d="M0,0 L28,28 M28,0 L0,28" stroke="#7a2336" stroke-width="1"/></pattern>
+    <pattern id="rain" width="44" height="150" patternUnits="userSpaceOnUse"><rect width="44" height="150" fill="#140810"/><g fill="#e62d46"><circle cx="8" cy="12" r="1.8"/><circle cx="8" cy="32" r="1.8"/><circle cx="8" cy="52" r="1.8"/><circle cx="8" cy="92" r="1.8"/><circle cx="8" cy="132" r="1.8"/><circle cx="30" cy="22" r="1.8"/><circle cx="30" cy="62" r="1.8"/><circle cx="30" cy="82" r="1.8"/><circle cx="30" cy="102" r="1.8"/></g></pattern>
+    <radialGradient id="vig"><stop offset="0.35" stop-color="#ffffff"/><stop offset="1" stop-color="#737373"/></radialGradient>
+    <linearGradient id="bar" x1="0" x2="1"><stop offset="0" stop-color="#e62d46"/><stop offset="1" stop-color="#e62d46" stop-opacity="0"/></linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+  </defs>
+
+  <!-- 奥→手前の矢印 -->
+  <line x1="42" y1="518" x2="42" y2="40" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <text x="42" y="28" text-anchor="middle" font-size="12" fill="#555">手前</text>
+  <text x="42" y="540" text-anchor="middle" font-size="12" fill="#555">奥</text>
+
+  <!-- x'=x-0.55y, y'=0.4y -->
+  <g stroke="#555" stroke-width="1">
+    <g transform="translate(170,462) matrix(1,0,-0.55,0.4,0,0)"><rect width="300" height="150" fill="#140810"/></g>
+    <g transform="translate(170,396) matrix(1,0,-0.55,0.4,0,0)"><rect width="300" height="150" fill="url(#grid)"/></g>
+    <g transform="translate(170,330) matrix(1,0,-0.55,0.4,0,0)"><rect width="300" height="150" fill="url(#rain)"/></g>
+    <g transform="translate(170,264) matrix(1,0,-0.55,0.4,0,0)"><rect width="300" height="150" fill="url(#vig)"/></g>
+    <g transform="translate(170,198) matrix(1,0,-0.55,0.4,0,0)"><rect width="300" height="150" fill="#f7f7f7" fill-opacity="0.75"/><g fill="none" stroke="#e62d46" stroke-width="2"><rect x="20" y="24" width="96" height="110"/><rect x="134" y="24" width="146" height="84"/><line x1="24" y1="11" x2="276" y2="11"/></g></g>
+    <g transform="translate(170,132) matrix(1,0,-0.55,0.4,0,0)"><rect width="300" height="150" fill="#f7f7f7" fill-opacity="0.75"/><rect x="24" y="62" width="100" height="24" fill="url(#bar)" stroke="none"/></g>
+    <g transform="translate(170,66) matrix(1,0,-0.55,0.4,0,0)"><rect width="300" height="150" fill="#f7f7f7" fill-opacity="0.75"/><g fill="#c0202f" stroke="none"><rect x="104" y="6" width="92" height="9"/><rect x="30" y="38" width="70" height="8"/><rect x="30" y="66" width="70" height="8"/><rect x="30" y="94" width="70" height="8"/><rect x="146" y="40" width="96" height="9"/><rect x="146" y="62" width="120" height="6"/></g></g>
+  </g>
+
+  <!-- 説明 -->
+  <g>
+    <text x="490" y="100" font-weight="bold">7 文字</text><text x="490" y="120" font-size="12" fill="#666">フォントで描く</text>
+    <text x="490" y="166" font-weight="bold">6 選択帯</text><text x="490" y="186" font-size="12" fill="#666">光は加算、帯はアルファ</text>
+    <text x="490" y="232" font-weight="bold">5 線・枠・見出し</text><text x="490" y="252" font-size="12" fill="#666">アルファ合成</text>
+    <text x="490" y="298" font-weight="bold">4 周辺減光</text><text x="490" y="318" font-size="12" fill="#666">vignette.png を<tspan fill="#c0392b" font-weight="bold">乗算</tspan></text>
+    <text x="490" y="364" font-weight="bold">3 流れるドット</text><text x="490" y="384" font-size="12" fill="#666">rain.png を<tspan fill="#c0392b" font-weight="bold">加算</tspan>、毎フレーム下へずらす</text>
+    <text x="490" y="430" font-weight="bold">2 斜めの格子</text><text x="490" y="450" font-size="12" fill="#666">grid.png を<tspan fill="#c0392b" font-weight="bold">加算</tspan>、強さ14でうっすら</text>
+    <text x="490" y="496" font-weight="bold">1 背景の色</text><text x="490" y="516" font-size="12" fill="#666">DrawBox で塗る(RGB 14,8,16)</text>
+  </g>
+</svg>

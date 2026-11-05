@@ -3,6 +3,7 @@
 #include "Character/Player/Player.h"
 #include "Main/System.h"
 #include "Render/ModelShaderManager.h"
+#include "Render/EffectManager.h"
 #include "EffekseerForDXLib.h"
 #include <algorithm>
 #include <cmath>
@@ -30,10 +31,15 @@ namespace
 	//投げる
 	constexpr float kThrowSpeed = 60.0f;//飛ぶ速さ
 	constexpr float kThrowSpinSpeed = 0.7f;
-	constexpr float kExplodeDistance = 150.0f;//ボスとこの距離まで近づいたら爆発
+	constexpr float kExplodeDistance = 225.0f;//ボスとこの距離まで近づいたら爆発
 	constexpr float kThrowMaxFrame = 90.0f;//これだけ飛んでも届かなければ爆発
 
-	constexpr float kExplodeEffectScale = 30.0f;//爆発のエフェクトの大きさ
+	constexpr float kExplodeEffectScale = 45.0f;//爆発のエフェクトの大きさ
+
+	//補給
+	constexpr float kSupplyFrame = 30.0f;//落ちてくる長さ
+	constexpr float kSupplyHeight = 2250.0f;//落ち始める高さ
+	constexpr float kSupplyEffectScale = 12.0f;//付いたときの爆発の大きさ
 }
 
 KingmechGatling::KingmechGatling(std::weak_ptr<BossEnemyKingmech> owner) :
@@ -70,6 +76,9 @@ void KingmechGatling::Update()
 	case Phase::Thrown:
 		UpdateThrown();
 		break;
+	case Phase::Supply:
+		UpdateSupply();
+		break;
 	default:
 		break;
 	}
@@ -77,6 +86,14 @@ void KingmechGatling::Update()
 
 void KingmechGatling::Draw()
 {
+	//補給中は回さず腕の真上に描く
+	if (m_phase == Phase::Supply)
+	{
+		MV1SetMatrix(m_modelHandle, CalcSupplyMatrix());
+		ModelShaderManager::GetInstance().DrawModel(m_modelHandle);
+		return;
+	}
+
 	if (m_phase != Phase::Cut && m_phase != Phase::Hold && m_phase != Phase::Thrown)return;
 
 
@@ -113,6 +130,22 @@ void KingmechGatling::Throw()
 	if (m_phase != Phase::Cut && m_phase != Phase::Hold)return;
 	m_frame = 0.0f;
 	m_phase = Phase::Thrown;
+}
+
+void KingmechGatling::StartSupply()
+{
+	if (m_phase != Phase::Gone)return;
+	m_frame = 0.0f;
+	m_phase = Phase::Supply;
+}
+
+void KingmechGatling::DebugRemove()
+{
+	if (m_phase != Phase::Attached)return;
+	auto boss = m_owner.lock();
+	if (!boss)return;
+	MV1SetMeshVisible(boss->m_modelHandle, m_bossMeshIndex, FALSE);
+	m_phase = Phase::Gone;
 }
 
 void KingmechGatling::UpdateCut()
@@ -171,6 +204,40 @@ void KingmechGatling::Explode()
 	//ボスにダメージ
 	auto boss = m_owner.lock();
 	if (boss)boss->OnGatlingExploded();
+}
+
+void KingmechGatling::UpdateSupply()
+{
+	m_frame += System::GetInstance().GetTimeScale();
+	if (m_frame >= kSupplyFrame)
+	{
+		FinishSupply();
+	}
+}
+
+void KingmechGatling::FinishSupply()
+{
+	auto boss = m_owner.lock();
+	if (!boss)return;
+
+	const MATRIX mat = CalcSupplyMatrix();
+	const Vector3 pos(mat.m[3][0], mat.m[3][1], mat.m[3][2]);
+	EffectManager::GetInstance().Play(AsyncData::KingmechMissileExplodeEffect, pos, 0.0f, kSupplyEffectScale);
+
+	//本体のメッシュに切り替える
+	MV1SetMeshVisible(boss->m_modelHandle, m_bossMeshIndex, TRUE);
+	m_phase = Phase::Attached;
+}
+
+MATRIX KingmechGatling::CalcSupplyMatrix()const
+{
+	auto boss = m_owner.lock();
+	if (!boss)return MGetIdent();
+
+	MATRIX mat = MMult(MGetTranslate(kArmOffset), MV1GetFrameLocalWorldMatrix(boss->m_modelHandle, m_bossArmFrame));
+	const float t = std::clamp(m_frame / kSupplyFrame, 0.0f, 1.0f);
+	mat.m[3][1] += kSupplyHeight * (1.0f - t * t);//だんだん速く
+	return mat;
 }
 
 

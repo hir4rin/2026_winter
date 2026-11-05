@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 340" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="13">
+  <rect width="820" height="340" fill="#ffffff"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+
+  <!-- 左 -->
+  <rect x="20" y="20" width="240" height="300" rx="10" fill="#f4f6fb" stroke="#8a95b5"/>
+  <text x="140" y="46" text-anchor="middle" font-weight="bold" font-size="14">StageSelectScene</text>
+  <rect x="38" y="62" width="204" height="52" rx="6" fill="#fff" stroke="#8a95b5"/><text x="140" y="84" text-anchor="middle">コンストラクタ</text><text x="140" y="103" text-anchor="middle" font-size="12" fill="#666">1回だけ</text>
+  <rect x="38" y="126" width="204" height="52" rx="6" fill="#fff" stroke="#8a95b5"/><text x="140" y="148" text-anchor="middle">Update</text><text x="140" y="167" text-anchor="middle" font-size="12" fill="#666">毎フレーム</text>
+  <rect x="38" y="190" width="204" height="52" rx="6" fill="#fff" stroke="#8a95b5"/><text x="140" y="212" text-anchor="middle">NormalUpdate</text><text x="140" y="231" text-anchor="middle" font-size="12" fill="#666">上下の入力 → s_cursor</text>
+  <rect x="38" y="254" width="204" height="52" rx="6" fill="#fff" stroke="#8a95b5"/><text x="140" y="276" text-anchor="middle">NormalDraw</text><text x="140" y="295" text-anchor="middle" font-size="12" fill="#666">描く</text>
+
+  <!-- 右 -->
+  <rect x="540" y="20" width="260" height="300" rx="10" fill="#fdf0f1" stroke="#c0392b"/>
+  <text x="670" y="46" text-anchor="middle" font-weight="bold" font-size="14">MenuUI(m_menu)</text>
+  <rect x="558" y="62" width="224" height="52" rx="6" fill="#fff" stroke="#c0392b"/><text x="670" y="84" text-anchor="middle">Init＋SetTitle など</text><text x="670" y="103" text-anchor="middle" font-size="12" fill="#666">画像・フォント・項目を用意</text>
+  <rect x="558" y="126" width="224" height="52" rx="6" fill="#fff" stroke="#c0392b"/><text x="670" y="148" text-anchor="middle">Update</text><text x="670" y="167" text-anchor="middle" font-size="12" fill="#666">フレームを数える</text>
+  <rect x="558" y="190" width="224" height="52" rx="6" fill="#fff" stroke="#c0392b"/><text x="670" y="212" text-anchor="middle">SetCursor / SetDetail</text><text x="670" y="231" text-anchor="middle" font-size="12" fill="#666">変わったらアニメを最初から</text>
+  <rect x="558" y="254" width="224" height="52" rx="6" fill="#fff" stroke="#c0392b"/><text x="670" y="276" text-anchor="middle">Draw</text><text x="670" y="295" text-anchor="middle" font-size="12" fill="#666">背景 → パネル → 文字</text>
+
+  <!-- 矢印 -->
+  <g stroke="#555" stroke-width="1.5">
+    <line x1="242" y1="88" x2="556" y2="88" marker-end="url(#a)"/>
+    <line x1="242" y1="152" x2="556" y2="152" marker-end="url(#a)"/>
+    <line x1="242" y1="216" x2="556" y2="216" marker-end="url(#a)"/>
+    <line x1="242" y1="280" x2="556" y2="280" marker-end="url(#a)"/>
+  </g>
+  <g text-anchor="middle" font-size="12"><text x="400" y="80">項目を渡す</text><text x="400" y="144">m_menu.Update()</text><text x="400" y="208">ApplyCursor()</text><text x="400" y="272">m_menu.Draw()</text></g>
+</svg>

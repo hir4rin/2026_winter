@@ -16,6 +16,7 @@
 #include "imgui.h"
 #include "Character/Enemy/Kingmech/State/BossPartThrow.h"
 #include "Character/Enemy/Kingmech/State/KingmechMissileTurn.h"
+#include "Character/Enemy/Kingmech/State/KingmechGatlingSupply.h"
 
 
 
@@ -23,13 +24,13 @@ namespace
 {
 	const std::string kStatusType = "BossEnemyKingmech";//EnemyStatus.csvのtype
 
-	constexpr float kModelScale = 2.3f;//モデルの大きさ//Tポーズで高さ約200なので約460
+	constexpr float kModelScale = 3.45f;//モデルの大きさ//Tポーズで高さ約200なので約690
 
 
 	constexpr float kToTargetPower = 3.0f;//プレイヤーの正面に行くようにknockBackする力
 
 
-	constexpr float kEnemyDistance = 50.0f;
+	constexpr float kEnemyDistance = 75.0f;
 
 	constexpr int kNormalAttackIndex = 0;//横斬り
 	constexpr int kLargeRangedAttackIndex = 5;
@@ -39,9 +40,10 @@ namespace
 
 	constexpr int kLargeAttackInterval = 10;//この回数攻撃したら全体攻撃
 	constexpr int kMissileTurnInterval = 6;//この回数攻撃したらミサイルのターン
+	constexpr int kGatlingSupplyInterval = 2;//ガトリングを失ってからこの回数攻撃したら補給
 	constexpr float kBackDot = -0.5f;//正面との内積がこれより小さければ背後(120度より後ろ)
-	constexpr float kRushMinDistance = 400.0f;//この距離より遠ければ突進
-	constexpr float kRushMaxDistance = 1000.0f;//突進を出す最大の距離
+	constexpr float kRushMinDistance = 600.0f;//この距離より遠ければ突進
+	constexpr float kRushMaxDistance = 1500.0f;//突進を出す最大の距離
 
 	constexpr int kGatlingExplodeDamage = 300;//投げ返したガトリングの爆発のダメージ
 
@@ -237,9 +239,15 @@ void BossEnemyKingmech::DrawDebugWindowExtra()
 		m_attackCountSinceMissile = 0;
 		ChangeState(std::make_shared<KingmechMissileTurn>(GetWeakPtr()));
 	}
-	if (!canChange)ImGui::EndDisabled();
 	ImGui::SameLine();
-	ImGui::Text("Count %d / %d", m_attackCountSinceMissile, kMissileTurnInterval);
+	if (ImGui::Button("Gatling Supply"))
+	{
+		m_gatling->DebugRemove();
+		m_attackCountSinceCut = 0;
+		ChangeState(std::make_shared<KingmechGatlingSupply>(GetWeakPtr()));
+	}
+	if (!canChange)ImGui::EndDisabled();
+	ImGui::Text("Missile %d / %d  Supply %d / %d", m_attackCountSinceMissile, kMissileTurnInterval, m_attackCountSinceCut, kGatlingSupplyInterval);
 }
 
 void BossEnemyKingmech::CutGatling(Collider& other, AttackData& data)
@@ -249,7 +257,6 @@ void BossEnemyKingmech::CutGatling(Collider& other, AttackData& data)
 	PlayBloodSplash(other);
 
 	m_gatling->Cut();
-	m_isPartBroken = true;
 	ChangeState(std::make_shared<BossPartThrow>(GetWeakPtr()));
 
 	//プレイヤーに投げさせる//targetをセット
@@ -287,8 +294,9 @@ int BossEnemyKingmech::SelectAttackIndex()
 	const float distance = toPlayer.Magnitude();
 
 	//上から順に条件を見て、当てはまったらその攻撃
-	//何回か攻撃したら全体攻撃
-	if (m_attackCountSinceLarge >= kLargeAttackInterval &&
+	//何回か攻撃したら全体攻撃//ガトリングが無い間は出さない
+	if (m_gatling->GetPhase() == KingmechGatling::Phase::Attached &&
+		m_attackCountSinceLarge >= kLargeAttackInterval &&
 		distance <= GetAttackNode(kLargeRangedAttackIndex).attackRange)
 	{
 		return kLargeRangedAttackIndex;
@@ -339,6 +347,10 @@ std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterAttackEnd()
 			++m_attackCountSinceLarge;
 		}
 		++m_attackCountSinceMissile;
+		if (m_gatling->GetPhase() == KingmechGatling::Phase::Gone)
+		{
+			++m_attackCountSinceCut;
+		}
 	}
 
 	//連撃//今の攻撃にnextAttackがあれば、予備動作なしで次の攻撃へ
@@ -355,6 +367,13 @@ std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterAttackEnd()
 
 std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterIdle()
 {
+	//ガトリングを失って何回か攻撃したら補給
+	if (m_gatling->GetPhase() == KingmechGatling::Phase::Gone &&
+		m_attackCountSinceCut >= kGatlingSupplyInterval)
+	{
+		m_attackCountSinceCut = 0;
+		return std::make_shared<KingmechGatlingSupply>(GetWeakPtr());
+	}
 	//何回か攻撃したらミサイルのターン
 	if (m_attackCountSinceMissile >= kMissileTurnInterval)
 	{
@@ -402,6 +421,13 @@ std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextOnPlayerFound()
 std::shared_ptr<EnemyStateBase> BossEnemyKingmech::NextAfterRecover()
 {
 	return EnemyBase::NextAfterRecover();
+}
+
+bool BossEnemyKingmech::IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state) const
+{
+	return EnemyBase::IsAttackFlowState(state) ||
+		std::dynamic_pointer_cast<KingmechMissileTurn>(state) ||
+		std::dynamic_pointer_cast<KingmechGatlingSupply>(state);
 }
 
 void BossEnemyKingmech::OnDamage(Collider& other, AttackData& data)

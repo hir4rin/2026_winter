@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 470" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="13">
+  <rect width="820" height="470" fill="#ffffff"/>
+  <defs>
+    <linearGradient id="base" x1="0" x2="1"><stop offset="0" stop-color="#e62d46" stop-opacity="0.8"/><stop offset="0.3" stop-color="#e62d46" stop-opacity="0.45"/><stop offset="0.65" stop-color="#e62d46" stop-opacity="0.15"/><stop offset="1" stop-color="#e62d46" stop-opacity="0"/></linearGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#e6222f" stop-opacity="0.45"/><stop offset="1" stop-color="#e6222f" stop-opacity="0"/></radialGradient>
+    <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.5" fill="#28000a" fill-opacity="0.55"/></pattern>
+    <g id="g1"><rect x="-10" y="-8" width="360" height="60" fill="url(#glow)"/></g>
+  </defs>
+
+  <text x="20" y="24" font-weight="bold" font-size="15">重ねる順番(4段)</text>
+
+  <!-- 1 -->
+  <text x="20" y="52"><tspan font-weight="bold" fill="#c0392b">1. 光</tspan>　glow.png を加算。sinで明滅</text>
+  <g transform="translate(20,64)"><rect width="370" height="64" fill="#140810"/><g transform="translate(15,10)"><use href="#g1"/></g></g>
+  <!-- 2 -->
+  <text x="430" y="52"><tspan font-weight="bold" fill="#c0392b">2. ベース</tspan>　select_base.png を左右反転</text>
+  <g transform="translate(430,64)"><rect width="370" height="64" fill="#140810"/><g transform="translate(15,10)"><use href="#g1"/><rect width="340" height="44" fill="url(#base)"/></g></g>
+  <!-- 3 -->
+  <text x="20" y="160"><tspan font-weight="bold" fill="#c0392b">3. 網点</tspan>　halftone.png を暗く重ねる</text>
+  <g transform="translate(20,172)"><rect width="370" height="64" fill="#140810"/><g transform="translate(15,10)"><use href="#g1"/><rect width="340" height="44" fill="url(#base)"/><rect width="340" height="44" fill="url(#dots)"/></g></g>
+  <!-- 4 -->
+  <text x="430" y="160"><tspan font-weight="bold" fill="#c0392b">4. 端の線</tspan>　左端に明るい線＋文字</text>
+  <g transform="translate(430,172)"><rect width="370" height="64" fill="#140810"/><g transform="translate(15,10)"><use href="#g1"/><rect width="340" height="44" fill="url(#base)"/><rect width="340" height="44" fill="url(#dots)"/><rect width="3" height="44" fill="#ff5a6e"/><text x="24" y="29" fill="#ffecee" font-size="18" font-family="'Yu Mincho', serif">列車ステージ</text></g></g>
+
+  <line x1="20" y1="256" x2="800" y2="256" stroke="#ddd"/>
+  <text x="20" y="282" font-weight="bold" font-size="15">カーソルを動かした直後の動き</text>
+  <text x="330" y="282" font-size="12" fill="#666">幅 = 1−(1−t)³、t = 経過フレーム ÷ 10</text>
+
+  <!-- フレーム表 -->
+  <g>
+    <text x="20" y="312" font-size="12">1F</text>
+    <rect x="70" y="298" width="600" height="22" fill="#140810"/><rect x="70" y="298" width="162.6" height="22" fill="#e62d46" opacity="0.4"/>
+    <text x="684" y="314" font-size="12">27%・暗い(0.4倍)</text>
+    <text x="20" y="342" font-size="12">2F</text>
+    <rect x="70" y="328" width="600" height="22" fill="#140810"/><rect x="70" y="328" width="292.8" height="22" fill="#e62d46"/>
+    <text x="684" y="344" font-size="12">49%</text>
+    <text x="20" y="372" font-size="12">3F</text>
+    <rect x="70" y="358" width="600" height="22" fill="#140810"/><rect x="70" y="358" width="394" height="22" fill="#e62d46" opacity="0.4"/>
+    <text x="684" y="374" font-size="12">66%・暗い(0.4倍)</text>
+    <text x="20" y="402" font-size="12">5F</text>
+    <rect x="70" y="388" width="600" height="22" fill="#140810"/><rect x="70" y="388" width="525" height="22" fill="#e62d46"/>
+    <text x="684" y="404" font-size="12">88%</text>
+    <text x="20" y="432" font-size="12">10F</text>
+    <rect x="70" y="418" width="600" height="22" fill="#140810"/><rect x="70" y="418" width="600" height="22" fill="#e62d46"/>
+    <text x="684" y="434" font-size="12">100%</text>
+  </g>
+  <text x="20" y="460" font-size="12" fill="#666">最初に速く伸びて、最後にゆっくり止まる。1Fと3Fだけ暗くして、ちらつきに見せる。</text>
+</svg>

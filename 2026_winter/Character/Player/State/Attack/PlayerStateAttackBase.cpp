@@ -408,7 +408,9 @@ void PlayerStateAttackBase::InitVerticalMove(const ComboNode& node)
 	if (node.moveSpeedY != 0)
 	{
 		//上下の速度を保存
-		m_InitVel = player->m_targetVec * node.moveSpeedX + Vector3(0, node.moveSpeedY, 0);
+		//上昇だけボス戦の倍率を掛ける
+		const float speedY = node.moveSpeedY > 0 ? node.moveSpeedY * player->GetAttackRiseScale() : node.moveSpeedY;
+		m_InitVel = player->m_targetVec * node.moveSpeedX + Vector3(0, speedY, 0);
 		m_gravity = 0.0f;
 		player->m_rb.m_vel = Vector3(0, 0, 0);
 	}

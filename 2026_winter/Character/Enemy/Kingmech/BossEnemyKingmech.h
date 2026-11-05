@@ -36,6 +36,7 @@ public:
     bool HasMissile()const { return !m_missiles.empty(); }//飛んでいるミサイルがあるか
 protected:
     int SelectAttackIndex()override;//出す攻撃を選ぶ(無ければ-1)//ボス用の分岐
+    bool IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state)const override;//ミサイルのターンも攻撃中
 
     //ステートの切り替え//今は EnemyBase と同じ
     std::shared_ptr<EnemyStateBase> NextAfterIdle()override;//Idleの待機時間が終わった
@@ -55,6 +56,7 @@ private:
 
     int m_attackCountSinceLarge = 0;//前の全体攻撃から何回攻撃したか
     int m_attackCountSinceMissile = 0;//前のミサイルのターンから何回攻撃したか
+    int m_attackCountSinceCut = 0;//ガトリングを失ってから何回攻撃したか
     Vector3 m_arenaCenter;//闘技場の中央//ミサイルのターンで移動する
 
     bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
@@ -63,6 +65,7 @@ private:
 
     friend class BossPartThrow;
     friend class KingmechMissileTurn;
+    friend class KingmechGatlingSupply;
     friend class KingmechGatling;
 };
 

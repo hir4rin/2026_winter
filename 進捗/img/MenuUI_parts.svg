@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 620" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="13">
+  <rect width="820" height="620" fill="#ffffff"/>
+  <defs>
+    <linearGradient id="bar" x1="0" x2="1"><stop offset="0" stop-color="#e62d46"/><stop offset="0.45" stop-color="#e62d46" stop-opacity="0.5"/><stop offset="1" stop-color="#e62d46" stop-opacity="0"/></linearGradient>
+    <linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="#e62d46" stop-opacity="0"/><stop offset="0.5" stop-color="#e62d46"/><stop offset="1" stop-color="#e62d46" stop-opacity="0"/></linearGradient>
+  </defs>
+
+  <!-- 画面 1280x720 を 0.5倍(原点 90,20) -->
+  <rect x="90" y="20" width="640" height="360" fill="#140810"/>
+  <!-- タイトル -->
+  <rect x="125" y="39" width="570" height="2" fill="url(#fade)"/>
+  <circle cx="125" cy="40" r="3" fill="none" stroke="#e62d46"/>
+  <circle cx="695" cy="40" r="3" fill="none" stroke="#e62d46"/>
+  <path d="M410,32 L414,40 L410,48 L406,40 z" fill="#e62d46"/>
+  <text x="410" y="66" text-anchor="middle" fill="#e62d46" font-size="14">ステージセレクト</text>
+
+  <!-- 左のパネル -->
+  <rect x="118.5" y="78.5" width="180" height="253" fill="none" stroke="#e62d46"/>
+  <rect x="122.5" y="82.5" width="13" height="13" fill="none" stroke="#e62d46"/>
+  <rect x="138" y="82.5" width="156.5" height="13" fill="#cd283e"/>
+  <text x="146" y="93" fill="#ffd7dc" font-size="10">ステージ一覧</text>
+  <g fill="none" stroke="#e62d46"><path d="M127,106 h-3 v18 h3"/><path d="M127,150 h-3 v18 h3"/></g>
+  <text x="136" y="120" fill="#e62d46" font-size="12">項目 1</text>
+  <rect x="123" y="128" width="173" height="18" fill="url(#bar)"/>
+  <rect x="123" y="128" width="2" height="18" fill="#ff5a6e"/>
+  <text x="136" y="142" fill="#ffecee" font-size="12">項目 2(選択中)</text>
+  <text x="136" y="164" fill="#e62d46" font-size="12">項目 3</text>
+
+  <!-- 右のパネル -->
+  <rect x="320" y="78.5" width="288.5" height="188" fill="none" stroke="#e62d46"/>
+  <text x="330" y="96" fill="#e62d46" font-size="11">詳細</text>
+  <line x1="358" y1="92" x2="596" y2="92" stroke="#e62d46"/>
+  <circle cx="598" cy="92" r="2.5" fill="none" stroke="#e62d46"/>
+  <text x="334" y="120" fill="#ffecee" font-size="13">ステージ名</text>
+  <rect x="330" y="128" width="268" height="2" fill="url(#fade)"/>
+  <text x="334" y="150" fill="#dc96a0" font-size="11">ステージの説明。枠の幅で折り返す。</text>
+
+  <!-- 下 -->
+  <rect x="280" y="357" width="260" height="1.5" fill="url(#fade)"/>
+  <rect x="344" y="346" width="130" height="22" fill="#140810"/>
+  <circle cx="356" cy="358" r="6" fill="#7fb000"/>
+  <text x="367" y="362" fill="#e62d46" font-size="11">決定</text>
+  <text x="412" y="362" fill="#e62d46" font-size="11">↑↓ 選択</text>
+
+  <!-- 番号 -->
+  <g font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">
+    <g><circle cx="680" cy="340" r="12" fill="#2f6fb0"/><text x="680" y="345">1</text></g>
+    <g><circle cx="620" cy="40" r="12" fill="#2f6fb0"/><text x="620" y="45">2</text></g>
+    <g><circle cx="299" cy="250" r="12" fill="#2f6fb0"/><text x="299" y="255">3</text></g>
+    <g><circle cx="276" cy="89" r="12" fill="#2f6fb0"/><text x="276" y="94">4</text></g>
+    <g><circle cx="266" cy="137" r="12" fill="#2f6fb0"/><text x="266" y="142">5</text></g>
+    <g><circle cx="110" cy="115" r="12" fill="#2f6fb0"/><text x="110" y="120">6</text></g>
+    <g><circle cx="540" cy="92" r="12" fill="#2f6fb0"/><text x="540" y="97">7</text></g>
+    <g><circle cx="500" cy="118" r="12" fill="#2f6fb0"/><text x="500" y="123">8</text></g>
+    <g><circle cx="560" cy="358" r="12" fill="#2f6fb0"/><text x="560" y="363">9</text></g>
+  </g>
+
+  <!-- 凡例 -->
+  <g font-size="13">
+    <text x="30" y="414" font-weight="bold">番号</text><text x="80" y="414" font-weight="bold">部品</text><text x="330" y="414" font-weight="bold">作り方</text>
+    <line x1="30" y1="422" x2="790" y2="422" stroke="#ccc"/>
+    <text x="36" y="442">1</text><text x="80" y="442">背景</text><text x="330" y="442">単色＋grid＋rain＋vignette</text>
+    <text x="36" y="462">2</text><text x="80" y="462">タイトルの線</text><text x="330" y="462">line_fade.png＋DxLibの円と四角形</text>
+    <text x="36" y="482">3</text><text x="80" y="482">パネルの枠</text><text x="330" y="482">frame9.png を9分割して伸ばす</text>
+    <text x="36" y="502">4</text><text x="80" y="502">見出しの帯とアイコン</text><text x="330" y="502">DrawBox(アイコンは仮の小さい四角)</text>
+    <text x="36" y="522">5</text><text x="80" y="522">選択帯</text><text x="330" y="522">glow＋select_base＋halftone＋DrawBox</text>
+    <text x="36" y="542">6</text><text x="80" y="542">未選択のブラケット</text><text x="330" y="542">bracket.png</text>
+    <text x="36" y="562">7</text><text x="80" y="562">詳細の見出しの線</text><text x="330" y="562">DrawLine と DrawCircleAA</text>
+    <text x="36" y="582">8</text><text x="80" y="582">ステージ名・説明</text><text x="330" y="582">游明朝のフォント(説明は折り返し)</text>
+    <text x="36" y="602">9</text><text x="80" y="602">ボタンの説明</text><text x="330" y="602">A.png＋フォント＋line_fade.png</text>
+  </g>
+</svg>

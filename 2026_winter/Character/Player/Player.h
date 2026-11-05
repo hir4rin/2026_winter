@@ -254,6 +254,10 @@ public:
 	void SetIsPartBrokenKilling(bool value) { m_isPartBrokenKilling = value; }
 	bool GetIsPartBrokenKilling()const { return m_isPartBrokenKilling; }
 
+	//攻撃の上昇の倍率//ボス戦で上げる
+	void SetAttackRiseScale(float scale) { m_attackRiseScale = scale; }
+	float GetAttackRiseScale()const { return m_attackRiseScale; }
+
 	//ブレイクの通知
 	void RequestGuardBreakChance(std::shared_ptr<EnemyBase> target) { m_guardBreakChanceTarget = target; }
 	//ボスのパーツを切り落とした通知//切り上げの後にPlayerStateBossPartThrowへ
@@ -373,6 +377,7 @@ private:
 	//部位破壊したターゲット//サーチはロックオンマネージャーに任せてる
 	std::weak_ptr<EnemyBase> m_partBrokenTarget;
 	bool m_isPartBrokenKilling = false;//確殺演出中かどうか//trueの間はロックオンマネージャーが確殺対象を更新しない
+	float m_attackRiseScale = 1.0f;//攻撃の上昇の倍率
 	std::weak_ptr<EnemyBase> m_guardBreakChanceTarget;//ブレイクした敵
 	std::weak_ptr<EnemyBase> m_bossPartThrowTarget;//パーツを切り落としたボス
 

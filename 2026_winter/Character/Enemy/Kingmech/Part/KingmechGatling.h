@@ -17,6 +17,7 @@ public:
 		Hold,//プレイヤーの手で回っている
 		Thrown,//ボスへ飛んでいく
 		Gone,//爆発して無くなった
+		Supply,//補給で上から落ちてくる
 	};
 
 public:
@@ -28,6 +29,8 @@ public:
 
 	void Cut();//切り落とす
 	void Throw();//ボスへ投げる//Cut・Holdのときだけ
+	void StartSupply();//補給を始める//Goneのときだけ
+	void DebugRemove();//デバッグ用//付いていたら外す
 
 	Phase GetPhase()const { return m_phase; }
 
@@ -36,6 +39,9 @@ private:
 	void UpdateHold();
 	void UpdateThrown();
 	void Explode();
+	void UpdateSupply();
+	void FinishSupply();
+	MATRIX CalcSupplyMatrix()const;//落ちてくる途中の行列
 
 	Vector3 GetHandPos()const;//プレイヤーの手の位置
 	Vector3 GetTargetPos()const;//投げる先(ボスの体)

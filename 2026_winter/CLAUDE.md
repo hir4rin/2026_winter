@@ -941,7 +941,16 @@
   `PlayerStateBossPartThrow` は無敵。途中で抜けても Exit で投げる。
 - `AsyncData::KingmechGatlingModel` を追加。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**
   (切れる位置・手に寄る速さ・回り方・投げのタイミング・爆発の位置。ボスのガード率が0なのでブレイクさせるにはステータスの guardRate を上げる)。
-- まだ: ガトリングを失った後に銃の技(Attack6_Shoot など)を出さないようにする、専用カメラ。
+- まだ: 専用カメラ。
+- (11/05)**ガトリングの補給**: 爆発で失ったあと、攻撃4回(`kGatlingSupplyInterval`)で `Kingmech/State/KingmechGatlingSupply`(vcxproj/filters に登録)へ。ミサイルのターンより優先。
+  Phase = Call(Roar 30F)/ Drop / Recover(Idle 60F)。`IsAttackFlowState` に入れたので補給中は怯まない(ダメージは通る)。切り落としと同じくガトリングは `Attached` に戻るので、また切れる。
+  - `KingmechGatling` に Phase `Supply`。腕に重なる行列に高さ(`kSupplyHeight` 1500)だけ足して上から落とす(`kSupplyFrame` 30F)。着いたらミサイルの爆発(`kSupplyEffectScale` 8)を出してボスのメッシュを表示。
+  - キャンセルは作っていない。補給中に死ぬと、倒れていくボスにガトリングが付く(残り最大30F)。気になったら `UpdateSupply` で死亡を見て止める。
+  - ガトリングが `Attached` でない間は全体攻撃(5番 Attack6_Shoot)を選ばない。攻撃CSVの nextAttack は全部 -1 なので連撃からも入らない。
+  - F2 の Enemy Debug の「Gatling Supply」ボタンで試せる(付いていたら外してから補給)。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(落ちる高さが画面に入るか・付く瞬間のずれ・爆発の大きさ・Roar の揺れ)。
+- (11/05)**Kingmech を1.5倍に**: `kModelScale` 2.3→3.45(高さ約690)。`EnemyStatus.csv` の体 60/360/100→110/520/150(足元の高さは前と同じ)。`kEnemyDistance` 75、突進 600〜1500、ガトリング `kExplodeDistance` 225・爆発45、補給 2250・12。
+  プレイヤーの `ComboChain01.csv` は変えない。切り上げが低く見えるので、`BossAppear` で `Player::SetAttackRiseScale(kBossAttackRiseScale)`(1.22、PhaseManager)。`InitVerticalMove` で上昇の攻撃だけ moveSpeedY に掛ける(高さは約1.5倍)。戻す処理は無い(リザルトで作り直す)。ボス戦中の雑魚敵にも効く。**ゲームでの確認はまだ**。手で回すガトリングも1.5倍で見える(m_baseRot にボスの倍率が入るため)。
+  `BossEnemyKingmechAttack.csv` の attackRange(300)・colRadius・colForwardOffset・colOffsetY も1.5倍にした。0〜2番の colRadius は元から0(ほぼ当たらないはず。値を決める)。
 
 ### 2026-10-29 列車ステージの明るさに差をつけた(コントラストが薄い・地味と言われた対策)
 - 戦う場所を明るく、トンネルと遠くを暗くした。値は `Stage.cpp` 先頭(`kTunnelColorScale` 0.45 / `kTrainColorScale` 1.15 / フォグ 2000〜5000、色 8,8,10)。
@@ -973,7 +982,8 @@
   - Fire: `Roar` のループ、プレイヤーの方を向いて撃つ(撃ち方は下の追記)。着弾の高さは中央の y。
   - Wait: `HasMissile()` が false(全部落ちた)まで。Recover: `Idle` で90F → `NextAfterRecover`。
 - ボス: `m_arenaCenter` = 出てくる位置(startPos)。`m_attackCountSinceMissile` を `NextAfterAttackEnd` で数え(連撃は最後まで終わって1回)、`kMissileTurnInterval`(6)以上なら `NextAfterIdle` の最初でこのステートへ(0に戻す)。攻撃権は取らない。
-- **まだ**: ターン中に攻撃されると `OnDamage` で HitGround に移って止まる(BossPartThrow と同じく「ダメージだけ」の分岐に入れる)。ガードブレイクの切り上げでガトリングが切れて中断する。
+- (11/05)`EnemyBase::IsAttackFlowState` を virtual にし、Kingmech で `KingmechMissileTurn` も攻撃中に含めた。ターン中の被弾はダメージだけ(怯まない・HP0 で死ぬ)。デバッグの敵Idleでもターンが止まる。ビルドは通った。ゲームでの確認はまだ。
+- **まだ**: ガードブレイクの切り上げでガトリングが切れて中断する。
   攻撃CSVの6番(表ではミサイルの雨)は、コードでは突進(`kRushAttackIndex`)。
 - MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**(移動の速さ・Roar のループ・撃つ数と間隔)。
 - (追記)デバッグ: F2 の Enemy Debug に「Kingmech」の欄。**Missile Turn ボタンですぐこのステートへ**(数も0に戻す)。横に今の数 / 間隔。
@@ -1219,6 +1229,7 @@
 - Debug・Release ともビルドは通った。ステージ1で画面を撮って位置・重なりを確認。**戦ってゲージが動くところの確認はまだ**。
 
 ### 2026-11-04 NG4風のメニューUI(MenuUI)・ステージセレクトに使用
+- **詳しくは `../進捗/note_メニューUI.md`**(図あり)。
 - `UI/MenuUI.h/.cpp`(vcxproj/filters に登録)。UIBase は継承していない(シーンが直接持つ)。設計解像度(1280x720)で書いて `Game::ScaleX/Y` で描く。
   - `SetTitle` / `SetListHeader` / `SetItems` / `SetCursor`(変わったら選択帯のアニメをやり直す) / `SetDetail(見出し, 名前, 説明)`。毎フレーム `Update` → `Draw`。
   - 描く順: 背景の色 → 斜めの格子(加算) → 流れるドット(加算、v をずらす) → 周辺減光(乗算) → タイトルの線 → 左のパネル(9スライスの枠・見出しの帯・項目) → 右のパネル → 下のボタン説明。

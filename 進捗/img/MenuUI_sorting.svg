@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 372" font-family="Meiryo, 'Yu Gothic', sans-serif" font-size="14">
+  <rect width="820" height="372" fill="#ffffff"/>
+
+  <!-- シェーダー -->
+  <rect x="20" y="20" width="250" height="262" rx="10" fill="#f1f0fa" stroke="#7a6fb5"/>
+  <path d="M20,30 a10,10 0 0 1 10,-10 h230 a10,10 0 0 1 10,10 v34 h-250 z" fill="#7a6fb5"/>
+  <text x="145" y="48" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">シェーダー向き</text>
+  <text x="145" y="90" text-anchor="middle" fill="#555" font-size="13">画面全体に一様にかかるもの</text>
+  <text x="44" y="126">・背景のぼかし</text>
+  <text x="44" y="152">・色調補正</text>
+  <text x="44" y="178">・全面の網点</text>
+  <text x="44" y="204">・周辺減光</text>
+  <text x="44" y="230">・流れるドット</text>
+  <text x="44" y="264" fill="#555" font-size="12">※周辺減光とドットはPNGでも作れる</text>
+
+  <!-- PNG -->
+  <rect x="285" y="20" width="250" height="262" rx="10" fill="#fdf0f1" stroke="#c0392b"/>
+  <path d="M285,30 a10,10 0 0 1 10,-10 h230 a10,10 0 0 1 10,10 v34 h-250 z" fill="#c0392b"/>
+  <text x="410" y="48" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">PNG向き</text>
+  <text x="410" y="90" text-anchor="middle" fill="#555" font-size="13">置く場所が決まっている部品</text>
+  <text x="309" y="126">・パネルの枠</text>
+  <text x="309" y="152">・選択帯</text>
+  <text x="309" y="178">・ブラケット</text>
+  <text x="309" y="204">・線の飾り</text>
+  <text x="309" y="230">・ボタンのアイコン</text>
+  <text x="309" y="264" fill="#555" font-size="12">※白で作って、描くときに色を付ける</text>
+
+  <!-- フォント -->
+  <rect x="550" y="20" width="250" height="262" rx="10" fill="#eef6f1" stroke="#3f8f68"/>
+  <path d="M550,30 a10,10 0 0 1 10,-10 h230 a10,10 0 0 1 10,10 v34 h-250 z" fill="#3f8f68"/>
+  <text x="675" y="48" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">フォント描画</text>
+  <text x="675" y="90" text-anchor="middle" fill="#555" font-size="13">内容が変わるもの</text>
+  <text x="574" y="126">・タイトル</text>
+  <text x="574" y="152">・項目名</text>
+  <text x="574" y="178">・ステージの説明</text>
+  <text x="574" y="204">・ボタンの説明</text>
+  <text x="574" y="264" fill="#555" font-size="12">※文字を増やしても画像は要らない</text>
+
+  <!-- 結論 -->
+  <rect x="20" y="300" width="780" height="52" rx="8" fill="#2a1420"/>
+  <text x="410" y="332" text-anchor="middle" fill="#fff" font-size="15">今回の実装: シェーダーは使わず、<tspan font-weight="bold" fill="#ff8c9c">PNG＋ブレンドモード＋フォント</tspan>だけで作った</text>
+</svg>
