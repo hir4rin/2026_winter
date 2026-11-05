@@ -33,8 +33,16 @@ public:
     void ThrowPart()override;//ガトリングを投げ返す
 
     void FireMissile(const Vector3& landPos);//ミサイルを1発追加する
+
+    //トドメのムービー
+    void StartFinisher();
+    void StartFinisherCut(const Vector3& normal, const Vector3& hinge, const Vector3& front, const Vector3& slideDir);//真っ二つにする
+    void SetFinisherCutMove(float slide, float tilt);//上半身のずれ
+    void HideForFinisher();//爆発で消える
+    bool IsFinisherAnimStopped()const { return m_finisherCut.isActive; }
     bool HasMissile()const { return !m_missiles.empty(); }//飛んでいるミサイルがあるか
 protected:
+    void ApplyPos()override;
     int SelectAttackIndex()override;//出す攻撃を選ぶ(無ければ-1)//ボス用の分岐
     bool IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state)const override;//ミサイルのターンも攻撃中
 
@@ -48,6 +56,19 @@ protected:
     std::shared_ptr<EnemyStateBase> NextOnPlayerFound()override;//プレイヤーを見つけた
     std::shared_ptr<EnemyStateBase> NextAfterRecover()override;//被弾・ダウン・ガードなどから立ち直った
 private:
+    //真っ二つの面
+    struct FinisherCut
+    {
+        bool isActive = false;
+        Vector3 normal;//上半身の側を向く
+        Vector3 hinge;//面の上の点
+        Vector3 front;//傾ける軸
+        Vector3 slideDir;//ずれる向き
+        float slide = 0.0f;
+        float tilt = 0.0f;
+    };
+
+    void DrawFinisherCut();
     void CutGatling(Collider& other, AttackData& data);//切り上げでガトリングを切り落とす
     void OnGatlingExploded();//投げ返されたガトリングが爆発した//ガトリングから呼ばれる
 
@@ -58,6 +79,9 @@ private:
     int m_attackCountSinceMissile = 0;//前のミサイルのターンから何回攻撃したか
     int m_attackCountSinceCut = 0;//ガトリングを失ってから何回攻撃したか
     Vector3 m_arenaCenter;//闘技場の中央//ミサイルのターンで移動する
+    bool m_isFinisher = false;//トドメのムービー中
+    bool m_isFinisherHidden = false;//爆発で消えた
+    FinisherCut m_finisherCut;
 
     bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
     bool m_wasIPressed = false;//前のフレームにIを押していたか//デバッグ用のアニメCSV読み込み直し
@@ -67,5 +91,6 @@ private:
     friend class KingmechMissileTurn;
     friend class KingmechGatlingSupply;
     friend class KingmechGatling;
+    friend class KingmechFinisher;
 };
 

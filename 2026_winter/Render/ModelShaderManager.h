@@ -35,6 +35,10 @@ public:
 	void SetBlackMode(bool isBlack) { m_isBlackMode = isBlack; }
 	bool GetBlackMode()const { return m_isBlackMode; }
 
+	//黒くするモードのとき、面の裏側を描かない(トドメの真っ二つ)//切り口のそばはrimWidthの幅で白くする
+	void SetCutPlane(const VECTOR& normal, float distance, float rimWidth);
+	void ClearCutPlane() { m_isCutPlane = false; }
+
 	//MV1DrawModelの代わりに呼ぶ
 	//黒くするモードのときは、モデルの頂点タイプに合った頂点シェーダー＋黒いピクセルシェーダーで描く
 	//それ以外は DxLib のいつもの光＋ステージの明かりを1回で描く(LitModelPS.hlsl)
@@ -82,10 +86,22 @@ private:
 	};
 	static constexpr int kStageLightSlot = 4;//定数バッファのスロット(LitModelPS.hlsl の register(b4))
 
+	//EnemyCutPS.hlsl の cbuffer と同じ並び
+	struct CutConstant
+	{
+		FLOAT4 plane;//xyz:法線 w:原点からの距離
+		FLOAT4 param;//x:切り口の光の幅
+	};
+	static constexpr int kCutSlot = 6;//EnemyCutPS.hlsl の register(b6)
+
 	std::array<int, DX_MV1_VERTEX_TYPE_NUM> m_vertexShaders = {};//添え字はDX_MV1_VERTEX_TYPE_〜
 	int m_blackPixelShader = -1;//真っ黒にするピクセルシェーダー
 	int m_litPixelShader = -1;//いつもの光＋明かりで描くピクセルシェーダー
 	int m_litBumpPixelShader = -1;//同じ(ノーマルマップのある頂点タイプ用)
+	int m_cutPixelShader = -1;//真っ二つにするピクセルシェーダー
+	int m_cutBumpPixelShader = -1;//同じ(ノーマルマップのある頂点タイプ用)
+	int m_cutConstantBuffer = -1;
+	bool m_isCutPlane = false;
 	int m_lightConstantBuffer = -1;
 	int m_lookPixelShader = -1;
 	int m_lookBumpPixelShader = -1;

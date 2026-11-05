@@ -32,6 +32,7 @@ namespace
 	constexpr float kThrowSpeed = 60.0f;//飛ぶ速さ
 	constexpr float kThrowSpinSpeed = 0.7f;
 	constexpr float kExplodeDistance = 225.0f;//ボスとこの距離まで近づいたら爆発
+	constexpr float kStickDistance = 130.0f;//この距離まで近づいたら刺さる
 	constexpr float kThrowMaxFrame = 90.0f;//これだけ飛んでも届かなければ爆発
 
 	constexpr float kExplodeEffectScale = 45.0f;//爆発のエフェクトの大きさ
@@ -79,6 +80,9 @@ void KingmechGatling::Update()
 	case Phase::Supply:
 		UpdateSupply();
 		break;
+	case Phase::Stuck:
+		UpdateStuck();
+		break;
 	default:
 		break;
 	}
@@ -86,20 +90,25 @@ void KingmechGatling::Update()
 
 void KingmechGatling::Draw()
 {
+	Draw(MGetIdent());
+}
+
+void KingmechGatling::Draw(const MATRIX& extra)
+{
 	//補給中は回さず腕の真上に描く
 	if (m_phase == Phase::Supply)
 	{
-		MV1SetMatrix(m_modelHandle, CalcSupplyMatrix());
+		MV1SetMatrix(m_modelHandle, MMult(CalcSupplyMatrix(), extra));
 		ModelShaderManager::GetInstance().DrawModel(m_modelHandle);
 		return;
 	}
 
-	if (m_phase != Phase::Cut && m_phase != Phase::Hold && m_phase != Phase::Thrown)return;
+	if (m_phase != Phase::Cut && m_phase != Phase::Hold && m_phase != Phase::Thrown && m_phase != Phase::Stuck)return;
 
 
 	//回転//y軸
 	MATRIX mat = MMult(MMult(MGetRotAxis(kSpinAxis, m_spinAngle), m_baseRot), MGetTranslate(m_pos.ToDxLibVector()));
-	MV1SetMatrix(m_modelHandle, mat);
+	MV1SetMatrix(m_modelHandle, MMult(mat, extra));
 	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);
 }
 
@@ -148,6 +157,34 @@ void KingmechGatling::DebugRemove()
 	m_phase = Phase::Gone;
 }
 
+void KingmechGatling::ResetForFinisher()
+{
+	auto boss = m_owner.lock();
+	if (!boss)return;
+	MV1SetMeshVisible(boss->m_modelHandle, m_bossMeshIndex, FALSE);
+	m_isStickThrow = false;
+	m_phase = Phase::Gone;
+}
+
+void KingmechGatling::ThrowAndStick()
+{
+	Throw();
+	m_isStickThrow = true;
+}
+
+void KingmechGatling::Vanish()
+{
+	m_phase = Phase::Gone;
+}
+
+Vector3 KingmechGatling::GetAttachedPos()const
+{
+	auto boss = m_owner.lock();
+	if (!boss)return m_pos;
+	const MATRIX mat = MMult(MGetTranslate(kArmOffset), MV1GetFrameLocalWorldMatrix(boss->m_modelHandle, m_bossArmFrame));
+	return Vector3(mat.m[3][0], mat.m[3][1], mat.m[3][2]);
+}
+
 void KingmechGatling::UpdateCut()
 {
 	const float timeScale = System::GetInstance().GetTimeScale();
@@ -184,7 +221,15 @@ void KingmechGatling::UpdateThrown()
 
 	//ボスへまっすぐ(ボスが動いても追いかける)
 	Vector3 toTarget = GetTargetPos() - m_pos;
-	if (toTarget.Magnitude() <= kExplodeDistance || m_frame >= kThrowMaxFrame)
+	if (m_isStickThrow)
+	{
+		if (toTarget.Magnitude() <= kStickDistance || m_frame >= kThrowMaxFrame)
+		{
+			StickToBoss();
+			return;
+		}
+	}
+	else if (toTarget.Magnitude() <= kExplodeDistance || m_frame >= kThrowMaxFrame)
 	{
 		Explode();
 		return;
@@ -204,6 +249,35 @@ void KingmechGatling::Explode()
 	//ボスにダメージ
 	auto boss = m_owner.lock();
 	if (boss)boss->OnGatlingExploded();
+}
+
+void KingmechGatling::StickToBoss()
+{
+	const Vector3 target = GetTargetPos();
+	const Vector3 toOut = (m_pos - target).Normalize();
+	m_stuckOffset = toOut * kStickDistance;
+	m_pos = target + m_stuckOffset;
+
+	//モデルの-Xが銃口
+	const VECTOR axisX = toOut.ToDxLibVector();
+	const VECTOR axisZ = VNorm(VCross(axisX, VGet(0.0f, 1.0f, 0.0f)));
+	const VECTOR axisY = VCross(axisZ, axisX);
+	const float scale = VSize(VGet(m_baseRot.m[0][0], m_baseRot.m[0][1], m_baseRot.m[0][2]));
+	m_baseRot = MGetIdent();
+	const VECTOR axes[3] = { axisX, axisY, axisZ };
+	for (int i = 0; i < 3; ++i)
+	{
+		m_baseRot.m[i][0] = axes[i].x * scale;
+		m_baseRot.m[i][1] = axes[i].y * scale;
+		m_baseRot.m[i][2] = axes[i].z * scale;
+	}
+	m_spinAngle = 0.0f;
+	m_phase = Phase::Stuck;
+}
+
+void KingmechGatling::UpdateStuck()
+{
+	m_pos = GetTargetPos() + m_stuckOffset;
 }
 
 void KingmechGatling::UpdateSupply()

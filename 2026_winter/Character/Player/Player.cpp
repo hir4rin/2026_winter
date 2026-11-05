@@ -234,6 +234,13 @@ void Player::Update(Camera& camera)
 
 	UpdateGuardBreakChance();//ブレイクのチャンス
 
+	//ボスのトドメのムービー//やられていたら入らない
+	if (!m_bossFinisherTarget.expired())
+	{
+		if (std::dynamic_pointer_cast<PlayerStateDie>(m_currentState))m_bossFinisherTarget.reset();
+		else ChangeState(std::make_shared<PlayerStateBossFinisher>(GetWeakPtr()));
+	}
+
 	if (m_currentState)
 	{
 		m_currentState->Update();//状態の更新
@@ -938,7 +945,7 @@ void Player::ApplyPos()
 	//}
 
 		//歩いて地面から離れたら落下ステートにする
-	if (IsLeftFloor())
+	if (IsLeftFloor() && !GetBossFinisherState())//トドメのムービーは動きが決まっているので落ちない
 	{
 		//歩いて地面から離れたときだけコヨーテタイムのジャンプを許可する
 		bool canCoyoteJump = std::dynamic_pointer_cast<PlayerStateMove>(m_currentState) != nullptr;

@@ -17,6 +17,7 @@
 #include "Character/Enemy/Kingmech/State/BossPartThrow.h"
 #include "Character/Enemy/Kingmech/State/KingmechMissileTurn.h"
 #include "Character/Enemy/Kingmech/State/KingmechGatlingSupply.h"
+#include "Character/Enemy/Kingmech/State/KingmechFinisher.h"
 
 
 
@@ -38,6 +39,12 @@ namespace
 	constexpr int kSweepAttackIndex = 2;//周囲薙ぎ払い
 	constexpr int kRushAttackIndex = 6;//とびかかり(突進)
 
+
+	constexpr int kSlashAttackIndex = 0;
+	constexpr int kLandAttackIndex = 3;
+	constexpr int kDashAttackIndex = 4;
+	constexpr int kFireAttackIndex = 6;
+
 	constexpr int kLargeAttackInterval = 10;//この回数攻撃したら全体攻撃
 	constexpr int kMissileTurnInterval = 6;//この回数攻撃したらミサイルのターン
 	constexpr int kGatlingSupplyInterval = 2;//ガトリングを失ってからこの回数攻撃したら補給
@@ -46,11 +53,12 @@ namespace
 	constexpr float kRushMaxDistance = 1500.0f;//突進を出す最大の距離
 
 	constexpr int kGatlingExplodeDamage = 300;//投げ返したガトリングの爆発のダメージ
+	constexpr float kFinisherRimWidth = 14.0f;//切り口の光の幅
 
 }
 
 
-BossEnemyKingmech::BossEnemyKingmech(std::weak_ptr<Player> player, Vector3 startPos):EnemyBase(player)
+BossEnemyKingmech::BossEnemyKingmech(std::weak_ptr<Player> player, Vector3 startPos) :EnemyBase(player)
 {
 
 	//ステータス
@@ -102,7 +110,7 @@ void BossEnemyKingmech::Init()
 		.pos = m_rb.m_pos,
 		.offset = Vector3(0, m_status.bodyColOffsetY, 0),
 		.shape = std::make_unique<CapsuleShape>(Vector3(0,m_status.bodyColHeight,0),m_status.bodyColRadius),
-		.tag = {Collider::Faction::Enemy, Collider::ColRole::None},
+		.tag = {Collider::Faction::Boss, Collider::ColRole::None},
 		.isActive = true
 		});
 
@@ -175,11 +183,19 @@ void BossEnemyKingmech::Update()
 		m_attackCoolTime -= System::GetInstance().GetTimeScale() * m_ownTimeScale;
 	}
 
-	//もし被弾中で攻撃のクールタイムが上がったら攻撃に移行
+	//もし被弾中で攻撃のクールタイムが上がったら攻撃に移行//腕がなかったら補充を先にする
 	if (std::dynamic_pointer_cast<EnemyHitGround>(m_currentState))
 	{
 		if (m_attackCoolTime <= 0.0f)
 		{
+			//補填
+			if (m_gatling->GetPhase() == KingmechGatling::Phase::Gone)
+			{
+				m_attackCountSinceCut = 0;
+				ChangeState(std::make_shared<KingmechGatlingSupply>(GetWeakPtr()));
+				return;
+			}
+
 			const int attackIndex = SelectAttackIndex();
 			//攻撃できて攻撃権が取れたら予備動作へ
 			auto tokenMgr = System::GetInstance().GetBattleMgr()->GetAttackTokenMgr().lock();
@@ -204,7 +220,7 @@ void BossEnemyKingmech::Update()
 		m_currentState->Update();//状態の更新
 	}
 	//アニメーションの更新//ここで1回だけ行う(各Stateでは更新しない)
-	m_anim.Update(m_ownTimeScale);
+	if (!IsFinisherAnimStopped())m_anim.Update(m_ownTimeScale);
 	//頭をプレイヤーの方に向ける//アニメーションの姿勢に回転を足すので、アニメーションの更新の後に呼ぶ
 	UpdateLookAtPlayer(m_status.headFrame);
 
@@ -214,8 +230,81 @@ void BossEnemyKingmech::Update()
 
 void BossEnemyKingmech::Draw()
 {
+	if (m_isFinisherHidden)return;
+	if (m_finisherCut.isActive)
+	{
+		DrawFinisherCut();
+		return;
+	}
 	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);//血殺中は黒く描く
 	m_gatling->Draw();
+}
+
+void BossEnemyKingmech::DrawFinisherCut()
+{
+	auto& shader = ModelShaderManager::GetInstance();
+	const FinisherCut& cut = m_finisherCut;
+	const MATRIX baseMat = MV1GetMatrix(m_modelHandle);
+
+	//下半身
+	const Vector3 lowerNormal = cut.normal * -1.0f;
+	shader.SetCutPlane(lowerNormal.ToDxLibVector(), lowerNormal.Dot(cut.hinge), kFinisherRimWidth);
+	shader.DrawModel(m_modelHandle);
+	m_gatling->Draw();
+
+	//上半身//面ごとずらす
+	const MATRIX rot = MGetRotAxis(cut.front.ToDxLibVector(), cut.tilt);
+	const Vector3 movedHinge = cut.hinge + cut.slideDir * cut.slide;
+	const MATRIX offset = MMult(MMult(MGetTranslate((cut.hinge * -1.0f).ToDxLibVector()), rot), MGetTranslate(movedHinge.ToDxLibVector()));
+	const Vector3 movedNormal(VTransformSR(cut.normal.ToDxLibVector(), rot));
+	shader.SetCutPlane(movedNormal.ToDxLibVector(), movedNormal.Dot(movedHinge), kFinisherRimWidth);
+	MV1SetMatrix(m_modelHandle, MMult(baseMat, offset));
+	shader.DrawModel(m_modelHandle);
+	m_gatling->Draw(offset);
+
+	MV1SetMatrix(m_modelHandle, baseMat);
+	shader.ClearCutPlane();
+}
+
+void BossEnemyKingmech::ApplyPos()
+{
+	//ムービー中は落下ステートに行かない
+	if (m_isFinisher)
+	{
+		CharacterBase::ApplyPos();
+		return;
+	}
+	EnemyBase::ApplyPos();
+}
+
+void BossEnemyKingmech::StartFinisher()
+{
+	if (m_isFinisher)return;
+	m_isFinisher = true;
+	m_hp = 0;
+	m_isExecuted = true;//被弾・処刑の対象から外す
+	if (m_hitCol)m_hitCol->SetIsActive(false);
+	SetIsGhost(true);
+	ChangeState(std::make_shared<KingmechFinisher>(GetWeakPtr()));
+	if (auto player = m_player.lock())player->RequestBossFinisher(GetSharedPtr());
+}
+
+void BossEnemyKingmech::StartFinisherCut(const Vector3& normal, const Vector3& hinge, const Vector3& front, const Vector3& slideDir)
+{
+	m_finisherCut = { true, normal, hinge, front, slideDir, 0.0f, 0.0f };
+}
+
+void BossEnemyKingmech::SetFinisherCutMove(float slide, float tilt)
+{
+	m_finisherCut.slide = slide;
+	m_finisherCut.tilt = tilt;
+}
+
+void BossEnemyKingmech::HideForFinisher()
+{
+	m_isFinisherHidden = true;
+	m_finisherCut.isActive = false;
+	m_gatling->Vanish();
 }
 
 void BossEnemyKingmech::ThrowPart()
@@ -246,6 +335,11 @@ void BossEnemyKingmech::DrawDebugWindowExtra()
 		m_attackCountSinceCut = 0;
 		ChangeState(std::make_shared<KingmechGatlingSupply>(GetWeakPtr()));
 	}
+	ImGui::SameLine();
+	if (ImGui::Button("Finisher"))
+	{
+		StartFinisher();
+	}
 	if (!canChange)ImGui::EndDisabled();
 	ImGui::Text("Missile %d / %d  Supply %d / %d", m_attackCountSinceMissile, kMissileTurnInterval, m_attackCountSinceCut, kGatlingSupplyInterval);
 }
@@ -265,11 +359,11 @@ void BossEnemyKingmech::CutGatling(Collider& other, AttackData& data)
 
 void BossEnemyKingmech::OnGatlingExploded()
 {
+	if (m_isFinisher)return;
 	m_hp -= kGatlingExplodeDamage;
 	if (m_hp <= 0)
 	{
-		m_hp = 0;
-		ChangeState(std::make_shared<EnemyDie>(GetWeakPtr()));
+		StartFinisher();
 		return;
 	}
 	if (auto state = std::dynamic_pointer_cast<BossPartThrow>(m_currentState))
@@ -295,35 +389,35 @@ int BossEnemyKingmech::SelectAttackIndex()
 
 	//上から順に条件を見て、当てはまったらその攻撃
 	//何回か攻撃したら全体攻撃//ガトリングが無い間は出さない
-	if (m_gatling->GetPhase() == KingmechGatling::Phase::Attached &&
-		m_attackCountSinceLarge >= kLargeAttackInterval &&
-		distance <= GetAttackNode(kLargeRangedAttackIndex).attackRange)
-	{
-		return kLargeRangedAttackIndex;
-	}
+	//if (m_gatling->GetPhase() == KingmechGatling::Phase::Attached &&
+	//	m_attackCountSinceLarge >= kLargeAttackInterval &&
+	//	distance <= GetAttackNode(kLargeRangedAttackIndex).attackRange)
+	//{
+	//	return kLargeRangedAttackIndex;
+	//}
 	//背後にいたら薙ぎ払い
-	Vector3 front = m_targetVec;
+	/*Vector3 front = m_targetVec;
 	front.y = 0.0f;
 	if (distance > 0.0f && front.Magnitude() > 0.0f &&
 		distance <= GetAttackNode(kSweepAttackIndex).attackRange &&
 		front.Normalize().Dot(toPlayer.Normalize()) < kBackDot)
 	{
 		return kSweepAttackIndex;
-	}
+	}*/
 	//遠かったら突進
-	if (distance >= kRushMinDistance && distance <= kRushMaxDistance)
-	{
-		return kRushAttackIndex;
-	}
+	//if (distance >= kRushMinDistance && distance <= kRushMaxDistance)
+	//{
+	//	return kRushAttackIndex;
+	//}
 
 	//どれにも当てはまらなければ、横斬りかコンボを半分ずつ(距離に入っているものだけ)
 	std::vector<int> candidates;
-	for (const int index : { kNormalAttackIndex, kComboAttackIndex })
+	for (const int index : { kSlashAttackIndex, kLandAttackIndex, kDashAttackIndex, kFireAttackIndex })
 	{
-		if (distance <= GetAttackNode(index).attackRange)
-		{
-			candidates.push_back(index);
-		}
+		//if (distance <= GetAttackNode(index).attackRange)
+		//{
+		candidates.push_back(index);
+		//}
 	}
 	if (candidates.empty())return -1;
 
@@ -467,11 +561,10 @@ void BossEnemyKingmech::OnDamage(Collider& other, AttackData& data)
 		m_isPlayerFound = true;
 		PlayBloodSplash(other);
 
-		//倒れたらその場で死ぬ
+		//トドメのムービーへ
 		if (m_hp <= 0)
 		{
-			m_hp = 0;
-			ChangeState(std::make_shared<EnemyDie>(GetWeakPtr()));
+			StartFinisher();
 		}
 		return;
 	}
@@ -555,34 +648,16 @@ void BossEnemyKingmech::OnDamage(Collider& other, AttackData& data)
 	//ヒット情報の作成
 	HitInfo hitinfo = {
 		.knockBackVel = Vector3(pushBackVec.x,data.knockBackPower.y,pushBackVec.z),//Y軸の上下降はここで加える
-		.knockBackPowerXZ = data.knockBackPower.x,
+		.knockBackPowerXZ = 0.0f,
 		.duration = data.knockBackFrame,
 		.isKirimomi = data.isKirimomi,
 	};
 
-	//体力が0になったときの処理
+	//体力が0になったらトドメのムービーへ
 	if (m_hp <= 0)
 	{
-		const bool isDropHit = data.knockBackPower.y < 0.0f || hitinfo.isKirimomi;
-		if (isDropHit)
-		{
-			//叩きつけ・キリモミ吹っ飛びは、吹き飛んでから着地したときに死ぬ(EnemyHitDropがEnemyDieに切り替える)
-			m_hp = 0;
-			m_isDieOut = true;
-			if (m_hitCol) m_hitCol->SetIsActive(false);
-		}
-		else if (isFloor && data.knockBackPower.y <= 0.0f)
-		{
-			//地上で普通の攻撃を受けたらその場で死ぬ
-			m_hp = 0;
-			ChangeState(std::make_shared<EnemyDie>(GetWeakPtr()));
-			return;
-		}
-		else
-		{
-			//空中・打ち上げ中は死なない(空中コンボを続けられるように、体力を1残す)
-			m_hp = 1;
-		}
+		StartFinisher();
+		return;
 	}
 
 	//ガードブレイク中ならヒットステートじゃなくてガードステートのまま

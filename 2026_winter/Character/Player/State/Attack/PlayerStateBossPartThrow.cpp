@@ -1,6 +1,8 @@
 ﻿#include "PlayerStateBossPartThrow.h"
 #include "Character/Player/Player.h"
 #include "Character/Enemy/EnemyBase.h"
+#include "Camera/CameraManager.h"
+#include "Camera/CameraState/CameraStateBase.h"
 
 namespace
 {
@@ -41,6 +43,11 @@ void PlayerStateBossPartThrow::Enter()
 	//	player->m_anim.GetAnimEndFrame() * kDefaultThrowRate : node.attackColStartFrames[0];
 	m_throwFrame = kThrowFrame;
 	m_isThrown = false;
+
+	if (auto cameraManager = player->m_cameraManager.lock())
+	{
+		cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::BossPartThrowCamera);
+	}
 }
 
 void PlayerStateBossPartThrow::Update()
@@ -79,6 +86,17 @@ void PlayerStateBossPartThrow::Exit()
 {
 	//途中で抜けても投げておく(ボスが待ち続けないように)
 	ThrowPart();
+
+	auto player = m_owner.lock();
+	if (!player) return;
+	auto cameraManager = player->m_cameraManager.lock();
+	if (!cameraManager) return;
+	//別の演出カメラに変わっていたら触らない
+	auto camera = cameraManager->GetActiveCamera();
+	if (camera && camera->GetCameraType() == CameraStateBase::Type::BossPartThrowCamera)
+	{
+		cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PlayerCaemra);
+	}
 }
 
 void PlayerStateBossPartThrow::DebugDraw()

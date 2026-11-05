@@ -8,7 +8,6 @@ namespace
 	constexpr int kShakeRandMax = 200;//カメラ揺れのランダム値の最大
 	constexpr float kShakeRandNormalize = 100.0f;//ランダム値を-1.0~1.0の範囲に正規化するための除数
 
-	constexpr float kChaseArriveDistance = 0.1f;//isChase時、目標とこれ以下の距離になったら追いついたとみなす
 	constexpr float kPivotEpsilon = 0.0001f;//pivotとの距離がこれ以下だと方向が求まらないので直線で追う
 }
 

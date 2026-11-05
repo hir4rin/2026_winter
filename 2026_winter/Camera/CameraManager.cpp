@@ -18,6 +18,8 @@
 #include "CameraState/PartBroken/PartBrokenBCamera.h"
 #include "CameraState/PartBroken/PartBrokenBCameraStart.h"
 #include "CameraState/BattleSmoothCamera.h"
+#include "CameraState/BossPartThrowCamera.h"
+#include "CameraState/BossFinisherCamera.h"
 #include "Collision/CollisionManager.h"
 #include "Stage/Stage.h"
 #include "Main/System.h"
@@ -46,6 +48,7 @@ namespace
 	constexpr float kFovOffsetWeightFrame = 10.0f;//演出カメラの出入りでオフセットを出し入れするフレーム数
 	constexpr float kFovMin = 10.0f * DX_PI_F / 180.0f;//視野角の下限
 	constexpr float kFovMax = 120.0f * DX_PI_F / 180.0f;//視野角の上限
+	constexpr float kRadToDeg = 180.0f / DX_PI_F;//デバッグ表示用
 
 	constexpr float kCollisionMargin = 20.0f;//当たった位置から注視点側に離す距離
 	constexpr float kCollisionMinDist = 30.0f;//注視点に近づける限界
@@ -166,7 +169,8 @@ bool CameraManager::IsFovOffsetCamera() const
 	auto type = m_currentState->GetCameraType();
 	return type == CameraStateBase::Type::PlayerCamera ||
 		type == CameraStateBase::Type::LockOnCamera ||
-		type == CameraStateBase::Type::BattleSmoothCamera;
+		type == CameraStateBase::Type::BattleSmoothCamera ||
+		type == CameraStateBase::Type::BossPartThrowCamera;
 }
 CameraManager::CheckSwitch& CameraManager::Switch()
 {
@@ -210,9 +214,14 @@ const char* CameraManager::GetCameraTypeName(int type)
 {
 	switch (static_cast<CameraStateBase::Type>(type))
 	{
+	case CameraStateBase::Type::None: return "None";
 	case CameraStateBase::Type::PlayerCamera: return "PlayerCamera";
+	case CameraStateBase::Type::Movie1Camera: return "Movie1Camera";
 	case CameraStateBase::Type::UltCamera: return "UltCamera";
 	case CameraStateBase::Type::LockOnCamera: return "LockOnCamera";
+	case CameraStateBase::Type::Stage1FazeCamera: return "Stage1FazeCamera";
+	case CameraStateBase::Type::BossAppearCamera: return "BossAppearCamera";
+	case CameraStateBase::Type::Stage2FazeCamera: return "Stage2FazeCamera";
 	case CameraStateBase::Type::FinishingSecondCamera: return "FinishingSecondCamera";
 	case CameraStateBase::Type::AssasinCamera: return "AssasinCamera";
 	case CameraStateBase::Type::AssasinCameraStart: return "AssasinCameraStart";
@@ -225,6 +234,8 @@ const char* CameraManager::GetCameraTypeName(int type)
 	case CameraStateBase::Type::AirAssasinCamera: return "AirAssasinCamera";
 	case CameraStateBase::Type::AirAssasinCameraStart: return "AirAssasinCameraStart";
 	case CameraStateBase::Type::BattleSmoothCamera: return "BattleSmoothCamera";
+	case CameraStateBase::Type::BossPartThrowCamera: return "BossPartThrowCamera";
+	case CameraStateBase::Type::BossFinisherCamera: return "BossFinisherCamera";
 	default: return "Other";
 	}
 }
@@ -236,10 +247,38 @@ void CameraManager::DrawDebugWindow()
 	ImGui::Checkbox("Stage Collision", &s.isStageCollision);
 	ImGui::Checkbox("Shake", &s.isShake);
 	ImGui::Checkbox("FOV Punch", &s.isFovPunch);
+	ImGui::Checkbox("FOV Offset", &s.isFovOffset);
 	ImGui::Checkbox("Log (Log/CameraEvents.txt)", &s.isLog);
 	ImGui::Text("Jump %d / Frame %d", m_jumpCount, FrameProfiler::GetInstance().GetFrameCount());
+
+	ImGui::Separator();
 	ImGui::Text("State %s", GetCameraTypeName(static_cast<int>(m_currentState->GetCameraType())));
-	ImGui::Text("Collision dist %.0f", m_collisionDist);
+	if (m_currentState->IsBlending())
+	{
+		ImGui::Text("Blend %.0f / %.0f", m_currentState->GetBlendElapsed(), m_currentState->GetBlendLength());
+	}
+	else
+	{
+		ImGui::TextUnformatted("Blend -");
+	}
+	ImGui::Text("Lock target %s / Attack target %s", GetLockTarget() ? "yes" : "no", GetAttackTarget() ? "yes" : "no");
+
+	ImGui::Separator();
+	const Vector3 statePos = m_currentState->GetPos();
+	const Vector3 target = m_currentState->GetTarget();
+	ImGui::Text("Pos    (%.0f, %.0f, %.0f)", statePos.x, statePos.y, statePos.z);
+	ImGui::Text("Render (%.0f, %.0f, %.0f)", m_renderPos.x, m_renderPos.y, m_renderPos.z);
+	ImGui::Text("Target (%.0f, %.0f, %.0f)", target.x, target.y, target.z);
+	ImGui::Text("Angle H %.1f / V %.1f", m_currentState->GetCameraAngleH() * kRadToDeg, m_currentState->GetCameraAngleV() * kRadToDeg);
+	ImGui::Text("Collision dist %.0f / raw %.0f", m_collisionDist, (statePos - target).Magnitude());
+
+	ImGui::Separator();
+	const float fovOffset = s.isFovOffset ? m_fovOffset * m_fovOffsetWeight : 0.0f;
+	ImGui::Text("FOV %.1f = state %.1f + offset %.1f + punch %.1f", m_renderFov * kRadToDeg,
+		m_currentState->GetFov() * kRadToDeg, fovOffset * kRadToDeg, m_fovPunchOffset * kRadToDeg);
+	ImGui::Text("Offset goal %.1f / weight %.2f", m_fovOffsetGoal * kRadToDeg, m_fovOffsetWeight);
+	ImGui::Text("Punch cool %.0f", m_fovPunchCoolTimer);
+	ImGui::Text("Shake %.1f / %.1f power %.1f", (std::max)(m_shakeTimer, 0.0f), m_shakeTimerMax, m_shakePower);
 	ImGui::End();
 }
 
@@ -256,7 +295,7 @@ void CameraManager::ApplyCameraSettings()
 		SetCameraPositionAndTarget_UpVecY(
 			imguiApp::GetInstance().GetAnimatorCameraPos().ToDxLibVector(),
 			imguiApp::GetInstance().GetAnimatorCameraTarget().ToDxLibVector());
-		SetupCamera_Perspective(CameraStateBase::kDefaultFov);
+		SetupCamera_Perspective(imguiApp::GetInstance().GetAnimatorCameraFov());
 		Effekseer_Sync3DSetting();
 		return;
 	}
@@ -349,8 +388,10 @@ void CameraManager::UpdatePhotoCamera()
 void CameraManager::SetPhotoCamera()
 {
 	//angleや座標を保存
-	m_photoCamPos = GetActiveCamera()->GetPos();
+	//画面に映っている位置・視野角から始める(ステージとの補正・FOVオフセット込み)
+	m_photoCamPos = m_renderPos;
 	m_photoCamTarget = GetActiveCamera()->GetTarget();
+	imguiApp::GetInstance().SetOverrideCameraFov(m_renderFov);
 
 	m_photoAngleH = GetActiveCamera()->GetCameraAngleH();
 	m_photoAngleV = GetActiveCamera()->GetCameraAngleV();
@@ -484,6 +525,7 @@ float CameraManager::FovOffsetUpdate()
 	}
 	m_fovOffsetWeight = std::clamp(m_fovOffsetWeight, 0.0f, 1.0f);
 
+	if (!Switch().isFovOffset)return 0.0f;
 	return m_fovOffset * m_fovOffsetWeight;
 }
 
@@ -619,6 +661,12 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::BattleSmoothCamera:
 		newState = std::make_shared<BattleSmoothCamera>(shared_from_this());
+		break;
+	case CameraStateName::BossPartThrowCamera:
+		newState = std::make_shared<BossPartThrowCamera>(shared_from_this());
+		break;
+	case CameraStateName::BossFinisherCamera:
+		newState = std::make_shared<BossFinisherCamera>(shared_from_this());
 		break;
 	default:
 		return;

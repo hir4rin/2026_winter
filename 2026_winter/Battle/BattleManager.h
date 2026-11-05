@@ -7,6 +7,14 @@ class AttackTokenManager;
 class BattleManager
 {
 public:
+	//トドメのムービーの画面効果
+	struct FinisherScreen
+	{
+		bool isPlaying = false;
+		float whiteRate = 0.0f;//白いフラッシュ
+		float slashRate = 0.0f;//斬撃の線
+		bool isHideKessatsu = false;//血殺の文字を消す
+	};
 
 	BattleManager();
 	virtual ~BattleManager();
@@ -39,6 +47,7 @@ public:
 	bool GetIsBattleEnd() { return m_isBattleEnd; }
 
 	std::weak_ptr<AttackTokenManager> GetAttackTokenMgr() { return m_attackTokenMgr; }
+	FinisherScreen& GetFinisherScreen() { return m_finisherScreen; }
 private:
 	std::shared_ptr<AttackTokenManager> m_attackTokenMgr;//敵の攻撃権
 
@@ -53,6 +62,7 @@ private:
 	bool m_isLastHitEventPlaying = false;//ラストヒットのイベント中かどうか
 
 	bool m_isBattleEnd = false;//バトルが終わったか
+	FinisherScreen m_finisherScreen;
 
 };
 

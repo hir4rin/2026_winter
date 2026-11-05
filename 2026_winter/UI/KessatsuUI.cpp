@@ -41,7 +41,7 @@ void KessatsuUI::Update(Input& input)
 {
 	//必殺技中だけ表示する
 	auto battleMgr = System::GetInstance().GetBattleMgr();
-	m_isVisible = battleMgr && battleMgr->GetIsUltimating();
+	m_isVisible = battleMgr && battleMgr->GetIsUltimating() && !battleMgr->GetFinisherScreen().isHideKessatsu;
 }
 
 void KessatsuUI::Draw()

@@ -126,6 +126,7 @@ public:
 	void Update();
 	//バトルマネージャー
 	void SetBattleMgr(std::weak_ptr<BattleManager> mgr) { m_battleMgr = mgr; }
+	bool HasBattleMgr()const { return !m_battleMgr.expired(); }
 	std::shared_ptr<BattleManager> GetBattleMgr();
 
 	//SoundManager& GetSoundManager() { return m_soundManager; }

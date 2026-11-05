@@ -14,7 +14,7 @@ namespace
 
 	constexpr float kJumpForWallStayFrame = 10.0f;//壁に沿って移動する状態に遷移するまでのフレーム数
 
-	constexpr float kJumpPowerRate = 1.0f;
+	constexpr float kJumpPowerRate = 2.0f;
 }
 
 

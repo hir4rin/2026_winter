@@ -163,6 +163,11 @@
     <ClCompile Include="Camera\CameraState\Stage2FazeCamera.cpp" />
     <ClCompile Include="Camera\CameraState\UltCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\BattleSmoothCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\BossPartThrowCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\BossFinisherCamera.cpp" />
+    <ClCompile Include="Character\Enemy\Kingmech\State\KingmechFinisher.cpp" />
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateBossFinisher.cpp" />
+    <ClCompile Include="UI\FinisherUI.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
@@ -324,6 +329,11 @@
     <ClInclude Include="Camera\CameraState\Stage2FazeCamera.h" />
     <ClInclude Include="Camera\CameraState\UltCameraState.h" />
     <ClInclude Include="Camera\CameraState\BattleSmoothCamera.h" />
+    <ClInclude Include="Camera\CameraState\BossPartThrowCamera.h" />
+    <ClInclude Include="Camera\CameraState\BossFinisherCamera.h" />
+    <ClInclude Include="Character\Enemy\Kingmech\State\KingmechFinisher.h" />
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateBossFinisher.h" />
+    <ClInclude Include="UI\FinisherUI.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />
@@ -478,6 +488,7 @@
     <None Include="Render\Shader\MV1VertexShader.hlsl" />
     <None Include="Render\Shader\EnemyBlackPS.hlsl" />
     <None Include="Render\Shader\LitModelPS.hlsl" />
+    <None Include="Render\Shader\EnemyCutPS.hlsl" />
     <None Include="Render\Shader\VertexShader.h" />
     <None Include="Render\Shader\DataType.h" />
     <None Include="Render\Shader\DxShader_Common_D3D11.h" />

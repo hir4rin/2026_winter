@@ -9,6 +9,7 @@ namespace
 	const std::wstring kModelVertexShaderPath = L"Render/Shader/MV1VertexShader.hlsl";
 	const std::wstring kBlackPixelShaderPath = L"Render/Shader/EnemyBlackPS.hlsl";
 	const std::wstring kLitPixelShaderPath = L"Render/Shader/LitModelPS.hlsl";
+	const std::wstring kCutPixelShaderPath = L"Render/Shader/EnemyCutPS.hlsl";
 	const std::wstring kLookPixelShaderPath = L"Render/Shader/CharacterLookPS.hlsl";
 	const char* const kShaderEntryPoint = "main";
 	const char* const kVertexShaderTarget = "vs_5_0";
@@ -46,6 +47,9 @@ void ModelShaderManager::Init()
 	m_litPixelShader = LoadShaderWithMacro(kLitPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
 	m_litBumpPixelShader = LoadShaderWithMacro(kLitPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 	m_lightConstantBuffer = CreateShaderConstantBuffer(sizeof(StageLightConstant));
+	m_cutPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
+	m_cutBumpPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
+	m_cutConstantBuffer = CreateShaderConstantBuffer(sizeof(CutConstant));
 	m_lookPixelShader = LoadShaderWithMacro(kLookPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
 	m_lookBumpPixelShader = LoadShaderWithMacro(kLookPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 
@@ -70,6 +74,12 @@ void ModelShaderManager::Terminate()
 	m_litBumpPixelShader = -1;
 	if (m_lightConstantBuffer != -1)DeleteShaderConstantBuffer(m_lightConstantBuffer);
 	m_lightConstantBuffer = -1;
+	if (m_cutPixelShader != -1)DeleteShader(m_cutPixelShader);
+	m_cutPixelShader = -1;
+	if (m_cutBumpPixelShader != -1)DeleteShader(m_cutBumpPixelShader);
+	m_cutBumpPixelShader = -1;
+	if (m_cutConstantBuffer != -1)DeleteShaderConstantBuffer(m_cutConstantBuffer);
+	m_cutConstantBuffer = -1;
 	if (m_lookPixelShader != -1)DeleteShader(m_lookPixelShader);
 	m_lookPixelShader = -1;
 	if (m_lookBumpPixelShader != -1)DeleteShader(m_lookBumpPixelShader);
@@ -83,7 +93,18 @@ void ModelShaderManager::Terminate()
 void ModelShaderManager::ResetSceneState()
 {
 	m_isBlackMode = false;
+	m_isCutPlane = false;
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);
+}
+
+void ModelShaderManager::SetCutPlane(const VECTOR& normal, float distance, float rimWidth)
+{
+	if (!m_isInit || m_cutConstantBuffer == -1)return;
+	auto* buffer = static_cast<CutConstant*>(GetBufferShaderConstantBuffer(m_cutConstantBuffer));
+	buffer->plane = { normal.x, normal.y, normal.z, distance };
+	buffer->param = { rimWidth, 0.0f, 0.0f, 0.0f };
+	UpdateShaderConstantBuffer(m_cutConstantBuffer);
+	m_isCutPlane = true;
 }
 
 void ModelShaderManager::DrawModel(int modelHandle)
@@ -95,6 +116,12 @@ void ModelShaderManager::DrawModel(int modelHandle)
 	}
 	if (m_isBlackMode)
 	{
+		if (m_isCutPlane)
+		{
+			SetShaderConstantBuffer(m_cutConstantBuffer, DX_SHADERTYPE_PIXEL, kCutSlot);
+			DrawModelWithShader(modelHandle, m_cutPixelShader, m_cutBumpPixelShader);
+			return;
+		}
 		DrawModelWithShader(modelHandle, m_blackPixelShader);
 		return;
 	}

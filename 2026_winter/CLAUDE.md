@@ -941,7 +941,11 @@
   `PlayerStateBossPartThrow` は無敵。途中で抜けても Exit で投げる。
 - `AsyncData::KingmechGatlingModel` を追加。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**
   (切れる位置・手に寄る速さ・回り方・投げのタイミング・爆発の位置。ボスのガード率が0なのでブレイクさせるにはステータスの guardRate を上げる)。
-- まだ: 専用カメラ。
+- (11/05)**投げのカメラ** `Camera/CameraState/BossPartThrowCamera.h/.cpp`(`CameraStateName` / `Type` 23、vcxproj/filters に登録)。`PlayerStateBossPartThrow` の Enter で切り替え、Exit で PlayerCamera に戻す(今のカメラがこれのときだけ)。ロックオン中は `SyncLockOnState` で LockOnCamera へ。
+  - 水平角度: Enter で1回だけ決める。`atan2(プレイヤー→敵)` ± 60度(今のカメラに近いほう。判定は `BattleSmoothCamera::DecideRotateSide` と同じものを `DecideAngleH` に持っている。`BattleSmoothCamera` の `kRotateAngle` を変えたらこちらの定数も変えること)。敵が取れなければ今の角度。
+  - 垂直角度: `kAngleV` = π/10 + 5度。位置は PlayerFollowCamera と同じ(`GetCameraFocusPos` + 高さ150、距離350)。スティック・引きずり・Lerp は無し。ブレンドはプレイヤー中心の Slerp 30F(EaseOut 2.0)。
+  - ボス戦の視野角 +20° が消えないように `IsFovOffsetCamera` の対象に入れた。
+  - 投げは約57F、ステート全体は約73Fで、爆発の前に戻り始めることがある。MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
 - (11/05)**ガトリングの補給**: 爆発で失ったあと、攻撃4回(`kGatlingSupplyInterval`)で `Kingmech/State/KingmechGatlingSupply`(vcxproj/filters に登録)へ。ミサイルのターンより優先。
   Phase = Call(Roar 30F)/ Drop / Recover(Idle 60F)。`IsAttackFlowState` に入れたので補給中は怯まない(ダメージは通る)。切り落としと同じくガトリングは `Attached` に戻るので、また切れる。
   - `KingmechGatling` に Phase `Supply`。腕に重なる行列に高さ(`kSupplyHeight` 1500)だけ足して上から落とす(`kSupplyFrame` 30F)。着いたらミサイルの爆発(`kSupplyEffectScale` 8)を出してボスのメッシュを表示。
@@ -1219,6 +1223,63 @@
   - 一時コードでカメラを4方向に回して、消す処理あり・なしの絵を4ステージで比べた: ステージ1・列車・デモは同じ(最大 1/255)。テストステージは消す処理なしでも毎回絵が変わる(動きが毎回同じにならない)ので比べられなかった。
   - GPU(ステージの描画): ステージ1 0.128 → 0.085ms、列車 0.091 → 0.077ms。CPU(Draw:Stage): ステージ1で Release +0.03ms / Debug +0.05ms(768メッシュを調べる分)。
 
+### 2026-11-05 プレイヤーの髪のポリゴンを減らした(`data/Player03.mv1` を入れ替えた)
+- 髪(`SK_CSF_F_HAIR_01`、4.1万三角形)は細長い板207枚。204枚は 横4 × 縦16〜28マスのきれいな格子(残り3枚は同じ板が2枚重なっているので格子にならず、そのまま残した)。
+- このPCに Blender は無く、手元の FBX(`2026_winter_Player_noY.fbx` / `AllAnimationPlayer.fbx`)にも今の髪は入っていないので、**mv1 だけから作り直した**:
+  1. `MV1SaveModelToXFile(h, "x", MV1_SAVETYPE_MESH)` で .x に書き出す(頂点・法線・UV・ウェイトが全部テキストで出る)
+  2. .x の髪の Mesh だけ書き換える: 板ごとに格子の座標を付けて、行・列を間引く(残した頂点は元の位置・法線・UV・ウェイトのまま)
+  3. **同じ名前の Material を1つにまとめる**(DxLib が書き出した .x はメッシュごとに同じ名前の Material があり、そのまま読むと「マテリアルの数が違う」でメモリが壊れて落ちる)
+  4. .x を読み、`MV1SaveModelToMV1File(new, "x", MV1_SAVETYPE_NORMAL, old, TRUE)` でアニメは元の mv1 から持ってきて保存する(マテリアルの色は元の値を名前で写す)
+- 結果(長さ1/2・幅1/2): 髪 41280 → 11328、プレイヤー全体 95049 → 65097 三角形、ファイル 6.5MB → 4.0MB。骨190・メッシュ23・アニメ95(名前と長さ)は同じ。マテリアルだけ 23 → 6(同じ名前がまとまる。`CharacterLook` は名前で見て、`Player.cpp` は全部に回すだけなので影響なし)。
+- GPU(プレイヤーの描画、ステージ1): 約0.094ms → 約0.06ms。ゲームの中で4方向(距離160)と通常のカメラの絵を比べて、見分けられなかった(`kCameraNear` が100なので、これより近くには映らない)。
+  ただし .x を通すと頂点の丸めで全身がごくわずかに変わる(髪を変えない場合で変わるピクセル約2%、ほとんどは 1〜2/255)。
+- 動いている髪: 全アニメ95本 × 4つの時間 × 3方向(1140枚)を元のモデルと比べた(`tools/HairLod/hairanim`)。頭の骨のズレは0。差が32/255を超えるピクセルは平均約600・最大1849(92万ピクセル中)。差の一番大きいポーズも見比べて、広がった髪の形は同じだった。DxLib の標準の描画での比較で、ゲームの CharacterLook では立っているポーズしか見ていない。
+- `data/Player03.mv1` を「長さ1/2・幅1/2」のものに入れ替えた。元のモデルは git の履歴にある。
+- 作り方は `tools/HairLod/README.md`(ツールは全部そこに移した)。
+
+### 2026-11-05 ボスとプレイヤーの押し戻し
+- `FixNextPosition::FixNextPosCC`: 片方が `Faction::Player`、もう片方が `Faction::Boss` なら、プレイヤーが重なりの全部(1.0)を退き、ボスは動かない。それ以外は今まで通り半分ずつ。
+- それまで `Faction::Boss` を使っている判定が1つも無く、ボスも全部 `Enemy` だったので、**ボスの体の判定(`ColRole::None`)だけ `Boss` にした**(`BossEnemyPirateR0` / `R1` / `BossEnemyKingmech`)。やられ判定(`Hit`)・部位・攻撃判定は `Enemy` のまま(攻撃の処理はそちらのタグを見ている)。デバッグ表示の色は敵と同じ灰色。
+- 一時コードでプレイヤーの横に Kingmech と PirateR1 を出して確かめた(どちらも プレイヤー1.0 / ボス0.0)。R0 は同じ変更だが動かしていない。壁とボスに挟まれたときはまだ見ていない。
+
+### 2026-11-05 Kingmech のトドメのムービー(全部自動、約8秒)
+- HPが0になる全部の経路(`OnDamage`・`OnGatlingExploded`)で `BossEnemyKingmech::StartFinisher` へ。`EnemyDie` には普通は行かない(プレイヤーが同時にやられたときだけ)。Kingmech は HP0 の「空中で1残す」「叩きつけ」の分岐も無くした。
+- `Kingmech/State/KingmechFinisher.h/.cpp`: ボスのステートが監督。全部ここの Phase で進める(時間は実フレーム、定数は .cpp 先頭)。
+  Stagger(膝をつく・白く飛ばす) → Supply(ガトリングが落ちてくる) → Cut(飛び上がって切り落とす) → Throw(投げる) → Silence(胸に刺さって止まる) → Slash(血殺の一閃) → Sheath(背を向けて納刀) → Split(上半身がずれる) → Explode(誘爆) → Done。
+  白の間にボスを闘技場の中央(`m_arenaCenter`)、プレイヤーをその前へ移し、残りのミサイルを消してガトリングをリセットする。ボス→プレイヤーの向きを `m_front` にして、カメラの位置はみんなこれからの相対(`Point(front, side, height)`)。
+- `Player/State/Attack/PlayerStateBossFinisher`: 無敵。KingmechFinisher の指示(`Warp` / `MoveTo` / `PlayAnim` / `Finish`)どおりに動く。ボスが消えたら Idle へ。空中でも `Player::ApplyPos` の落下ステートへ行かないようにした。
+- `Camera/CameraState/BossFinisherCamera`: `SetShot`(始まりと終わりの位置・注視点・視野角・長さ)で、実フレームで直線に動かす。
+- 真っ二つ: `Render/Shader/EnemyCutPS.hlsl`(黒いシルエットで面の裏を捨て、切り口のそばを白くする。**hlsl は BOM なしで保存すること**。BOM があるとコンパイルに失敗して起動時に assert)。`ModelShaderManager::SetCutPlane / ClearCutPlane`、定数バッファ b6。`BossEnemyKingmech::DrawFinisherCut` で下半身と上半身の2回描く(黒モードのときだけ効く)。
+- ガトリング: `ThrowAndStick` で爆発せず刺さる。`Phase::Stuck`(モデルの-Xが銃口)。
+- `FinisherUI`(黒帯・白いフラッシュ・斬撃の線)、`BattleManager::GetFinisherScreen()`。ムービー中は HUD を消し、Sheath から血殺の文字も消す(シルエットが隠れるため)。
+- 終わり: `m_isLifeZero` が立って全滅扱い → 遷移表どおりリザルト。リザルトへ行くならカメラ・黒帯はそのまま暗転、先のフェーズがあれば次のフレームで元に戻す。ムービー中は `SetIsEventPlaying(true)` で入力とポーズを止める。
+- 確認: F2 の Enemy Debug の「Finisher」ボタンですぐ流せる。
+- 一時コードでボスを自動で出して15Fごとに撮影し、デモ・ステージ1で最後まで流れること、デモで遷移表の流れから暗転まで進むことを確認した。Debug・Release のビルドは通った。**ゲームで実際に倒して見る確認はまだ**(特に血殺の一撃でHP0にしたとき・ガトリングが無いとき)。
+- **ステージ1では血殺の赤いフォグが建物にかからない**(前からの `LitModelPS` のフォグの問題。空だけ赤い)。
+- 仮のもの: 音なし、納刀は専用モーションが無いので `AttackPose` → `Idle`、爆発は既存のエフェクトの組み合わせ。ミサイル渡りは入れていない。
+
+### 2026-11-05 Update が 1.0 → 2.0 になる瞬間のラグの原因
+- ユーザーのプレイのログ(VS から Debug、約230秒)を見た。1フレームが2回分(25ms以上)になったのは9フレームだけ。原因は次の2つで、**mv1 の数ではない**(Draw:Stage/Enemy/Player は平均 0.15/0.09/0.05ms)。
+- **原因1: Debug のエフェクト**。`Draw:Effect` が10〜12.7msのフレームで33msになっていた(frame 6514, 6871, 6876, 6877)。`UpdateEffekseer3D` は `Update` の区切りに入っている(`EffectManager::Update`)ので、エフェクトが多いと `Update` も一緒に増える。
+  - 一時コードで血しぶきを繰り返し再生して測った(ステージ1)。Draw:Effect の平均/最大(ms)は 8フレームごとの SplashA: Debug 5.1/8.6・Release 0.31/1.1、SplashC: 11.5/17.4・0.66/1.1、SplashWhite: 15.3/22.1・0.85/1.6。BloodWing 1つ: 0.82/1.5・0.09/0.4。
+  - **Debug は Release の約10倍遅い**(Effekseer の `_d` のライブラリのため)。Update も Debug は平均1.4〜3.9ms、Release は0.15〜0.42ms。ラグの確認は Release で行う。
+  - 1回の粒の数: SplashA/B 251、SplashC 414、SplashWhite 561。8フレームごとに重ねると 855〜2427。
+- **原因2(たぶん): ログの書き込み**。frame 1679, 1739, 1799 で、1フレームの処理は普通なのに間隔だけ 37〜159ms になった。全部 `WriteStats`(60フレームごとに FrameStats.txt を開いて閉じる)の直後。frame 1741 の88msも、記録にない74msが `SetRefreshIndex` の書き込みの所。`FrameProfiler` は書くたびに fopen/fclose していた。
+  - **直した**: ログはメモリ(`m_logBuffers`)にためて、別のスレッド(`FrameProfiler::LogThread`)が1秒に1回ファイルへ書く。優先度は低め。終了時に `FrameProfiler::Terminate` が残りを書く(`Application::Terminate` の最初)。ログの形は前と同じ。
+  - ファイルの書き込みに毎回0.4秒かかるようにしても(一時コード)、Debug のフレームの間隔は最大21.5msで止まらなかった。
+  - VS の「デバッグの停止」で強制終了すると、最後の1秒ほどのログは残らない。
+  - 直した後の確認の1回目(ビルドの直後)に 557ms の止まりが1回出たが、続けて4回動かしても出なかった(最大33ms)。原因は分かっていない。
+- ステージとの当たり判定(`MV1CollCheck_Capsule` の第2引数 -1)は問題ではない。-1 は全フレームの意味で、`MV1SetupCollInfo` の格子(32×8×32)で近くのポリゴンだけ調べる。当たり判定のモデルは ステージ1 3204三角形・列車 756三角形。カプセル1回 約1.3µs。
+  - 一時コードで測った(ステージ1、敵が動いていない状態): 42回/フレームで約0.1ms。`Upd:Collision` の Debug 0.59ms のうち2割弱で、残りは全組み合わせの判定(コライダー44個 → 946組 × 3回のループ)。プレイ中の Upd:Collision は平均0.75ms、最大2.8ms(Debug)。
+
+### 2026-11-05 カメラのデバッグ機能を今のコードに合わせた
+- **Camera Check**(`CameraManager::DrawDebugWindow`): FOV Offset のスイッチ、ブレンドの進み(`CameraStateBase::IsBlending` を public にし、`GetBlendElapsed / GetBlendLength` を追加)、ロック・攻撃の対象の有無、State の位置と描画の位置(`m_renderPos`)、注視点、角度、補正前後の距離、FOV の内訳(state + offset + punch)、シェイクの残りを出す。`GetCameraTypeName` に抜けていた Type を足した。
+- **フォトモード**: 開始位置を `GetPos()` から `m_renderPos`(ステージとの補正込み)にし、開始時の視野角を `m_renderFov` にした(`imguiApp::SetOverrideCameraFov`)。前はボス戦の +20° などが消えて `m_camFovDeg` に飛んでいた。ステージ編集も同じ。
+- **Camera Debug**: Angle H の向きをゲームの `m_angleH`(カメラ→注視点)に合わせた(左右が逆だった)。**前の値とは符号が逆になる**。Sync From Current で視野角も写す。
+- **Camera Animator**: `CameraKeyframe::fov`(ラジアン)を追加。Save Camera で今の視野角を保存し、Keyframe Editor で編集できる。再生は `UpdateBlend` と同じ計算(`fovEasingMode / fovEasingPower / fovDuration` も編集できる)で、区間の長さは位置と視野角の長いほう。前は再生中ずっと60°だった。
+- **Camera Keyframe Editor**: isChase の区間は追いつくまで次へ進まない(`UpdateBlend` / `IsBlending` と同じ。`kChaseArriveDistance` を CameraStateBase.h へ移した)。EaseOutBack / EaseOutExpo のときは Power を編集できない。Slerp に「Pivot = Player」ボタン(ゲームのカメラの Slerp はプレイヤー中心)。最後のキーフレームのブレンド設定は未使用と表示する。
+- MSBuild(Debug x64)はゲーム起動中だったので、出力先を scratchpad にしてビルド・リンクまで確認した。**プロジェクトの exe はまだ前のまま・ゲームでの確認もまだ**。
+
 ### 2026-11-04 プレイヤーのHUD(HP・スキル・必殺技ゲージ)
 - **詳しくは `../進捗/note_プレイヤーのHUD.md`**(図あり)。
 - `data/UI/` をフォルダ分けしたので、KessatsuUI の画像を `data/UI/bloodUI/〜` に変えた。
@@ -1271,6 +1332,7 @@
 - [ ] ボスの連続攻撃: コードはできた。BossEnemyPirateAttack.csv に1撃目・2撃目の行を書いてゲームで確認(向き・間の長さ・連撃中の被弾で止まってよいか)
 - [ ] 追加したボスのアニメ(回避・コンボ)を攻撃CSV・ステートで使う
 - [ ] ボスの剣をゲームで確認(握り・向き)。腰の剣(Pirate_Sword_In_Belt)を消すか決める
+- [ ] Kingmech のトドメのムービーをゲームで確認(尺・カメラ・納刀のモーション・音)。よければミサイル渡りを足す
 - [ ] ボスのラウンド切り替えの演出(7→8 のイベント。R0 の死体を消す・変身エフェクト・カメラ)
 - [ ] 一時ライト(TempTopLight)を本番のライト調整ができたら消す
 - [ ] BossArm: ゲームで付け根のずらしを ImGui で決めて定数に書き写す(今は0＝ボスの腕に重なる)。Anim の Play で腕だけ違うアニメが流れるか確認

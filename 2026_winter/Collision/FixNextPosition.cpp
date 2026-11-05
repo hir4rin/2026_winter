@@ -14,6 +14,7 @@ namespace
 	constexpr float kCheckTop = 800.0f;
 	constexpr float kWallThreshold = 0.5f;//境界線
 	constexpr float kPushBackSplitRatio = 0.5f;//押し戻しを両者で分け合う割合(0.5倍にして両方が半分ずつ退く)
+	constexpr float kPushBackFullRatio = 1.0f;//片方だけが全部退くときの割合
 	constexpr float kStepClearanceHeight = 1.0f;//段差で突っかかるのを防ぐための壁ポリゴン判定の高さ余裕
 }
 
@@ -257,8 +258,24 @@ void FixNextPosition::FixNextPosCC(Collider& colA, Collider& colB)
 	//横方向にだけ動かしたいので
 	AToB.y = 0.0f;
 
-	colA.m_rb.m_vel += AToB.Normalize() * -overlap * 0.5f;
-	colB.m_rb.m_vel += AToB.Normalize() * overlap * 0.5f;
+	float rateA = kPushBackSplitRatio;
+	float rateB = kPushBackSplitRatio;
+	//ボスは動かさず、プレイヤーだけを押し戻す
+	const Collider::Faction factionA = colA.GetFaction();
+	const Collider::Faction factionB = colB.GetFaction();
+	if (factionA == Collider::Faction::Player && factionB == Collider::Faction::Boss)
+	{
+		rateA = kPushBackFullRatio;
+		rateB = 0.0f;
+	}
+	else if (factionA == Collider::Faction::Boss && factionB == Collider::Faction::Player)
+	{
+		rateA = 0.0f;
+		rateB = kPushBackFullRatio;
+	}
+
+	colA.m_rb.m_vel += AToB.Normalize() * -overlap * rateA;
+	colB.m_rb.m_vel += AToB.Normalize() * overlap * rateB;
 
 }
 

@@ -1,17 +1,23 @@
 ﻿#pragma once
 #include "DxLib.h"
 #include <array>
+#include <condition_variable>
+#include <cstdarg>
+#include <mutex>
+#include <string>
+#include <thread>
 #include <vector>
 
 /// <summary>
 /// 1フレームの中の区切りごとの時間を測る(カクつきの原因を探す用)
 /// kSpikeMs を超えたフレームは、内訳を Log/FrameSpikes.txt に書く。F2 の「Frame Time」ウィンドウでも見られる
+/// ログはメモリにためて、別のスレッドが kLogIntervalMs ごとにファイルへ書く(書き込みでゲームが止まらないように)
 /// </summary>
 class FrameProfiler
 {
 private:
 	FrameProfiler() = default;
-	~FrameProfiler() = default;
+	~FrameProfiler();
 	FrameProfiler(const FrameProfiler&) = delete;
 	FrameProfiler& operator=(const FrameProfiler&) = delete;
 public:
@@ -41,8 +47,11 @@ public:
 	void SetExpectedPeriod(float ms) { m_expectedPeriodMs = ms; }
 	/// <summary>ゲームのスレッドの優先度を上げる(待ちから戻るのが遅れるのを防げるか試す用。F2 の「Frame Time」か起動の引数 -prio=high)</summary>
 	void SetHighPriority(bool isHigh);
+	/// <summary>残りのログをファイルに書いて、書き込みのスレッドを止める(終了時に呼ぶ)</summary>
+	void Terminate();
 
 private:
+	enum class LogFile { Spike, Stat, Event, Num };
 	struct Section
 	{
 		const char* name;
@@ -61,6 +70,9 @@ private:
 	static constexpr int kStatFrame = 60;
 	static constexpr float kPeriodJitterMs = 3.0f;//フレームの間隔がこれ以上ずれたら記録する
 	static constexpr float kMemoryBarMaxGB = 4.0f;//メモリのバーがいっぱいになる量
+	static constexpr int kLogIntervalMs = 1000;//ログをファイルに書く間隔
+	static constexpr int kLogTextMax = 512;//1回に足せるログの長さ
+	static constexpr int kLogFileNum = static_cast<int>(LogFile::Num);
 
 	//処理の重さ(1フレーム分に対して)とメモリのバー
 	void DrawLoadBar();
@@ -69,10 +81,24 @@ private:
 	void WritePeriodJitter(float periodMs);
 	void AddStat(const char* name, float ms);
 	void WriteStats();
+	//ログをメモリに足す(printf と同じ書き方)
+	void AddLog(LogFile file, const char* format, ...);
+	void AddLogV(LogFile file, const char* format, va_list args);
+	void AddSectionLog();
+	//書き込みのスレッド
+	void LogThread();
+	void WriteLogFiles();
 
 	std::vector<Stat> m_stats;
 	int m_statCount = 0;
-	bool m_isStatFileStarted = false;
+
+	std::thread m_logThread;
+	std::mutex m_logMutex;
+	std::condition_variable m_logWake;
+	std::array<std::string, kLogFileNum> m_logBuffers;//ゲームのスレッドがためる
+	std::array<std::string, kLogFileNum> m_logWriting;//書き込みのスレッドだけが使う
+	std::array<bool, kLogFileNum> m_isLogFileStarted = {};//書き込みのスレッドだけが使う
+	bool m_isLogStop = false;
 
 	LONGLONG m_frameStart = 0;
 	LONGLONG m_lastMark = 0;
@@ -83,10 +109,8 @@ private:
 	int m_historyIndex = 0;
 	int m_frameCount = 0;
 	int m_spikeCount = 0;
-	bool m_isFileStarted = false;
 	LONGLONG m_lastRefreshIndex = -1;
 	int m_refreshMissCount = 0;//モニターの更新と1対1にならなかった回数
-	bool m_isEventFileStarted = false;
 	float m_expectedPeriodMs = 1000.0f / 60.0f;
 	int m_jitterCount = 0;//間隔がずれた回数
 	float m_lastPeriodMs = 0.0f;

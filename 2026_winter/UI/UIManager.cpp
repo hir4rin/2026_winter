@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "KessatsuUI.h"
 #include "PlayerHUD.h"
+#include "FinisherUI.h"
 
 void UIManager::TitleInit()
 {
@@ -25,6 +26,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	Add(std::make_shared<KessatsuUI>());
 	//HP・スキル・必殺技ゲージ
 	Add(std::make_shared<PlayerHUD>(player));
+	//トドメのムービーの黒帯・フラッシュ
+	Add(std::make_shared<FinisherUI>());
 
 	//登録したUIのハンドルを生成する
 	InitAll();

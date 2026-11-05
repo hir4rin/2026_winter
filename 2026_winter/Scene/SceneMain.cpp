@@ -286,7 +286,7 @@ void SceneMain::NormalUpdate()
 	//[BloodKillFog]必殺技中かどうかで赤いフォグのかかり具合を進める
 	m_bloodKillFog.Update(battleMgr->GetIsUltimating());
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	//F4キーでボスの一つ手前のフェーズへ飛ぶ
 	const bool isF4Pressed = CheckHitKey(KEY_INPUT_F4) != 0;
 	if (isF4Pressed && !m_wasF4Pressed)
@@ -294,7 +294,7 @@ void SceneMain::NormalUpdate()
 		m_phaseManager->DebugSkipToBossPrevPhase();
 	}
 	m_wasF4Pressed = isF4Pressed;
-#endif
+//#endif
 
 	//F5/F6キーでスキルエフェクトを再生する(エフェクト確認用)
 	const bool isF5Pressed = CheckHitKey(KEY_INPUT_F5) != 0;
@@ -412,7 +412,7 @@ void SceneMain::NormalDraw()
 		imguiApp::GetInstance().DrawCameraAnimatorWindow(
 			m_cameraManager->GetPhotoCameraPos(),
 			m_cameraManager->GetPhotoCameraTarget());
-		imguiApp::GetInstance().DrawCameraKeyframeEditorWindow();
+		imguiApp::GetInstance().DrawCameraKeyframeEditorWindow(m_player->GetRigidBody().GetPos());
 	}
 
 	//ステージ編集中は壁ゾーンの線枠と編集用のImGuiウィンドウを出す

@@ -110,7 +110,7 @@ void BossEnemyPirateR0::Init()
 		.pos = m_rb.m_pos,
 		.offset = Vector3(0, m_status.bodyColOffsetY, 0),
 		.shape = std::make_unique<CapsuleShape>(Vector3(0,m_status.bodyColHeight,0),m_status.bodyColRadius),
-		.tag = {Collider::Faction::Enemy, Collider::ColRole::None},
+		.tag = {Collider::Faction::Boss, Collider::ColRole::None},
 		.isActive = true
 		});
 

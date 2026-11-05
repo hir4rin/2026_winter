@@ -213,6 +213,7 @@ void Application::Run()
 
 void Application::Terminate()
 {
+	FrameProfiler::GetInstance().Terminate();
 	ReleaseVBlankOutput();
 	//ImGuiのリソースを解放する(DxLib_Endより前)
 	imguiApp::GetInstance().Uninit();

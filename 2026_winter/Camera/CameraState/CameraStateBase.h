@@ -38,6 +38,7 @@ public:
 	};
 
 	static constexpr float kDefaultFov = DX_PI_F / 3.0f;//標準の視野角(60度)
+	static constexpr float kChaseArriveDistance = 0.1f;//isChase時、目標とこれ以下の距離になったら追いついたとみなす
 
 	//isChase用:pos/targetを、goalPos/goalTargetに向けてchaseRate分だけ近づける(Slerpならpivot中心に回り込みながら)
 	//imguiAppのカメラアニメーターからも使うためstatic
@@ -78,6 +79,8 @@ public:
 		AirAssasinCamera = 20,
 		AirAssasinCameraStart = 21,
 		BattleSmoothCamera = 22,
+		BossPartThrowCamera = 23,
+		BossFinisherCamera = 24,
 
 		
 
@@ -99,6 +102,13 @@ public:
 	Vector3 GetTarget()const { return m_target; }
 	float GetFov()const { return IsBlending() ? m_fov : m_goalFov; }//ブレンドが終わっていたら目標の視野角
 	void SetStartFov(float fov) { m_startFov = fov; m_fov = fov; }//Enterの前に呼ぶ
+
+	// 現在blend中かどうか
+	//isChase時はduration経過後も、追いつく(ほぼ重なる)まではblend中扱い
+	//視野角のほうが長いときは、視野角が目標に着くまでblend中扱い
+	bool IsBlending()const { return m_blendElapsed < (std::max)(m_activeBlend.duration, m_activeBlend.GetFovDuration()) || (m_activeBlend.isChase && !m_isChaseArrived); }
+	float GetBlendElapsed()const { return m_blendElapsed; }//デバッグ表示用
+	float GetBlendLength()const { return (std::max)(m_activeBlend.duration, m_activeBlend.GetFovDuration()); }//デバッグ表示用
 
 	virtual Type GetCameraType()const = 0;//各Stateが自分の種類を返す(実装を強制する)
 
@@ -134,10 +144,6 @@ public:
 protected:
 	void UpdateBlend(const Vector3& rawPos, const Vector3& rawTarget);//毎フレーム呼ぶ
 	void ResetBlend(const Vector3& startPos, const Vector3& startTarget);//Enterの最初に呼ぶ
-	// 現在blend中かどうか
-	//isChase時はduration経過後も、追いつく(ほぼ重なる)まではblend中扱い
-	//視野角のほうが長いときは、視野角が目標に着くまでblend中扱い
-	bool IsBlending()const { return m_blendElapsed < (std::max)(m_activeBlend.duration, m_activeBlend.GetFovDuration()) || (m_activeBlend.isChase && !m_isChaseArrived); }
 protected:
 	//ステートの親
 	std::weak_ptr<CameraManager> m_owner;

@@ -27,6 +27,7 @@
 #include "Character/Player/State/Attack/PlayerStateGuardBreakChance.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakAttack.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateBossPartThrow.h"//以下同文
+#include "Character/Player/State/Attack/PlayerStateBossFinisher.h"//以下同文
 #include "DataLoader/AnimData.h"
 #include "Render/CharacterLook.h"
 #include <memory>
@@ -262,6 +263,9 @@ public:
 	void RequestGuardBreakChance(std::shared_ptr<EnemyBase> target) { m_guardBreakChanceTarget = target; }
 	//ボスのパーツを切り落とした通知//切り上げの後にPlayerStateBossPartThrowへ
 	void RequestBossPartThrow(std::shared_ptr<EnemyBase> target) { m_bossPartThrowTarget = target; }
+	//ボスのトドメのムービーの通知//次のUpdateでPlayerStateBossFinisherへ
+	void RequestBossFinisher(std::shared_ptr<EnemyBase> target) { m_bossFinisherTarget = target; }
+	std::shared_ptr<PlayerStateBossFinisher> GetBossFinisherState()const { return std::dynamic_pointer_cast<PlayerStateBossFinisher>(m_currentState); }
 	//必殺技状態中かどうか
 	bool GetIsUltimating() { return m_isUltimating; }
 
@@ -380,6 +384,7 @@ private:
 	float m_attackRiseScale = 1.0f;//攻撃の上昇の倍率
 	std::weak_ptr<EnemyBase> m_guardBreakChanceTarget;//ブレイクした敵
 	std::weak_ptr<EnemyBase> m_bossPartThrowTarget;//パーツを切り落としたボス
+	std::weak_ptr<EnemyBase> m_bossFinisherTarget;//トドメのムービーのボス
 
 	//壁走り、壁キック用
 	//当たった壁との情報//壁走りの開始位置の判定に使う
@@ -416,6 +421,7 @@ private:
 	friend class PlayerStateGuardBreakChance;
 	friend class PlayerStateGuardBreakAttack;
 	friend class PlayerStateBossPartThrow;
+	friend class PlayerStateBossFinisher;
 	//武器
 	friend class PlayerWeapon;
 

@@ -1,8 +1,8 @@
 ﻿#include "FrameProfiler.h"
 #include "imgui.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
-#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -16,20 +16,93 @@ namespace
 	constexpr float kBytesPerGB = 1024.0f * 1024.0f * 1024.0f;
 }
 
+FrameProfiler::~FrameProfiler()
+{
+	Terminate();
+}
+
+void FrameProfiler::Terminate()
+{
+	{
+		std::lock_guard<std::mutex> lock(m_logMutex);
+		m_isLogStop = true;
+	}
+	m_logWake.notify_one();
+	if (m_logThread.joinable()) m_logThread.join();
+}
+
 void FrameProfiler::LogEvent(const char* format, ...)
 {
-	//起動して最初の記録のときにファイルを作り直す
-	if (!m_isEventFileStarted) std::filesystem::create_directories("Log");
-	FILE* file = nullptr;
-	if (fopen_s(&file, kEventLogPath, m_isEventFileStarted ? "a" : "w") != 0 || file == nullptr) return;
-	m_isEventFileStarted = true;
-	fprintf(file, "frame %d ", m_frameCount);
+	AddLog(LogFile::Event, "frame %d ", m_frameCount);
 	va_list args;
 	va_start(args, format);
-	vfprintf(file, format, args);
+	AddLogV(LogFile::Event, format, args);
 	va_end(args);
-	fprintf(file, "\n");
-	fclose(file);
+	AddLog(LogFile::Event, "\n");
+}
+
+void FrameProfiler::AddLog(LogFile file, const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	AddLogV(file, format, args);
+	va_end(args);
+}
+
+void FrameProfiler::AddLogV(LogFile file, const char* format, va_list args)
+{
+	char text[kLogTextMax];
+	const int length = vsnprintf(text, sizeof(text), format, args);
+	if (length <= 0) return;
+	std::lock_guard<std::mutex> lock(m_logMutex);
+	if (m_isLogStop) return;
+	m_logBuffers[static_cast<int>(file)].append(text, (std::min)(length, kLogTextMax - 1));
+	if (!m_logThread.joinable())
+	{
+		m_logThread = std::thread(&FrameProfiler::LogThread, this);
+		SetThreadPriority(m_logThread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+	}
+}
+
+void FrameProfiler::AddSectionLog()
+{
+	for (const auto& section : m_lastSections) AddLog(LogFile::Spike, " %s=%.1f", section.name, section.ms);
+	AddLog(LogFile::Spike, "\n");
+}
+
+void FrameProfiler::LogThread()
+{
+	bool isStop = false;
+	while (!isStop)
+	{
+		{
+			std::unique_lock<std::mutex> lock(m_logMutex);
+			m_logWake.wait_for(lock, std::chrono::milliseconds(kLogIntervalMs), [this] { return m_isLogStop; });
+			m_logBuffers.swap(m_logWriting);
+			isStop = m_isLogStop;
+		}
+		WriteLogFiles();
+	}
+}
+
+void FrameProfiler::WriteLogFiles()
+{
+	const char* const paths[kLogFileNum] = { kSpikeLogPath, kStatLogPath, kEventLogPath };
+	for (int i = 0; i < kLogFileNum; ++i)
+	{
+		std::string& text = m_logWriting[i];
+		if (text.empty()) continue;
+		//起動して最初の記録のときにファイルを作り直す
+		if (!m_isLogFileStarted[i]) std::filesystem::create_directories("Log");
+		FILE* file = nullptr;
+		if (fopen_s(&file, paths[i], m_isLogFileStarted[i] ? "a" : "w") == 0 && file != nullptr)
+		{
+			m_isLogFileStarted[i] = true;
+			fwrite(text.data(), 1, text.size(), file);
+			fclose(file);
+		}
+		text.clear();
+	}
 }
 
 void FrameProfiler::BeginFrame()
@@ -97,16 +170,9 @@ void FrameProfiler::AddStat(const char* name, float ms)
 
 void FrameProfiler::WriteStats()
 {
-	if (!m_isStatFileStarted) std::filesystem::create_directories("Log");
-	FILE* file = nullptr;
-	if (fopen_s(&file, kStatLogPath, m_isStatFileStarted ? "a" : "w") == 0 && file != nullptr)
-	{
-		m_isStatFileStarted = true;
-		fprintf(file, "frame %d (avg/min/max ms):", m_frameCount);
-		for (const auto& stat : m_stats) fprintf(file, " %s=%.2f/%.1f/%.1f", stat.name, stat.sum / m_statCount, stat.min, stat.max);
-		fprintf(file, "\n");
-		fclose(file);
-	}
+	AddLog(LogFile::Stat, "frame %d (avg/min/max ms):", m_frameCount);
+	for (const auto& stat : m_stats) AddLog(LogFile::Stat, " %s=%.2f/%.1f/%.1f", stat.name, stat.sum / m_statCount, stat.min, stat.max);
+	AddLog(LogFile::Stat, "\n");
 	m_stats.clear();
 	m_statCount = 0;
 }
@@ -114,29 +180,16 @@ void FrameProfiler::WriteStats()
 void FrameProfiler::WriteSpike(float totalMs)
 {
 	++m_spikeCount;
-	//起動して最初の記録のときにファイルを作り直す
-	if (!m_isFileStarted) std::filesystem::create_directories("Log");
-	FILE* file = nullptr;
-	if (fopen_s(&file, kSpikeLogPath, m_isFileStarted ? "a" : "w") != 0 || file == nullptr) return;
-	m_isFileStarted = true;
-	fprintf(file, "frame %d total %.1fms:", m_frameCount, totalMs);
-	for (const auto& section : m_lastSections) fprintf(file, " %s=%.1f", section.name, section.ms);
-	fprintf(file, "\n");
-	fclose(file);
+	AddLog(LogFile::Spike, "frame %d total %.1fms:", m_frameCount, totalMs);
+	AddSectionLog();
 }
 
 void FrameProfiler::WritePeriodJitter(float periodMs)
 {
 	++m_jitterCount;
 	//m_lastSections はまだ前のフレームの内訳
-	if (!m_isFileStarted) std::filesystem::create_directories("Log");
-	FILE* file = nullptr;
-	if (fopen_s(&file, kSpikeLogPath, m_isFileStarted ? "a" : "w") != 0 || file == nullptr) return;
-	m_isFileStarted = true;
-	fprintf(file, "frame %d period %.1fms%s:", m_frameCount - 1, periodMs, m_isHighPriority ? " (high)" : "");
-	for (const auto& section : m_lastSections) fprintf(file, " %s=%.1f", section.name, section.ms);
-	fprintf(file, "\n");
-	fclose(file);
+	AddLog(LogFile::Spike, "frame %d period %.1fms%s:", m_frameCount - 1, periodMs, m_isHighPriority ? " (high)" : "");
+	AddSectionLog();
 }
 
 void FrameProfiler::SetHighPriority(bool isHigh)
@@ -154,14 +207,7 @@ void FrameProfiler::SetRefreshIndex(LONGLONG refreshIndex)
 		if (delta != 1)
 		{
 			++m_refreshMissCount;
-			if (!m_isFileStarted) std::filesystem::create_directories("Log");
-			FILE* file = nullptr;
-			if (fopen_s(&file, kSpikeLogPath, m_isFileStarted ? "a" : "w") == 0 && file != nullptr)
-			{
-				m_isFileStarted = true;
-				fprintf(file, "frame %d refresh +%lld (1 が正常)\n", m_frameCount, delta);
-				fclose(file);
-			}
+			AddLog(LogFile::Spike, "frame %d refresh +%lld (1 が正常)\n", m_frameCount, delta);
 		}
 	}
 	m_lastRefreshIndex = refreshIndex;

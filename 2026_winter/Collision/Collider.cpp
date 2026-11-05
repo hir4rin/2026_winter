@@ -19,6 +19,7 @@ void Collider::DebugDraw() const
 		color = GetColor(0, 255, 0);//プレイヤーは緑
 		break;
 	case Faction::Enemy:
+	case Faction::Boss:
 		color = GetColor(128, 128, 128);//敵は灰色
 		break;
 	case Faction::StaticObject:

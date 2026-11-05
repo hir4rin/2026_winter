@@ -15,6 +15,7 @@ struct CameraKeyframe
 {
 	Vector3 pos;
 	Vector3 target;
+	float fov = CameraStateBase::kDefaultFov;//視野角(ラジアン)
 	CameraStateBase::BlendSetting blendSetting;//このキーフレームから次のキーフレームへ遷移する際のブレンド設定
 };
 
@@ -81,7 +82,8 @@ public:
 	/// Position/Target/Blend Mode/Duration/Easing Power/Slerp Pivotをまとめて編集できる
 	/// (Camera Animator側のリストが長くなると窮屈だったので、詳細編集はこちらのウィンドウに分けている)
 	/// </summary>
-	void DrawCameraKeyframeEditorWindow();
+	/// <param name="playerPos">プレイヤーの座標(Slerp Pivotに入れる用)</param>
+	void DrawCameraKeyframeEditorWindow(const Vector3& playerPos);
 
 	//カメラ上書きが有効かどうかを返す(ウィンドウ内の"Override Camera"チェックボックスの状態そのもの)
 	bool IsCameraOverrideEnabled()const { return m_overrideCamera; }
@@ -91,6 +93,7 @@ public:
 	const Vector3& GetOverrideCameraTarget()const { return m_camTarget; }
 	//上書き・フォトモード用の視野角を返す(ラジアン)
 	float GetOverrideCameraFov()const { return m_camFovDeg * (DX_PI_F / 180.0f); }
+	void SetOverrideCameraFov(float fov) { m_camFovDeg = fov * (180.0f / DX_PI_F); }
 
 	//カメラアニメーターが再生中かどうかを返す("Execute"ボタンを押してから再生が終わるまでtrue)
 	bool IsCameraAnimatorPlaying()const { return m_isAnimatorPlaying; }
@@ -98,6 +101,8 @@ public:
 	const Vector3& GetAnimatorCameraPos()const { return m_animatorCamPos; }
 	//再生中の補間結果の注視点を返す(同上)
 	const Vector3& GetAnimatorCameraTarget()const { return m_animatorCamTarget; }
+	//再生中の補間結果の視野角を返す(ラジアン)
+	float GetAnimatorCameraFov()const { return m_animatorCamFov; }
 
 	//Shift-JISの文字列(CSVの名前・ソースの日本語)をImGuiで出せるUTF-8に直す
 	static std::string ToUtf8(const std::string& sjis);
@@ -144,8 +149,10 @@ private:
 	int m_selectedKeyframeIndex = -1;//Camera Keyframe Editorで今編集対象になっているキーフレームのindex(-1なら未選択)
 
 	bool m_isAnimatorPlaying = false;//"Execute"を押してから再生が終わるまでtrue
+	bool m_isAnimatorChaseArrived = false;//isChaseの区間で、目標に追いついたらtrue
 	int m_animatorSegmentIndex = 0;//今補間している区間(m_cameraKeyframes[index]→[index+1])
 	float m_animatorSegmentElapsed = 0.0f;//今の区間に入ってからの経過フレーム数(CameraStateBaseのm_blendElapsedと同じ考え方)
 	Vector3 m_animatorCamPos;//再生中の補間結果のカメラ座標(GetAnimatorCameraPosで返す値)
 	Vector3 m_animatorCamTarget;//再生中の補間結果の注視点(GetAnimatorCameraTargetで返す値)
+	float m_animatorCamFov = CameraStateBase::kDefaultFov;//再生中の補間結果の視野角(GetAnimatorCameraFovで返す値)
 };

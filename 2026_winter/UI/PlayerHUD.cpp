@@ -3,6 +3,8 @@
 #include "DxLib.h"
 #include "Main/Game.h"
 #include "Character/Player/Player.h"
+#include "Main/System.h"
+#include "Battle/BattleManager.h"
 
 namespace
 {
@@ -85,7 +87,7 @@ void PlayerHUD::Init()
 void PlayerHUD::Update(Input& input)
 {
 	auto player = m_player.lock();
-	m_isVisible = (player != nullptr);
+	m_isVisible = (player != nullptr) && !System::GetInstance().GetBattleMgr()->GetFinisherScreen().isPlaying;
 	if (!player) return;
 
 	const float hpRate = static_cast<float>(player->GetHp()) / player->GetMaxHp();
