@@ -35,12 +35,14 @@ namespace
 	constexpr float kTrainFogEnd = 5000.0f;//真っ暗になる距離(SceneMainのファークリップ)
 	constexpr int kTrainFogColor = 8;//フォグの色(ほぼ黒)
 
-	//ステージ1の夜のフォグ(近くはそのまま、遠くの建物を暗い青に沈める)
-	constexpr float kNightFogStart = 1500.0f;
-	constexpr float kNightFogEnd = 9000.0f;
-	constexpr int kNightFogR = 10;
-	constexpr int kNightFogG = 12;
-	constexpr int kNightFogB = 24;
+	//ステージ1の夜のフォグ(近くはそのまま、遠くの建物を空の地平線の色に沈める。カメラのファー5000より手前で消しきる)
+	constexpr float kNightFogStart = 2200.0f;
+	constexpr float kNightFogEnd = 4950.0f;
+	constexpr float kFogOffStart = 100000.0f;//フォグを切るときの距離
+	constexpr float kFogOffEnd = 200000.0f;
+	constexpr int kNightFogR = 48;
+	constexpr int kNightFogG = 24;
+	constexpr int kNightFogB = 62;
 }
 
 
@@ -176,6 +178,8 @@ void Stage::Draw() const
 	//キャラやエフェクトにはかけない
 	if (useTrainFog || useNightFog)
 	{
+		//自作の頂点シェーダーはフォグを切っても距離の値を読むので、遠くへ送ってから切る
+		SetFogStartEnd(kFogOffStart, kFogOffEnd);
 		SetFogEnable(FALSE);
 	}
 }

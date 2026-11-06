@@ -240,6 +240,7 @@ public:
 	void ClearAssasinTarget() { m_assasinTarget.reset(); }
 	std::shared_ptr<EnemyBase> GetAssasinTarget()const;//死んでいたらnullptrを返す
 	const bool CanAssasin()const;
+	bool CanInputAssasinState()const;//Yで暗殺に入れるステートのときtrue
 	//暗殺演出中かどうか//演出中は暗殺対象を固定する
 	void SetIsAssasinating(bool value) { m_isAssasinating = value; }
 	bool GetIsAssasinating()const { return m_isAssasinating; }
@@ -249,6 +250,7 @@ public:
 	void ClearPartBrokenTarget() { m_partBrokenTarget.reset(); }
 	std::shared_ptr<EnemyBase> GetPartBrokenTarget()const;//死んでいたらnullptrを返す
 	const bool CanPartBrokenFinish()const;
+	bool CanInputPartBrokenState()const;//Yで確殺に入れるステートのときtrue
 	//プレイヤーの向いている方向
 	Vector3 GetTargetVec()const { return m_targetVec; }
 	//確殺演出中かどうか//演出中は確殺対象を固定する

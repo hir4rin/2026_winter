@@ -244,6 +244,9 @@ VS_OUTPUT main( VS_INPUT VSInput )
 
 	#endif // FOG_LINEAR || FOG_EXP || FOG_EXP2
 
+	// fog: run-time switch (FOG_LINEAR is not defined when this file is compiled)
+	if( g_Common.Fog.Mode == 3 ) VSOutput.Fog.x = saturate( lViewPosition.z * g_Common.Fog.LinearDiv + g_Common.Fog.LinearAdd ) ;
+
 	VSOutput.Fog.y = 1.0f ;
 	if( g_Common.VerticalFog.Mode == 1 || g_Common.VerticalFog.Mode == 2 )
 	{

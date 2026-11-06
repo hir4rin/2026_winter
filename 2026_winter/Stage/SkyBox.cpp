@@ -1,6 +1,4 @@
 ﻿#include "SkyBox.h"
-#include "../Camera/CameraManager.h"
-#include "../Camera/CameraState/CameraStateBase.h"
 
 
 
@@ -21,14 +19,14 @@ SkyBox::~SkyBox()
 	}
 }
 
-void SkyBox::Init(std::weak_ptr<CameraManager> cameraMgr)
+void SkyBox::Init(const std::string& dir)
 {
-	m_textureHandle[kFront] = LoadGraph("data/SkyBox/front.png");
-	m_textureHandle[kBack] = LoadGraph("data/SkyBox/back.png");
-	m_textureHandle[kLeft] = LoadGraph("data/SkyBox/left.png");
-	m_textureHandle[kRight] = LoadGraph("data/SkyBox/right.png");
-	m_textureHandle[kUp] = LoadGraph("data/SkyBox/up.png");
-	m_textureHandle[kDown] = LoadGraph("data/SkyBox/down.png");
+	m_textureHandle[kFront] = LoadGraph((dir + "/front.png").c_str());
+	m_textureHandle[kBack] = LoadGraph((dir + "/back.png").c_str());
+	m_textureHandle[kLeft] = LoadGraph((dir + "/left.png").c_str());
+	m_textureHandle[kRight] = LoadGraph((dir + "/right.png").c_str());
+	m_textureHandle[kUp] = LoadGraph((dir + "/up.png").c_str());
+	m_textureHandle[kDown] = LoadGraph((dir + "/down.png").c_str());
 	// ロード確認（-1 なら読み込み失敗）
 	for (int i = 0; i < kFaceNum; i++)
 	{
@@ -37,16 +35,11 @@ void SkyBox::Init(std::weak_ptr<CameraManager> cameraMgr)
 			printfDx("SkyBox texture %d の読み込みに失敗しました\n", i);
 		}
 	}
-	m_cameraManager = cameraMgr;
-	Update();
 }
 
-void SkyBox::Update()
+void SkyBox::Draw()
 {
-	auto camera = m_cameraManager.lock()->GetActiveCamera();
-	if (!camera)return;
-
-	Vector3 cameraPos = camera->GetPos();
+	const VECTOR cameraPos = GetCameraPosition();
 	const float size = kSize;
 	const float x = cameraPos.x;
 	const float y = cameraPos.y;
@@ -70,17 +63,16 @@ void SkyBox::Update()
 	//下面
 	SetFaceVertices(kDown, Vector3(x - size, y - size, z + size), Vector3(x + size, y - size, z + size),
 		Vector3(x + size, y - size, z - size), Vector3(x - size, y - size, z - size));
-}
 
-void SkyBox::Draw()
-{
 	SetUseLighting(FALSE);           // ライティングを無効化
-	SetUseZBuffer3D(false);
+	SetUseZBuffer3D(FALSE);
+	SetTextureAddressMode(DX_TEXADDRESS_CLAMP);//面のつなぎ目が出ないように
 	for (int i = 0; i < kFaceNum; i++)
 	{
-		DrawPolygon3D(m_vertex[i], 2, m_textureHandle[i], TRUE);
+		DrawPolygon3D(m_vertex[i], 2, m_textureHandle[i], FALSE);
 	}
-	SetUseZBuffer3D(true);
+	SetTextureAddressMode(DX_TEXADDRESS_WRAP);
+	SetUseZBuffer3D(TRUE);
 	SetUseLighting(TRUE);            // ライティングを元に戻す
 }
 

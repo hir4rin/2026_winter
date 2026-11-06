@@ -71,6 +71,8 @@ void BloodKillFog::EndStage(int stageViewHandle) const
 	if (m_rate <= 0.0f) return;
 
 	//キャラやエフェクトにフォグがかからないように戻す
+	//自作の頂点シェーダーはフォグを切っても距離の値を読むので、遠くへ送ってから切る
+	SetFogStartEnd(kNoFogDistance * 10.0f, kNoFogDistance * 20.0f);
 	SetFogEnable(FALSE);
 	MV1SetDifColorScale(stageViewHandle, GetColorF(1.0f, 1.0f, 1.0f, 1.0f));
 #endif

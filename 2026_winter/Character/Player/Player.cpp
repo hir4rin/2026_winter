@@ -564,6 +564,14 @@ bool Player::IsMoveState() const
 		std::dynamic_pointer_cast<PlayerStateFastRun>(m_currentState);
 }
 
+bool Player::CanInputAssasinState() const
+{
+	return std::dynamic_pointer_cast<PlayerStateIdle>(m_currentState) ||
+		IsMoveState() ||
+		std::dynamic_pointer_cast<PlayerStateJump>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateFall>(m_currentState);
+}
+
 std::shared_ptr<EnemyBase> Player::GetAssasinTarget() const
 {
 	return m_assasinTarget.lock();
@@ -586,6 +594,15 @@ const bool Player::CanPartBrokenFinish() const
 	auto partBrokenTarget = GetPartBrokenTarget();
 
 	return partBrokenTarget ? true : false;
+}
+
+bool Player::CanInputPartBrokenState() const
+{
+	return std::dynamic_pointer_cast<PlayerStateIdle>(m_currentState) ||
+		IsMoveState() ||
+		std::dynamic_pointer_cast<PlayerStateAttack>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateAttackLanding>(m_currentState) ||
+		std::dynamic_pointer_cast<PlayerStateSkillAttack>(m_currentState);
 }
 
 

@@ -14,6 +14,7 @@
 #include "Render/EffectManager.h"
 #include "Render/ModelShaderManager.h"
 #include "Stage/Stage.h"
+#include "Stage/SkyBox.h"
 #include "Main/Input.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
@@ -126,6 +127,11 @@ void SceneMain::Init()
 	m_stage->Init();
 	const StageInfo& stageInfo = StageData::GetInfo(m_stageType);
 	m_stage->GameInit(stageInfo);
+	if (stageInfo.skyDir != nullptr)
+	{
+		m_skyBox = std::make_unique<SkyBox>();
+		m_skyBox->Init(stageInfo.skyDir);
+	}
 	CollisionManager::GetInstance().SetStage(m_stage);
 	//ステージ編集モードで保存した壁キック/壁走りゾーンを読み込む
 	m_stage->LoadWallZones(stageInfo.wallZoneNumber);
@@ -354,6 +360,7 @@ void SceneMain::FadeInDraw()
 
 void SceneMain::NormalDraw()
 {
+	if (m_skyBox) m_skyBox->Draw();
 	m_bloodKillFog.DrawBackground();//[BloodKillFog]
 
 	DrawGrid();

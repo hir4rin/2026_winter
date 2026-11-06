@@ -1,6 +1,7 @@
 // FBX などを DxLib で読み込んで mv1 に保存する
 // 使い方: convert.exe [flat] 入力.fbx 出力.mv1 [入力2 出力2 ...]
 //   flat: キャラ・デモステージと同じく、拡散光を弱く(色×0.1)・環境光を強く(色×0.9)・反射0.1にする(色は .x の拡散色を使う)
+//   night: ステージ1用。拡散光を強め(色×0.40)・環境光を弱め(色×0.50)にして面の向きで明るさを変える。反射はflatと同じ
 // 結果(外形の大きさ・メッシュ数)は convert_log.txt に書く
 #include "DxLib.h"
 #include <cstdio>
@@ -11,6 +12,8 @@ namespace
 	constexpr float kFlatDifRate = 0.1f;//flatのときの拡散色の倍率(System.cppで読む体・ステージのモデルと同じ)
 	constexpr float kFlatAmbRate = 0.9f;//flatのときの環境色の倍率
 	constexpr float kFlatSpc = 0.1f;//flatのときの反射色
+	constexpr float kNightDifRate = 0.40f;//nightのときの拡散色の倍率
+	constexpr float kNightAmbRate = 0.50f;//nightのときの環境色の倍率
 	constexpr float kDefaultAmb = 0.08f;//flatでないとき、環境色が無いマテリアルに入れる値
 }
 
@@ -22,7 +25,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	fopen_s(&log, "convert_log.txt", "w");
 	int result = 0;
 	const bool flat = __argc > 1 && strcmp(__argv[1], "flat") == 0;
-	for (int i = flat ? 2 : 1; i + 1 < __argc; i += 2)
+	const bool night = __argc > 1 && strcmp(__argv[1], "night") == 0;
+	for (int i = (flat || night) ? 2 : 1; i + 1 < __argc; i += 2)
 	{
 		int h = MV1LoadModel(__argv[i]);
 		if (h < 0)
@@ -43,6 +47,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			{
 				MV1SetMaterialDifColor(h, m, GetColorF(dif.r * kFlatDifRate, dif.g * kFlatDifRate, dif.b * kFlatDifRate, dif.a));
 				MV1SetMaterialAmbColor(h, m, GetColorF(dif.r * kFlatAmbRate, dif.g * kFlatAmbRate, dif.b * kFlatAmbRate, 1.0f));
+				MV1SetMaterialSpcColor(h, m, GetColorF(kFlatSpc, kFlatSpc, kFlatSpc, 1.0f));
+			}
+			else if (night)
+			{
+				MV1SetMaterialDifColor(h, m, GetColorF(dif.r * kNightDifRate, dif.g * kNightDifRate, dif.b * kNightDifRate, dif.a));
+				MV1SetMaterialAmbColor(h, m, GetColorF(dif.r * kNightAmbRate, dif.g * kNightAmbRate, dif.b * kNightAmbRate, 1.0f));
 				MV1SetMaterialSpcColor(h, m, GetColorF(kFlatSpc, kFlatSpc, kFlatSpc, 1.0f));
 			}
 			else

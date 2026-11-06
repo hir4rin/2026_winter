@@ -14,6 +14,7 @@ class PhaseManager;
 class BattleManager;
 class Camera;
 class Stage;
+class SkyBox;
 class WallZoneEditor;
 class PhaseAreaEditor;
 class UIManager;
@@ -60,6 +61,7 @@ private:
 	std::shared_ptr<BattleManager> m_battleManager;
 	std::unique_ptr<Camera> m_camera;//Player::Updateに渡すだけ(実際のカメラはCameraManagerが制御する)
 	std::shared_ptr<Stage> m_stage;
+	std::unique_ptr<SkyBox> m_skyBox;//空(空の画像があるステージだけ)
 	std::unique_ptr<WallZoneEditor> m_wallZoneEditor;//ステージ編集モードで壁ゾーンを設置・編集するImGuiウィンドウ
 	std::unique_ptr<PhaseAreaEditor> m_phaseAreaEditor;//ステージ編集モードでフェーズ進行のエリアを編集するImGuiウィンドウ
 	std::unique_ptr<UIManager> m_uiManager;//このシーンで表示するUIをまとめて管理する

@@ -1,9 +1,8 @@
 ﻿#pragma once
 #include "DxLib.h"
 #include "../Math/Vector3.h"
-#include <memory>
+#include <string>
 
-class CameraManager;
 class SkyBox
 {
 public:
@@ -19,8 +18,9 @@ public:
 	};
 	SkyBox();
 	virtual ~SkyBox();
-	void Init(std::weak_ptr<CameraManager> cameraMgr);
-	void Update();
+	/// <summary>dir の front/back/left/right/up/down.png を読む</summary>
+	void Init(const std::string& dir);
+	/// <summary>今のカメラを囲むように描く。ステージより先に呼ぶ</summary>
 	void Draw();
 private:
 	static constexpr int kVertexPerFace = 6;//2ポリゴンx3頂点
@@ -28,7 +28,6 @@ private:
 
 	VERTEX3D m_vertex[kFaceNum][kVertexPerFace];//各面の頂点データ
 	int m_textureHandle[kFaceNum];//各面のテクスチャハンドル
-	std::weak_ptr<CameraManager> m_cameraManager;//カメラの弱参照
 
 	/// <summary>
 	/// 1面分（クワッド）の頂点を設定

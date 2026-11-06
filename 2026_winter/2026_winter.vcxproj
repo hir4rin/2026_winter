@@ -168,6 +168,8 @@
     <ClCompile Include="Character\Enemy\Kingmech\State\KingmechFinisher.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateBossFinisher.cpp" />
     <ClCompile Include="UI\FinisherUI.cpp" />
+    <ClCompile Include="UI\AssasinTargetUI.cpp" />
+    <ClCompile Include="UI\PartBrokenKillUI.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
@@ -334,6 +336,8 @@
     <ClInclude Include="Character\Enemy\Kingmech\State\KingmechFinisher.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateBossFinisher.h" />
     <ClInclude Include="UI\FinisherUI.h" />
+    <ClInclude Include="UI\AssasinTargetUI.h" />
+    <ClInclude Include="UI\PartBrokenKillUI.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />

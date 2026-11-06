@@ -29,6 +29,7 @@ struct StageInfo
 	int enemySpawnNumber;//敵配置のCSV番号(data/Stage/Enemies/Enemies003.csv など)//ファイルが無ければ今まで通りテスト用の敵を1体出す
 	                     //フェーズ進行(data/Stage/PhaseFlow/PhaseStage003.csv)とエリア(data/Stage/PhaseAreas/Stage003.csv)の番号も兼ねる(SceneMain::Init で読む)
 	bool useNightFog = false;//遠くを夜の色(暗い青)にするか(ステージ1)
+	const char* skyDir = nullptr;//空の画像のフォルダ(無ければ空を描かない)
 };
 
 
@@ -40,7 +41,7 @@ namespace StageData
 		{ "テストステージ", "今までの動作確認用ステージ", AsyncData::TitleStageModel, AsyncData::TitleStageModel, false, 1, 1 },
 		{ "デモステージ", "屋上 → 通り → 高架道路 → ボス広場(壁走り・壁キックで進む)", AsyncData::DemoStageModel, AsyncData::DemoStageModel, false, 3, 3 },
 		{ "列車ステージ", "トンネルを走るDDO列車の上で戦う。平台車 → 車内 → スロープで屋根 → 車内 → 最後尾", AsyncData::TrainStageModel, AsyncData::TrainStageColModel, true, 4, 4 },
-		{ "ステージ1", "雨の街 → ピラミッド前の広場 → 壁走りで溝を越える → 閉じた部屋 → ボス広場", AsyncData::CyberStageModel, AsyncData::CyberStageColModel, false, 5, 5, true },
+		{ "ステージ1", "雨の街 → ピラミッド前の広場 → 壁走りで溝を越える → 閉じた部屋 → ボス広場", AsyncData::CyberStageModel, AsyncData::CyberStageColModel, false, 5, 5, true, "data/Stage/CyberStage/Sky" },
 	} };
 
 	inline const StageInfo& GetInfo(StageType type)

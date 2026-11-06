@@ -1303,6 +1303,34 @@
 - `StageSelectScene`: 前の文字だけの表示をやめて `m_menu` で描く。`ApplyCursor()` で右のパネルにステージ名・説明。
 - Debug(x64)でビルドは通った。起動して画面を撮り、表示・カーソル移動・折り返しを確認した。シェーダーはまだ使っていない(背景のぼかし・グリッチなどは後で)。
 
+### 2026-11-06 ステージ1の仕上げ(隙間・色・見えない面・敵の数)
+- **詳しくは `../tools/CyberStage/ステージ1_設計.md` の「仕上げ」**。Unity は閉じていたので batchmode で保存済みのシーンに足して消した(`Assets/Editor/CyberStagePolish.cs`。`ApplyAll` は適用済みなので2回呼ばない。前のシーンは `ninja_motion/Backup/CyberStage1Scene_before_1106.unity`)。
+- 隙間: 当たり判定から歩ける所を求め、壁の奥に見た目が無い85か所を建物の箱でふさいだ。縦穴の上の足場の外と妖魔の部屋の扉の左右は何も無く落ちたので見えない壁を足した。壁ぎわに車・コンテナなど31個。
+- 敵: 3 → 4 → 5 → 6 → 7 → 8 → ボス(`Enemies005.csv`)。足元に床があり物に埋まっていないことは Unity で確認した。
+- 色: 区画ごとの色(`CyberStageTool.Zones`)、`convert.exe night`(拡散0.4・環境0.5)で面の向きの陰影を出した。床は濃淡を強めた。
+- 見えない面: 通り道から映らない三角形を書き出さない(`CyberStageVisibility`)。見た目 約51万 → 約28万三角形、頂点 約88万 → 約48万、mv1 4.4MB → 2.7MB、メッシュ 768 → 500。遠くの超高層ビルは夜空の絵に置き換えて消した。テクスチャは小物を512に縮め、66MB → 32MB。Release のピークは 1.37GB(`-bench=900 -stage=3`。11/04 の記録はステージ内 1.57GB で、同じ測り方の比較ではない)。
+  - **シーンを直したら Tools > Cyber Stage > 3. Bake Hidden Faces And Export**。
+  - ランダムな300視点で面を省かない mv1 と比べた: 違うピクセルは全体の0.29%、一番多い視点で1.4%(細い隙間の向こうの建物の一部)。
+- ゲーム側:
+  - `SkyBox` を使えるようにした(`Init(フォルダ)`、`Draw` で今のカメラを囲む)。`StageInfo::skyDir`、`SceneMain::m_skyBox`。血殺の背景は空の上に塗る。
+  - **`LitModelPS` のフォグが効くようにした**(`MV1VertexShader.hlsl` で `g_Common.Fog.Mode == 3` なら計算)。前は `Fog.x` がいつも1で、夜のフォグも血殺の赤いフォグも建物にかかっていなかった。
+    **`SetFogEnable(FALSE)` だけでは `Fog.Mode` が3のまま残る**ので、切る前に `SetFogStartEnd` で距離を遠くへ送る(`Stage::Draw`、`BloodKillFog::EndStage`)。新しくフォグを使うときも同じにする。
+- 確認: Debug・Release ともビルドは通った。Release で `-bench=900 -stage=3` は最後まで動いた。絵はゲームと同じライト・明かり・フォグの preview(scratchpad)で通り道の54か所を確認した。**実際に遊んでの確認はまだ**(敵8体の谷の戦いやすさ、小物に敵が引っかからないか、血殺の赤いフォグの見え方)。
+
+### 2026-11-06 暗殺対象のUI(AssasinTargetUI)
+- `UI/AssasinTargetUI.h/.cpp`(UIBase 継承、Front)。`UIManager::InGameInit` で登録。対象の頭の上に、丸いアイコン・Yボタン・右へ伸びる赤い帯・「暗殺」の文字を出す。値は .cpp 先頭。
+- 出す条件(`FindTarget`): `Player::GetAssasinTarget()` がいて、`Player::CanInputAssasinState()`(今回追加。Idle / Move / FastRun / Jump / Fall)が true、血殺・イベント中でない。**暗殺に入れるステートを増やしたら `CanInputAssasinState` も直すこと**。
+- 位置は Draw の中で敵の足元(`GetRigidBody().GetPos()`)+ `kEnemyHeight`(200)を `ConvWorldPosToScreenPos`。敵の種類で背の高さが違うと合わないので、そのときは敵ごとに高さを持たせる。カメラの後ろ(z が 0〜1 の外)は描かない。対象が変わったらアニメをやり直す。普通に対象がいなくなったときはすぐ消す。
+- 暗殺が始まったとき(`Player::GetIsAssasinating()` が true)は約0.3秒のリアクションをしてから消す。アイコンが大きくなり、白い円を重ねて光らせ、帯が左へ縮み、全体がフェードする。カメラが切り替わるので、リアクション中は画面の位置を止める(`m_drawX/Y`)。値は .cpp 先頭の `kExit〜`。
+- 全体の大きさは `kUIScale`(0.8)を変える。画像・帯・文字・`kIconLift` にまとめて効く。
+- 素材: `data/UI/Assasin/icon.png`(`tools/AssasinUIGen/MakeAssasinIcon.ps1` で作る。丸の中心は .cpp の `kIconCenterX/Y` と合わせる)、`button/Y.png`、帯は `Menu/select_base.png` を赤くして左右反転。アイコンとボタンは乗算済みアルファ。
+- `PartBrokenKillUI`(UIBase 継承、Front、`UIManager::InGameInit` で登録)は確殺対象の体の中心に赤い刃の×とYボタンを出す。全体の大きさは `kUIScale`(0.7)、位置は足元+ `kEnemyCenterHeight`(100)。値は .cpp 先頭。
+- 確殺UIを出す条件(`FindTarget`): `Player::GetPartBrokenTarget()` がいて、`Player::CanInputPartBrokenState()`(今回追加。Idle / Move / FastRun / Attack / AttackLanding / SkillAttack)が true、血殺・イベント中でない。**確殺に入れるステートを増やしたら `CanInputPartBrokenState` も直すこと**。攻撃中はキャンセルできるフレーム前でも出る(途中で消えてチラつかないように)。
+- Idle / Move / FastRun は暗殺の入力が確殺より先なので、暗殺対象がいるときは確殺UIを出さない。
+- 確殺が始まったら(`GetIsPartBrokenKilling()`)約0.3秒のリアクション。刃が白くなり長く細くなって弾け、真ん中の丸は光ってフェードする。画面の位置は止める。値は `kExit〜`。
+- 素材: `data/UI/PartBrokenKill/blade.png`(`tools/AssasinUIGen/MakePartBrokenBlade.ps1` で作る白一色の刃。赤は `SetDrawBright` で付ける。1枚で赤い刃・明滅・白い芯・白くなる動きを描く)。
+- Debug(x64)でビルドは通った。一時コードでステージ1のプレイヤーの前に未発見の敵を出して、頭の上に出ることと、地上暗殺に入ったときのリアクション、確殺UIの出る動きと確殺に入ったときのリアクションを画面で確認した(一時コードは消した)。**実際に操作しての確認はまだ**(攻撃中の表示、対象の切り替わり、空中暗殺のリアクション、確殺の別パターン、壁の向こうの敵に出ないか)。
+
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 
@@ -1327,6 +1355,7 @@
 ---
 
 ## TODO / 次にやること
+- [ ] ステージ1の仕上げ(11/06)をゲームで確認: 敵の増え方と谷の8体の戦いやすさ、小物に敵が引っかからないか、血殺の赤いフォグが濃すぎないか、スキル演出のカメラで建物の裏が欠けて見えないか
 - [ ] **ステージ1(StageType::Cyber)をゲームで確認**: 8mの溝を壁走りで渡れるか(ぬれた通りの先の2連続も)、溝の区画(2枚)と鉄格子の通路(3枚)・ボス前(4枚)で続けて壁走りできるか(落下中に壁走りゾーンの壁へ張り付くようにしたので、ほかの所で意図せず張り付かないかも)、縦穴3か所を壁蹴りで登れるか(広場の出口の縦穴は6m)、10mの飛び降りで困らないか、駅の階段・斜面(約27〜30°)を登れるか、駅の見張りを暗殺できるか、エリア・敵の位置、フレームレート
 - [ ] ImGui のウィンドウをゲームの外に出してみる(描画が崩れないか・ゲームが止まらないか・キー入力)。Enemy Debug ウィンドウで攻撃を出して確認
 - [ ] ボスの連続攻撃: コードはできた。BossEnemyPirateAttack.csv に1撃目・2撃目の行を書いてゲームで確認(向き・間の長さ・連撃中の被弾で止まってよいか)
