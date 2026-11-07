@@ -84,7 +84,7 @@ void PlayerHUD::Init()
 	m_dispUltRate = static_cast<float>(player->GetUltGauge()) / player->GetMaxGauge();
 }
 
-void PlayerHUD::Update(Input& input)
+void PlayerHUD::Update()
 {
 	auto player = m_player.lock();
 	m_isVisible = (player != nullptr) && !System::GetInstance().GetBattleMgr()->GetFinisherScreen().isPlaying;

@@ -14,6 +14,9 @@ public:
 	void Exit() override;
 	void DebugDraw() override;
 
+	std::shared_ptr<EnemyBase> GetTarget()const { return m_target.lock(); }
+	float GetRemainRate()const;//残りの割合(1→0)//UI用
+
 private:
 	void ToLocomotion();//Idle/Moveに戻る
 

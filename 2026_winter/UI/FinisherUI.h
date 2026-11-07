@@ -6,7 +6,7 @@ class FinisherUI : public UIBase
 {
 public:
 	void Init()override;
-	void Update(Input& input)override;
+	void Update()override;
 	void Draw()override;
 
 private:

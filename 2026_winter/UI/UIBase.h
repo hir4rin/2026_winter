@@ -1,8 +1,6 @@
 #pragma once
 #include "../Math/Vector3.h"
 
-class Input;
-
 //UIを描く順番
 enum class UILayer
 {
@@ -16,7 +14,7 @@ public:
 	//純粋仮想関数
 	virtual ~UIBase() = default;
 	virtual void Init() = 0;
-	virtual void Update(Input& input) = 0;
+	virtual void Update() = 0;
 	virtual void Draw() = 0;
 	//外部から表示状態を変更する
 	void SetVisible(bool isVisible) { m_isVisible = isVisible; }

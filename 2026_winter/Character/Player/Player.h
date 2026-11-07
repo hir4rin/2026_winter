@@ -24,6 +24,7 @@
 #include "Character/Player/State/Locomotion/PlayerStateWallStay.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateWallRunKick.h"//以下同文
 #include "Character/Player/State/Defence/PlayerAttackParried.h"//以下同文
+#include "Character/Player/State/Defence/PlayerHitKirimomiState.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakChance.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakAttack.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateBossPartThrow.h"//以下同文
@@ -196,6 +197,7 @@ public:
 	void OnDamage(Collider& other, AttackData& data) override;
 	void OnJustDodge(Collider& other, AttackData& data);//ジャスト回避判定に敵の攻撃が当たった時の処理//現在の状態に通知する
 	void OnParried();//攻撃を敵に弾かれたときの処理//ひるませる
+	Vector3 CalcKnockBackDir(Collider& other);//攻撃者→プレイヤーの水平の向き
 
 	void OnAttackHit(int otherId);//攻撃が当たった時の処理
 
@@ -263,6 +265,8 @@ public:
 
 	//ブレイクの通知
 	void RequestGuardBreakChance(std::shared_ptr<EnemyBase> target) { m_guardBreakChanceTarget = target; }
+	std::shared_ptr<PlayerStateGuardBreakChance> GetGuardBreakChanceState()const { return std::dynamic_pointer_cast<PlayerStateGuardBreakChance>(m_currentState); }
+	bool IsGuardBreakAttacking()const { return std::dynamic_pointer_cast<PlayerStateGuardBreakAttack>(m_currentState) != nullptr; }
 	//ボスのパーツを切り落とした通知//切り上げの後にPlayerStateBossPartThrowへ
 	void RequestBossPartThrow(std::shared_ptr<EnemyBase> target) { m_bossPartThrowTarget = target; }
 	//ボスのトドメのムービーの通知//次のUpdateでPlayerStateBossFinisherへ
@@ -420,6 +424,7 @@ private:
 	friend class PlayerStateWallStay;
 	friend class PlayerStateWallRunKick;
 	friend class PlayerAttackParried;
+	friend class PlayerHitKirimomiState;
 	friend class PlayerStateGuardBreakChance;
 	friend class PlayerStateGuardBreakAttack;
 	friend class PlayerStateBossPartThrow;

@@ -75,11 +75,11 @@ void KingmechMissile::CreateExplodeCol()
 	CharacterBase::AttackData data = {
 		.attackPower = kExplodePower,
 		.brokenRate = 0.0f,
-		.knockBackPower = Vector3(0.0f, 0.0f, 0.0f),
+		.knockBackPower = Vector3(20.0f, 20.0f, 0.0f),
 		.knockBackFrame = 0.0f,
-		.hitStopTime = 0.0f,
+		.hitStopTime = 0.1f,
 		.kAttackColOffset = 0.0f,
-		.isKirimomi = false
+		.isKirimomi = true
 	};
 	//プレイヤーの着地の衝撃と同じ作り//寿命で消える
 	m_explodeCol = std::make_shared<FixedAttackCol>(m_owner, data, m_landPos);

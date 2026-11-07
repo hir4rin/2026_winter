@@ -5,6 +5,7 @@
 #include "FinisherUI.h"
 #include "AssasinTargetUI.h"
 #include "PartBrokenKillUI.h"
+#include "GuardBreakChanceUI.h"
 
 void UIManager::TitleInit()
 {
@@ -32,6 +33,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	Add(std::make_shared<AssasinTargetUI>(player));
 	//確殺対象の体の中心のUI
 	Add(std::make_shared<PartBrokenKillUI>(player));
+	//ガードブレイクのチャンス中のUI
+	Add(std::make_shared<GuardBreakChanceUI>(player));
 	//トドメのムービーの黒帯・フラッシュ
 	Add(std::make_shared<FinisherUI>());
 
@@ -60,12 +63,12 @@ void UIManager::InitAll()
 	}
 }
 
-void UIManager::Update(Input& input)
+void UIManager::Update()
 {
 	//登録されたUIのUpdateをまとめて呼ぶ
 	for (auto& ui : m_uiList)
 	{
-		ui->Update(input);
+		ui->Update();
 	}
 }
 void UIManager::DrawBack()

@@ -173,8 +173,12 @@ void Application::Run()
 		//組み立てたImGuiのウィンドウを描画する(ScreenFlipより前に呼ぶ)
 		imguiApp::GetInstance().Render();
 		FrameProfiler::GetInstance().Mark("ImGui");
-		//描画した内容を画面に反映する
-		//モニターの更新を待ってから出す
+		//描画した内容をすぐ画面に出す
+		//待ってから出すと絵が1フレーム古くなる
+		ScreenFlip();
+		FrameProfiler::GetInstance().Mark("Flip");
+		//出した後にモニターの更新を待つ
+		//次のフレームは更新の直後から始まる
 		bool isWaited = m_paceMode == PaceMode::None;
 		if (m_paceMode == PaceMode::WaitVSync)
 		{
@@ -190,15 +194,14 @@ void Application::Run()
 				isWaited = true;
 			}
 		}
-		FrameProfiler::GetInstance().Mark("Wait");
-		ScreenFlip();
 		//画面の合成を待つ(フルスクリーンなどで使えないときは自前の待ちにする)
 		if (m_paceMode == PaceMode::Dwm && !m_isFullScreen)
 		{
 			//最小化中などはすぐ返ってくるので、短すぎたら自前の待ちもする
 			isWaited = SUCCEEDED(DwmFlush()) && GetNowHiPerformanceCount() - start >= kFrameTimeMicroSec / 2;
 		}
-		FrameProfiler::GetInstance().Mark("Flip");
+		//待ち時間の記録
+		FrameProfiler::GetInstance().Mark("Wait");
 		const long long refreshIndex = GetRefreshIndex();
 		if (refreshIndex >= 0) FrameProfiler::GetInstance().SetRefreshIndex(refreshIndex);
 		FrameProfiler::GetInstance().EndFrame();
@@ -232,7 +235,7 @@ void Application::Terminate()
 
 void Application::InitFramePacing()
 {
-	//モニターが60Hz前後なら、モニターの更新(WaitForVBlank)を待ってから出す
+	//モニターが60Hz前後なら、画面に出した後にモニターの更新(WaitForVBlank)を待つ
 	//それ以外(120/144Hz など)なら Run の自前の待ちで合わせる
 	//(このPCでは ScreenFlip の VSync 待ちが効かず、自前の待ちだけだと少しずつずれて引っかかる)
 	const int refreshRate = GetRefreshRate();

@@ -97,6 +97,9 @@ public:
 	//プレイヤーの攻撃がヒットしたとき//PlayerCamera中だけBattleSmoothCameraに遷移する
 	void OnPlayerAttackHit();
 
+	//startからendへの線がステージに当たるか
+	bool IsStageHit(const Vector3& start, const Vector3& end) const;
+
 	//カクつきの切り分け用のスイッチ(F2 の「Camera Check」。シーンをまたいで残る)
 	struct CheckSwitch
 	{

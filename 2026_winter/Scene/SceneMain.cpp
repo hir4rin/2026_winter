@@ -287,7 +287,7 @@ void SceneMain::NormalUpdate()
 
 	m_cameraManager->Update();
 
-	m_uiManager->Update(input);
+	m_uiManager->Update();
 
 	//[BloodKillFog]必殺技中かどうかで赤いフォグのかかり具合を進める
 	m_bloodKillFog.Update(battleMgr->GetIsUltimating());

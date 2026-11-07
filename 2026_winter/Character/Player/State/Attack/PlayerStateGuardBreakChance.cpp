@@ -88,6 +88,12 @@ void PlayerStateGuardBreakChance::DebugDraw()
 	DrawFormatString(10, 10, GetColor(255, 255, 255), "PlayerState:GuardBreakChance %.0f/%.0f", m_timer, kChanceTime);
 }
 
+float PlayerStateGuardBreakChance::GetRemainRate() const
+{
+	const float rate = 1.0f - m_timer / kChanceTime;
+	return (rate > 0.0f) ? rate : 0.0f;
+}
+
 void PlayerStateGuardBreakChance::ToLocomotion()
 {
 	auto player = m_owner.lock();

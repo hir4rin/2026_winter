@@ -37,7 +37,7 @@ void KessatsuUI::Init()
 	m_isVisible = false;
 }
 
-void KessatsuUI::Update(Input& input)
+void KessatsuUI::Update()
 {
 	//必殺技中だけ表示する
 	auto battleMgr = System::GetInstance().GetBattleMgr();

@@ -18,7 +18,7 @@ void FinisherUI::Init()
 	m_isVisible = true;
 }
 
-void FinisherUI::Update(Input& input)
+void FinisherUI::Update()
 {
 	auto battle = System::GetInstance().GetBattleMgr();
 	if (!battle)return;

@@ -94,7 +94,7 @@ void AssasinTargetUI::Init()
 	m_isVisible = false;
 }
 
-void AssasinTargetUI::Update(Input& input)
+void AssasinTargetUI::Update()
 {
 	//暗殺が始まったらリアクションに入る
 	auto player = m_player.lock();

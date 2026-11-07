@@ -4,6 +4,7 @@
 #include "Character/Player/State/Locomotion/PlayerStateMove.h"
 #include "PlayerWeapon.h"
 #include "Collision/HitCol.h"
+#include "Collision/AttackCol.h"
 #include "Camera/CameraManager.h"
 #include "Camera/LockOnManager.h"
 #include "DataLoader/DataManager.h"
@@ -221,10 +222,6 @@ void Player::Update(Camera& camera)
 		}
 	}
 
-	
-
-
-
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(Jump,Fall,Attack)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
 
@@ -357,8 +354,40 @@ void Player::OnDamage(Collider& other, AttackData& data)
 	bool isUltAttacking = std::dynamic_pointer_cast<PlayerStateUlt>(m_currentState) != nullptr;
 	if (isSkillAttacking || isUltAttacking)return;
 
+
+	//Kirimomi攻撃なら吹き飛ばせる
+	if (data.isKirimomi)
+	{
+		//ヒット情報の作成
+		HitInfo hitinfo = {
+			.knockBackVel = CalcKnockBackDir(other) * data.knockBackPower.x + Vector3(0.0f, data.knockBackPower.y, 0.0f),
+			.isKirimomi = data.isKirimomi,
+		};
+		//吹き飛ばしステートにする
+		ChangeState(std::make_shared<PlayerHitKirimomiState>(GetWeakPtr(), hitinfo));
+		return;
+	}
+
 	//stateをhitStateにする
 	ChangeState(std::make_shared<PlayerStateHit>(GetWeakPtr(), data));
+}
+
+Vector3 Player::CalcKnockBackDir(Collider& other)
+{
+	//攻撃判定は持ち主の前に出ているので、持ち主の位置を基準にする
+	Vector3 attackerPos = other.GetRigidBody().GetPos();
+	auto attackCol = dynamic_cast<AttackCol*>(&other);
+	if (attackCol)
+	{
+		auto attacker = attackCol->GetOwner().lock();
+		if (attacker) attackerPos = attacker->GetRigidBody().GetPos();
+	}
+
+	Vector3 dir = m_rb.m_pos - attackerPos;
+	dir.y = 0.0f;
+	//重なっていたら後ろへ
+	if (dir.Magnitude() <= 0.0f) dir = m_targetVec * -1.0f;
+	return dir.Normalize();
 }
 
 void Player::OnParried()

@@ -162,6 +162,9 @@
     <ClCompile Include="Character\Player\State\Defence\PlayerStateHit.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Player\State\Defence\PlayerHitKirimomiState.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Player\State\Defence\PlayerAttackParried.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -262,6 +265,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\PartBrokenKillUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\GuardBreakChanceUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp">
@@ -692,6 +698,9 @@
     <ClInclude Include="Character\Player\State\Defence\PlayerStateHit.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\Player\State\Defence\PlayerHitKirimomiState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Character\Player\State\Defence\PlayerAttackParried.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -792,6 +801,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="UI\PartBrokenKillUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\GuardBreakChanceUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h">

@@ -1331,6 +1331,64 @@
 - 素材: `data/UI/PartBrokenKill/blade.png`(`tools/AssasinUIGen/MakePartBrokenBlade.ps1` で作る白一色の刃。赤は `SetDrawBright` で付ける。1枚で赤い刃・明滅・白い芯・白くなる動きを描く)。
 - Debug(x64)でビルドは通った。一時コードでステージ1のプレイヤーの前に未発見の敵を出して、頭の上に出ることと、地上暗殺に入ったときのリアクション、確殺UIの出る動きと確殺に入ったときのリアクションを画面で確認した(一時コードは消した)。**実際に操作しての確認はまだ**(攻撃中の表示、対象の切り替わり、空中暗殺のリアクション、確殺の別パターン、壁の向こうの敵に出ないか)。
 
+### 2026-11-07 UIのUpdateの引数をなくした
+- `UIBase::Update(Input& input)` → `Update()`。`UIManager` と各UIも同じ。Input はシングルトンなので、UIで入力が要るときは Player と同じく `Input::GetInstance()` で取る(今は入力を使っているUIはない)。
+- `UI/UIBase.h` / `UIBase.cpp` / `FontManager` は Shift-JIS(ほかのUIは UTF-8)。スクリプトで書き換えるときは文字コードに注意。
+
+### 2026-11-07 ガードブレイクのチャンスUI(GuardBreakChanceUI)
+- `UI/GuardBreakChanceUI.h/.cpp` を追加(vcxproj/filters、`UIManager::InGameInit` に登録)。チャンス中に敵の体の中心(足元+100)へ出す。
+- デザイン: グラデーションの青い×の刃と周りの光、後ろの丸い光、深い青の丸の中に残り時間のリング、つやのある青い丸に白いY、右へ透明になる青い帯に「ガードブレイク」(游明朝、紺のふち)。形は確殺と同じ×なので、見分けるのは色・リング・帯。
+- 素材は `data/UI/GuardBreak/`(blade / blade_glow / glow / disc / button / band の6枚)。作り直しは `tools/AssasinUIGen/MakeGuardBreakUI.ps1`。色は画像に入っている(べた塗りに見えないようグラデーションにした)。白く光らせるときだけ確殺の白い `blade.png` を重ねる。
+- 敵が白いので、白は文字とYだけにして青を主にしている。リングを丸に乗せる・帯の文字の範囲は透かさない、は白い敵の上で読めるようにするため。
+- 残り時間は `PlayerStateGuardBreakChance::GetRemainRate()`。残り3割で刃が明るい青に点滅。リングは画像なしで `DrawLineAA` をつないで描く(`DrawRing`)。
+- Yを押した(`Player::IsGuardBreakAttacking()`)ら18Fのリアクション: 白くなり、刃が長く細くなって弾け、波紋が広がり、帯は右へ流れる。それ以外で終わったら20Fで縮みながら消える。消えている間は画面の位置を止める。
+- Debug(x64)でビルドは通った。**ゲームでの確認はまだ**(大きさ、文字が帯に収まるか、帯の向き、明るいステージでの見やすさ)。
+
+### 2026-11-07 画面に出してからモニターの更新を待つようにした(描画が遅れて感じる件)
+- ログでは描画は軽く(Release・待ちなしのステージ1で1フレーム平均0.35ms)、遅れて感じるのは画面に出すまでの待ちと考えた。
+- `Application::Run` の順番を「更新 → 描画 → 待つ → ScreenFlip」から「更新 → 描画 → ScreenFlip → 待つ」に変更。区切りの順番も Flip → Wait になった。
+- Release の `-bench=1800 -stage=3` で確認: 間隔 平均16.68ms、更新の取りこぼし0回、フレームの始まりから画面に出すまで 約15ms → 約1ms。20ms超えは2回(次のフレームが短くなる前からあるずれ)。
+- **遅れの短縮はコードからの見込みで、モニターに映るまでは測っていない。実際に遊んでの確認はまだ**。変わらなければカメラの追従(`PlayerFollowCamera.cpp` の `kCameraLerpFactor` 0.1)を見る。
+
+### 2026-11-07 ステージ1の道を曲げた(一本道でランゲームのようだった件)
+- **詳しくは `../tools/CyberStage/ステージ1_設計.md` の「曲げた道」**。区画の境目7か所で90度に曲げた。区画の表の Z は曲げる前の座標。
+- ツールは `ninja_motion/Assets/Editor/CyberStageTurns.cs`。**`Apply` は適用済みなので2回呼ばない**。前のシーンは `ninja_motion/Backup/CyberStage1Scene_before_turns_1107.unity`、見えない面のデータの控えは `VisibilityBake_before_turns_1107.bytes`、`CyberStagePolish.cs` の控えは `CyberStagePolish_before_turns.cs.txt`。
+- 書き出した物: `CyberStage.mv1` / `CyberStageCol.mv1` / `Enemies005.csv` / `WallZones/Stage005.csv` / `PhaseAreas/Stage005.csv` / `Lights/Stage005.csv`。ゲームのコードと `PhaseStage005.csv` は変えていない(エリア名が同じ)。
+- 見た目 約31万三角形(前は約28万)、当たり判定 4404三角形。
+- 確認: Unity で7か所の角の床と中心線の通り抜け、Release の `-bench=480 -stage=3` で読み込みと正常終了。**実際に操作しての確認はまだ**。
+- (追記)**隙間埋めの壁の部品の向きを直した**: 11/06 の `FillRun` は部品が90度ずれて壁の箱に埋まり、建物がのっぺり見えていた(部品の表はローカルの+X)。`FillRun` の向きの計算を直し、シーンは `CyberStageTurns.FixGapModules` で `Library/CyberStageAnalyze/runs.txt` の記録を曲げた後の座標に直して、76個を置き直し8個を作った。**適用済みなので2回呼ばない**(印は `CyberStage/99_GapModulesFixed`)。前のシーンは `ninja_motion/Backup/CyberStage1Scene_before_modules_1107.unity`。見た目は約31万三角形のまま。Unity の絵と Release の `-bench=300 -stage=3` で確認した。
+
+### 2026-11-07 BattleSmoothCamera に入るときに壁を見て回るサイドを決める
+- `BattleSmoothCamera::Enter` で近いほうのサイドを決めたあと、そのサイドのカメラの目標位置が壁に当たり、逆サイドは当たらないときだけ逆サイドへ(`IsWallHit`)。判定は入るときの1回だけ。両方当たるならそのまま。
+- 入ったあとに壁に当たっても反転しない(戦闘中に急に回さないため)。今まで通り `FixStageCollision` で寄るだけ。歩いて PlayerFollowCamera に戻り、また攻撃が当たれば判定し直す。
+- `CameraManager::IsStageHit(start, end)`: 線がステージに当たるか。Camera Check の Stage Collision を切ると当たらない扱い。
+- 当たり判定用のモデル(colModel)に線を引くので、**見えない壁にも反応する**。線の端が少しかするだけでも当たり扱い。
+- 目標位置・注視点の計算を `CalcGoalPos(角度指定)` / `CalcGoalTarget` に切り出した。
+- MSBuild(Debug x64)でビルドは通った。**ゲームでの確認はまだ**。
+
+### 2026-11-07 プレイヤーのきりもみの被弾(PlayerHitKirimomiState)の土台
+- `Character/Player/State/Defence/PlayerHitKirimomiState.h/.cpp` を追加し、vcxproj/filters と Player.h(include/friend)に登録。**まだどこからも入らない**(`Player::OnDamage` などから遷移させる)。
+- `Player01Anim.csv` に key `HitKirimomi` = `Ninja_HitReact_Explosion`(Player03.mv1 の番号42・40F)を追加。Enter でループなしで流すだけ。
+- `Player::OnDamage` で `data.isKirimomi` なら遷移(ユーザーが作成)。吹っ飛びと着地もユーザーが書いた。`m_rb.m_vel` は毎フレーム0になるので、速度は重力の累積から毎フレーム作る(`EnemyHitAir` と同じ)。
+- 直した3点:
+  - **Enter は当たり判定の最中(OnDamage の中)に呼ばれる**ので、そこで `SetIsFloor(false)` しても効かず、次のフレームに `IsLeftFloor` で `PlayerStateFall` に移っていた → 上昇中は Update で `SetIsFloor(false)`。
+  - `knockBackPower.x` は向きではなく水平の強さ → `Player::CalcKnockBackDir(other)`(攻撃の持ち主→プレイヤーの水平の向き)に掛ける。ミサイルをきりもみにするなら、持ち主(ボス)ではなく判定の位置を基準にする分岐が要る。
+  - 着地したら速度を入れない(XZ が残って滑っていた)。
+- 敵と同じく `HitInfo` で受ける。`OnDamage` で `knockBackVel` を作って渡し、ステートは `m_info.knockBackVel + 重力` で飛ぶだけ。敵の吸着(toTarget)は足さない。`duration` は使わない(着地で終わる)。
+- 中は Phase で進める: `Fly`(吹っ飛び)→ 着地で `Down`(爆発アニメが38Fまで進むのを待つ)→ `GetUp`(`Get_Up_Combat`)→ Idle/Move。38Fで止めるのは、それより後のアニメが立ち姿に戻るため(`kDownEndFrame`)。
+  - 今の値だと着地は約40F、倒れきるのは約76Fでずれる。受け身は未実装(`Down` の間だけ回避で `GetUp` を飛ばす案)。
+- `knockBackY` が0以下だと最初から落下中の扱いで、地上ではその場に止まる。
+- MSBuild(Debug x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-11-07 プレイヤーに起き上がりのアニメを追加(Get_Up_Combat)
+- `data/Player03.mv1` のアニメを 95 → 96 本にした。`Player01Anim.csv` に key `GetUp` = `Get_Up_Combat`(65F)を追加。`PlayerHitKirimomiState` の `GetUp` で使う。
+- 仰向けから始まるので、`Ninja_HitReact_Explosion` の倒れた姿勢(32F以降)からつながる。向きも合っている。
+- `Ninja_HitReact_Explosion` は38Fまで仰向けで、39.9Fでは立ち姿に戻っている。最後まで流すと一瞬立って見えるかもしれないので、`ChangeAnim` の endFrame を38にするとよい。
+- 手順は `../tools/PlayerAnim/README.md`。FBX からはアニメだけを取り、メッシュ(髪の削減・マテリアル)は今の Player03.mv1 のまま保存した。
+  - Unity: `TruePlayer.controller` にクリップを追加、`SK_VEX_01` を Tools > Skinned Anim FBX Exporter で書き出し(FPS30、XZ固定 `root,pelvis`、**Y固定はOFF**)。
+  - FBX は scratchpad に出したので残っていない(この手順で作り直せる)。
+- 確認: 髪込みの三角形 65097・メッシュ23・マテリアル6・テクスチャ6は同じ。既存95本の骨の位置を比べて、94本は差 0.1 未満、`Run_Combat_to_Run` だけ最大 3.02(`Player01Anim.csv` では使っていない)。Debug の `-bench=180 -stage=3` で読み込んで正常終了。ゲームで起き上がりを流す確認はまだ。
+
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 
@@ -1355,6 +1413,8 @@
 ---
 
 ## TODO / 次にやること
+- [ ] **ステージ1の曲がり角(11/07)をゲームで確認**: 7か所の角を走って通れるか、カメラが回りきるか、角の直後の壁走り(特に角1の先・角3の先・角5の先)の向き、角の外から建物の裏や空が見えないか、角4・角6の見張りを背中から暗殺できるか、スタートから角1までの約170mが長くないか
+- [ ] ガードブレイクのチャンスUIをゲームで確認。チャンスの長さを決める(今は `kChanceTime` 60F×スロー0.2で実時間約5秒。リングもこの長さで減る)、チャンス中の無敵を決める
 - [ ] ステージ1の仕上げ(11/06)をゲームで確認: 敵の増え方と谷の8体の戦いやすさ、小物に敵が引っかからないか、血殺の赤いフォグが濃すぎないか、スキル演出のカメラで建物の裏が欠けて見えないか
 - [ ] **ステージ1(StageType::Cyber)をゲームで確認**: 8mの溝を壁走りで渡れるか(ぬれた通りの先の2連続も)、溝の区画(2枚)と鉄格子の通路(3枚)・ボス前(4枚)で続けて壁走りできるか(落下中に壁走りゾーンの壁へ張り付くようにしたので、ほかの所で意図せず張り付かないかも)、縦穴3か所を壁蹴りで登れるか(広場の出口の縦穴は6m)、10mの飛び降りで困らないか、駅の階段・斜面(約27〜30°)を登れるか、駅の見張りを暗殺できるか、エリア・敵の位置、フレームレート
 - [ ] ImGui のウィンドウをゲームの外に出してみる(描画が崩れないか・ゲームが止まらないか・キー入力)。Enemy Debug ウィンドウで攻撃を出して確認
@@ -1367,6 +1427,7 @@
 - [ ] BossArm: ゲームで付け根のずらしを ImGui で決めて定数に書き写す(今は0＝ボスの腕に重なる)。Anim の Play で腕だけ違うアニメが流れるか確認
 - [ ] BossArm Step2: 当たり判定・ステータス行・腕の長さで手の位置を制限、敵のステート(Hit/HitAir/AirStay/AirFall)を腕で通す。本物の腕モデル(骨・アニメ入り)
 - [ ] BattleSmoothCamera の戻る条件をゲームで確認(30F / 800 / 100 の調整)
+- [ ] BattleSmoothCamera のサイドの決め方をゲームで確認(壁ぎわで逆サイドへ入るか、見えない壁で変わらないか、少しかするだけで変わりすぎないか)
 - [ ] 落下禁止をゲームで確認(縁で止まる・辺に沿って滑る・角で止まる・攻撃・回避の後に歩けば落ちる)
 - [ ] カメラとステージの当たり判定(案A)をゲームで確認。めり込みが気になれば案B(MV1CollCheck_Sphere の二分探索)へ
 - [x] FOVパンチ(ゲームで強さ・長さを確認。場面ごとの強さ・向きは note の8章の表)

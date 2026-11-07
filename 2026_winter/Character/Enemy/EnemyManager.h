@@ -44,7 +44,7 @@ private:
 	void UpdateGroupAlert();//同じグループの誰かがプレイヤーを見つけていたら、全員に気づかせる
 	
 private:
-	static constexpr size_t kMaxCorpseNum = 5;//残しておく死体の最大数
+	static constexpr size_t kMaxCorpseNum = 3;//残しておく死体の最大数
 
 	std::vector<std::shared_ptr<EnemyBase>> m_enemies;
 	std::deque<std::shared_ptr<EnemyBase>> m_corpses;//死体を死んだ順に並べたもの

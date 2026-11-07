@@ -153,6 +153,15 @@ Vector3 CameraManager::FixStageCollision(const Vector3& pos, const Vector3& targ
 	return target + dir * m_collisionDist;
 }
 
+bool CameraManager::IsStageHit(const Vector3& start, const Vector3& end) const
+{
+	auto stage = m_stage.lock();
+	if (!stage || !Switch().isStageCollision) return false;
+
+	auto hit = MV1CollCheck_Line(stage->GetStageModelHandle(), -1, start.ToDxLibVector(), end.ToDxLibVector());
+	return hit.HitFlag != 0;
+}
+
 bool CameraManager::IsStageCollisionCamera() const
 {
 	//ここはよう悩み//一旦全部の判定をする

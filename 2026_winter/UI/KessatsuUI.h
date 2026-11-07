@@ -10,7 +10,7 @@ public:
 	~KessatsuUI() override;
 
 	void Init() override;
-	void Update(Input& input) override;
+	void Update() override;
 	void Draw() override;
 	//文字はプレイヤーより後ろに出す
 	UILayer GetLayer() const override { return UILayer::Back; }

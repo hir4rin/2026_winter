@@ -82,7 +82,7 @@ void PartBrokenKillUI::Init()
 	m_isVisible = false;
 }
 
-void PartBrokenKillUI::Update(Input& input)
+void PartBrokenKillUI::Update()
 {
 	//確殺が始まったらリアクションに入る
 	auto player = m_player.lock();

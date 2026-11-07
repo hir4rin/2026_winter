@@ -41,6 +41,11 @@ void BattleSmoothCamera::Enter(CameraData data)
 	m_moveFrame = 0;
 	//遷移元のカメラ位置(m_pos)から、近いほうの45度を決める
 	DecideRotateSide();
+	//近いほうが壁で、逆サイドが空いていたら逆サイドへ
+	if (IsWallHit(m_rotateAngle) && !IsWallHit(-m_rotateAngle))
+	{
+		m_rotateAngle = -m_rotateAngle;
+	}
 }
 
 void BattleSmoothCamera::Update()
@@ -78,13 +83,7 @@ void BattleSmoothCamera::Update()
 	//目標座標を計算
 	FixCameraPos();
 
-	enemyPos.y = playerPos.y;
-
-	//注視点//プレイヤーから敵のほうへ固定距離ずらす//高さはPlayerFollowCameraと同じ
-	Vector3 pToEVec = (enemyPos - playerPos).Normalize() * kPtoETargetLength;
-	//Vector3 pToEVec = (enemyPos - playerPos) * 0.45f;
-	m_goalTarget = (playerPos + pToEVec) + kCameraHeight;
-	//m_goalTarget = (playerPos +pToEVec) + kCameraHeight;
+	m_goalTarget = CalcGoalTarget(playerPos, enemyPos);
 
 	//Blend中はBlendのほうのlerp
 	if (IsBlending())
@@ -119,18 +118,23 @@ void BattleSmoothCamera::FixCameraPos()
 	if (!enemy)return;
 	if (!player)return;
 
+	m_goalPos = CalcGoalPos(player->GetRigidBody().GetPos(), enemy->GetRigidBody().GetPos(), m_rotateAngle);
+}
+
+Vector3 BattleSmoothCamera::CalcGoalPos(const Vector3& playerPos, const Vector3& enemyPos, float rotateAngle) const
+{
 	//カメラの座標を算出
 	//EtoPVecをプレイヤー中心に45度回転させ、playerの座標から足す
-	Vector3 playerPos = player->GetRigidBody().GetPos();
-	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+	Vector3 flatPlayerPos = playerPos;
+	Vector3 flatEnemyPos = enemyPos;
 	//y座標を0にする
-	playerPos.y = enemyPos.y = 0.0f;
+	flatPlayerPos.y = flatEnemyPos.y = 0.0f;
 
-	Vector3 EtoPVec = (playerPos - enemyPos).Normalize();
+	Vector3 EtoPVec = (flatPlayerPos - flatEnemyPos).Normalize();
 	EtoPVec *= kEtoPVecLength;
 
-	//水平方向の回転//どちら側に回すかはEnterで決めたものを使う
-	auto rotY = Matrix4x4::MakeRotationY(m_rotateAngle);
+	//水平方向の回転
+	auto rotY = Matrix4x4::MakeRotationY(rotateAngle);
 
 	//DxLibに変換
 	auto EtoPVecDx = EtoPVec.ToDxLibVector();
@@ -140,9 +144,34 @@ void BattleSmoothCamera::FixCameraPos()
 	auto RotPtoC = VTransform(EtoPVecDx, rotYMat);//回転させる
 	RotPtoC = VAdd(RotPtoC, kCameraHeight.ToDxLibVector());
 
-	auto pos = VAdd(RotPtoC, player->GetRigidBody().GetPos().ToDxLibVector());//プレイヤーの座標に足す
+	auto pos = VAdd(RotPtoC, playerPos.ToDxLibVector());//プレイヤーの座標に足す
 
-	m_goalPos = Vector3::FromDxLibVector(pos);
+	return Vector3::FromDxLibVector(pos);
+}
+
+Vector3 BattleSmoothCamera::CalcGoalTarget(const Vector3& playerPos, Vector3 enemyPos) const
+{
+	enemyPos.y = playerPos.y;
+
+	//注視点//プレイヤーから敵のほうへ固定距離ずらす//高さはPlayerFollowCameraと同じ
+	Vector3 pToEVec = (enemyPos - playerPos).Normalize() * kPtoETargetLength;
+	//Vector3 pToEVec = (enemyPos - playerPos) * 0.45f;
+	//m_goalTarget = (playerPos +pToEVec) + kCameraHeight;
+	return (playerPos + pToEVec) + kCameraHeight;
+}
+
+bool BattleSmoothCamera::IsWallHit(float rotateAngle) const
+{
+	auto cameraManager = m_owner.lock();
+	if (!cameraManager)return false;
+	auto enemy = cameraManager->GetAttackTarget();
+	auto player = cameraManager->GetContext()->m_player.lock();
+	if (!enemy)return false;
+	if (!player)return false;
+
+	Vector3 playerPos = player->GetRigidBody().GetPos();
+	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+	return cameraManager->IsStageHit(CalcGoalTarget(playerPos, enemyPos), CalcGoalPos(playerPos, enemyPos, rotateAngle));
 }
 
 void BattleSmoothCamera::CameraSetting()

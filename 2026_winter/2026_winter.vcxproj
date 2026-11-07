@@ -170,6 +170,7 @@
     <ClCompile Include="UI\FinisherUI.cpp" />
     <ClCompile Include="UI\AssasinTargetUI.cpp" />
     <ClCompile Include="UI\PartBrokenKillUI.cpp" />
+    <ClCompile Include="UI\GuardBreakChanceUI.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
@@ -190,6 +191,7 @@
     <ClCompile Include="Character\Player\PlayerState.cpp" />
     <ClCompile Include="Character\Player\State\Defence\PlayerStateDie.cpp" />
     <ClCompile Include="Character\Player\State\Defence\PlayerStateHit.cpp" />
+    <ClCompile Include="Character\Player\State\Defence\PlayerHitKirimomiState.cpp" />
     <ClCompile Include="Character\Player\State\Defence\PlayerAttackParried.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateFall.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateIdle.cpp" />
@@ -338,6 +340,7 @@
     <ClInclude Include="UI\FinisherUI.h" />
     <ClInclude Include="UI\AssasinTargetUI.h" />
     <ClInclude Include="UI\PartBrokenKillUI.h" />
+    <ClInclude Include="UI\GuardBreakChanceUI.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />
@@ -360,6 +363,7 @@
     <ClInclude Include="Character\Player\PlayerState.h" />
     <ClInclude Include="Character\Player\State\Defence\PlayerStateDie.h" />
     <ClInclude Include="Character\Player\State\Defence\PlayerStateHit.h" />
+    <ClInclude Include="Character\Player\State\Defence\PlayerHitKirimomiState.h" />
     <ClInclude Include="Character\Player\State\Defence\PlayerAttackParried.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateFall.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateIdle.h" />

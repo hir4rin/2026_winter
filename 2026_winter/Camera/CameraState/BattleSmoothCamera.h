@@ -4,6 +4,7 @@
 //バトル中、PlayerFollowCameraで攻撃がヒットしたときに、
 //敵→プレイヤーの軸から近いほうに45度傾けた位置へ回り込むカメラ
 //右スティックの入力・歩き出した・敵から離れた・空中の敵が近すぎるときはPlayerFollowCameraに戻る
+//入るときに近いほうが壁に当たり、逆サイドが当たらなければ逆サイドへ回り込む
 class BattleSmoothCamera :
     public CameraStateBase
 {
@@ -23,6 +24,9 @@ public:
 private:
 	void DecideRotateSide();//どちら側に傾けるかを決める//Enterで一度だけ呼ぶ
 	bool IsExitCondition(const Vector3& playerPos, const Vector3& enemyPos, bool isEnemyFloor);//PlayerFollowCameraに戻るか//timerでmove,runのフレームを数えて決める
+	Vector3 CalcGoalPos(const Vector3& playerPos, const Vector3& enemyPos, float rotateAngle) const;//この角度のときのカメラの位置
+	Vector3 CalcGoalTarget(const Vector3& playerPos, Vector3 enemyPos) const;//注視点
+	bool IsWallHit(float rotateAngle) const;//この角度のとき、カメラが壁に当たるか
 
 private:
 	float m_rotateAngle = 0.0f;//敵→プレイヤーベクトルを回転させる角度(符号でどちら側かを決める)

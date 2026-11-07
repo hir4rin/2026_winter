@@ -12,7 +12,7 @@ public:
 	~PlayerHUD() override;
 
 	void Init() override;
-	void Update(Input& input) override;
+	void Update() override;
 	void Draw() override;
 
 private:

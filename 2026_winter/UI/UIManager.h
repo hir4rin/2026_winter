@@ -21,7 +21,7 @@ public:
 	void Add(std::shared_ptr<UIBase> ui);
 	//登録しているUIをすべて外す(ハンドルは各UIのデストラクタで解放する)
 	void Clear();
-	void Update(Input& input);
+	void Update();
 	//3D描画の途中(プレイヤーを描く前)に呼ぶ//UILayer::BackのUIを描く
 	void DrawBack();
 	//3D描画がすべて終わった後に呼ぶ//UILayer::FrontのUIを描く
