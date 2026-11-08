@@ -26,6 +26,11 @@ void PlayerHitKirimomiState::Enter()
 	if (!player) return;
 	player->m_anim.ChangeAnim(player->GetAnimName("HitKirimomi"), false, 0.5f, kDownEndFrame);
 
+	//吹っ飛ぶ向きの逆(攻撃してきた側)を向く
+	Vector3 faceDir = m_info.knockBackVel * -1.0f;
+	faceDir.y = 0.0f;
+	if (faceDir.Magnitude() > 0.0f) player->m_targetVec = faceDir.Normalize();
+
 	m_gravity = 0.0f;
 	m_phase = Phase::Fly;
 }

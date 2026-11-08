@@ -192,6 +192,7 @@
     <ClCompile Include="Character\Player\State\Defence\PlayerStateDie.cpp" />
     <ClCompile Include="Character\Player\State\Defence\PlayerStateHit.cpp" />
     <ClCompile Include="Character\Player\State\Defence\PlayerHitKirimomiState.cpp" />
+    <ClCompile Include="Character\Player\State\Defence\PlayerHitAirState.cpp" />
     <ClCompile Include="Character\Player\State\Defence\PlayerAttackParried.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateFall.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateIdle.cpp" />
@@ -294,7 +295,8 @@
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\SceneController.cpp" />
     <ClCompile Include="Collision\SphereShape.cpp" />
-    <ClCompile Include="Render\BloodKillFog.cpp" />
+    <ClCompile Include="Render\BloodDecalManager.cpp" />
+    <ClCompile Include="Render\StageColorGrade.cpp" />
     <ClCompile Include="Render\TempTopLight.cpp" />
     <ClCompile Include="Stage\SkyBox.cpp" />
     <ClCompile Include="Stage\Stage.cpp" />
@@ -364,6 +366,7 @@
     <ClInclude Include="Character\Player\State\Defence\PlayerStateDie.h" />
     <ClInclude Include="Character\Player\State\Defence\PlayerStateHit.h" />
     <ClInclude Include="Character\Player\State\Defence\PlayerHitKirimomiState.h" />
+    <ClInclude Include="Character\Player\State\Defence\PlayerHitAirState.h" />
     <ClInclude Include="Character\Player\State\Defence\PlayerAttackParried.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateFall.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateIdle.h" />
@@ -469,7 +472,8 @@
     <ClInclude Include="Scene\SceneController.h" />
     <ClInclude Include="Collision\SphereShape.h" />
     <ClInclude Include="Collision\PolygonShape.h" />
-    <ClInclude Include="Render\BloodKillFog.h" />
+    <ClInclude Include="Render\BloodDecalManager.h" />
+    <ClInclude Include="Render\StageColorGrade.h" />
     <ClInclude Include="Render\TempTopLight.h" />
     <ClInclude Include="Render\CharacterLook.h" />
     <ClInclude Include="Main\FrameProfiler.h" />    <ClInclude Include="Stage\SkyBox.h" />

@@ -26,7 +26,7 @@ namespace
 
 	constexpr float kEfOffset = 80.0f;//エフェクトの座標のオフセット
 
-	constexpr int kUltStartFrame = 120;//必殺技の演出の開始フレーム数
+	constexpr int kUltStartFrame = 80;//必殺技の演出の開始フレーム数
 	constexpr float kUltTimeScaleRate = 0.1f;//必殺技演出中の時間スケール
 
 	constexpr int kSkillKessatuFrame = 60;//スキル血殺の演出の長さ(タイムスケールを掛けて減る)
@@ -216,7 +216,7 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 					//スキルと必殺の血殺を分ける
 					if (isUltimating)
 					{
-						System::GetInstance().GetBattleMgr()->SetUltStart(kSkillKessatuFrame);//スキル血殺の演出をスタートする
+						System::GetInstance().GetBattleMgr()->SetUltStart(kSkillKessatuFrame, other.GetWorldPos());//スキル血殺の演出をスタートする
 						if (!isLastHitEvent)
 						{
 							System::GetInstance().SetTimeScaleForFrames(kSkillKessatuTimeScaleRate, kSkillKessatuSlowFrame);//時間を遅くする//60フレームで元に戻す
@@ -225,7 +225,7 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 					}
 					else
 					{
-						System::GetInstance().GetBattleMgr()->SetUltStart(kUltStartFrame);//必殺技の演出をスタートする
+						System::GetInstance().GetBattleMgr()->SetUltStart(kUltStartFrame, other.GetWorldPos());//必殺技の演出をスタートする
 						if (!isLastHitEvent)
 						{
 							System::GetInstance().SetTimeScaleForFrames(kUltTimeScaleRate, kUltStartFrame);//時間を遅くする//60フレームで元に戻す

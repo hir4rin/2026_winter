@@ -25,6 +25,7 @@
 #include "Character/Player/State/Locomotion/PlayerStateWallRunKick.h"//以下同文
 #include "Character/Player/State/Defence/PlayerAttackParried.h"//以下同文
 #include "Character/Player/State/Defence/PlayerHitKirimomiState.h"//以下同文
+#include "Character/Player/State/Defence/PlayerHitAirState.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakChance.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakAttack.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateBossPartThrow.h"//以下同文
@@ -425,6 +426,7 @@ private:
 	friend class PlayerStateWallRunKick;
 	friend class PlayerAttackParried;
 	friend class PlayerHitKirimomiState;
+	friend class PlayerHitAirState;
 	friend class PlayerStateGuardBreakChance;
 	friend class PlayerStateGuardBreakAttack;
 	friend class PlayerStateBossPartThrow;

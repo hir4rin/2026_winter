@@ -23,7 +23,9 @@ namespace
 	constexpr float kEtoPVecLength = 150.0f;//敵→プレイヤーベクトルの長さ
 	constexpr float kRotateAngle = DX_PI_F / 3.0f;//カメラを回転させる角度
 
-	constexpr float kBlendDuration = 45.0f;//ブレンドにかけるフレーム数
+	constexpr float kCameraTargetDistanceRate = 25.0f;//カメラの注視点への倍率
+
+	constexpr float kBlendDuration = 10.0f;//ブレンドにかけるフレーム数
 	constexpr float kBlendEasingPower = 0.5f;//ブレンドのイージング指数
 
 	constexpr float kCameraNear = 10.0f;//ニアクリップ(0だとDxLibの深度計算が壊れて何も映らなくなる)
@@ -42,6 +44,10 @@ void UltCameraState::Enter(CameraData data)
 {
 	m_angleH = data.angleH;
 	m_angleV = data.angleV;
+	//当たった位置から始める//その一撃で敵が死んでいても寄れるように
+	m_enemyPos = System::GetInstance().GetBattleMgr()->GetUltBurstPos();
+	m_isTargetLost = false;
+	UpdateEnemyPos();
 	ResetBlend(data.pos, data.target);
 
 	SetCameraNearFar(kCameraNear, kCameraFar);
@@ -51,25 +57,21 @@ void UltCameraState::Update()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto enemy = cameraManager->GetAttackTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
-	if (!enemy)
-	{
-		//敵がいない場合は、PlayerCameraに切り替える//このカメラが一番優先度高いとき
-		cameraManager->ChangeState(std::make_shared<PlayerFollowCamera>(m_owner));
-		return;
-	}
 	if (!player)return;
+
+	UpdateEnemyPos();
 
 	//目標ターゲットを計算
 	FixCameraPos();
 	//まず回転角度をlerpする
 	Vector3 playerPos = player->GetRigidBody().GetPos();
-	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+	Vector3 enemyPos = m_enemyPos;
 
 
 	//注視点
-	m_goalTarget = (playerPos + enemyPos) / 2 + kCameraHeight;
+	Vector3 EtoPVec = (playerPos - enemyPos).Normalize();
+	m_goalTarget = (playerPos + EtoPVec * kCameraTargetDistanceRate) + kCameraHeight;
 	//注視点の割合を決める//あんまり気に入ってない//なんか変だから値を小さくしている
 	enemyPos.y = playerPos.y;
 	float dis = (enemyPos - playerPos).Magnitude();
@@ -128,9 +130,7 @@ void UltCameraState::FixCameraPos()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto enemy = cameraManager->GetAttackTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
-	if (!enemy)return;
 	if (!player)return;
 
 	//auto rotX = Matrix4x4::MakeRotationX(0.16f);//固定
@@ -143,7 +143,7 @@ void UltCameraState::FixCameraPos()
 	//カメラの座標を算出
 	//PtoEVecの逆ベクトルを15度程度ずらす、playerの座標から足す
 	Vector3 playerPos = player->GetRigidBody().GetPos();
-	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+	Vector3 enemyPos = m_enemyPos;
 	//y座標を0にする
 	playerPos.y = enemyPos.y = 0.0f;
 
@@ -186,6 +186,21 @@ void UltCameraState::FixCameraPos()
 	m_goalPos = Vector3::FromDxLibVector(pos);
 }
 
+void UltCameraState::UpdateEnemyPos()
+{
+	//一度見失ったら、別の敵へカメラが飛ばないように取り直さない
+	if (m_isTargetLost)return;
+	auto cameraManager = m_owner.lock();
+	if (!cameraManager)return;
+	auto enemy = cameraManager->GetAttackTarget();
+	if (!enemy)
+	{
+		m_isTargetLost = true;
+		return;
+	}
+	m_enemyPos = enemy->GetRigidBody().GetPos();
+}
+
 void UltCameraState::CameraSetting()
 {
 }
@@ -193,15 +208,11 @@ void UltCameraState::CameraSetting()
 using BlendSetting = CameraStateBase::BlendSetting;
 BlendSetting UltCameraState::GetBlendSetting() const
 {
-	auto cameraManager = m_owner.lock();
-	auto enemy = cameraManager ? cameraManager->GetAttackTarget() : nullptr;
-
-
 	return BlendSetting{
 		.mode = BlendSetting::Mode::Slerp,
 		.duration = kBlendDuration,
-		.easingMode = EasingMode::EaseIn,
+		.easingMode = EasingMode::EaseOut,
 		.easingPower = kBlendEasingPower,
-		.pivot = (enemy) ? enemy->GetRigidBody().GetPos() : Vector3(),
+		.pivot = m_enemyPos,
 	};
 }

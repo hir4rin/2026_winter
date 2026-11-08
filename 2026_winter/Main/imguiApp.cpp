@@ -1,5 +1,6 @@
 ﻿#include "imguiApp.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx11.h"
 #include <d3d11.h>
@@ -64,6 +65,9 @@ namespace
 	const char* const kJapaneseFontPath = "C:\\Windows\\Fonts\\meiryo.ttc";//日本語を出すためのフォント
 	constexpr float kJapaneseFontSize = 15.0f;
 	constexpr UINT kShiftJisCodePage = 932;
+
+	const char* const kOutsideWindowName = "Frame Time";//ゲームのウィンドウの外に出してよいウィンドウ
+	constexpr float kInsideMargin = 4.0f;//ほかのウィンドウをゲームのウィンドウの端から離す距離
 }
 
 //ImGuiを使えるようにする初期化処理。ここで「ImGuiの入れ物を作る」→「入力と描画の係(バックエンド)を登録する」→
@@ -77,8 +81,10 @@ void imguiApp::Init(HWND hwnd, ID3D11Device* device, ID3D11DeviceContext* contex
 	ImGuiIO& io = ImGui::GetIO();//入出力まわりの設定を取得する
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;//キーボードだけでもImGuiのUIを操作できるようにする設定
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;//ウィンドウ同士をくっつけられるようにする(docking版の機能)
-	//ゲームのウィンドウの外に出す機能(ViewportsEnable)は最初は切る(外のウィンドウを出す Present がたまに1フレーム近く止まってカクつくため)
-	//F2 の「Frame Time」の「ImGui windows outside」で入れられる
+	//ゲームのウィンドウの外に出す機能。F2 の「Frame Time」だけ最初から外に出す(FrameProfiler::SetupWindowPlacement)
+	//ほかのウィンドウはドラッグしない限り中のまま。外のウィンドウを出す Present がたまに止まってカクつくことがあるので、「Frame Time」の「Outside game window」で切れる
+	//(ImGui の決まりで、最初の NewFrame より前に入れておく)
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 	ImGui::StyleColorsDark();//見た目のテーマをダーク(黒っぽい配色)にする
 
@@ -127,6 +133,61 @@ void imguiApp::NewFrame()
 	ImGui_ImplDX11_NewFrame();//描画側の1フレーム分の準備
 	ImGui_ImplWin32_NewFrame();//入力側の1フレーム分の準備(マウス座標などの更新)
 	ImGui::NewFrame();//ImGui本体に「新しいフレームが始まった」と伝える
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) KeepWindowsInsideGame();
+}
+
+void imguiApp::KeepWindowsInsideGame()
+{
+	ImGuiContext& g = *ImGui::GetCurrentContext();
+	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+	const ImVec2 areaMin(mainViewport->Pos.x + kInsideMargin, mainViewport->Pos.y + kInsideMargin);
+	const ImVec2 areaMax(mainViewport->Pos.x + mainViewport->Size.x - kInsideMargin, mainViewport->Pos.y + mainViewport->Size.y - kInsideMargin);
+	if (areaMax.x <= areaMin.x || areaMax.y <= areaMin.y) return;//最小化中など
+
+	//はみ出さない位置と大きさにする。変わったら true
+	auto fit = [&](ImVec2& pos, ImVec2& size)
+		{
+			const ImVec2 newSize((std::min)(size.x, areaMax.x - areaMin.x), (std::min)(size.y, areaMax.y - areaMin.y));
+			const ImVec2 newPos((std::clamp)(pos.x, areaMin.x, areaMax.x - newSize.x), (std::clamp)(pos.y, areaMin.y, areaMax.y - newSize.y));
+			const bool isChanged = newPos.x != pos.x || newPos.y != pos.y || newSize.x != size.x || newSize.y != size.y;
+			pos = newPos;
+			size = newSize;
+			return isChanged;
+		};
+	//外に出すウィンドウと、ドラッグ中のウィンドウはそのまま
+	ImGuiWindow* outsideWindow = ImGui::FindWindowByName(kOutsideWindowName);
+	ImGuiDockNode* outsideNode = (outsideWindow && outsideWindow->DockNode) ? ImGui::DockNodeGetRootNode(outsideWindow->DockNode) : nullptr;
+	ImGuiWindow* movingWindow = g.MovingWindow ? g.MovingWindow->RootWindowDockTree : nullptr;
+
+	//ドッキングしたウィンドウのまとまり(一番上のノード)
+	for (int i = 0; i < g.DockContext.Nodes.Data.Size; ++i)
+	{
+		auto* node = static_cast<ImGuiDockNode*>(g.DockContext.Nodes.Data[i].val_p);
+		if (!node || !node->IsFloatingNode() || node == outsideNode) continue;
+		if (node->HostWindow && node->HostWindow == movingWindow) continue;
+		ImVec2 pos = node->Pos;
+		ImVec2 size = node->Size;
+		if (!fit(pos, size)) continue;
+		node->Pos = pos;
+		node->Size = size;
+		if (node->HostWindow)
+		{
+			ImGui::SetWindowPos(node->HostWindow, pos);
+			ImGui::SetWindowSize(node->HostWindow, size);
+		}
+	}
+	//ドッキングしていないウィンドウ
+	for (ImGuiWindow* window : g.Windows)
+	{
+		if (window->Flags & (ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_Popup | ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_DockNodeHost)) continue;
+		if (window->DockNode || window->DockNodeAsHost || window->IsFallbackWindow) continue;
+		if (window == outsideWindow || window == movingWindow) continue;
+		ImVec2 pos = window->Pos;
+		ImVec2 size = window->SizeFull;
+		if (!fit(pos, size)) continue;
+		ImGui::SetWindowPos(window, pos);
+		ImGui::SetWindowSize(window, size);
+	}
 }
 
 //組み立てたImGuiのウィンドウを、実際に画面に描画する関数
@@ -137,7 +198,11 @@ void imguiApp::Render()
 
 	ImGui::Render();//ここまでに組み立てたUIを、描画用のデータ(頂点情報)に変換する
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());//その頂点情報を実際にDirectX11でGPUに描かせる
+}
 
+void imguiApp::RenderPlatformWindows()
+{
+	if (!m_initialized)return;
 	//ゲームのウィンドウの外に出したImGuiのウィンドウを描く
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{

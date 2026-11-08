@@ -26,7 +26,7 @@ namespace
 
 	constexpr float stopAnimFrame = 1.58f;//Attackのアニメの手を上に上げた瞬間//一旦使っていない
 
-	constexpr float kColStart = 20.0f;
+	constexpr float kColStart = 23.0f;
 	constexpr float kColEnd = 30.0f;
 
 	const std::string kUltStartAnim = "Power_Attack_Start";//構え始め

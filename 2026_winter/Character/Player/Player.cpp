@@ -44,6 +44,9 @@ namespace
 	constexpr float kCameraShakePower = 2.5f;//カメラの揺れの強さ
 	constexpr float kCameraShakeTime = 5.0f;//カメラの揺れの時間
 
+	constexpr float kAirHitKnockBackXZ = 3.0f;//空中被弾で横に押される力
+	constexpr float kAirHitKnockBackY = 2.0f;//空中被弾で少しだけ浮く力
+
 
 	constexpr float kBloodWingScale = 14.0f;//必殺技状態の翼エフェクトのスケール//エフェクトは長さ10ほどで作っている
 	const char* const kBloodWingFrameName = "spine_05";//翼の付け根にするボーン//背骨の一番上(肩甲骨の高さ)
@@ -365,6 +368,17 @@ void Player::OnDamage(Collider& other, AttackData& data)
 		};
 		//吹き飛ばしステートにする
 		ChangeState(std::make_shared<PlayerHitKirimomiState>(GetWeakPtr(), hitinfo));
+		return;
+	}
+
+	//空中で被弾したら小さく吹っ飛んで落ちる//OnDamage中はIsFloorが使えないので前フレームの接地を見る
+	if (!WasFloor())
+	{
+		//吹き飛ぶ力は攻撃ではなくプレイヤー側の値
+		HitInfo hitinfo = {
+			.knockBackVel = CalcKnockBackDir(other) * kAirHitKnockBackXZ + Vector3(0.0f, kAirHitKnockBackY, 0.0f),
+		};
+		ChangeState(std::make_shared<PlayerHitAirState>(GetWeakPtr(), hitinfo));
 		return;
 	}
 

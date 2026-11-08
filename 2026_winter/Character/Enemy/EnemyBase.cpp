@@ -7,6 +7,7 @@
 #include "../../DataLoader/DataManager.h"
 #include "Battle/BattleManager.h"
 #include "Render/EffectManager.h"
+#include "Render/BloodDecalManager.h"
 #include "Battle/AttackTokenManager.h"
 #include <algorithm>
 #include <cassert>
@@ -350,6 +351,7 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	if (!m_isPartBroken && Utility::IsHitRate(static_cast<int>(data.brokenRate * m_status.partBreakRate)))
 	{
 		OnPartBreak();
+		PlayFloorBlood(BloodAmount::Small);
 	}
 
 
@@ -730,6 +732,23 @@ void EnemyBase::PlayHeadBreakBlood()
 	if (m_status.headFrame < 0)return;
 	const Vector3 neckPos = Vector3::FromDxLibVector(MV1GetFramePosition(m_modelHandle, m_status.headFrame));
 	PlayBlood(AsyncData::BloodSplashEffectB, neckPos);
+}
+
+void EnemyBase::PlayFloorBlood(BloodAmount amount)
+{
+	auto player = m_player.lock();
+	if (!player)return;
+
+	Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
+	toEnemy.y = 0.0f;
+	if (toEnemy.Magnitude() <= 0.0f)
+	{
+		toEnemy = player->GetTargetVec();//重なっているときはプレイヤーの正面に飛ばす
+	}
+	if (auto bloodMgr = System::GetInstance().GetBattleMgr()->GetBloodDecalMgr().lock())
+	{
+		bloodMgr->Spawn(m_rb.m_pos, toEnemy.Normalize(), amount);
+	}
 }
 
 void EnemyBase::FinisherPerformanceProcess()

@@ -3,6 +3,7 @@
 #include "Character/Enemy/EnemyBase.h"
 #include "Main/System.h"
 #include "../Camera/CameraManager.h"
+#include "Render/BloodDecalManager.h"
 
 
 namespace
@@ -114,6 +115,9 @@ void PlayerStateAirAssasin::Update()
 		player->m_rb.m_vel = Vector3(0.0f, 0.0f, 0.0f);
 		if (m_timer > kExecuteFrame)
 		{
+			assasinTarget->PlayFloorBlood(BloodAmount::Large);
+
+
 			m_state = AssasinState::End;
 			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::AirAssasinCamera);
 			System::GetInstance().SetTimeScale(1.0f);

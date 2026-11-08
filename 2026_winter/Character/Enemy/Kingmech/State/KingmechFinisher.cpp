@@ -293,7 +293,7 @@ void KingmechFinisher::ChangePhase(Phase next)
 
 	case Phase::Slash:
 		System::GetInstance().SetTimeScale(1.0f);
-		battle->SetUltStart(kUltFrame);
+		battle->SetUltStart(kUltFrame, owner->m_gatling->GetPos());
 		m_cutPoint = owner->m_gatling->GetPos();
 		playerState->PlayAnim(playerState->GetAnimNameOf("DashAttack"), false, 1.2f, -1.0f, 3.0f);
 		playerState->MoveTo(Point(-kPlayerEndBack, 0.0f, 0.0f), kSlashMoveFrame, EasingMode::EaseIn, 1.5f);
@@ -304,7 +304,6 @@ void KingmechFinisher::ChangePhase(Phase next)
 	case Phase::Sheath:
 		playerState->Warp(Point(-kPlayerEndBack, 0.0f, 0.0f), m_front * -1.0f);
 		playerState->PlayAnim(playerState->GetAnimNameOf("AttackPose"), true, 1.0f, -1.0f, 4.0f);
-		battle->GetFinisherScreen().isHideKessatsu = true;
 		SetShot(Point(-1230.0f, 280.0f, 60.0f), Point(-1130.0f, 250.0f, 60.0f),
 			Point(-200.0f, 0.0f, 300.0f), Point(-200.0f, 0.0f, 320.0f), kFovWide, kFovWide - 4.0f, kSheathTime + kSplitTime + kExplodeTime);
 		break;

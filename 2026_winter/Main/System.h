@@ -2,6 +2,7 @@
 #include <unordered_map>
 //#include "Sound/SoundManager.h"
 #include <memory>
+#include <source_location>
 #include <string>
 #include <vector>
 
@@ -98,18 +99,15 @@ public:
 	/// </summary>
 	void Terminate();
 
-	void SetTimeScale(float scale) { timeScale = scale; }
+	/// <summary>時間の流れを変える(変わったら、呼んだ場所を FrameProfiler に記録する)</summary>
+	void SetTimeScale(float scale, std::source_location location = std::source_location::current());
 	float GetTimeScale() const { return timeScale; }
 	/// <summary>
 	/// 時間の流れともとに戻るまでのフレーム数を設定する関数
 	/// </summary>
 	/// <param name="timescale">時間の流れ=通常時が1.0f</param>
 	/// <param name="frames">通常時に戻るまでのframe数</param>
-	void SetTimeScaleForFrames(float timescale, int frames)
-	{
-		timeScale = timescale;//時間のスケールを設定する
-		m_frameCount = frames;//フレームカウントを設定する
-	}
+	void SetTimeScaleForFrames(float timescale, int frames, std::source_location location = std::source_location::current());
 
 	/// <summary>
 	/// どのステージでも使うもの(プレイヤー・エフェクト)を非同期で読み込む(起動時に1回)

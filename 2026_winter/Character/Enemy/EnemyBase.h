@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Character/CharacterBase.h"
 enum class AsyncData : int;
+enum class BloodAmount : int;
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
 #include "Character/Enemy/State/Locomotion/EnemyChase.h"
 #include "Character/Enemy/State/Defence/EnemyGuard.h"
@@ -264,6 +265,7 @@ public:
 	virtual void OnAssasined();//暗殺確定時
 	virtual void OnAirAssasined();//空中暗殺確定時
 	virtual void OnPartBrokenKilled(PartBrokenPattern pattern);//確殺確定時
+	void PlayFloorBlood(BloodAmount amount);//床に血の跡を残す(血はプレイヤーの反対側へ飛ぶ)
 	bool GetIsExecuted()const { return m_isExecuted; }//確殺・暗殺が始まったかどうか//trueなら確殺・暗殺の対象にしない
 	bool GetIsPlayerFound()const { return m_isPlayerFound; }//プレイヤーを発見したかどうか//trueなら暗殺の対象にしない
 	void SetIsPlayerFound(bool isPlayerFound) { m_isPlayerFound = isPlayerFound; }

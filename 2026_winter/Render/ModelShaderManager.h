@@ -39,6 +39,10 @@ public:
 	void SetCutPlane(const VECTOR& normal, float distance, float rimWidth);
 	void ClearCutPlane() { m_isCutPlane = false; }
 
+	//DrawModelで描くモデルの色を変える(ステージ用)//rateはかかり具合(0～1)
+	void SetColorGrade(const COLOR_F& dark, const COLOR_F& bright, float blackLevel, float whiteLevel, float rate);
+	void ClearColorGrade();
+
 	//MV1DrawModelの代わりに呼ぶ
 	//黒くするモードのときは、モデルの頂点タイプに合った頂点シェーダー＋黒いピクセルシェーダーで描く
 	//それ以外は DxLib のいつもの光＋ステージの明かりを1回で描く(LitModelPS.hlsl)
@@ -94,6 +98,15 @@ private:
 	};
 	static constexpr int kCutSlot = 6;//EnemyCutPS.hlsl の register(b6)
 
+	//LitModelPS.hlsl の ColorGradeBuffer と同じ並び
+	struct ColorGradeConstant
+	{
+		FLOAT4 dark;//rgb:暗い所の色 a:かかり具合
+		FLOAT4 bright;//rgb:明るい所の色
+		FLOAT4 level;//x:黒の明るさ y:白の明るさ
+	};
+	static constexpr int kColorGradeSlot = 7;//LitModelPS.hlsl の register(b7)
+
 	std::array<int, DX_MV1_VERTEX_TYPE_NUM> m_vertexShaders = {};//添え字はDX_MV1_VERTEX_TYPE_〜
 	int m_blackPixelShader = -1;//真っ黒にするピクセルシェーダー
 	int m_litPixelShader = -1;//いつもの光＋明かりで描くピクセルシェーダー
@@ -102,6 +115,8 @@ private:
 	int m_cutBumpPixelShader = -1;//同じ(ノーマルマップのある頂点タイプ用)
 	int m_cutConstantBuffer = -1;
 	bool m_isCutPlane = false;
+	int m_colorGradeBuffer = -1;
+	bool m_isColorGrade = false;
 	int m_lightConstantBuffer = -1;
 	int m_lookPixelShader = -1;
 	int m_lookBumpPixelShader = -1;

@@ -5,6 +5,7 @@
 #include "Render/CharacterLook.h"
 #include "DataLoader/DataManager.h"
 #include "Stage/StageInfo.h"
+#include "FrameProfiler.h"
 #include <cassert>
 
 namespace
@@ -263,6 +264,18 @@ void System::Terminate()
 
 }
 
+void System::SetTimeScale(float scale, std::source_location location)
+{
+	if (scale != timeScale) FrameProfiler::GetInstance().RecordTimeScale(timeScale, scale, location.file_name(), static_cast<int>(location.line()));
+	timeScale = scale;
+}
+
+void System::SetTimeScaleForFrames(float timescale, int frames, std::source_location location)
+{
+	SetTimeScale(timescale, location);//時間のスケールを設定する
+	m_frameCount = frames;//フレームカウントを設定する
+}
+
 void System::Update()
 {
 	//サウンドのフェードなどを更新する
@@ -276,7 +289,7 @@ void System::Update()
 
 		if (m_frameCount <= 0)
 		{
-			timeScale = 1.0f;//時間のスケールを元に戻す
+			SetTimeScale(1.0f);//時間のスケールを元に戻す
 			m_frameCount = -1;//フレームカウントを0にする
 		}
 	}

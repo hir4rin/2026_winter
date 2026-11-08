@@ -21,7 +21,7 @@ public:
 	void Draw()const;
 	void OnCollision(Collider& other)override;
 	int GetStageModelHandle()const { return m_stageModelHandle;}
-	int GetStageViewHandle()const { return m_stageViewHandle; }//[BloodKillFog]
+	int GetStageViewHandle()const { return m_stageViewHandle; }
 	/// <summary>ステージの明かり(プレイヤーに近いものを点ける)</summary>
 	StageLights& GetLights() { return m_lights; }
 

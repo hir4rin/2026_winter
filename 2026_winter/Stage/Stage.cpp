@@ -85,7 +85,7 @@ void Stage::GameInit(const StageInfo& info)
 		const COLOR_F tunnelScale = GetColorF(kTunnelColorScale, kTunnelColorScale, kTunnelColorScale, 1.0f);
 		MV1SetAmbColorScale(m_tunnelHandle, tunnelScale);
 		MV1SetDifColorScale(m_tunnelHandle, tunnelScale);
-		//列車はマテリアルの環境光が明るさのほとんどなので、環境光だけ上げる(拡散は血殺のフォグが使う)
+		//列車はマテリアルの環境光が明るさのほとんどなので、環境光だけ上げる
 		MV1SetAmbColorScale(m_stageViewHandle, GetColorF(kTrainColorScale, kTrainColorScale, kTrainColorScale, 1.0f));
 	}
 	// モデルのポリゴンの当たり判定を構築する(第二引数を-1にすると全てのポリゴンを対象にする)
@@ -152,8 +152,8 @@ void Stage::Draw() const
 {
 	//MV1DrawModel(m_stageModelHandle);
 
-	//列車ステージは遠くを暗くする(血殺のフォグがかかっているときはそちらを使う)
-	const bool useTrainFog = m_tunnelHandle != -1 && !GetFogEnable();
+	//列車ステージは遠くを暗くする
+	const bool useTrainFog = m_tunnelHandle != -1;
 	if (useTrainFog)
 	{
 		SetFogEnable(TRUE);
@@ -161,7 +161,7 @@ void Stage::Draw() const
 		SetFogColor(kTrainFogColor, kTrainFogColor, kTrainFogColor);
 		SetFogStartEnd(kTrainFogStart, kTrainFogEnd);
 	}
-	const bool useNightFog = m_useNightFog && !GetFogEnable();
+	const bool useNightFog = m_useNightFog;
 	if (useNightFog)
 	{
 		SetFogEnable(TRUE);
@@ -198,7 +198,7 @@ void Stage::DrawTunnel() const
 	{
 		const float z = m_pos_graphic.z + i * kTunnelLength + m_tunnelScroll;
 		MV1SetPosition(m_tunnelHandle, VGet(m_pos_graphic.x, m_pos_graphic.y + kTunnelOffsetY, z));
-		MV1DrawModel(m_tunnelHandle);
+		ModelShaderManager::GetInstance().DrawModel(m_tunnelHandle);
 	}
 }
 

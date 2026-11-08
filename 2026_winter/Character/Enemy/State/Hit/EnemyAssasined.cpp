@@ -3,6 +3,7 @@
 #include "Collision/HitCol.h"
 #include "Character/Player/Player.h"
 #include "Main/System.h"
+#include "Render/BloodDecalManager.h"
 
 namespace
 {
@@ -78,6 +79,7 @@ void EnemyAssasined::Update()
 			m_state = AssasinState::Execute;
 			owner->OnHeadBreak();
 			owner->PlayHeadBreakBlood();
+			owner->PlayFloorBlood(BloodAmount::Large);
 		}
 		break;
 	case AssasinState::Execute:

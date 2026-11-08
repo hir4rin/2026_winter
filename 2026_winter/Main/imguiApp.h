@@ -56,6 +56,9 @@ public:
 	void NewFrame();
 	//ImGuiのウィンドウを組み立て終わった後、ScreenFlipの前に呼ぶ。「組み立てた内容を実際に画面に描いて」という合図
 	void Render();
+	//ゲームのウィンドウの外に出したImGuiのウィンドウを描く。ScreenFlip の後に呼ぶ
+	//(前に呼ぶと、外のウィンドウの Present に引っぱられてゲームの ScreenFlip が数ms遅くなるため)
+	void RenderPlatformWindows();
 
 	//デバッグ用ウィンドウ(Camera Debug/Camera Animator)を表示するかどうかを切り替える(F2キーに割り当てる想定)
 	//Releaseビルドでもこのフラグをtrueにすればデバッグウィンドウを使える
@@ -118,6 +121,10 @@ private:
 	//座標(m_camPos)と注視点(m_camTarget)から、角度・距離を逆算する(↑の計算の逆)
 	//「今のカメラは注視点から見て何度・どれくらいの距離にあるか」を求める処理
 	void RecalcAngleDistanceFromPos();
+
+	//「Frame Time」以外のウィンドウを、ゲームのウィンドウからはみ出さない位置・大きさに直す
+	//(はみ出すと ImGui が自動で外のウィンドウにして、その Present でカクつくため)
+	void KeepWindowsInsideGame();
 
 	//カメラアニメーターの再生を1フレーム分進める(再生中でなければ何もしない)
 	//DrawCameraAnimatorWindow()の中で毎フレーム呼ばれる

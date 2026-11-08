@@ -3,7 +3,7 @@
 #include <memory>
 #include "Scene/Scene.h"
 #include "Stage/StageInfo.h"
-#include "Render/BloodKillFog.h"//[BloodKillFog]
+#include "Render/StageColorGrade.h"
 #include "Render/TempTopLight.h"//[TempTopLight]
 
 class Player;
@@ -65,7 +65,7 @@ private:
 	std::unique_ptr<WallZoneEditor> m_wallZoneEditor;//ステージ編集モードで壁ゾーンを設置・編集するImGuiウィンドウ
 	std::unique_ptr<PhaseAreaEditor> m_phaseAreaEditor;//ステージ編集モードでフェーズ進行のエリアを編集するImGuiウィンドウ
 	std::unique_ptr<UIManager> m_uiManager;//このシーンで表示するUIをまとめて管理する
-	BloodKillFog m_bloodKillFog;//[BloodKillFog]血殺中に背景とステージを赤くする(お試し)
+	StageColorGrade m_stageColorGrade;//血殺中に背景とステージの色を変える
 	TempTopLight m_tempTopLight;//[TempTopLight]暗くて見づらいので真上から照らす(一時的)
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか

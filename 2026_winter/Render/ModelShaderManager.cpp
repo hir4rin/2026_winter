@@ -47,6 +47,7 @@ void ModelShaderManager::Init()
 	m_litPixelShader = LoadShaderWithMacro(kLitPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
 	m_litBumpPixelShader = LoadShaderWithMacro(kLitPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 	m_lightConstantBuffer = CreateShaderConstantBuffer(sizeof(StageLightConstant));
+	m_colorGradeBuffer = CreateShaderConstantBuffer(sizeof(ColorGradeConstant));
 	m_cutPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
 	m_cutBumpPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 	m_cutConstantBuffer = CreateShaderConstantBuffer(sizeof(CutConstant));
@@ -55,6 +56,7 @@ void ModelShaderManager::Init()
 
 	m_isInit = true;
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);//明かりの数を0で入れておく(明かりの無いステージでも CharacterLook が b4 を読むため)
+	ClearColorGrade();
 }
 
 void ModelShaderManager::Terminate()
@@ -74,6 +76,9 @@ void ModelShaderManager::Terminate()
 	m_litBumpPixelShader = -1;
 	if (m_lightConstantBuffer != -1)DeleteShaderConstantBuffer(m_lightConstantBuffer);
 	m_lightConstantBuffer = -1;
+	if (m_colorGradeBuffer != -1)DeleteShaderConstantBuffer(m_colorGradeBuffer);
+	m_colorGradeBuffer = -1;
+	m_isColorGrade = false;
 	if (m_cutPixelShader != -1)DeleteShader(m_cutPixelShader);
 	m_cutPixelShader = -1;
 	if (m_cutBumpPixelShader != -1)DeleteShader(m_cutBumpPixelShader);
@@ -95,6 +100,27 @@ void ModelShaderManager::ResetSceneState()
 	m_isBlackMode = false;
 	m_isCutPlane = false;
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);
+	ClearColorGrade();
+}
+
+void ModelShaderManager::SetColorGrade(const COLOR_F& dark, const COLOR_F& bright, float blackLevel, float whiteLevel, float rate)
+{
+	if (!m_isInit || m_colorGradeBuffer == -1)return;
+	auto* buffer = static_cast<ColorGradeConstant*>(GetBufferShaderConstantBuffer(m_colorGradeBuffer));
+	buffer->dark = { dark.r, dark.g, dark.b, rate };
+	buffer->bright = { bright.r, bright.g, bright.b, 0.0f };
+	buffer->level = { blackLevel, whiteLevel, 0.0f, 0.0f };
+	UpdateShaderConstantBuffer(m_colorGradeBuffer);
+	m_isColorGrade = true;
+}
+
+void ModelShaderManager::ClearColorGrade()
+{
+	if (m_colorGradeBuffer == -1)return;
+	auto* buffer = static_cast<ColorGradeConstant*>(GetBufferShaderConstantBuffer(m_colorGradeBuffer));
+	buffer->dark.w = 0.0f;
+	UpdateShaderConstantBuffer(m_colorGradeBuffer);
+	m_isColorGrade = false;
 }
 
 void ModelShaderManager::SetCutPlane(const VECTOR& normal, float distance, float rimWidth)
@@ -125,13 +151,14 @@ void ModelShaderManager::DrawModel(int modelHandle)
 		DrawModelWithShader(modelHandle, m_blackPixelShader);
 		return;
 	}
-	//明かりが無ければいつもの描画
-	if (m_stageLightNum <= 0 || m_litPixelShader == -1)
+	//明かりも色変えも無ければいつもの描画
+	if ((m_stageLightNum <= 0 && !m_isColorGrade) || m_litPixelShader == -1)
 	{
 		MV1DrawModel(modelHandle);
 		return;
 	}
 	BindStageLights();
+	SetShaderConstantBuffer(m_colorGradeBuffer, DX_SHADERTYPE_PIXEL, kColorGradeSlot);
 	DrawModelWithShader(modelHandle, m_litPixelShader, m_litBumpPixelShader);
 }
 

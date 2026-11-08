@@ -143,6 +143,7 @@ void Application::Run()
 		//このフレームの開始時間を取得
 		LONGLONG start = GetNowHiPerformanceCount();
 		FrameProfiler::GetInstance().BeginFrame();
+		FrameProfiler::GetInstance().SetFrameTimeScale(System::GetInstance().GetTimeScale());
 
 		//前のフレームに描画した内容をクリアする
 		ClearDrawScreen();
@@ -175,8 +176,12 @@ void Application::Run()
 		FrameProfiler::GetInstance().Mark("ImGui");
 		//描画した内容をすぐ画面に出す
 		//待ってから出すと絵が1フレーム古くなる
+		FrameProfiler::GetInstance().MarkGpuFrameEnd();
 		ScreenFlip();
 		FrameProfiler::GetInstance().Mark("Flip");
+		//外に出したImGuiのウィンドウはゲームの画面を出した後に描く
+		imguiApp::GetInstance().RenderPlatformWindows();
+		FrameProfiler::GetInstance().Mark("ImGui(out)");
 		//出した後にモニターの更新を待つ
 		//次のフレームは更新の直後から始まる
 		bool isWaited = m_paceMode == PaceMode::None;
@@ -202,6 +207,8 @@ void Application::Run()
 		}
 		//待ち時間の記録
 		FrameProfiler::GetInstance().Mark("Wait");
+		const bool isVBlankWaited = m_paceMode == PaceMode::WaitVSync || m_paceMode == PaceMode::VBlank;
+		FrameProfiler::GetInstance().UpdateLatency(isVBlankWaited);
 		const long long refreshIndex = GetRefreshIndex();
 		if (refreshIndex >= 0) FrameProfiler::GetInstance().SetRefreshIndex(refreshIndex);
 		FrameProfiler::GetInstance().EndFrame();

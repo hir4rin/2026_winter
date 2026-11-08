@@ -12,6 +12,7 @@
 #include "DataLoader/DataManager.h"
 #include "Collision/CollisionManager.h"
 #include "Render/EffectManager.h"
+#include "Render/BloodDecalManager.h"
 #include "Render/ModelShaderManager.h"
 #include "Stage/Stage.h"
 #include "Stage/SkyBox.h"
@@ -82,6 +83,8 @@ SceneMain::~SceneMain()
 {
 	//プレイヤー・ステージのコライダーをマネージャーから外してからモデルを解放する
 	CollisionManager::GetInstance().Terminate();
+	//ステージのモデルを消す前に血の準備を片付ける
+	if (auto bloodMgr = m_battleManager->GetBloodDecalMgr().lock()) bloodMgr->Terminate();
 	m_player.reset();
 	m_stage.reset();
 	//シェーダーは毎回コンパイルすると重いので消さない(Application::Terminate で消す)
@@ -173,6 +176,7 @@ void SceneMain::Init()
 	m_battleManager = std::make_shared<BattleManager>();
 	m_battleManager->Init();
 	System::GetInstance().SetBattleMgr(m_battleManager);
+	if (auto bloodMgr = m_battleManager->GetBloodDecalMgr().lock()) bloodMgr->Init(m_stage->GetStageModelHandle(), m_stage->GetStageViewHandle());
 
 	//プレイヤー追従カメラ
 	m_cameraManager->Init(m_player, m_stage);
@@ -289,8 +293,8 @@ void SceneMain::NormalUpdate()
 
 	m_uiManager->Update();
 
-	//[BloodKillFog]必殺技中かどうかで赤いフォグのかかり具合を進める
-	m_bloodKillFog.Update(battleMgr->GetIsUltimating());
+	//血殺中はステージの色を変える
+	m_stageColorGrade.Update(battleMgr->GetIsUltimating());
 
 //#ifdef _DEBUG
 	//F4キーでボスの一つ手前のフェーズへ飛ぶ
@@ -361,25 +365,26 @@ void SceneMain::FadeInDraw()
 void SceneMain::NormalDraw()
 {
 	if (m_skyBox) m_skyBox->Draw();
-	m_bloodKillFog.DrawBackground();//[BloodKillFog]
+	m_stageColorGrade.DrawBackground();
 
 	DrawGrid();
 	FrameProfiler::GetInstance().Mark("Draw:Bg");
 
 	//ステージを先に描く(明かりの光の重ね描きは深さを少し手前にずらしているので、キャラを後に描いて足元へのはみ出しを上書きする)
-	m_bloodKillFog.BeginStage(m_stage->GetStageViewHandle());//[BloodKillFog]
+	m_stageColorGrade.Begin();
 	m_stage->Draw();
-	m_bloodKillFog.EndStage(m_stage->GetStageViewHandle());//[BloodKillFog]
+	if (auto bloodMgr = m_battleManager->GetBloodDecalMgr().lock()) bloodMgr->Draw();//床の血の跡
+	m_stageColorGrade.End();
 	FrameProfiler::GetInstance().Mark("Draw:Stage");
+	//2DのUIは深度を書かないので、後から描いた3Dに上書きされる
+	//敵・プレイヤーより後ろに出したいUI(血殺の文字など)はここで描く
+	m_uiManager->DrawBack();
 	//血殺中は敵を真っ黒にする
 	ModelShaderManager::GetInstance().SetBlackMode(System::GetInstance().GetBattleMgr()->GetIsUltimating());
 	m_enemyManager->Draw();
 	ModelShaderManager::GetInstance().SetBlackMode(false);
 	FrameProfiler::GetInstance().Mark("Draw:Enemy");
 
-	//2DのUIは深度を書かないので、後から描いた3Dに上書きされる
-	//プレイヤーより後ろに出したいUI(血殺
-	m_uiManager->DrawBack();
 	m_player->Draw();
 	FrameProfiler::GetInstance().Mark("Draw:Player");
 

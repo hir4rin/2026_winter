@@ -43,6 +43,14 @@ cbuffer StageLightBuffer : register(b4)
 	float4 g_Param;						// x:数 y,z:(使っていない) w:裏側への回り込み
 };
 
+// ステージの色変え(ModelShaderManager が b7 に入れる)
+cbuffer ColorGradeBuffer : register(b7)
+{
+	float4 g_GradeDark;		// rgb:暗い所の色 a:かかり具合
+	float4 g_GradeBright;	// rgb:明るい所の色
+	float4 g_GradeLevel;	// x:これより暗いと暗い所の色 y:これより明るいと明るい所の色
+};
+
 #define LIGHTTYPE_DIRECTIONAL 3
 
 
@@ -89,6 +97,14 @@ float4 main(PS_INPUT input) : SV_TARGET
 
 	// フォグ(頂点シェーダーが Fog.x に計算済み。フォグが無いときは 1)
 	color = lerp(g_Common.Fog.Color.rgb, color, saturate(input.Fog.x * input.Fog.y));
+
+	// 色変え(フォグの色も一緒に変える)
+	if (g_GradeDark.a > 0.0f)
+	{
+		float luma = dot(color, float3(0.299f, 0.587f, 0.114f));
+		luma = saturate((luma - g_GradeLevel.x) / (g_GradeLevel.y - g_GradeLevel.x));
+		color = lerp(color, lerp(g_GradeDark.rgb, g_GradeBright.rgb, luma), g_GradeDark.a);
+	}
 
 	return float4(color, alpha);
 }

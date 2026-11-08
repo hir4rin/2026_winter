@@ -111,7 +111,10 @@
     <ClCompile Include="Stage\Phase\PhaseAreaEditor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Render\BloodKillFog.cpp">
+    <ClCompile Include="Render\BloodDecalManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\StageColorGrade.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Render\TempTopLight.cpp">
@@ -163,6 +166,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\State\Defence\PlayerHitKirimomiState.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Player\State\Defence\PlayerHitAirState.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Character\Player\State\Defence\PlayerAttackParried.cpp">
@@ -638,7 +644,10 @@
     <ClInclude Include="Stage\WallZone\WallZoneEditor.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Render\BloodKillFog.h">
+    <ClInclude Include="Render\BloodDecalManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\StageColorGrade.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Render\TempTopLight.h">
@@ -699,6 +708,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\State\Defence\PlayerHitKirimomiState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Player\State\Defence\PlayerHitAirState.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Character\Player\State\Defence\PlayerAttackParried.h">

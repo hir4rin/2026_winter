@@ -42,6 +42,10 @@ void SkillKessatuCamera::Enter(CameraData data)
 {
 	m_angleH = data.angleH;
 	m_angleV = data.angleV;
+	//当たった位置から始める//その一撃で敵が死んでいても寄れるように
+	m_enemyPos = System::GetInstance().GetBattleMgr()->GetUltBurstPos();
+	m_isTargetLost = false;
+	UpdateEnemyPos();
 	ResetBlend(data.pos, data.target);
 
 	SetCameraNearFar(kCameraNear, kCameraFar);
@@ -51,21 +55,16 @@ void SkillKessatuCamera::Update()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto enemy = cameraManager->GetAttackTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
-	if (!enemy)
-	{
-		//敵がいない場合は、PlayerCameraに切り替える//このカメラが一番優先度高いとき
-		cameraManager->ChangeState(std::make_shared<PlayerFollowCamera>(m_owner));
-		return;
-	}
 	if (!player)return;
+
+	UpdateEnemyPos();
 
 	//目標ターゲットを計算
 	FixCameraPos();
 	//まず回転角度をlerpする
 	Vector3 playerPos = player->GetRigidBody().GetPos();
-	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+	Vector3 enemyPos = m_enemyPos;
 
 
 	//注視点
@@ -128,9 +127,7 @@ void SkillKessatuCamera::FixCameraPos()
 {
 	auto cameraManager = m_owner.lock();
 	if (!cameraManager)return;
-	auto enemy = cameraManager->GetAttackTarget();
 	auto player = cameraManager->GetContext()->m_player.lock();
-	if (!enemy)return;
 	if (!player)return;
 
 	//auto rotX = Matrix4x4::MakeRotationX(0.16f);//固定
@@ -143,7 +140,7 @@ void SkillKessatuCamera::FixCameraPos()
 	//カメラの座標を算出
 	//PtoEVecの逆ベクトルを15度程度ずらす、playerの座標から足す
 	Vector3 playerPos = player->GetRigidBody().GetPos();
-	Vector3 enemyPos = enemy->GetRigidBody().GetPos();
+	Vector3 enemyPos = m_enemyPos;
 	//y座標を0にする
 	playerPos.y = enemyPos.y = 0.0f;
 
@@ -186,6 +183,21 @@ void SkillKessatuCamera::FixCameraPos()
 	m_goalPos = Vector3::FromDxLibVector(pos);
 }
 
+void SkillKessatuCamera::UpdateEnemyPos()
+{
+	//一度見失ったら、別の敵へカメラが飛ばないように取り直さない
+	if (m_isTargetLost)return;
+	auto cameraManager = m_owner.lock();
+	if (!cameraManager)return;
+	auto enemy = cameraManager->GetAttackTarget();
+	if (!enemy)
+	{
+		m_isTargetLost = true;
+		return;
+	}
+	m_enemyPos = enemy->GetRigidBody().GetPos();
+}
+
 void SkillKessatuCamera::CameraSetting()
 {
 }
@@ -193,15 +205,11 @@ void SkillKessatuCamera::CameraSetting()
 using BlendSetting = CameraStateBase::BlendSetting;
 BlendSetting SkillKessatuCamera::GetBlendSetting() const
 {
-	auto cameraManager = m_owner.lock();
-	auto enemy = cameraManager ? cameraManager->GetAttackTarget() : nullptr;
-
-
 	return BlendSetting{
 		.mode = BlendSetting::Mode::Slerp,
 		.duration = kBlendDuration,
-		.easingMode = EasingMode::EaseIn,
+		.easingMode = EasingMode::EaseOut,
 		.easingPower = kBlendEasingPower,
-		.pivot = (enemy) ? enemy->GetRigidBody().GetPos() : Vector3(),
+		.pivot = m_enemyPos,
 	};
 }
