@@ -7,6 +7,7 @@
 #include "Collision/AttackCol.h"
 #include "Camera/CameraManager.h"
 #include "Camera/LockOnManager.h"
+#include "Battle/BattleManager.h"
 #include "DataLoader/DataManager.h"
 #include "Character/Enemy/EnemyBase.h"
 #include "Render/ModelShaderManager.h"
@@ -46,6 +47,10 @@ namespace
 
 	constexpr float kAirHitKnockBackXZ = 3.0f;//空中被弾で横に押される力
 	constexpr float kAirHitKnockBackY = 2.0f;//空中被弾で少しだけ浮く力
+
+	constexpr int kSkillKessatuFrame = 60;//スキル血殺の演出の長さ(タイムスケールを掛けて減る)
+	constexpr int kSkillKessatuSlowFrame = 60;//スキル血殺のスローの長さ(実フレーム)
+	constexpr float kSkillKessatuTimeScaleRate = 0.1f;//スキル血殺中の時間スケール
 
 
 	constexpr float kBloodWingScale = 14.0f;//必殺技状態の翼エフェクトのスケール//エフェクトは長さ10ほどで作っている
@@ -419,6 +424,27 @@ void Player::OnJustDodge(Collider& other, AttackData& data)
 	//現在の状態に通知する//回避状態以外は何もしない
 	if (!m_currentState)return;
 	m_currentState->OnJustDodge(other, data);
+}
+
+float Player::GetAttackFrame()
+{
+	//ステートがないときは今のアニメのフレームを返す//保険
+	const float animFrame = m_anim.GetNowAnimFrame();
+
+	//窓口
+	return m_currentState ? m_currentState->GetAttackFrame(animFrame) : animFrame;
+}
+
+void Player::StartSkillKessatsu(const Vector3& pos)
+{
+	auto battleMgr = System::GetInstance().GetBattleMgr();
+	battleMgr->SetUltStart(kSkillKessatuFrame, pos);
+	if (battleMgr->GetIsLastHitEventPlaying())return;
+	System::GetInstance().SetTimeScaleForFrames(kSkillKessatuTimeScaleRate, kSkillKessatuSlowFrame);
+	if (auto cameraManager = m_cameraManager.lock())
+	{
+		cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::SkillKessatuCamera);
+	}
 }
 
 void Player::ForceIdleState()

@@ -43,6 +43,13 @@ protected:
 	//ドロップ攻撃の着地時に吹き飛ばしの当たり判定を置く//通常攻撃とスキル攻撃で共通
 	void InpuctAttackSetUp();
 	float ResolveTransitionFrame(float csvFrame, float defaultRate);//CSVのフレームが負の値なら、デフォルトの進行率をフレームに変換して返す
+
+
+
+	//今の攻撃のフレームを返す//m_owner->GetAnimFrame()で取得した値を、現在のコンボノードのアニメーションのフレームに変換して返す
+	float GetNowFrame();
+	//今の攻撃のフレームがstartFrame~endFrameの間にあるか
+	bool IsFrameBetween(float startFrame, float endFrame);
 protected:
 	//次のコンボ段へ遷移中か//trueのときはExitでコンボ段数をリセットしない
 	//同じクラスのステートへ遷移するときだけtrueにする(別クラスへ渡すと前の段のcurrentComboIndexが残ってしまう)

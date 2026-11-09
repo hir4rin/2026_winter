@@ -263,7 +263,8 @@ void PlayerStateAttackBase::AttackMoveMent()
 
 		//コンボノードで設定されたフレームの間だけ突進
 		float moveEndFrame = ResolveTransitionFrame(node.moveEndFrame, kDefaultMoveEndRate);
-		if (player->m_anim.IsAnimFrameBetween(node.moveStartFrame, moveEndFrame))
+		//アニメーションがその引数の間かどうか
+		if (IsFrameBetween(node.moveStartFrame, moveEndFrame))
 		{
 			player->m_rb.m_vel = player->m_targetVec * node.moveSpeedX;//攻撃の最初の数秒は前に突進する
 		}
@@ -275,7 +276,7 @@ void PlayerStateAttackBase::AttackMoveMent()
 	else//上下差あり//終了は地面につくまで(上昇は速度が0になるまで)なので、moveEndFrameは使わない
 	{
 		//moveStartFrameまでは動かない(重力も加算しない)
-		if (player->m_anim.GetNowAnimFrame() < node.moveStartFrame)
+		if (GetNowFrame() < node.moveStartFrame)
 		{
 			player->m_rb.m_vel = Vector3(0, 0, 0);
 			return;
@@ -338,7 +339,7 @@ bool PlayerStateAttackBase::UpdateAttackWindow(AttackCol& col, const ComboNode& 
 	int activeWindow = -1;
 	for (int i = 0; i < static_cast<int>(node.attackColStartFrames.size()); ++i)
 	{
-		if (player->m_anim.IsAnimFrameBetween(node.attackColStartFrames[i], node.attackColEndFrames[i]))
+		if (IsFrameBetween(node.attackColStartFrames[i], node.attackColEndFrames[i]))
 		{
 			activeWindow = i;
 			break;
@@ -380,7 +381,7 @@ bool PlayerStateAttackBase::UpdateDropAttackWindow(AttackCol& col, const ComboNo
 	int activeWindow = -1;
 	for (int i = 0; i < static_cast<int>(node.attackColStartFrames.size()); ++i)
 	{
-		if (player->m_anim.IsAnimFrameBetween(node.attackColStartFrames[i], node.attackColEndFrames[i]))
+		if (IsFrameBetween(node.attackColStartFrames[i], node.attackColEndFrames[i]))
 		{
 			activeWindow = i;
 			break;
@@ -530,5 +531,21 @@ float PlayerStateAttackBase::ResolveTransitionFrame(float csvFrame, float defaul
 	//CSVで指定されていたらそのフレームを使う
 	if (csvFrame >= 0.0f) return csvFrame;
 	//負の値なら、デフォルトの進行率をフレームに変換する
-	return player->m_anim.GetAnimEndFrame() * defaultRate;
+	return GetAttackEndFrame(player->m_anim.GetAnimEndFrame()) * defaultRate;
+}
+
+float PlayerStateAttackBase::GetNowFrame()
+{
+	auto player = m_owner.lock();
+	if (!player) return 0.0f;
+	
+	return GetAttackFrame(player->m_anim.GetNowAnimFrame());
+}
+
+bool PlayerStateAttackBase::IsFrameBetween(float startFrame, float endFrame)
+{
+	//現在のアニメフレームか、スキルの進行フレームを取得
+	const float frame = GetNowFrame();
+
+	return frame >= startFrame && frame < endFrame;
 }

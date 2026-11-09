@@ -20,6 +20,10 @@ public:
     void Update() override;
     void Exit() override;
 	void DebugDraw()override;
+
+	float GetAttackFrame(float)const override { return m_frame; }
+	float GetAttackEndFrame(float)const override { return m_endFrame; }
+
 private:
 	void AttackInputCheck();//攻撃入力をチェックする関数
 	int  SelectAnimInit();//スキル攻撃の何段目を再生するか決める
@@ -40,10 +44,20 @@ private:
 	void UpdateSkillAttackCol();//位置を分身に合わせて、CSVのフレームでON/OFF//AttackMoveMentの後に呼ぶ
 	void ReleaseSkillAttackCol();//スキル用の攻撃判定を消す
 
+	void AdvanceFrame();//自前のフレームとアニメを進める
+	void EndSkill();//Idle/Move/Fallへ戻す
+	void StartKessatsu();//分身を消して血殺に入る
+private:
+
 	std::shared_ptr<SkillAttackCol> m_skillAttackCol;//地上スキル1用の攻撃判定//地上スキル1以外はnullptr
 	int m_ghostEffectHandle = -1;//再生中の分身エフェクトのハンドル//-1なら再生していない
 	int m_nextComboIndex = -1;//次のスキル攻撃の段数//m_nextAttackTypeがSkillAttackのときだけ使う
 	AttackType m_nextAttackType = AttackType::None;//予約された次の攻撃の種類//SkillAttackなら次の段、弱・強ならPlayerStateAttackへ
 	bool m_isComboInputReserved = false;//コンボ入力を受け付けたかどうかのフラグ
+
+	float m_frame = 0.0f;//経過フレーム
+	float m_endFrame = 0.0f;//終わりのフレーム
+	float m_frameSpeed = 1.0f;//CSVの再生速度
+	bool m_isKessatsuPose = false;//血殺の姿勢で止まっている
 };
 

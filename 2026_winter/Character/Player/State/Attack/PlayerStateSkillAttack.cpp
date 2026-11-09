@@ -10,6 +10,7 @@
 #include "Main/System.h"
 #include "EffekseerForDXLib.h"
 #include "Character/Enemy/EnemyBase.h"
+#include <algorithm>
 
 namespace
 {
@@ -30,6 +31,9 @@ namespace
 	//スキル1用の攻撃判定
 	constexpr float kSkillAttackColRadius = 150.0f;//半径//とりあえず通常攻撃と同じ
 	const Vector3 kSkillAttackColOffset = Vector3(0.0f, 100.0f, 0.0f);//敵の足元だと低いので上にずらす
+
+	const char* const kKessatsuPoseAnim = "Dodge_Combat_F";//分身の姿勢のアニメ
+	constexpr float kKessatsuPoseFrame = 13.0f;//分身の姿勢のフレーム
 }
 
 PlayerStateSkillAttack::PlayerStateSkillAttack(std::weak_ptr<Player> player):
@@ -53,7 +57,23 @@ void PlayerStateSkillAttack::Enter()
 	//スキル攻撃の何段目を再生するか決める
 	int currentComboIndex = SelectAnimInit();
 	const ComboNode& node = player->m_comboChain[currentComboIndex];
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, node.blendFrame);
+	//スキル1,2は分身の姿勢で止めておく
+	if (IsSkillAttack1(currentComboIndex) || currentComboIndex == ComboIndex::SkillAttack2)
+	{
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, kKessatsuPoseAnim, false, 0.0f, -1.0f, kKessatsuPoseFrame, 0.0f);
+	}
+	else
+	{
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, node.blendFrame);
+	}
+
+	//初期化
+	m_frame = 0.0f;
+	m_frameSpeed = node.animTimeScale;
+	const float total = player->m_anim.GetAnimTotalFrame(node.animName);
+	//csvのendFrameが負の値なら総フレーム数を使う、総フレーム数を超える場合は総フレーム数に収める
+	m_endFrame = (node.endFrame < 0.0f) ? total : (std::min)(node.endFrame, total);
+
 	//打ち上げは上昇をプログラム(moveSpeedY)で行うので、アニメーションの上昇を見た目から消す
 	if (currentComboIndex == ComboIndex::SkillAttack0)
 	{
@@ -86,6 +106,18 @@ void PlayerStateSkillAttack::Update()
 	if (!player) return;
 	auto& input = Input::GetInstance();
 
+	//血殺の姿勢の間は移動も判定も通さない
+	if (m_isKessatsuPose)
+	{
+		if (System::GetInstance().GetBattleMgr()->GetIsUltimating())
+		{
+			player->m_anim.Update();
+			return;
+		}
+		EndSkill();
+		return;
+	}
+
 	//攻撃中の移動処理
 	AttackMoveMent();
 	//スキル1の判定//AttackMoveMentがm_attackColをONにしてくるので、その後で消す(スキル1のみ
@@ -96,7 +128,7 @@ void PlayerStateSkillAttack::Update()
 	UpdateGhostEffect();
 
 	const ComboNode& currentNode = player->m_comboChain[player->m_comboInfo.currentComboIndex];
-	float nowFrame = player->m_anim.GetNowAnimFrame();
+	float nowFrame = m_frame;
 	float actionCancelFrame = ResolveTransitionFrame(currentNode.actionCancelFrame, kDefaultActionCancelRate);
 	float cancelFrame = ResolveTransitionFrame(currentNode.cancelFrame, kDefaultCancelRate);
 
@@ -128,7 +160,7 @@ void PlayerStateSkillAttack::Update()
 		}
 			
 		//アニメーションの更新
-		player->m_anim.Update();
+		AdvanceFrame();
 		return;
 	}
 
@@ -141,14 +173,26 @@ void PlayerStateSkillAttack::Update()
 			return;
 		}
 		//アニメーションの更新
-		player->m_anim.Update();
+		AdvanceFrame();
 		return;
 	}
 
 	//血殺中は入力も遷移もしない
 	if (System::GetInstance().GetBattleMgr()->GetIsUltimating())
 	{
-		player->m_anim.Update();
+		AdvanceFrame();
+		return;
+	}
+
+	//旗が立ったらキャンセルせず、終わりで血殺
+	if (player->IsKessatsuReserved())
+	{
+		if (m_frame >= m_endFrame)
+		{
+			StartKessatsu();
+			return;
+		}
+		AdvanceFrame();
 		return;
 	}
 
@@ -198,32 +242,14 @@ void PlayerStateSkillAttack::Update()
 	}
 
 	//コンボ予約がなく、アニメーションが終わったとき
-	if (player->m_anim.GetAnimEndFlag())
+	if (m_frame >= m_endFrame)
 	{
-		player->m_rb.m_vel.y = 0.0f;//y軸の速度を0に戻す
-		if (player->IsFloor())
-		{
-			if (input.IsLeftStickInput())
-			{
-				//入力があればMove状態に遷移する
-				player->ChangeState(std::make_shared<PlayerStateMove>(m_owner));
-				return;
-			}
-			else
-			{
-				player->ChangeState(std::make_shared<PlayerStateIdle>(m_owner));
-				return;
-			}
-		}
-		else//空中は落下状態に移行
-		{
-			player->ChangeState(std::make_shared<PlayerStateFall>(m_owner));
-			return;
-		}
+		EndSkill();
+		return;
 	}
 
 	//アニメーションの更新
-	player->m_anim.Update();
+	AdvanceFrame();
 }
 
 void PlayerStateSkillAttack::Exit()
@@ -236,6 +262,7 @@ void PlayerStateSkillAttack::Exit()
 		//落下禁止を無効化
 		player->SetPreventFall(false);
 		player->m_comboInfo.isHit = false;
+		player->ClearKessatsuReserve();
 
 		if (!m_isComboTransition)
 		{
@@ -278,7 +305,7 @@ void PlayerStateSkillAttack::AttackInputCheck()
 	//攻撃の入力を受け付けるか
 	float inputStartFrame = ResolveTransitionFrame(currentNode.comboInputStartFrame, kDefaultComboInputStartRate);
 	float inputEndFrame = ResolveTransitionFrame(currentNode.comboInputEndFrame, kDefaultComboInputEndRate);
-	float nowFrame = player->m_anim.GetNowAnimFrame();
+	float nowFrame = m_frame;
 	bool canInput = nowFrame >= inputStartFrame && nowFrame <= inputEndFrame;//コンボ入力受付時間内かどうか
 	if (!canInput)return;//コンボ入力受付時間外なら、ここで処理を終える
 
@@ -596,4 +623,46 @@ void PlayerStateSkillAttack::ReleaseSkillAttackCol()
 		m_skillAttackCol->SetLifeTimeLimited();
 		m_skillAttackCol.reset();
 	}
+}
+
+void PlayerStateSkillAttack::AdvanceFrame()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+
+	//自前のフレームを進める//m_frameSpeedはCSVのanimTimeScaleで決まる
+	float frame = m_frame + System::GetInstance().GetTimeScale() * m_frameSpeed;
+
+	m_frame = (std::min)(frame, m_endFrame);
+	player->m_anim.Update();
+}
+
+void PlayerStateSkillAttack::EndSkill()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+	player->m_rb.m_vel.y = 0.0f;//y軸の速度を0に戻す
+	if (!player->IsFloor())//空中は落下状態に移行
+	{
+		player->ChangeState(std::make_shared<PlayerStateFall>(m_owner));
+		return;
+	}
+	if (Input::GetInstance().IsLeftStickInput())
+	{
+		player->ChangeState(std::make_shared<PlayerStateMove>(m_owner));
+		return;
+	}
+	player->ChangeState(std::make_shared<PlayerStateIdle>(m_owner));
+}
+
+void PlayerStateSkillAttack::StartKessatsu()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+	m_isKessatsuPose = true;
+	StopGhostEffect();//分身を消してモデルを出す
+	player->m_rb.m_vel = Vector3(0, 0, 0);
+	m_attackCol->SetIsActive(false);
+	if (m_skillAttackCol)m_skillAttackCol->SetIsActive(false);
+	player->StartSkillKessatsu(player->GetKessatsuPos());
 }

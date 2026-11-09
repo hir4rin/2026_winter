@@ -29,7 +29,8 @@ public:
 	void DebugDrawWallCheck();
 
 	//攻撃のフレーム数を取得(スキル攻撃用
-	//virtual float GetAttackFrame() { return m_owner.lock()->m_anim.GetAnimTotalFrame();}
+	virtual float GetAttackFrame(float animFrame)const { return animFrame; }
+	virtual float GetAttackEndFrame(float animEnd)const { return animEnd; }
 
 	virtual float GetAttackEndFrame() { return 1.0f; }
 

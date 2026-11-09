@@ -20,8 +20,8 @@ namespace
 	constexpr float kTargetRatioMin = 0.5f;//注視点の割合の最小値
 	constexpr float kTargetRatioMax = 0.6f;//注視点の割合の最大値
 
-	constexpr float kEtoPVecLength = 150.0f;//敵→プレイヤーベクトルの長さ
-	constexpr float kRotateAngle = DX_PI_F / 3.0f;//カメラを回転させる角度
+	constexpr float kEtoPVecLength = 250.0f;//敵→プレイヤーベクトルの長さ
+	constexpr float kRotateAngle = DX_PI_F  * 4.0f / 9.0f;//カメラを回転させる角度
 
 	constexpr float kBlendDuration = 2.0f;//ブレンドにかけるフレーム数
 	constexpr float kBlendEasingPower = 0.5f;//ブレンドのイージング指数

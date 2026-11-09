@@ -275,6 +275,14 @@ public:
 	//必殺技状態中かどうか
 	bool GetIsUltimating() { return m_isUltimating; }
 
+	//今の攻撃のフレーム//スキル攻撃用
+	float GetAttackFrame();
+	void ReserveKessatsu(const Vector3& pos) { m_isKessatsuReserved = true; m_kessatsuPos = pos; }
+	void ClearKessatsuReserve() { m_isKessatsuReserved = false; }
+	bool IsKessatsuReserved()const { return m_isKessatsuReserved; }
+	const Vector3& GetKessatsuPos()const { return m_kessatsuPos; }
+	void StartSkillKessatsu(const Vector3& pos);
+
 
 	//内部ロックオンのために
 	std::weak_ptr<CameraManager> GetCameraManager()const { return m_cameraManager; }
@@ -347,6 +355,8 @@ private:
 
 	bool m_isUltimating = false;//必殺技状態かどうか
 	bool m_isSkillInvisible = false;//スキル攻撃中にモデル(本体・羽・武器)を描画しないか//代わりにエフェクトを出す
+	bool m_isKessatsuReserved = false;//スキルの終わりに血殺する
+	Vector3 m_kessatsuPos = {};//血殺の位置
 	bool m_isCameraFocusOverride = false;//カメラの注視点のYを敵の高さで上書きするか//打ち上げ(スキル0)が当たってからスキル1の間だけtrue
 	std::weak_ptr<EnemyBase> m_cameraFocusEnemy;//上書き中にカメラが高さを合わせる敵(打ち上げた敵)
 	bool m_isTitleMode = false;//タイトル画面かどうか//trueの場合、移動方向をカメラ基準ではなく固定軸にする
