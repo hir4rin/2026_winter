@@ -1483,6 +1483,29 @@
 - 画像は `data/UI/bloodUI/slash_streak.png`(1280x96、全部白でアルファが形)。作り直しは `../tools/BloodDecalGen/MakeSlashStreak.ps1`。
 - 一時コードで血殺の状態にして、列車ステージとステージ1の画面で確認した(一時コードは消した)。Debug(x64)でビルドは通った。**実際に血殺を出しての確認はまだ**。
 
+### 2026-11-09 通常ヒットの血を新しくした(BloodHit)
+- `data/Effect/Blood/BloodHit.efk`(1/20スケール・+Zへ飛ぶ・20倍で再生は前と同じ)。`AsyncData::BloodHitEffect`。`EnemyBase::PlayBloodSplash` の通常ヒットで再生。`EnemyBase.cpp` 先頭の `kUseBloodHit` を false にすると前の A〜C に戻る。必殺技中の白い血・首の血は変えていない。
+- 作業ファイルは `../EffectTools/BloodHit/BloodHit_v1〜v3`(v3 が採用版。大きさ確認用の Dummy ノード入り)。テクスチャの生成は `../EffectTools/BloodHit/gen_blood_textures.ps1 出力先 接尾辞`。v3 で使っているのは `BH_Core_d / Chunk_c / Fine_c / Mist_e / Shred_c / Strand_c`(エディタがパスごとにキャッシュするので、作り直すときは接尾辞を変える)。
+- ノード: Mist(霧) / Chunk(厚い塊) / Fine(粒) / Shred(暗い破片) / StrandHead+StrandBody(細い糸) / Core(芯。最後に描く)。
+- 調べて分かったこと: `LocationAbsValues` の Drag は PVA の初速には効かない。失速は `LocationValues.Type=Easing`(StartRapidly / EndSlowly)で作り、重力だけ力場で足している。移動方向ビルボードは1フレーム目の向きが合わないので `FadeIn.Frame=1` で隠している。形を削って消す表現(AlphaCutoff FCurve)はゲームでも動いた。
+- 確認: Release(x64)のビルドは通った。一時コードでステージ1のプレイヤーの前に再生して、新旧を画面で比べた(一時コードは消した)。8Fごとに繰り返し再生した Draw:Effect(平均/最大ms)は Release で BloodHit 約0.13/0.4、BloodSplash(A) 約0.32/1.0。**実際に敵を斬っての確認はまだ**(連打での見え方、敵に重なったときの見え方、Debug の重さ)。
+
+- (追記)通常ヒットの血を3パターンにした。`BloodHit`(A: 横へ飛んで弧を描く)、`BloodHit_C`(低く左右に広がる扇形・粒と糸が多い)、`BloodHit_D`(低く片側(+X)へ流れる)。`AsyncData::BloodHitEffect / C / D` は連続した値にしてあり、`PlayBloodSplash` が `GetRand` で選ぶ。作業ファイルは `../EffectTools/BloodHit/BloodHit_C_v1`・`BloodHit_D_v1`(テクスチャは A と同じ)。Release で撮影して違いを確認した(`../EffectTools/BloodHit/game_patterns_A_C_D.png`)。Draw:Effect は C を8Fごとに繰り返して 約0.13/0.3ms。D は常に同じ側へ流れる(左右反転はまだ無い)。
+
+### 2026-11-09 確殺・暗殺の血を分けた
+- 暗殺 `data/Effect/Blood/BloodAssassin.efk`(3回脈打つ・約1.4秒)、確殺 `BloodKill.efk`(17回の噴射が続く・約2.4秒)。首の位置から斜め上へ噴く。テクスチャは BloodHit と同じ。作業ファイルは `../EffectTools/BloodExec/BloodAssassin_v1`・`BloodKill_v1`(Dummy ノード入り)。
+- `AsyncData::BloodAssassinEffect / BloodKillEffect`。`EnemyBase::PlayHeadBreakBlood(AsyncData)` に変えて、地上・空中の暗殺と確殺で出し分ける。
+- 敵が倒れても首から噴くように `EnemyBase::UpdateHeadBloodPos()`(`SetPosPlayingEffekseer3DEffect` で再生中の位置を動かす)を3つのステートの Update で呼ぶ。粒は `LocationEffectType=WhenCreating` なので、出た後は空中に残り、発生元だけが首についていく。`Pulse1〜3` は親(None)で、時間差と大きさだけ変えている。
+- 落とし穴: **別のフォルダへ「名前を付けて保存」すると、テクスチャの参照は元のフォルダのまま**。そのまま書き出すとゲームで白い四角になる(確殺版で実際に起きた)。別の版を作るときは ColorTexture を指定し直す。
+- 確認: Release(x64)のビルドは通った。一時コードでステージ1に敵を出して `PlayerStateAssasin` / `PlayerStatePartBrokenKill` に入れ、演出の中で血の出方と首への追従を画面で確認した(一時コードは消した)。**空中暗殺・確殺のパターンBの片方・ボスは未確認。負荷も未測定**。
+
+### 2026-11-09 部位破壊の血(BloodPartBreak)
+- `data/Effect/Blood/BloodPartBreak.efk`(肩から外へ太く噴いて、そのあと約2秒滴る)。`AsyncData::BloodPartBreakEffect`。作業ファイルは `../EffectTools/BloodExec/BloodPartBreak_v1`(Dummy ノード入り)。滴りは `Drip` ノード。
+- `EnemyBase::OnDamage` の `OnPartBreak()` の直後に `PlayPartBreakBlood()`。位置は `m_status.leftArmFrame`(-1 なら出ない)、+Z は体の中心から肩へ向かう向き。追従は `UpdatePartBloodPos()` を Swordman / Gunner / Bazooka の `Update` の `m_leftArmPart->Update()` の後で呼ぶ。首の血と共通の `UpdateBloodPos(handle, frame)` にまとめた。ボス(R0/R1)は `OnDamage` の `OnPartBreak` がコメントアウトされているので出ない。デバッグの Z キーの部位破壊でも出ない。
+- 確認: Release(x64)のビルドは通った。一時コードで Swordman を出して部位破壊させ、肩から噴くこと・走っても追従することを画面で確認した(一時コードは消した)。実際の攻撃での部位破壊・Gunner / Bazooka は未確認。
+- (追記)滴りを太い水滴(`BH_Fine_a`)にして試したが、見た目が変だったので元の細い水滴(`BH_Fine_c`、数30、重力は力場)に戻した。そのあと落下だけ `PVA.Acceleration`(y=-0.014)に変えた(力場の重力は20倍に比例しないため)。敵が向きを変えたフレームで滴りが下へ伸びるのを確認したが、止まっている間はカメラの向きによって体に隠れて見えない。
+- 分かったこと: **`LocalForceField` の重力はゲーム側の `SetScale`(20倍)に比例しないらしい**。力場で重力をかけた血はエディタより落ちない(通常ヒット A/C/D・暗殺・確殺・部位破壊の噴出)。`file_export` の magnification=20・再生スケール1 にすると落下が速くなりすぎたので採用していない。PVA の加速度はスケールに比例する。
+
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 
@@ -1550,6 +1573,8 @@
 - [x] 実際のUIクラス(HPバーなど)を作って `InGameInit()` に登録する(PlayerHUD。必殺技中などに隠すかはまだ)
 - [ ] ゲームを起動して血殺中に敵(本体・取れた腕/頭)が黒くなるか確認
 - [ ] ゲームを起動して見た目を確認(血殺の色変えの強さ、血の大きさ(20倍)、向き、白い血、スロー時の速さ)
+- [ ] 新しい通常ヒットの血(BloodHit)を実際に敵を斬って確認: 連打で同じ形が目立たないか、敵に重なったときの見え方。よければ血殺・トドメ版を派生させる
+- [ ] 確殺・暗殺の血(BloodKill / BloodAssassin)を実際の操作で確認: 空中暗殺、確殺のパターンA/B、ボス、霧の丸さ、負荷
 - [ ] 多段ヒットで血が出すぎないか確認。多すぎるなら一定フレーム出さない制限を入れる
 - [ ] 血殺演出の残り(2D極太斬撃、3Dの白い斬撃、「血殺」の文字、端を黒くするビネット、振動)
   - 描画順の案: 背景(赤) → ステージ(赤フォグ) → キャラ → 2D斬撃 → 3D白斬撃 → 血しぶき → ビネット → 文字

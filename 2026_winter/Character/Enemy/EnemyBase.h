@@ -380,7 +380,11 @@ protected:
 	void FinishHitProcess();//Hitの終了処理
 	void PlayBloodSplash(Collider& other);//血しぶきを再生する//otherは当たった攻撃の判定
 	int PlayBlood(AsyncData effect, const Vector3& pos);//posで血を再生する(+Zはプレイヤー→敵の向き)//再生ハンドルを返す
-	void PlayHeadBreakBlood();//首の付け根から血を出す(確殺・暗殺で頭を切ったとき)
+	void PlayHeadBreakBlood(AsyncData effect);//首の付け根から血を出す(確殺・暗殺で頭を切ったとき)
+	void UpdateHeadBloodPos();//再生中の首の血を首の位置へ動かす
+	void PlayPartBreakBlood();//腕の付け根から体の外側へ血を出す(部位破壊したとき)
+	void UpdatePartBloodPos();//再生中の部位破壊の血を腕の付け根へ動かす
+	void UpdateBloodPos(int& handle, int frame);//再生中の血をボーンの位置へ動かす//再生が終わったらhandleを-1にする
 	//確殺、暗殺後のenemyの状態制御
 	void FinisherPerformanceProcess();//確殺、暗殺後のenemyの状態制御
 
@@ -443,6 +447,8 @@ protected:
 
 	//部位破壊したかどうか
 	bool m_isPartBroken = false;
+	int m_headBloodHandle = -1;//再生中の首の血
+	int m_partBloodHandle = -1;//再生中の部位破壊の血
 	//確殺・暗殺が始まったか(処刑済み)//アニメの終わりを待たずに対象から外すためのもの
 	bool m_isExecuted = false;
 

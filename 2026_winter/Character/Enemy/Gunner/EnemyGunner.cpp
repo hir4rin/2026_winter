@@ -155,6 +155,7 @@ void EnemyGunner::Update()
 	if (m_isBreakLeftArm)
 	{
 		m_leftArmPart->Update();
+		UpdatePartBloodPos();
 	}
 
 	if (m_isBreakHead)

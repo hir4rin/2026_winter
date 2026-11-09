@@ -78,7 +78,7 @@ void EnemyAssasined::Update()
 		{
 			m_state = AssasinState::Execute;
 			owner->OnHeadBreak();
-			owner->PlayHeadBreakBlood();
+			owner->PlayHeadBreakBlood(AsyncData::BloodAssassinEffect);
 			owner->PlayFloorBlood(BloodAmount::Large);
 		}
 		break;
@@ -96,6 +96,8 @@ void EnemyAssasined::Update()
 	case AssasinState::End:
 		break;
 	}
+
+	owner->UpdateHeadBloodPos();
 
 	//死んだ判定
 	if (m_state == AssasinState::End && owner->m_anim.GetAnimEndFlag())

@@ -102,6 +102,8 @@ void EnemyPartBrokenKilled::Update()
 		break;
 	}
 
+	owner->UpdateHeadBloodPos();
+
 	//死んだ判定
 	if (m_state == PartBrokenKill::End && owner->m_anim.GetAnimEndFlag())
 	{
@@ -152,7 +154,7 @@ void EnemyPartBrokenKilled::PatternAUpdate()
 		if (m_excuteTimer > kHeadBrokenTime)
 		{
 			owner->OnHeadBreak();
-			owner->PlayHeadBreakBlood();
+			owner->PlayHeadBreakBlood(AsyncData::BloodKillEffect);
 			m_state = PartBrokenKill::End;
 		}
 		break;
@@ -195,7 +197,7 @@ void EnemyPartBrokenKilled::PatternBUpdate()
 		if (m_excuteTimer > (kEndMoveFrame - kStartMoveFrame))//()は実行中のフレーム間だけを確保した
 		{
 			owner->OnHeadBreak();
-			owner->PlayHeadBreakBlood();
+			owner->PlayHeadBreakBlood(AsyncData::BloodKillEffect);
 			m_state = PartBrokenKill::End;
 		}
 		break;

@@ -7,6 +7,7 @@
 #include "../../DataLoader/DataManager.h"
 #include "Battle/BattleManager.h"
 #include "Render/EffectManager.h"
+#include "EffekseerForDXLib.h"
 #include "Render/BloodDecalManager.h"
 #include "Battle/AttackTokenManager.h"
 #include <algorithm>
@@ -36,7 +37,8 @@ namespace
 	constexpr float kEnemyDistance = 50.0f;
 
 	//血しぶきエフェクト
-	constexpr int kBloodSplashPatternNum = 3;//パターン数(AsyncData::BloodSplashEffectA〜C)
+	constexpr int kBloodSplashPatternNum = 3;//パターン数(BloodHitEffect〜D、前の血はBloodSplashEffectA〜C)
+	constexpr bool kUseBloodHit = true;//通常ヒットに新しい血を使う(falseで前のA〜Cに戻る)
 	constexpr float kBloodSplashHeight = 100.0f;//足元からの高さ(やられ判定の高さに合わせる)
 	constexpr float kBloodSplashScale = 20.0f;//エフェクトは1/20で作っているので20倍して元の大きさに戻す
 	constexpr float kBloodSplashUltSpeed = 0.45f;//必殺技中の血しぶきの再生速度(タイムスケールに関係なくこの速さになる)
@@ -351,6 +353,7 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	if (!m_isPartBroken && Utility::IsHitRate(static_cast<int>(data.brokenRate * m_status.partBreakRate)))
 	{
 		OnPartBreak();
+		PlayPartBreakBlood();
 		PlayFloorBlood(BloodAmount::Small);
 	}
 
@@ -699,7 +702,8 @@ void EnemyBase::PlayBloodSplash(Collider& other)
 	if (!isUltimating)
 	{
 		const int pattern = GetRand(kBloodSplashPatternNum - 1);
-		effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodSplashEffectA) + pattern);
+		const AsyncData first = kUseBloodHit ? AsyncData::BloodHitEffect : AsyncData::BloodSplashEffectA;
+		effect = static_cast<AsyncData>(static_cast<int>(first) + pattern);
 	}
 	const Vector3 bloodPos(m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
 	const int playingHandle = PlayBlood(effect, bloodPos);
@@ -727,11 +731,41 @@ int EnemyBase::PlayBlood(AsyncData effect, const Vector3& pos)
 	return EffectManager::GetInstance().Play(effect, pos, atan2f(toEnemy.x, toEnemy.z), kBloodSplashScale);
 }
 
-void EnemyBase::PlayHeadBreakBlood()
+void EnemyBase::PlayHeadBreakBlood(AsyncData effect)
 {
 	if (m_status.headFrame < 0)return;
 	const Vector3 neckPos = Vector3::FromDxLibVector(MV1GetFramePosition(m_modelHandle, m_status.headFrame));
-	PlayBlood(AsyncData::BloodSplashEffectB, neckPos);
+	m_headBloodHandle = PlayBlood(effect, neckPos);
+}
+
+void EnemyBase::UpdateHeadBloodPos()
+{
+	UpdateBloodPos(m_headBloodHandle, m_status.headFrame);
+}
+
+void EnemyBase::PlayPartBreakBlood()
+{
+	if (m_status.leftArmFrame < 0)return;
+	const Vector3 shoulderPos = Vector3::FromDxLibVector(MV1GetFramePosition(m_modelHandle, m_status.leftArmFrame));
+	const Vector3 outward = shoulderPos - m_rb.m_pos;
+	m_partBloodHandle = EffectManager::GetInstance().Play(AsyncData::BloodPartBreakEffect, shoulderPos, atan2f(outward.x, outward.z), kBloodSplashScale);
+}
+
+void EnemyBase::UpdatePartBloodPos()
+{
+	UpdateBloodPos(m_partBloodHandle, m_status.leftArmFrame);
+}
+
+void EnemyBase::UpdateBloodPos(int& handle, int frame)
+{
+	if (handle < 0 || frame < 0)return;
+	if (IsEffekseer3DEffectPlaying(handle) != 0)
+	{
+		handle = -1;
+		return;
+	}
+	const VECTOR pos = MV1GetFramePosition(m_modelHandle, frame);
+	SetPosPlayingEffekseer3DEffect(handle, pos.x, pos.y, pos.z);
 }
 
 void EnemyBase::PlayFloorBlood(BloodAmount amount)

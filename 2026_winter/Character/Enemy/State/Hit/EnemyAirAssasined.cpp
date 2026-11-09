@@ -82,12 +82,14 @@ void EnemyAirAssasined::Update()
 		//頭破壊
 		owner->m_rb.m_vel = Vector3(0.0f, 0.0f, 0.0f);
 		owner->OnHeadBreak();
-		owner->PlayHeadBreakBlood();
+		owner->PlayHeadBreakBlood(AsyncData::BloodAssassinEffect);
 		m_state = AssasinState::End;
 		break;
 	case AssasinState::End:
 		break;
 	}
+
+	owner->UpdateHeadBloodPos();
 
 	//死んだ判定
 	if (m_state == AssasinState::End && owner->m_anim.GetAnimEndFlag())

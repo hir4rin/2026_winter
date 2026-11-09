@@ -74,6 +74,12 @@ enum class AsyncData : int
 	BloodSplashEffectB,//真上に噴き上がる
 	BloodSplashEffectC,//横に低く扇状に広がる(液体多め)
 	BloodSplashEffectWhite,//必殺技中の白い血しぶき(パターンBの白い版//奥側に多く飛び散る)
+	BloodHitEffect,//通常ヒットの血(横へ飛んで弧を描く)
+	BloodHitEffectC,//低く左右に広がる扇形
+	BloodHitEffectD,//低く片側へ流れる
+	BloodAssassinEffect,//暗殺の血(2〜3回脈打つ)
+	BloodKillEffect,//確殺の血(長く噴き続ける)
+	BloodPartBreakEffect,//部位破壊の血(肩から噴いて滴り続ける)
 	Goal,
 };
 
