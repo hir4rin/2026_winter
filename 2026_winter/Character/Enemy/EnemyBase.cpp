@@ -37,8 +37,7 @@ namespace
 	constexpr float kEnemyDistance = 50.0f;
 
 	//血しぶきエフェクト
-	constexpr int kBloodSplashPatternNum = 3;//パターン数(BloodHitEffect〜D、前の血はBloodSplashEffectA〜C)
-	constexpr bool kUseBloodHit = true;//通常ヒットに新しい血を使う(falseで前のA〜Cに戻る)
+	constexpr int kBloodSplashPatternNum = 3;//パターン数(BloodHitEffect〜D)
 	constexpr float kBloodSplashHeight = 100.0f;//足元からの高さ(やられ判定の高さに合わせる)
 	constexpr float kBloodSplashScale = 20.0f;//エフェクトは1/20で作っているので20倍して元の大きさに戻す
 	constexpr float kBloodSplashUltSpeed = 0.45f;//必殺技中の血しぶきの再生速度(タイムスケールに関係なくこの速さになる)
@@ -698,12 +697,11 @@ void EnemyBase::PlayBloodSplash(Collider& other)
 	//そのため、当たった攻撃が必殺技の判定かどうかも見る
 	const bool isUltimating = System::GetInstance().GetBattleMgr()->GetIsUltimating() ||
 		other.GetTag().role == Collider::ColRole::UltAttack;
-	AsyncData effect = AsyncData::BloodSplashEffectWhite;
+	AsyncData effect = AsyncData::BloodUltEffect;
 	if (!isUltimating)
 	{
 		const int pattern = GetRand(kBloodSplashPatternNum - 1);
-		const AsyncData first = kUseBloodHit ? AsyncData::BloodHitEffect : AsyncData::BloodSplashEffectA;
-		effect = static_cast<AsyncData>(static_cast<int>(first) + pattern);
+		effect = static_cast<AsyncData>(static_cast<int>(AsyncData::BloodHitEffect) + pattern);
 	}
 	const Vector3 bloodPos(m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
 	const int playingHandle = PlayBlood(effect, bloodPos);

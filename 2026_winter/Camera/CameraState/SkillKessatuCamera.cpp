@@ -23,7 +23,7 @@ namespace
 	constexpr float kEtoPVecLength = 150.0f;//敵→プレイヤーベクトルの長さ
 	constexpr float kRotateAngle = DX_PI_F / 3.0f;//カメラを回転させる角度
 
-	constexpr float kBlendDuration = 20.0f;//ブレンドにかけるフレーム数
+	constexpr float kBlendDuration = 2.0f;//ブレンドにかけるフレーム数
 	constexpr float kBlendEasingPower = 0.5f;//ブレンドのイージング指数
 
 	constexpr float kCameraNear = 10.0f;//ニアクリップ(0だとDxLibの深度計算が壊れて何も映らなくなる)
@@ -206,7 +206,7 @@ using BlendSetting = CameraStateBase::BlendSetting;
 BlendSetting SkillKessatuCamera::GetBlendSetting() const
 {
 	return BlendSetting{
-		.mode = BlendSetting::Mode::Slerp,
+		.mode = BlendSetting::Mode::Lerp,
 		.duration = kBlendDuration,
 		.easingMode = EasingMode::EaseOut,
 		.easingPower = kBlendEasingPower,

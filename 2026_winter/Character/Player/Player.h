@@ -238,7 +238,6 @@ public:
 	bool IsMoveState()const;//Move,FastRunのときtrue
 
 	//暗殺
-
 	void SetAssasinTarget(std::shared_ptr<EnemyBase> target) { m_assasinTarget = target; }
 	void ClearAssasinTarget() { m_assasinTarget.reset(); }
 	std::shared_ptr<EnemyBase> GetAssasinTarget()const;//死んでいたらnullptrを返す
@@ -294,6 +293,8 @@ public:
 	//色変え
 	void SetResultUp();
 	void ChangeResultMove();
+
+	
 
 private:
 	/// <summary>

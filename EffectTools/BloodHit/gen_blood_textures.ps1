@@ -13,8 +13,10 @@ public static class BloodTex
     // dark/light r,g,b then specular r,g,b
     static float[] Pal = { 0.20f, 0.56f, 0.006f, 0.024f, 0.045f, 0.105f, 0.93f, 0.42f, 0.47f };
     static float[] MistRgb = { 0.56f, 0.01f, 0.085f };
+    public static bool Pure = false;
     public static void SetPalette(string name)
     {
+        if (name == "pure") { Pure = true; }
         if (name == "white") { Pal = new float[] { 0.60f, 0.97f, 0.56f, 0.95f, 0.55f, 0.93f, 1f, 1f, 1f }; MistRgb = new float[] { 0.95f, 0.93f, 0.92f }; }
         if (name == "ink") { Pal = new float[] { 0.02f, 0.09f, 0.015f, 0.06f, 0.02f, 0.07f, 0.55f, 0.52f, 0.55f }; MistRgb = new float[] { 0.06f, 0.05f, 0.06f }; }
     }
@@ -85,6 +87,7 @@ public static class BloodTex
             byte[] buf = new byte[w * h * 4];
             for (int i = 0; i < w * h; i++)
             {
+                if (Pure) { R[i] = 1; G[i] = 1; B[i] = 1; A[i] = C(A[i] / 0.55f); }
                 buf[i * 4] = (byte)(C(B[i]) * 255); buf[i * 4 + 1] = (byte)(C(G[i]) * 255);
                 buf[i * 4 + 2] = (byte)(C(R[i]) * 255); buf[i * 4 + 3] = (byte)(C(A[i]) * 255);
             }

@@ -377,7 +377,7 @@ void KingmechFinisher::PlayWhiteBlood(float scale)
 	for (const float side : { -kBloodSideOffset, 0.0f, kBloodSideOffset })
 	{
 		const Vector3 pos = m_cutPoint + m_side * side;
-		const int handle = effect.Play(AsyncData::BloodSplashEffectWhite, pos, rotY, scale);
+		const int handle = effect.Play(AsyncData::BloodUltEffect, pos, rotY, scale);
 		effect.SetOwnSpeed(handle, kBloodOwnSpeed);
 	}
 }

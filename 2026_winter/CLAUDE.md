@@ -1506,6 +1506,17 @@
 - (追記)滴りを太い水滴(`BH_Fine_a`)にして試したが、見た目が変だったので元の細い水滴(`BH_Fine_c`、数30、重力は力場)に戻した。そのあと落下だけ `PVA.Acceleration`(y=-0.014)に変えた(力場の重力は20倍に比例しないため)。敵が向きを変えたフレームで滴りが下へ伸びるのを確認したが、止まっている間はカメラの向きによって体に隠れて見えない。
 - 分かったこと: **`LocalForceField` の重力はゲーム側の `SetScale`(20倍)に比例しないらしい**。力場で重力をかけた血はエディタより落ちない(通常ヒット A/C/D・暗殺・確殺・部位破壊の噴出)。`file_export` の magnification=20・再生スケール1 にすると落下が速くなりすぎたので採用していない。PVA の加速度はスケールに比例する。
 
+### 2026-11-09 血殺・トドメの血(BloodUlt)
+- `data/Effect/Blood/BloodUlt.efk`(白のみ・奥へ大きく広がる A1)。`AsyncData::BloodUltEffect`。`PlayBloodSplash` の必殺技中と `KingmechFinisher::PlayWhiteBlood` を `BloodSplash_B_White` から置き換えた。
+- 作業ファイルは `../EffectTools/BloodExec/BloodUlt_v1`(A1〜A3 白のみ、B1〜B3 白と墨。1=奥へ、2=斜め上へ、3=低く横へ。Dummy ノード入り)。力場の重力は使わず Easing の移動だけ。白と墨のテクスチャは `gen_blood_textures.ps1 出力先 接尾辞 white|ink`。
+- 確認: Release(x64)のビルドは通った。一時コードで `SetUltStart` して血殺の画面で撮影した(一時コードは消した)。Draw:Effect は8Fごとの繰り返しで 約0.4〜0.5/1.0〜1.2ms。**白い血は2Dの白い爆発の上だと埋もれる**(黒い敵の上では見える)。実際の血殺・Kingmech のトドメは未確認。
+- 灰色に見えたので真っ白に変更(作業ファイルは `BloodUlt_A1W`)。テクスチャは `gen_blood_textures.ps1 出力先 pw pure`(RGB 全部1、アルファを上げる)の `BH_*_pw`。色の乱数と Track の灰色をやめ、半透明の霧(Mist)は黒い敵の上で灰色になるので外した。白い爆発に重なって埋もれるのはユーザー了承済み。変更後の Draw:Effect は未測定(描画ノードは減った)。
+- 元の血を削除: `BloodSplash`, `_B`, `_C`, `_B_White`(.efk/.efkefc)と `Texture/Blood*.png` 13枚、`AsyncData::BloodSplashEffectA/B/C/White` と `kUseBloodHit`。戻すときは git から。
+
+### 2026-11-09 スキル血殺の姿勢(途中・自分で実装する)
+- 手順は `../進捗/note_スキル血殺の姿勢と旗の実装手順.md`。一度試して動きを確かめ、コードはすべて消した(ユーザーが自分で書く)。段階1の1から。
+- 決定: スキル攻撃を自前フレーム(`m_frame`)で進める、最後の一撃で旗を立ててスキルの終わりに血殺を発動、姿勢は `Dodge_Combat_F` の13F(分身と同じ形だった)。
+
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 
