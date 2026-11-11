@@ -48,6 +48,7 @@ void ModelShaderManager::Init()
 	m_litBumpPixelShader = LoadShaderWithMacro(kLitPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 	m_lightConstantBuffer = CreateShaderConstantBuffer(sizeof(StageLightConstant));
 	m_colorGradeBuffer = CreateShaderConstantBuffer(sizeof(ColorGradeConstant));
+	m_guardRimBuffer = CreateShaderConstantBuffer(sizeof(GuardRimConstant));
 	m_cutPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
 	m_cutBumpPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 	m_cutConstantBuffer = CreateShaderConstantBuffer(sizeof(CutConstant));
@@ -57,6 +58,7 @@ void ModelShaderManager::Init()
 	m_isInit = true;
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);//明かりの数を0で入れておく(明かりの無いステージでも CharacterLook が b4 を読むため)
 	ClearColorGrade();
+	ClearGuardRim();
 }
 
 void ModelShaderManager::Terminate()
@@ -79,6 +81,9 @@ void ModelShaderManager::Terminate()
 	if (m_colorGradeBuffer != -1)DeleteShaderConstantBuffer(m_colorGradeBuffer);
 	m_colorGradeBuffer = -1;
 	m_isColorGrade = false;
+	if (m_guardRimBuffer != -1)DeleteShaderConstantBuffer(m_guardRimBuffer);
+	m_guardRimBuffer = -1;
+	m_isGuardRim = false;
 	if (m_cutPixelShader != -1)DeleteShader(m_cutPixelShader);
 	m_cutPixelShader = -1;
 	if (m_cutBumpPixelShader != -1)DeleteShader(m_cutBumpPixelShader);
@@ -101,6 +106,7 @@ void ModelShaderManager::ResetSceneState()
 	m_isCutPlane = false;
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);
 	ClearColorGrade();
+	ClearGuardRim();
 }
 
 void ModelShaderManager::SetColorGrade(const COLOR_F& dark, const COLOR_F& bright, float blackLevel, float whiteLevel, float rate)
@@ -121,6 +127,25 @@ void ModelShaderManager::ClearColorGrade()
 	buffer->dark.w = 0.0f;
 	UpdateShaderConstantBuffer(m_colorGradeBuffer);
 	m_isColorGrade = false;
+}
+
+void ModelShaderManager::SetGuardRim(const COLOR_F& color, float power)
+{
+	if (!m_isInit || m_guardRimBuffer == -1)return;
+	auto* buffer = static_cast<GuardRimConstant*>(GetBufferShaderConstantBuffer(m_guardRimBuffer));
+	buffer->color = { color.r, color.g, color.b, 0.0f };
+	buffer->param = { power, 0.0f, 0.0f, 0.0f };
+	UpdateShaderConstantBuffer(m_guardRimBuffer);
+	m_isGuardRim = true;
+}
+
+void ModelShaderManager::ClearGuardRim()
+{
+	if (m_guardRimBuffer == -1)return;
+	auto* buffer = static_cast<GuardRimConstant*>(GetBufferShaderConstantBuffer(m_guardRimBuffer));
+	buffer->color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	UpdateShaderConstantBuffer(m_guardRimBuffer);
+	m_isGuardRim = false;
 }
 
 void ModelShaderManager::SetCutPlane(const VECTOR& normal, float distance, float rimWidth)
@@ -151,14 +176,15 @@ void ModelShaderManager::DrawModel(int modelHandle)
 		DrawModelWithShader(modelHandle, m_blackPixelShader);
 		return;
 	}
-	//明かりも色変えも無ければいつもの描画
-	if ((m_stageLightNum <= 0 && !m_isColorGrade) || m_litPixelShader == -1)
+	//明かりの有無に関係なくいつも LitModelPS で描く(DxLibの標準とは陰影が違い、ステージごとに見た目が変わったため)
+	if (m_litPixelShader == -1)
 	{
 		MV1DrawModel(modelHandle);
 		return;
 	}
 	BindStageLights();
 	SetShaderConstantBuffer(m_colorGradeBuffer, DX_SHADERTYPE_PIXEL, kColorGradeSlot);
+	SetShaderConstantBuffer(m_guardRimBuffer, DX_SHADERTYPE_PIXEL, kGuardRimSlot);
 	DrawModelWithShader(modelHandle, m_litPixelShader, m_litBumpPixelShader);
 }
 

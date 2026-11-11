@@ -7,6 +7,7 @@
 #include "../../DataLoader/DataManager.h"
 #include "Battle/BattleManager.h"
 #include "Render/EffectManager.h"
+#include "Render/ModelShaderManager.h"
 #include "EffekseerForDXLib.h"
 #include "Render/BloodDecalManager.h"
 #include "Battle/AttackTokenManager.h"
@@ -51,6 +52,20 @@ namespace
 	constexpr int kDebugLineSpacing = 2;//文字の行間
 	constexpr float kDebugTokenRingRadius = 80.0f;//攻撃権の輪の半径
 	constexpr int kDebugTokenRingDivNum = 24;//攻撃権の輪の分割数
+
+	//ガード中のふちの光
+	const COLOR_F kGuardRimColor = GetColorF(0.85f, 0.92f, 1.0f, 1.0f);//少し青みのある白
+	constexpr float kGuardRimStrength = 1.5f;//強さ
+	constexpr float kGuardRimPulse = 0.3f;//明滅の幅(強さに対する割合)
+	constexpr float kGuardRimPulseFrame = 50.0f;//明滅の1周のフレーム数
+	constexpr float kGuardRimPower = 3.0f;//ふちの細さ(大きいほど細い)
+	constexpr float kGuardRimFadeInFrame = 6.0f;//出るまでのフレーム数(実フレーム)
+	constexpr float kGuardRimFadeOutFrame = 12.0f;//消えるまでのフレーム数(実フレーム)
+
+	//ガードブレイク
+	constexpr float kGuardBreakEffectHeight = 100.0f;//閃光・ガラス片を出す高さ(足元から)
+	constexpr float kGuardBreakEffectScale = 20.0f;//エフェクトの大きさ(1/20で作っている)
+	constexpr float kGuardBreakEffectSpeed = 1.0f;//エフェクトの速さ(チャンスのスローに関係なくこの速さ)
 }
 
 EnemyBase::EnemyBase(std::weak_ptr<Player> player)
@@ -870,6 +885,69 @@ std::shared_ptr<EnemyStateBase> EnemyBase::NextAfterRecover()
 {
 	//一度Idleに戻り、Idleの待機時間が終わったらNextAfterIdleで次の行動を決める
 	return std::make_shared<EnemyIdle>(GetWeakPtr());
+}
+
+void EnemyBase::UpdateGuardRim()
+{
+	//ガード中(ボス用のガードも含む)なら出す、それ以外は消す
+	const bool isGuard = std::dynamic_pointer_cast<EnemyGuard>(m_currentState) != nullptr && !m_isLifeZero;
+	if (isGuard)
+	{
+		m_guardRimRate = (std::min)(m_guardRimRate + 1.0f / kGuardRimFadeInFrame, 1.0f);
+	}
+	else
+	{
+		m_guardRimRate = (std::max)(m_guardRimRate - 1.0f / kGuardRimFadeOutFrame, 0.0f);
+	}
+
+	if (m_guardRimRate > 0.0f)
+	{
+		m_guardRimTimer += 1.0f;
+	}
+	else
+	{
+		m_guardRimTimer = 0.0f;
+	}
+}
+
+void EnemyBase::BeginGuardRim()const
+{
+	if (m_guardRimRate <= 0.0f)return;
+	//明滅
+	const float pulse = 1.0f + kGuardRimPulse * std::sin(m_guardRimTimer / kGuardRimPulseFrame * DX_TWO_PI_F);
+	const float strength = kGuardRimStrength * pulse * m_guardRimRate;
+	ModelShaderManager::GetInstance().SetGuardRim(
+		GetColorF(kGuardRimColor.r * strength, kGuardRimColor.g * strength, kGuardRimColor.b * strength, 1.0f), kGuardRimPower);
+}
+
+void EnemyBase::EndGuardRim()const
+{
+	if (m_guardRimRate <= 0.0f)return;
+	ModelShaderManager::GetInstance().ClearGuardRim();
+}
+
+void EnemyBase::StartGuardBreakEffect()
+{
+	//紫の閃光とガラス片(+Zをプレイヤーから敵へ向けるので、破片は敵の向こう側へ多く飛ぶ)
+	float rotY = 0.0f;
+	if (auto player = m_player.lock())
+	{
+		Vector3 toEnemy = m_rb.m_pos - player->GetRigidBody().GetPos();
+		toEnemy.y = 0.0f;
+		if (toEnemy.Magnitude() <= 0.0f)toEnemy = player->GetTargetVec();
+		rotY = atan2f(toEnemy.x, toEnemy.z);
+	}
+	const Vector3 effectPos(m_rb.m_pos.x, m_rb.m_pos.y + kGuardBreakEffectHeight, m_rb.m_pos.z);
+	const AsyncData effects[] = { AsyncData::GuardBreakFlashEffect, AsyncData::GuardBreakShardsEffect };
+	for (const auto effect : effects)
+	{
+		const int handle = EffectManager::GetInstance().Play(effect, effectPos, rotY, kGuardBreakEffectScale);
+		//チャンスのスローがかかっても、閃光と破片はふつうの速さで出す
+		EffectManager::GetInstance().SetOwnSpeed(handle, kGuardBreakEffectSpeed);
+	}
+
+	//ガードのふちの光はここで止める(ゆっくり消さない)
+	m_guardRimRate = 0.0f;
 }
 
 bool EnemyBase::IsAttackFlowState(const std::shared_ptr<EnemyStateBase>& state) const

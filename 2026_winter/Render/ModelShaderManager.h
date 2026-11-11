@@ -43,6 +43,10 @@ public:
 	void SetColorGrade(const COLOR_F& dark, const COLOR_F& bright, float blackLevel, float whiteLevel, float rate);
 	void ClearColorGrade();
 
+	//DrawModelで描くモデルのふちを光らせる(ガード中の敵用)//colorは色×強さ、powerはふちの細さ
+	void SetGuardRim(const COLOR_F& color, float power);
+	void ClearGuardRim();
+
 	//MV1DrawModelの代わりに呼ぶ
 	//黒くするモードのときは、モデルの頂点タイプに合った頂点シェーダー＋黒いピクセルシェーダーで描く
 	//それ以外は DxLib のいつもの光＋ステージの明かりを1回で描く(LitModelPS.hlsl)
@@ -107,6 +111,14 @@ private:
 	};
 	static constexpr int kColorGradeSlot = 7;//LitModelPS.hlsl の register(b7)
 
+	//LitModelPS.hlsl の GuardRimBuffer と同じ並び
+	struct GuardRimConstant
+	{
+		FLOAT4 color;//rgb:色×強さ
+		FLOAT4 param;//x:ふちの細さ
+	};
+	static constexpr int kGuardRimSlot = 8;//LitModelPS.hlsl の register(b8)
+
 	std::array<int, DX_MV1_VERTEX_TYPE_NUM> m_vertexShaders = {};//添え字はDX_MV1_VERTEX_TYPE_〜
 	int m_blackPixelShader = -1;//真っ黒にするピクセルシェーダー
 	int m_litPixelShader = -1;//いつもの光＋明かりで描くピクセルシェーダー
@@ -117,6 +129,8 @@ private:
 	bool m_isCutPlane = false;
 	int m_colorGradeBuffer = -1;
 	bool m_isColorGrade = false;
+	int m_guardRimBuffer = -1;
+	bool m_isGuardRim = false;
 	int m_lightConstantBuffer = -1;
 	int m_lookPixelShader = -1;
 	int m_lookBumpPixelShader = -1;

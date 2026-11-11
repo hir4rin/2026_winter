@@ -35,3 +35,10 @@ void BattleManager::Update()
 	m_bloodDecalMgr->Update();
 }
 
+bool BattleManager::TakeScreenBloodRequest()
+{
+	const bool isRequested = m_isScreenBloodRequested;
+	m_isScreenBloodRequested = false;
+	return isRequested;
+}
+

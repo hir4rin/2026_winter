@@ -1518,6 +1518,64 @@
 - 決定: スキル攻撃を自前フレーム(`m_frame`)で進める、最後の一撃で旗を立ててスキルの終わりに血殺を発動、姿勢は `Dodge_Combat_F` の13F(分身と同じ形だった)。
 - 11/10: 段階3まで実装済み(1〜2はユーザー、3は一部Claude)。Debug x64のビルドは通った。**ゲームでの確認はまだ**(手順書の段階1・2・3の「確認」)。次は確認と、必要なら段階4の見た目調整。
 
+### 2026-11-11 ガード中の敵のふちを白く光らせる(リムライト)
+- `LitModelPS.hlsl` に `GuardRimBuffer`(b8)。`pow(1 - dot(N,V), 細さ) × 色` をフォグの後・色変えの前に足す。色が0なら何もしない。
+- `ModelShaderManager::SetGuardRim(色×強さ, 細さ) / ClearGuardRim()`。ふちの光があるときは明かり・色変えが無くても `LitModelPS` で描く。b8 は lit で描くたびに付ける(ステージなどは0のまま)。
+- `EnemyBase::UpdateGuardRim()`(今のステートが `EnemyGuard` か派生(BossGuard)なら 6F で出て、それ以外は 12F で消える。実フレーム)、`BeginGuardRim / EndGuardRim`。
+  `EnemyManager` が Update の後と Draw の前後で呼ぶので、各敵のコードは触っていない。武器・取れた部位も一緒に光る。
+- 値は `EnemyBase.cpp` 先頭の `kGuardRim〜`(色 0.85,0.92,1.0、強さ1.5、明滅±30%・50F、細さ3.0)。
+- 血殺中(黒モード)は黒いシェーダーなので光らない。BossArm は自分がガードのステートにならないので光らない。
+- Debug(x64)でビルドは通った。fxc で2通り(BUMPMAP 有り/無し)のコンパイルも通った。**ゲームでの確認はまだ**(強さ・細さ、白い敵の上での見え方)。
+- (追記)最初はシェーダーへの追記が入っていなかった(Git Bash の python は Store の空のものでスクリプトが動いていなかった)。直した。
+- (追記)体全体の光(b8 の param.y)は外した。そのあと反転ハル(法線の向きにふくらませた裏面を加算で描く)でオーラを作ったが、ユーザーに合わなかったので**消した**(シェーダー・コードとも残していない)。ふちの光は細めにした(強さ1.5・細さ3.0)。
+- (追記)**オーラ(GuardGlow)はユーザーの判断で全部消した。ガード中は輪郭のふちの光だけ**。
+  - 試したもの: ぼかした光(敵を白いシルエットで別の画面に描き、縮めてぼかして加算) → NG4 の録画(`Videos/画面録画/画面録画 2026-11-11 195947.mp4`、8.5秒・13.4秒あたり)に合わせて、動きの後ろに残る白い残像(前のフレームの残像を少しずつ暗くして重ねる、カメラが動いた分ずらす)。
+  - 消したもの: `Render/GuardGlow.h/.cpp`、`Render/Shader/GuardSilhouettePS.hlsl`、`ModelShaderManager` のシルエットのモード、`EnemyBase::BeginGuardGlow / EndGuardGlow`、`EnemyManager` の残像の描画、vcxproj/filters の登録。
+  - 分かったこと(また作るとき用):
+    - 描画先を変えると DxLib のカメラが戻る。**行列(`SetCameraViewMatrix` など)で戻すと `GetCameraPosition()` が2Dの初期値(640,360,-623)のまま**になり、プレイヤーの見た目(`CharacterLook`、この位置で光を計算する)が青白くなった。位置・注視点・上向き・視野角・ニア/ファーを覚えて `SetCameraNearFar` → `SetupCamera_Perspective` → `SetCameraPositionAndTargetAndUpVec` で戻すと直った。
+    - `SetDrawZBuffer(DX_SCREEN_BACK)` は0を返すが効かず、別の画面で画面のZは借りられなかった(壁の向こうの敵の光も透けた)。
+    - 重さは全部の敵が光って Release で 1フレーム +0.18ms(GPU 込み)。
+
+
+### 2026-11-11 ガードブレイクの演出(紫の閃光・ガラス片)
+- 参考: ユーザーの NG4 の録画 `Videos/画面録画/画面録画 2026-11-11 201252.mp4`(2.4秒・5.5秒・8.5秒あたり)。流れは 白い殻 → 紫の放射状の閃光 → 殻が虹色のガラスになって割れる → 白と黒の破片が飛び散る(約0.6秒)。最初の「全身が白く飛ぶ」はユーザーの希望で作っていない。
+- `EnemyGuardBreak::Enter` → `EnemyBase::StartGuardBreakEffect()`: 閃光とガラス片を胸の高さ(足元+100)に20倍で再生(+Z = プレイヤー→敵)。`SetOwnSpeed(1.0)` でチャンスのスロー(0.2)に関係なくふつうの速さ。ガードの光(`m_guardRimRate`)を0にする。値は `EnemyBase.cpp` 先頭の `kGuardBreak〜`。
+- エフェクト(`data/Effect/GuardBreak/`、1/20で作成、`AsyncData::GuardBreakFlashEffect / GuardBreakShardsEffect`、System の LoadCommon で読む):
+  - `GuardBreakFlash`: Core(白→紫の光)・Haze / Haze2(大きな紫のもや)・Rays(放射状の筋16本、RotatedBillboard でランダムな向き)・Line(横一文字の線)。(ZTest は最初切っていたが、プレイヤーにもかぶるので Zオフセットに変えた。下の追記)。
+  - `GuardBreakShards`: ShardWhite(60個)・ShardDark(18個)。Billboard=Fixed でランダムに回転しながら飛び、重力で落ちる(PVA の加速度)。画像 `Texture/GB_Shard.png` は2x2の4種類(UV アニメのランダムな開始で選ぶ)。作り直しは scratchpad の gen_shards.ps1(残していない。四角形・三角形を白で塗るだけ)。
+- (追記)白い殻が赤・緑・青に分かれて虹色に割れる処理(`GuardGlow::EndShatter`)も作ったが、わかりづらかったので**消した**(ユーザーの判断)。ガードブレイクで出るのは紫の閃光とガラス片だけ。ガードのふちの光はガードブレイクの瞬間に止める(`m_guardRimRate = 0`)。
+- (追記)**直した2点**:
+  - ガードブレイク付近でプレイヤーが青白くなる: 閃光の ZTest を切っていたので、敵の後に描くプレイヤーの上にも大きな紫のもやが重なっていた。ZTest を戻し、**Zオフセット(DepthOffset)で閃光だけカメラ側へ寄せた**(Core / Rays / Line 60、Haze / Haze2 100。単位はゲームの cm)。敵の体には隠れず、手前のプレイヤーには隠れる。
+    「Zオフセットの拡大(IsDepthOffsetChangedDependingOnParticleScale)」を入れると、オフセットにパーティクルの大きさ(20倍 × もやの大きさ16〜26)まで掛かり、閃光が敵の体の上にしか出なくなったので切っている。
+  - ガードブレイクでもプレイヤーに紫が重ならないことを撮って確認した(Release)。
+  - (プレイヤーが青白くなるもう1つの原因は、ガード中の白い残像(GuardGlow)のカメラの戻し方だった。GuardGlow は消した。上のリムライトの追記)
+- 一時コードで全部の敵を80Fガード → ガードブレイクにして列車ステージで撮った(Release)。紫の光・飛び散る破片が出る。**実際の操作でのガードブレイク・ガードブレイクのチャンスUIとの重なり・ボスでの見え方はまだ**。
+### 2026-11-11 敵・ステージをいつも LitModelPS で描く(列車とステージ1で敵の見た目が違った件)
+- 原因: `ModelShaderManager::DrawModel` は明かり・色変えが無いと `MV1DrawModel`(DxLib の標準)で描いていた。列車ステージは明かりが無いので標準、ステージ1は `LitModelPS`。
+  標準の描画は陰影が薄く白飛びして見え、`LitModelPS` は陰影・反射が出る(同じ場所で撮って比べた)。列車でガードすると `LitModelPS` に切り替わり、ステージ1と同じ見た目になっていた。
+- `DrawModel` は黒モード以外いつも `LitModelPS`(シェーダーが読めなかったときだけ標準)。列車・デモ・テストのステージと敵も変わる。
+- ステージ1は今まで通り明かり・夜のフォグがかかるので、明るさの違いはそのぶん残る(描き方は同じ)。
+- 一時コードで列車の敵を撮り、変更後の普通の描画が前の `LitModelPS` と同じになること、ふちの光が出ることを確認した(白い敵の上だと控えめ。暗い背景だとふちが見える)。4ステージとも `-bench=120` で正常終了。
+- **Git Bash の `python` は使えない**(Store の空のもの)。画像の処理は PowerShell の System.Drawing で行った。
+
+### 2026-11-11 画面に付く血(ScreenBloodUI)
+- 参考: NG4 の録画 `Videos/画面録画/画面録画 2026-11-11 210744.mp4`。斬った瞬間にレンズへ血が付き、ふちが暗く沈んで、約1.5秒で消える。案A(2D画像だけ)で作った。放射ブラー・色ずれ(案B)は作っていない。
+- `UI/ScreenBloodUI.h/.cpp`(UIBase 継承、Front)。`UIManager::InGameInit` で **PlayerHUD より前**に登録しているので、HUD は血の手前に出る。vcxproj/filters に登録した。
+- **出すのは暗殺・確殺だけ**(ユーザーの指定。部位破壊・血殺では出さない)。`BattleManager::RequestScreenBlood()` / `TakeScreenBloodRequest()`。床の血(`PlayFloorBlood`)の直後の4か所で呼ぶ: `EnemyAssasined`(地上の暗殺)、`PlayerStateAirAssasin`(空中の暗殺)、`PlayerStatePartBrokenKill`(確殺のパターンA・B)。
+- **見た目は血殺の血のUI(splash2_UI・white_burst)と同じ、べた塗りでふちがくっきりした墨の飛沫**(最初の陰影つきの丸い血は「変」と言われて作り直した)。
+  - 大きな飛沫: 冠のような塊から棘と尾を引く粒が飛ぶ。左右の角に1つずつ(上下はランダム、対角が多め)、塊を角に置いて画面の中心へ飛ばす。
+  - 粒の帯(splash2_UI のような形): 上か下のふちに1本、ふちに沿って少し内側へ。
+  - 根元を中心に3Fで広がり、100Fで消える(最後の45Fでフェード)。色は (128,2,12) のべた塗り。
+  - ふちに血殺の墨のビネット(`bloodUI/ink_vignette.png`)を薄く(最大110、90F)。
+  - 値は .cpp 先頭。
+- 画像: `data/UI/ScreenBlood/`(splat_0〜3・spray_0〜2、1024px。白で形はアルファだけ、乗算済みアルファで読む)。作り直しは `../tools/BloodDecalGen/MakeScreenBlood.ps1`。画像の根元の位置(splat は中心から -0.45×0.49、spray は -0.82×0.49)を変えたら .cpp の `kSplatRootRate` / `kSprayRootRate` も直す。
+- 確認: Release・Debug(x64)のビルドは通った。一時コードでステージ1に2回出して画面を撮った(一時コードは消した)。**実際に暗殺・確殺しての確認はまだ**(演出のカメラ・スローと重なったときの見え方、量)。
+
+### 2026-11-11 確殺の対象を足元の高さの差で絞る
+- `LockOnManager::TryPartBrokenTarget`: プレイヤーと敵の足元(`GetRigidBody().GetPos().y`)の高さの差が `kPartBrokenMaxHeightDiff`(50)以上の敵は候補から外す。
+- 外すほう(`CheckPartBrokenTarget`)も同じ: 高さの差が50以上になったら対象から外す(距離の判定の前)。距離と違って余裕(margin)は付けていないので、ちょうど50前後の段差だと出たり消えたりするかもしれない。
+- Debug(x64)でビルドは通った。ゲームでの確認はまだ。
+
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 

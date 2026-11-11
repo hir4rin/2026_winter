@@ -6,6 +6,7 @@
 #include "../Camera/CameraManager.h"
 #include "Math/Easing.h"
 #include "Render/BloodDecalManager.h"
+#include "Battle/BattleManager.h"
 #include <algorithm>
 
 namespace
@@ -283,6 +284,7 @@ void PlayerStatePartBrokenKill::PatternAUpdate()
 		if (player->m_anim.GetNowAnimFrame() >= kPatternAHeadBrokenAnimFrame)
 		{
 			partBrokenTarget->PlayFloorBlood(BloodAmount::Large);
+			System::GetInstance().GetBattleMgr()->RequestScreenBlood();
 			m_state = PartBrokenKill::End;
 			System::GetInstance().SetTimeScale(1.0f);
 			cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PartBrokenACameraEnd);
@@ -356,6 +358,7 @@ void PlayerStatePartBrokenKill::PatternBUpdate()
 		if (player->m_anim.GetNowAnimFrame() >= kEndMoveFrame)
 		{
 			partBrokenTarget->PlayFloorBlood(BloodAmount::Large);
+			System::GetInstance().GetBattleMgr()->RequestScreenBlood();
 			m_state = PartBrokenKill::End;
 			//System::GetInstance().SetTimeScale(1.0f);
 			//cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::PlayerCaemra);

@@ -4,6 +4,7 @@
 #include "Main/System.h"
 #include "../Camera/CameraManager.h"
 #include "Render/BloodDecalManager.h"
+#include "Battle/BattleManager.h"
 
 
 namespace
@@ -116,6 +117,7 @@ void PlayerStateAirAssasin::Update()
 		if (m_timer > kExecuteFrame)
 		{
 			assasinTarget->PlayFloorBlood(BloodAmount::Large);
+			System::GetInstance().GetBattleMgr()->RequestScreenBlood();
 
 
 			m_state = AssasinState::End;

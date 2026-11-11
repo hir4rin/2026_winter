@@ -51,6 +51,13 @@ cbuffer ColorGradeBuffer : register(b7)
 	float4 g_GradeLevel;	// x:これより暗いと暗い所の色 y:これより明るいと明るい所の色
 };
 
+// ガード中のふちの光(ModelShaderManager が b8 に入れる)
+cbuffer GuardRimBuffer : register(b8)
+{
+	float4 g_GuardRimColor;	// rgb:色×強さ(0なら光らない)
+	float4 g_GuardRimParam;	// x:ふちの細さ(大きいほど細い)
+};
+
 #define LIGHTTYPE_DIRECTIONAL 3
 
 
@@ -97,6 +104,13 @@ float4 main(PS_INPUT input) : SV_TARGET
 
 	// フォグ(頂点シェーダーが Fog.x に計算済み。フォグが無いときは 1)
 	color = lerp(g_Common.Fog.Color.rgb, color, saturate(input.Fog.x * input.Fog.y));
+
+	// ガード中のふちの光(フォグの後に足して、遠くでも見えるようにする)
+	if (g_GuardRimColor.r + g_GuardRimColor.g + g_GuardRimColor.b > 0.0f)
+	{
+		float nv = saturate(dot(normal, toCamera));
+		color += pow(1.0f - nv, g_GuardRimParam.x) * g_GuardRimColor.rgb;
+	}
 
 	// 色変え(フォグの色も一緒に変える)
 	if (g_GradeDark.a > 0.0f)

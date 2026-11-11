@@ -311,6 +311,7 @@
     <ClCompile Include="UI\UIBase.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="UI\KessatsuUI.cpp" />
+    <ClCompile Include="UI\ScreenBloodUI.cpp" />
     <ClCompile Include="UI\PlayerHUD.cpp" />
     <ClCompile Include="UI\MenuUI.cpp" />
   </ItemGroup>
@@ -492,6 +493,7 @@
     <ClInclude Include="UI\UIBase.h" />
     <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="UI\KessatsuUI.h" />
+    <ClInclude Include="UI\ScreenBloodUI.h" />
     <ClInclude Include="UI\PlayerHUD.h" />
     <ClInclude Include="UI\MenuUI.h" />
   </ItemGroup>

@@ -27,6 +27,9 @@ void EnemyGuardBreak::Enter()
 	owner->m_anim.ChangeAnim(owner->GetAnimName("KnockDownStart"), false, 0.5f * owner->GetAnimSpeed("KnockDownStart"), 26.0f);
 	m_state = GuardBreakState::Start;
 
+	//紫の閃光・ガラス片
+	owner->StartGuardBreakEffect();
+
 	//プレイヤーに通知
 	if (auto player = owner->m_player.lock())
 	{

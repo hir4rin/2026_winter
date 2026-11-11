@@ -6,6 +6,7 @@
 #include "AssasinTargetUI.h"
 #include "PartBrokenKillUI.h"
 #include "GuardBreakChanceUI.h"
+#include "ScreenBloodUI.h"
 
 void UIManager::TitleInit()
 {
@@ -27,6 +28,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	//インゲームで使うUIをここで生成して登録する
 	//必殺技中の「血殺」の文字
 	Add(std::make_shared<KessatsuUI>());
+	//画面に付く血(HUDより先に描く)
+	Add(std::make_shared<ScreenBloodUI>());
 	//HP・スキル・必殺技ゲージ
 	Add(std::make_shared<PlayerHUD>(player));
 	//暗殺対象の頭の上のUI

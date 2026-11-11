@@ -77,6 +77,8 @@ enum class AsyncData : int
 	BloodKillEffect,//確殺の血(長く噴き続ける)
 	BloodPartBreakEffect,//部位破壊の血(肩から噴いて滴り続ける)
 	BloodUltEffect,//血殺・トドメの白い血
+	GuardBreakFlashEffect,//ガードブレイクの紫の閃光
+	GuardBreakShardsEffect,//ガードブレイクで飛び散るガラス片
 	Goal,
 };
 

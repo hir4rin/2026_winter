@@ -9,6 +9,7 @@
 #include "Main/System.h"
 #include "Main/Input.h"
 #include <cassert>
+#include <cmath>
 
 namespace
 {
@@ -19,6 +20,7 @@ namespace
 	constexpr float kAssasinRange = 500.0f;//暗殺できる距離
 	constexpr float kAirAssasinRange = 1000.0f;//空中暗殺できる距離(プレイヤーが空中のとき)
 	constexpr float kPartBrokenRange = 700.0f;//確殺できる距離
+	constexpr float kPartBrokenMaxHeightDiff = 50.0f;//確殺できる足元の高さの差(これ以上は対象にしない)
 	constexpr float kExecuteReleaseMargin = 50.0f;//暗殺・確殺の対象を外す距離の余裕(境目でのちらつき防止)
 
 	constexpr float kDebugSphereRadius = 20.0f;//デバッグ描画の球の半径
@@ -324,14 +326,17 @@ void LockOnManager::TryPartBrokenTarget()
 
 	//範囲内にいる敵を見つける
 	std::vector<std::shared_ptr<EnemyBase>> candidates;
+	const float playerY = player->GetRigidBody().GetPos().y;
 	//範囲をだんだん広げる
 	for (int i = 1; i <= kLockOnCheckNum; i++)
 	{
 		candidates = CollectEnemiesRange(kPartBrokenRange * i / kLockOnCheckNum);
-		//部位破壊している、かつ処刑済みでない、かつ地上にいる敵のみにする//範囲を広げる判定より前に外す
-		std::erase_if(candidates, [](const auto& enemy)
+		//部位破壊している、かつ処刑済みでない、かつ地上にいる、かつ高さの差が小さい敵のみにする//範囲を広げる判定より前に外す
+		std::erase_if(candidates, [playerY](const auto& enemy)
 		{
-			return !enemy->GetIsPartBroken() || enemy->GetIsExecuted() || !enemy->IsFloor();
+			const float heightDiff = std::abs(enemy->GetRigidBody().GetPos().y - playerY);
+			return !enemy->GetIsPartBroken() || enemy->GetIsExecuted() || !enemy->IsFloor()
+				|| heightDiff >= kPartBrokenMaxHeightDiff;
 		});
 		if (!candidates.empty())break;
 	}
@@ -368,6 +373,13 @@ void LockOnManager::CheckPartBrokenTarget()
 
 	//細かい範囲の調整は後で調整
 
+	//高さの差が大きければ解除
+	const float heightDiff = std::abs(target->GetRigidBody().GetPos().y - player->GetRigidBody().GetPos().y);
+	if (heightDiff >= kPartBrokenMaxHeightDiff)
+	{
+		player->ClearPartBrokenTarget();
+		return;
+	}
 
 	//離れすぎたら解除
 	float distance = (target->GetRigidBody().GetPos() - player->GetRigidBody().GetPos()).Magnitude();

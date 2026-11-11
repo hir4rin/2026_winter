@@ -4,6 +4,7 @@
 #include "Character/Player/Player.h"
 #include "Main/System.h"
 #include "Render/BloodDecalManager.h"
+#include "Battle/BattleManager.h"
 
 namespace
 {
@@ -80,6 +81,7 @@ void EnemyAssasined::Update()
 			owner->OnHeadBreak();
 			owner->PlayHeadBreakBlood(AsyncData::BloodAssassinEffect);
 			owner->PlayFloorBlood(BloodAmount::Large);
+			System::GetInstance().GetBattleMgr()->RequestScreenBlood();
 		}
 		break;
 	case AssasinState::Execute:

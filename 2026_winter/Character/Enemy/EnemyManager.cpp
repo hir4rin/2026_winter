@@ -63,6 +63,7 @@ void EnemyManager::Update()
 		//新しく出た敵や、被弾から戻った敵にもかかるように毎フレーム設定する
 		enemy->SetDebugIdle(m_isDebugIdle);
 		enemy->Update();
+		enemy->UpdateGuardRim();
 	}
 	//グループの敵がプレイヤーを見つけたら、同じグループの敵も気づく
 	UpdateGroupAlert();
@@ -102,7 +103,10 @@ void EnemyManager::Draw()
 {
 	for (auto& enemy : m_enemies)
 	{
+		//ガード中はふちを光らせる(武器・部位も一緒に光る)
+		enemy->BeginGuardRim();
 		enemy->Draw();
+		enemy->EndGuardRim();
 	}
 }
 

@@ -266,6 +266,13 @@ public:
 	virtual void OnAirAssasined();//空中暗殺確定時
 	virtual void OnPartBrokenKilled(PartBrokenPattern pattern);//確殺確定時
 	void PlayFloorBlood(BloodAmount amount);//床に血の跡を残す(血はプレイヤーの反対側へ飛ぶ)
+
+	//ガード中のふちの光//EnemyManagerがUpdateの後とDrawの前後で呼ぶ
+	void UpdateGuardRim();
+	void BeginGuardRim()const;
+	void EndGuardRim()const;
+	//ガードブレイク(EnemyGuardBreak の Enter で呼ぶ)//紫の閃光とガラス片を出し、ガードの光を止める
+	void StartGuardBreakEffect();
 	bool GetIsExecuted()const { return m_isExecuted; }//確殺・暗殺が始まったかどうか//trueなら確殺・暗殺の対象にしない
 	bool GetIsPlayerFound()const { return m_isPlayerFound; }//プレイヤーを発見したかどうか//trueなら暗殺の対象にしない
 	void SetIsPlayerFound(bool isPlayerFound) { m_isPlayerFound = isPlayerFound; }
@@ -442,6 +449,8 @@ protected:
 	float m_knockBackFrame = 0;//吹き飛ばしのフレーム数
 	float m_knockBackDownFrame = 0.0f;//吹き飛ばし後のダウン時間
 	float m_airCount = 0.0f;//空中にいる時間//AirStayのときに使う
+	float m_guardRimRate = 0.0f;//ガードのふちの光のかかり具合(0～1)
+	float m_guardRimTimer = 0.0f;//ふちの光の明滅用
 	bool m_isLifeZero = false;//体力が0になったか
 	HitType m_hitType = HitType::None;//空中にいるかどうか
 

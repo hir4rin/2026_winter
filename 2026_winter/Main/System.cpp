@@ -58,6 +58,9 @@ namespace
 	const std::string kBloodKillEffectPath = "data/Effect/Blood/BloodKill.efk";
 	const std::string kBloodPartBreakEffectPath = "data/Effect/Blood/BloodPartBreak.efk";
 	const std::string kBloodUltEffectPath = "data/Effect/Blood/BloodUlt.efk";
+	//ガードブレイク
+	const std::string kGuardBreakFlashEffectPath = "data/Effect/GuardBreak/GuardBreakFlash.efk";
+	const std::string kGuardBreakShardsEffectPath = "data/Effect/GuardBreak/GuardBreakShards.efk";
 
 	//Kingmechのミサイルの雨
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
@@ -95,6 +98,8 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::BloodKillEffect] = LoadEffekseerEffect(kBloodKillEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodPartBreakEffect] = LoadEffekseerEffect(kBloodPartBreakEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodUltEffect] = LoadEffekseerEffect(kBloodUltEffectPath.c_str());
+	m_asyncHandles[AsyncData::GuardBreakFlashEffect] = LoadEffekseerEffect(kGuardBreakFlashEffectPath.c_str());
+	m_asyncHandles[AsyncData::GuardBreakShardsEffect] = LoadEffekseerEffect(kGuardBreakShardsEffectPath.c_str());
 }
 
 void System::LoadStage(StageType type)
@@ -270,6 +275,8 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodKillEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodPartBreakEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodUltEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GuardBreakFlashEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GuardBreakShardsEffect]);
 
 }
 

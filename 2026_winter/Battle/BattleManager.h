@@ -52,6 +52,11 @@ public:
 	std::weak_ptr<AttackTokenManager> GetAttackTokenMgr() { return m_attackTokenMgr; }
 	std::weak_ptr<BloodDecalManager> GetBloodDecalMgr() { return m_bloodDecalMgr; }
 	FinisherScreen& GetFinisherScreen() { return m_finisherScreen; }
+
+	//画面に血を付ける(暗殺・確殺。ScreenBloodUIが受け取る)
+	void RequestScreenBlood() { m_isScreenBloodRequested = true; }
+	//来ていればtrue(受け取ったら消える)
+	bool TakeScreenBloodRequest();
 private:
 	std::shared_ptr<AttackTokenManager> m_attackTokenMgr;//敵の攻撃権
 	std::shared_ptr<BloodDecalManager> m_bloodDecalMgr;//床の血の跡
@@ -69,6 +74,7 @@ private:
 
 	bool m_isBattleEnd = false;//バトルが終わったか
 	FinisherScreen m_finisherScreen;
+	bool m_isScreenBloodRequested = false;//画面の血
 
 };
 
