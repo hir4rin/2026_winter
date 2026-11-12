@@ -1635,6 +1635,57 @@
 - 確認: Debug・Release のビルドは通った。`-result` で画面を撮り、出る順番・ハンコ・揺れを確認した。一時コードでステージ1を150Fで終わらせて、実際の記録(0 / 34体・2.50秒)が出ることも確認した(一時コードは消した)。
 - (追記)最初はゲームの最後の画面をぼかして背景にしていたが、ステージセレクトと同じ背景にした(見た目をそろえる・PNG に差し替えやすくするため)。画面の取り込み(`m_resultBgHandle`)と引数の bgHandle は削除。ドットは `m_bgFrame` で流すので、スキップしても飛ばない。あとでステージごとの背景 PNG にする案あり。**実際に遊んでクリアしての確認はまだ**(技の数え方が合っているか、リトライ)。
 
+### 2026-11-12 チュートリアルの設計(会話で決めた・まだ作っていない。ユーザーが自分で書く)
+- 方針: **遷移表(`PhaseStage〜.csv`)をチュートリアルの台本にする**。「いつ出すか」は PhaseManager、「何をどう見せるか」は TutorialScene。`TutorialManager` は作らない(待ちの列・「もう見た」の印・出してよいかの判定を別に持つと、遷移表と二重になるため)。
+  チュートリアルは専用のステージ(タスク表の「チュートリアルシーン」)なので、表の順に1回ずつ出るだけで「もう見た」の印は要らない。
+- 後ろを止めるのは PauseScene と同じく `PushScene`(SceneController は一番上だけ Update、全部 Draw)。SceneMain が止まるので、BattleManager・PhaseManager・エフェクトの更新とクリアタイムも止まる。タイムスケール0で止める案はやめた(実フレームで動くものが止まらない)。
+- 遷移表の書き方(列 `eventParam` / `eventDelay` を足す。eventDelay 空欄は0):
+  ```
+  #from,condition,param,intParam,to,event,eventParam,eventDelay
+  0,Start,,,1,Tutorial,Move,60     ← フェーズ1を始めて60F後に Move
+  1,AllDead,,,2,Tutorial,Attack,30
+  ```
+  待つためだけに Timer の行(=フェーズ)をはさむのはやめた(敵配置のフェーズ番号がずれる・敵のいないフェーズは AllDead がすぐ成り立つ)。
+- 流れ: CSV → `PhaseTransition::eventParam / eventDelay`(DataManager で読む) → `PhaseManager::ChangePhase` で `m_tutorialId` / `m_tutorialDelay` を覚える
+  → `IsTutorialReady()`(`!m_tutorialId.empty() && m_phaseFrame >= m_tutorialDelay`) → SceneMain の NormalUpdate の最後で、`IsTutorialReady() && CanOpenTutorial()` なら `PushScene(TutorialScene(controller, TakeTutorial()))`
+  → TutorialScene が `Tutorial.csv` の同じ id の行(ページ)を集めて表示、A で送って最後に `PopScene`。
+  - `PhaseEvent::Tutorial` を足す。`ChangePhase` は行ごと(`const PhaseTransition&`)受け取る形にする(F4 のデバッグの呼び出しは None の行を渡すか、今の版を残す)。
+  - **頼みは BattleManager ではなく PhaseManager に持たせる**: Start の行の ChangePhase は BattleManager を作る前に呼ばれ、`GetBattleMgr` の assert に当たるため。待つ数も `m_phaseFrame` をそのまま使える(実フレーム。ポーズ中は進まない)。
+  - `CanOpenTutorial()`: 血殺中(`GetIsUltimating`)・イベント中・暗殺・確殺の最中でないか(最後の1体を血殺・暗殺で倒すと演出の途中でフェーズが変わるため)。出せなければ頼みが残り、出せるようになったフレームで出る。
+  - Push は PhaseManager の Update の中でしない(リザルトの ResetScene と同じ理由)。
+  - 1つのフェーズで2回出したくなったら、そのとき頼みを1つから列にする。
+- `Tutorial.csv` の案: `#id,page,type(Image/Movie),file,title,text`。全部のチュートリアルを1つのファイルに書き、**1行=1ページ**。
+  ```
+  Move,0,Image,move.png,移動,左スティックで移動します
+  Move,1,Movie,move_dash.mp4,ダッシュ,RBを押しながら…
+  Attack,0,Movie,attack.mp4,攻撃,Xで弱攻撃、Yで強攻撃
+  Attack,1,Image,combo.png,コンボ,つなげると…
+  ```
+- **DataManager の読み込み**(PhaseFlow と同じ置き方):
+  - 1行分の構造体 `TutorialPageData { id, page, type, file, title, text }`(文字のまま)。
+  - `LoadTutorial()`: `LoadRawCsv` で1行ずつ分けて `m_tutorialPages` に詰める(起動時か SceneMain で1回)。
+  - `GetTutorialPages(id)`: `m_tutorialPages` から id が同じ行を集め、page の小さい順に `std::sort` して返す(例: "Attack" → 0,1 の2ページ)。
+  - DataManager は文字を返すだけで画像は読まない。`file` を `LoadGraph` で読んで自分の `Page`(ハンドル付き)に入れ、解放するのは TutorialScene。
+  - 簡単にするなら: CSV をページ順に書くと決めて、page の列と並べ替えをなくしてもよい(上から同じ id の行を集めるだけ)。
+- **TutorialScene の作り**(`Scene/TutorialScene.h/.cpp`、PauseScene と同じくメンバー関数ポインタで Update / Draw を切り替える):
+  - 流れ: コンストラクタ(id のページを集めて画像・動画を読む)→ FadeIn(10F で後ろを暗くしてパネルを出す。入力は見ない)→ Normal(A / 右で次、左で前、最後のページで A → FadeOut)→ FadeOut(10F で消して `PopScene`。この後はメンバーを触らない)→ デストラクタで `DeleteGraph`。
+  - メンバーの案: `struct Page { PageType type(Image/Movie); int handle; std::string title, text; }`、`std::vector<Page> m_pages`、`m_pageIndex`、`m_frame`(フェード用、実フレーム)。関数 `ChangePage(next)`(動画を止める・頭から流す)/ `UpdateMovie()`(ループ)/ `DrawPage(rate)`(rate=出具合0〜1。FadeIn / Normal / FadeOut の Draw はこれを rate を変えて呼ぶだけ)。
+  - ページは `DataManager::GetTutorialPages(id)`(同じ id の行を page 順に返す)。画像も動画も `LoadGraph` で読めるのでハンドルは1つ。数ページなので全部コンストラクタで読む。
+  - **入力は自分で `Input::GetInstance().Update()` を呼ぶ**(下の SceneMain が止まっているので。PauseScene の NormalUpdate と同じ)。
+  - 描画: 後ろの SceneMain は SceneController が先に描くので、黒を半透明で重ねて暗くする(PauseScene の NormalDraw と同じ)。パネル・見出し・画像/動画の枠・説明・「1 / 3」・下にボタンの説明(A 次へ / 最後は閉じる)。枠や文字は MenuUI の素材(frame9・游明朝・DrawTiled)を使い回すと見た目がそろう。
+  - 作る順番: 画像1枚・ページ送りなし・A で閉じる → Push / Pop と入力を確かめる → ページ送り → 動画。
+- 動画: `LoadGraph("〜.mp4")`(または OpenMovieToGraph) → `PlayMovieToGraph`、描くのは `DrawExtendGraph`。ページを離れるときは `PauseMovieToGraph`、入るときは `SeekMovieToGraph(h,0)` → 再生。ループは `GetMovieStateToGraph` が0(止まった)なら頭に戻して再生。読み込みは TutorialScene のコンストラクタ、解放はデストラクタ。mp4 がだめなら ogv。
+- 気をつけること: 閉じた A(や先行入力)がゲームに入らないか(必要なら閉じて数フレーム `SetInputBlocked`)、チュートリアル中に PauseScene が積まれないか。
+- 止めずにヒントを出す型(「Yで暗殺」を出したまま遊ばせ、やったら消える)は、あとで UIBase の UI として足す(消える条件は ResultRecorder の回数など)。
+
+### 2026-11-13 列車ステージの連結部のすき間を渡り板でふさいだ
+- 前は連結部(当たり判定の床が2m切れていた)に落ちると線路の高さ(y=-170)の見えない床に立っていた。7か所に渡り板を置いて落ちないようにした。コードは変えていない。
+- Unity の `TrainStageTool.cs` に `Tools > Train Stage > Add Gangway Plates` を足した。隣の車両の床(回っていない薄い当たり判定の箱)で、すき間(0.01〜3m)をはさんで向き合い高さがそろう端を探して、見た目と当たり判定の板を置く。
+  - 見た目は `grid_floor` を2m単位で貼った厚さ0.1mの板(メッシュは `Assets/TrainStage/Gangway/*.asset`)、当たり判定は厚さ0.35mの箱。両側のデッキに0.05m差し込む。どちらも `TrainStage/Gangway`・`TrainStage_Collision/Gangway` にまとめる。
+  - 押すたびに Gangway を消して作り直すので、車両を動かしたらもう一度押して 2. Export。
+- 置いたのは9枚: y=0 が7か所全部、上りスロープ–4両目と4両目–下りスロープは屋根の高さ(y=6.02、幅 x=±4)も。屋根の高さの板に手すりは無い(横から落ちても下の板に着く)。
+- 確認: `probe.exe` で TrainStageCol.mv1 の連結部(z=1950/4150/8397/10597/14844/17044/21291、x=0/600/-750)が全部 y=0(屋根の2か所の中央は y=602)。`preview.exe` で見た目もつながっている。**実際にゲームで歩いての確認はまだ**。
+
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 
@@ -1659,6 +1710,7 @@
 ---
 
 ## TODO / 次にやること
+- [ ] チュートリアル(11/12 の設計)を作る: PhaseFlowData に Tutorial と列2つ → DataManager で読む → PhaseManager の頼み → SceneMain で Push → TutorialScene(まず画像1枚、そのあと動画・ページ送り)
 - [ ] リザルト画面(11/12)を実際にクリアして確認: 技の回数が合っているか(スキル技が1回の技で何回も数えられないか)、リトライ、点数とランクの境目の調整、ステージごとの目標タイム、アイテム・死亡の仕組みができたら `ResultData` の itemUseCount / deathCount に入れる、音
 - [ ] 床の血の跡(11/08)をゲームで確認: 色・量・残る長さ、カメラが動いたときのちらつき、斜面と床の端、空中での出方- [ ] **ステージ1の曲がり角(11/07)をゲームで確認**: 7か所の角を走って通れるか、カメラが回りきるか、角の直後の壁走り(特に角1の先・角3の先・角5の先)の向き、角の外から建物の裏や空が見えないか、角4・角6の見張りを背中から暗殺できるか、スタートから角1までの約170mが長くないか
 - [ ] ガードブレイクのチャンスUIをゲームで確認。チャンスの長さを決める(今は `kChanceTime` 60F×スロー0.2で実時間約5秒。リングもこの長さで減る)、チャンス中の無敵を決める
@@ -1717,7 +1769,7 @@
   - 座標: デッキ上面 y=0、原点=スタート(1両目の前寄り)。前からの距離u(m) → Z=(u-1.5)*100、X は組み立て時の符号の逆
   - 色: ステージとトンネルは `convert.exe flat` でキャラ・デモステージと同じ「拡散=色×0.1・環境=色×0.9・反射0.1」にしてある(ライトの向きで明るさが変わらず、敵とのなじみがデモステージと同じ)。色は build_train_stage.py の TINT_*、トンネルは build_all.sh の TUNNEL_DIF
   - 敵配置 `Enemies004.csv`・遷移 `PhaseStage004.csv`(A:1両目 → B:2・3両目 → C:4両目の屋根と5両目 → D:6両目 → GameClear)は仮。エリートは今 Swordman
-  - 列車の左右の縁(x=±800)と前後の端に、高さ1200の見えない壁を立てて外へ出られないようにしている。連結部のすき間に落ちると線路の高さ(y=-170)の見えない床に立つ
+  - 列車の左右の縁(x=±800)と前後の端に、高さ1200の見えない壁を立てて外へ出られないようにしている。連結部のすき間は渡り板(Unity の `Tools > Train Stage > Add Gangway Plates`、何度でも作り直せる)でふさいである。線路の高さの見えない床(当たり判定の Outer、上面 y=-150)は念のため残っている
   - 作り直し: `tools/TrainStage/build_all.sh 素材フォルダ [--corridor]`(Git Bash)。中身は prepare_corridor.py → build_train_stage.py → build_tunnel.py → `tools/FbxToMv1/export_x.py`(.x) → `convert.exe`(mv1)。ゲームのDxLibはFBXを読めないので .x 経由。`preview.exe` でゲームと同じライトの見た目を PNG に、`probe.exe` で当たり判定の高さ・法線を調べられる
   - **Unityで調整する(今後はこちらが本番)**: Unityプロジェクト `Desktop/programm/ninja_motion` の `Assets/Editor/TrainStageTool.cs`。
     `Tools > Train Stage > 1. Import From Game Data (Setup Scene)` で `data/Stage/TrainStage/TrainStage_Unity.fbx`・tex・トンネルを取り込んで `Assets/Scenes/TrainStageScene.unity` を作る(作り直すと調整は消える)。
