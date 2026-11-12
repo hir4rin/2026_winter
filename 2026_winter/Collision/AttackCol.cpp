@@ -5,6 +5,7 @@
 #include "../Camera/CameraState/CameraStateBase.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
+#include "Battle/ResultRecorder.h"
 #include "Character/Enemy/EnemyBase.h"
 #include "Character/CharacterBase.h"
 #include "HitCol.h"
@@ -158,6 +159,8 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				m_attackData->knockBackFrame -= nowAnimFrame;
 				//ダメージの受け渡し
 				hitCol->OnDamageInterFace(*this, *m_attackData);
+				//リザルトのコンボ
+				if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->OnPlayerAttackHit();
 				//ヒットストップの受け渡し
 				//hitCol->SetTimeScaleInterFace(0.3f, 10.0f);
 
@@ -225,6 +228,7 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 					else
 					{
 						System::GetInstance().GetBattleMgr()->SetUltStart(kUltStartFrame, other.GetWorldPos());//必殺技の演出をスタートする
+						if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->AddTechnique(ResultData::Technique::TrueUlt);
 						if (!isLastHitEvent)
 						{
 							System::GetInstance().SetTimeScaleForFrames(kUltTimeScaleRate, kUltStartFrame);//時間を遅くする//60フレームで元に戻す

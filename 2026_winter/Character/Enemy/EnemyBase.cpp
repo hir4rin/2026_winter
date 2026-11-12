@@ -6,6 +6,7 @@
 #include "Main/System.h"
 #include "../../DataLoader/DataManager.h"
 #include "Battle/BattleManager.h"
+#include "Battle/ResultRecorder.h"
 #include "Render/EffectManager.h"
 #include "Render/ModelShaderManager.h"
 #include "EffekseerForDXLib.h"
@@ -367,6 +368,7 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	if (!m_isPartBroken && Utility::IsHitRate(static_cast<int>(data.brokenRate * m_status.partBreakRate)))
 	{
 		OnPartBreak();
+		if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->AddTechnique(ResultData::Technique::PartBreak);
 		PlayPartBreakBlood();
 		PlayFloorBlood(BloodAmount::Small);
 	}

@@ -8,6 +8,7 @@
 #include "Camera/CameraManager.h"
 #include "Camera/LockOnManager.h"
 #include "Battle/BattleManager.h"
+#include "Battle/ResultRecorder.h"
 #include "DataLoader/DataManager.h"
 #include "Character/Enemy/EnemyBase.h"
 #include "Render/ModelShaderManager.h"
@@ -342,6 +343,8 @@ void Player::OnDamage(Collider& other, AttackData& data)
 		m_damageInfo.damageTimer = m_damageInfo.kDamageTime;
 		//リザルト集計用//被弾回数を加算する
 		m_damageTakenCount++;
+		//コンボを切る
+		if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->OnPlayerDamaged();
 		if (m_hp <= 0)
 		{
 			//死亡ステートにする
@@ -439,6 +442,7 @@ void Player::StartSkillKessatsu(const Vector3& pos)
 {
 	auto battleMgr = System::GetInstance().GetBattleMgr();
 	battleMgr->SetUltStart(kSkillKessatuFrame, pos);
+	if (auto recorder = battleMgr->GetResultRecorder().lock()) recorder->AddTechnique(ResultData::Technique::SkillKessatsu);
 	if (battleMgr->GetIsLastHitEventPlaying())return;
 	System::GetInstance().SetTimeScaleForFrames(kSkillKessatuTimeScaleRate, kSkillKessatuSlowFrame);
 	if (auto cameraManager = m_cameraManager.lock())

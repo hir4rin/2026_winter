@@ -25,6 +25,7 @@
 #include "Main/FrameProfiler.h"
 #include "Scene/PauseScene.h"
 #include "Scene/ResultScene.h"
+#include "Battle/ResultRecorder.h"
 #include "Stage/WallZone/WallZoneEditor.h"
 #include "Stage/Phase/PhaseAreaEditor.h"
 #include "UI/UIManager.h"
@@ -350,8 +351,16 @@ void SceneMain::FadeOutUpdate()
 	m_fadeFrame++;
 	if (m_fadeFrame >= kFadeFrame)
 	{
+		const StageInfo& info = StageData::GetInfo(m_stageType);
+		const int spawnNum = static_cast<int>(DataManager::GetInstance().GetEnemySpawnData().size());
+		const int enemyNum = spawnNum > 0 ? spawnNum : 1;
+		ResultData result;
+		if (auto recorder = m_battleManager->GetResultRecorder().lock())
+		{
+			result = recorder->MakeResult(static_cast<int>(m_stageType), info.targetClearSec, m_enemyManager->GetTotalKillCount(), enemyNum);
+		}
 		//このシーンはここで破棄されるので、呼んだ後は何もしない
-		m_controller.ResetScene<ResultScene>();
+		m_controller.ResetScene<ResultScene>(m_stageType, result);
 		return;
 	}
 }

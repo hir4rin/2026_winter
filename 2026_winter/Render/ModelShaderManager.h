@@ -72,12 +72,12 @@ public:
 	//頂点タイプに合った頂点シェーダーのハンドルを返す(対応していない頂点タイプは-1)
 	int GetVertexShader(int vertexType)const;
 
-private:
-	//マクロを付けてhlslをコンパイルし、DxLibのシェーダーハンドルにする
+	//マクロを付けてhlslをコンパイルし、DxLibのシェーダーハンドルにする(タイトルのロゴでも使う)
 	//macrosの最後は{nullptr,nullptr}にすること
 	static int LoadShaderWithMacro(const std::wstring& path, const char* target,
 		const std::vector<D3D_SHADER_MACRO>& macros, bool isVertex);
 
+private:
 	//1つのモデルを指定のピクセルシェーダーで描く
 	//メッシュごとに頂点タイプが違うモデル(4ボーンと8ボーンが混ざっているなど)はメッシュごとに頂点シェーダーを切り替える
 	//bumpPixelShader はノーマルマップのある頂点タイプ用(-1 なら pixelShader)

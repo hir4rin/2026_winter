@@ -54,6 +54,9 @@
     <ClCompile Include="Scene\StageSelectScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\TitleScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Scene\ResultScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -351,6 +354,12 @@
     <ClCompile Include="Battle\BattleManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Battle\ResultRecorder.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ResultUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\State\EnemyStateBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -573,6 +582,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Scene\StageSelectScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\TitleScene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Scene\ResultScene.h">
@@ -896,6 +908,12 @@
     <ClInclude Include="Battle\BattleManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Battle\ResultRecorder.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ResultUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="DataLoader\AnimData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1094,6 +1112,9 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\CharacterLookPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\TitleLogoPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\VertexShader.h">

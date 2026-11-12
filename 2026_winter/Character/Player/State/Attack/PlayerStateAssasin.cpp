@@ -2,6 +2,8 @@
 #include "Character/Player/Player.h"
 #include "Character/Enemy/EnemyBase.h"
 #include "Main/System.h"
+#include "Battle/BattleManager.h"
+#include "Battle/ResultRecorder.h"
 #include "../Camera/CameraManager.h"
 
 
@@ -33,6 +35,7 @@ void PlayerStateAssasin::Enter()
 	if (!player) return;
 	//落下禁止を有効化
 	player->SetPreventFall(true);
+	if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->AddTechnique(ResultData::Technique::Assasin);
 
 	//暗殺名前一覧
 	//	Execute01->Execute01Victim     移動させないとださい　△

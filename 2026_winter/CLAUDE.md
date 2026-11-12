@@ -1571,10 +1571,69 @@
 - 画像: `data/UI/ScreenBlood/`(splat_0〜3・spray_0〜2、1024px。白で形はアルファだけ、乗算済みアルファで読む)。作り直しは `../tools/BloodDecalGen/MakeScreenBlood.ps1`。画像の根元の位置(splat は中心から -0.45×0.49、spray は -0.82×0.49)を変えたら .cpp の `kSplatRootRate` / `kSprayRootRate` も直す。
 - 確認: Release・Debug(x64)のビルドは通った。一時コードでステージ1に2回出して画面を撮った(一時コードは消した)。**実際に暗殺・確殺しての確認はまだ**(演出のカメラ・スローと重なったときの見え方、量)。
 
+### 2026-11-12 タイトル画面(TitleScene)と、ロゴを斬って垂らす演出(シェーダー)
+- `Scene/TitleScene.h/.cpp`(vcxproj/filters に登録)。**起動して最初のシーン**(`Application::Run` の `ResetScene<TitleScene>`。前は StageSelectScene)。Pause / Result から戻る先はステージセレクトのまま。
+- 流れ(フレームはシーンの始まりから。値は .cpp 先頭): フェードイン30F → 鋼の「忍」と後ろの帯が 1.06 倍から 45F で縮みながら出る → 85F 斬り口の光が左から5Fで走る → 89F 白い閃光(加算10F)・揺れ(20F)・上半分が線に沿って18pxずれてすき間7px → 95F から45Fで斬り口から下へ赤く染まる → 107F から300Fかけて垂れが伸びる → 140F から「PRESS  A  BUTTON」(游明朝)が明滅。
+  - 演出の途中で A を押すと 140F まで飛ばす。その後の A でフェードアウトしてステージセレクト。
+- **シェーダー `Render/Shader/TitleLogoPS.hlsl`**(実行時にコンパイル。`ModelShaderManager::LoadShaderWithMacro` を public にして使っている)。`DrawPrimitive2DToShader` で四角を1枚描く。定数は b9。
+  - t0 = 斬る前の鋼、t1 = 同じ形の赤。画像のピクセル座標で、斬り線より上は線に沿ってずらす、すき間は透明、下は斬り口からの距離で鋼→赤。
+  - 垂れ: 20px ごとに1本(6割の列)、太さ・長さ・伸びる速さを乱数で変える。下の透明な所から上へ長さぶん探して、赤の濃い所(α>0.7)があれば血の色(先ほど暗い・真ん中に細い光)。四角は画像より 200px 下に伸ばして、垂れがはみ出せるようにしている。
+  - **2D 用の入力は先頭に `SV_POSITION` が要る**(抜くと全部1つずれて、テクスチャ座標が 0 になり何も出なかった)。**hlsl は BOM なしの UTF-8**(BOM があると「Illegal character」でコンパイルに失敗する)。
+- 画像は `data/UI/Title/`: `logo_back.png`(帯・交差の筆・しずく・SHINOBI) / `logo_steel.png` / `logo_red.png` / `logo_cut.png`(斬り口の光、加算) と斬り線の `logo_cut.csv`(x,y,向き。画像のピクセル座標)。全部 747x640 で同じ位置。`logo.png` は完成形の1枚(今は使っていない)。
+  - Illustrator の `Shinobu_vertical` に `layers: true` を付けると、`exportLayers` がこれらを書き出す(steel / red は完成形の書き出しのときは隠しておく。斬り線は見えない目印の線 `cutMarker` を置いて、縮小・移動の後の位置を読む)。
+- 背景は暗い色＋メニューの周辺減光(`data/UI/Menu/vignette.png` を乗算)。
+- **斬り線は後ろの暗い赤の斜めの筆と同じ線**(約29°。Illustrator で筆をまっすぐな1本にして、その線で斬る。前は 8° で筆とずれていた)。
+- **斬った瞬間の閃光(Effekseer、2D)**: `data/Effect/Title/TitleSlash.efk`。85F(斬り口の光が走り始める)に `PlaySlashEffect` で、斬り線の中心・角度に合わせ、刃の長さをロゴ画像で 510px(斬り線は約445px)にして出す。**29° にしてからはゲームの画面でまだ確認していない**。`Effekseer_Set2DSetting` はコンストラクタ、`UpdateEffekseer2D` は Update、`DrawEffekseer2D` はロゴの後・画面の白い光の前。
+  - 作り方・数値は `../tools/TitleSlashFx/RESEARCH_NOTES.md`(元の .efkefc は `TitleSlash_v1/`、テクスチャは `gen_slash_tex.ps1`)。画面の白い光と斬り口の光の画像は残して重ねている。
+- Debug(x64)でビルドは通った。起動して時間をずらして画面を撮り、斬る・染まる・垂れるまで動くのを確認。閃光が斬り線に沿って走るのも連写で確認した。**A でステージセレクトへ進むところ・A で飛ばすところはまだ試していない**。Release はまだビルドしていない。
+
+### 2026-11-12 タイトルロゴ(Illustrator で作る) → 決定: 10 の「忍」(Shinobu_vertical)
+- **決定版 `Shinobu_vertical`**: 「忍 = 刃＋心」で、上の刃を鋼・下の心を血の赤にして境目を斬る(`slash` に中心 `at` を渡す。高さは `SPLIT`)。KSO黒龍爽の忍に面取り・黒いふち・赤い光・落ち影。後ろに赤い筆の帯(先に墨のしずく)と交差する暗い赤の筆、帯の上に縦の SHINOBI(Copperplate)。
+  - ゲーム用: **`data/UI/Title/logo.png`(747x640、透過。余白は `GAME_MARGIN`)**。確認用は `../tools/TitleLogoGen/out/Shinobu_vertical_preview.png`。
+  - `ONLY = ["Shinobu_vertical"]` で決定版だけ作る(空にすると全部の案)。KSO黒龍爽が入っていない PC では作り直せない。
+- 候補だった 05 の斬った文字(`slicedTitle`。`Title_NINJA` 10° / `Title_SHINOBI` 6°)も、他の案と同じくコードと `out/` の出力を残してある(ゲーム用の画像は消した)。`out/R3_〜`・`out/round2/` も参考に残してある。
+- タイトル画面(`Scene/TitleScene`)で表示している(下の 11/12 の欄)。
+- `../tools/TitleLogoGen/MakeTitleLogo.ps1` が Illustrator を COM(`Illustrator.Application`)で起動し、`title_logo.jsx`(ExtendScript)を実行する。
+- 最初の案(フォントの「忍」＋飾り)は「AI臭い」でボツ。**文字はフォントを使わず、筆の線を1画ずつ組む**方式にした(`GLYPHS`: 高さ100の座標で、点の列・太さ・入り(b/s)・抜き(s/f/b))。
+  - 線の中心を Catmull-Rom でならし、太さの変化(入り・抜き)とふちの荒れを付けて輪郭にする。抜きが "f" の画は、中に細い穴(かすれ)を開けた複合パス(外側 POSITIVE、穴 NEGATIVE)。
+- 2回目: Koei Tecmo / Platinum / Capcom のロゴの作り方を参考に12案(`VARIANTS` の `build` 関数)。筆の文字(`brush`)と、フォントを輪郭にした文字(`type` / 縦書き `typeV`)を組み合わせる。
+  - KT: 01 筆の忍＋Perpetua Titling / 02 筆の NINJA＋白い忍(KSO) / 03 金の忍者(KSO)＋NINJA
+  - PG: 04 Bodoni の SHINOBI＋線だけの大きな忍 / 05 Acumin の NINJA を斬って上白・下赤 / 06 横の切れ目で速さ / 07 ステンシル風の忍(Noto Sans JP Black)
+  - CP: 08 Old English の SHINOBI(赤のグラデ) / 09 鋼の NINJA(Trajan) / 10 縦書きの忍者＋縦の NINJA / 11 荒い筆の忍＋赤い版ずれ / 12 極太明朝の忍を斬る
+  - 道具: `paint`(色 / グラデの段 / ふち)、`slash`(斜めに斬ってずらす)、`clipTo`(帯の部分だけ残す)。
+- 3回目: 2回目の 02・03・04・05・09・10 が好評だったので、その6つを作り込んだ(`R3_〜`。今の `VARIANTS` はこの6つだけ、2回目の出力は `out/round2/` に移した)。
+  - `fx(item, {glow, shadow, extrude, rim, outline, emboss})`: 本体の後ろに 光(ぼかし) / 落ち影 / 押し出し / 赤い縁 / ふち / 面取り(明暗を斜めにずらした複製) を重ね、まとめたグループを返す。**fx の後で本体だけ動かすと重ねた物が残るので、配置してから fx を呼ぶ**。
+  - ぼかしは `applyEffect('<LiveEffect name="Adobe PSL Gaussian Blur">…')`。グラデの段に3つ目の値を書くと不透明度。
+  - 筆の文字に `spray`(払いの先に細長いしずく)。`strokeAt` で好きな形の1画(円相・刃のような線・縦の帯)。`cutLine` は斬った線の光。
+  - 02 赤い筆の NINJA(グラデ・押し出し・斬り・白い忍に赤い光) / 03 金の忍者(面取り・影・赤い円相・刃の線つき副題) / 04 Bodoni の SHINOBI(細い線・消えていく大きな忍・縦のシノビ・O を斬る線) / 05 斬った NINJA(押し出し・斬り口の光・忍の札) / 09 鋼の NINJA(面取り・黒と赤の縁・後ろで光る忍) / 10 縦の忍者(赤い筆の帯・NINJA・朱の印)。
+- 出力: `../tools/TitleLogoGen/out/` に案ごとの透過PNG・暗い背景の `_preview.png`・手直し用の `.ai`(1600x800)。**作り直すと .ai も上書きされる**。
+- ハマった所: 大きい座標で組むと Illustrator のキャンバス(約16000pt)を超えて消える → 小さく組んでから resize。穴の点に NaN が混ざると画ごと消える。
+  マスク(クリップ)は複合パスが使えない → 帯ごとに複製して1本のパスで切る。マスクの大きさがグループの大きさになるので、マスクは文字の外枠で切っておく(大きいと全体の縮小に巻き込まれて小さくなる)。
+  マスクのパスに塗りを付けると四角が見えてしまう → `paint` は `clipping` のパスを飛ばす。
+
 ### 2026-11-11 確殺の対象を足元の高さの差で絞る
 - `LockOnManager::TryPartBrokenTarget`: プレイヤーと敵の足元(`GetRigidBody().GetPos().y`)の高さの差が `kPartBrokenMaxHeightDiff`(50)以上の敵は候補から外す。
 - 外すほう(`CheckPartBrokenTarget`)も同じ: 高さの差が50以上になったら対象から外す(距離の判定の前)。距離と違って余裕(margin)は付けていないので、ちょうど50前後の段差だと出たり消えたりするかもしれない。
 - Debug(x64)でビルドは通った。ゲームでの確認はまだ。
+
+### 2026-11-12 リザルト画面(NG4 のリザルトを参考に)
+- 配置: 左=ランクのハンコと総合スコア、中央左=足す項目(技・切る数・クリアタイム)、中央右=倍率(アイテム・死亡)、右=テクニックの詳細データ(コンボ・部位破壊・確殺・暗殺・スキル技・スキル血殺・真必殺技)、下=A 次へ / Y リトライ。
+- 点: `総合 = (技 + 切 + 時) × 道 × 死`。`Battle/ResultRecorder.h/.cpp` の `ResultData` が計算する(値は .cpp 先頭と関数内の表。全部仮)。
+  - 技 = 最大コンボ×20 + 技ごとの点×回数(部位破壊300・確殺800・暗殺800・スキル技150・スキル血殺1000・真必殺技1500)。上限なし。
+  - 切 = 倒した数 / 配置CSVの敵の数 × 20000。時 = 目標(`StageInfo::targetClearSec`、今は全部300秒)以内なら20000、目標の3倍で0。
+  - 道・死 = 1回ごとに -0.1(最低0.5)。**アイテム・死亡の仕組みが無いので、今はいつも0回(×1.0)**。
+  - ランク: 下忍 / 中忍(20000〜) / 上忍(32000〜) / 頭領(40000〜) / 影(46000〜)。
+- 記録: `ResultRecorder`(`BattleManager` が持つ。`GetResultRecorder().lock()`)。クリアタイムは `BattleManager::Update` で実フレームを数える(ポーズ・フォトモード中は数えない)。
+  コンボは攻撃が当たるたびに+1、90F当たらないか被弾で0(`AttackCol` / `Player::OnDamage`)。技は `EnemyBase::OnDamage`(部位破壊)、`PlayerStatePartBrokenKill::Enter`、`PlayerStateAssasin` / `AirAssasin::Enter`、`PlayerStateSkillAttack::Enter`、`Player::StartSkillKessatsu`、`AttackCol` の必殺技の開始で数える。
+- `SceneMain`: フェードアウトが終わったら `ResetScene<ResultScene>(stageType, result)`。
+- `UI/ResultUI.h/.cpp`: 描画と出る順番(実フレーム、.cpp 先頭の `k〜Start`)。背景(ステージセレクトの MenuUI と同じ。色＋格子・流れるドット・周辺減光) → 上の帯 → 線 → 技(詳細データが上から) → 切 → 時 → 倍率 → 総合 → ため(暗くする) → ハンコ(上から押す・揺れ・墨のはね) → 新記録 → ボタン。約5秒。
+  - A でスキップ: 1回目はためまで、2回目は最後まで。ボタンが出たら A でステージセレクト、Y でリトライ(Now Loading を出して同じステージ)。
+  - ハンコは文字を1文字ずつ回して縦に並べる(`DrawRotaStringToHandle` の縦書きは回転の中心が合わなかった)。上のランクほど揺れと墨のはねが強い。墨は `ScreenBlood/splat_0〜2`。
+  - Windows の `DrawText` マクロとぶつかるので、文字を描く関数は `DrawLabel`。
+- 自己ベスト: `Save/BestScore.txt`(1行に「ステージ番号 スコア」)。超えたら「新記録」を出して保存。
+- **起動の引数 `-result`** でリザルトだけを仮の結果で開く(`ResultScene::MakeDebugData`。自己ベストは保存しない)。
+- 確認: Debug・Release のビルドは通った。`-result` で画面を撮り、出る順番・ハンコ・揺れを確認した。一時コードでステージ1を150Fで終わらせて、実際の記録(0 / 34体・2.50秒)が出ることも確認した(一時コードは消した)。
+- (追記)最初はゲームの最後の画面をぼかして背景にしていたが、ステージセレクトと同じ背景にした(見た目をそろえる・PNG に差し替えやすくするため)。画面の取り込み(`m_resultBgHandle`)と引数の bgHandle は削除。ドットは `m_bgFrame` で流すので、スキップしても飛ばない。あとでステージごとの背景 PNG にする案あり。**実際に遊んでクリアしての確認はまだ**(技の数え方が合っているか、リトライ)。
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
@@ -1600,6 +1659,7 @@
 ---
 
 ## TODO / 次にやること
+- [ ] リザルト画面(11/12)を実際にクリアして確認: 技の回数が合っているか(スキル技が1回の技で何回も数えられないか)、リトライ、点数とランクの境目の調整、ステージごとの目標タイム、アイテム・死亡の仕組みができたら `ResultData` の itemUseCount / deathCount に入れる、音
 - [ ] 床の血の跡(11/08)をゲームで確認: 色・量・残る長さ、カメラが動いたときのちらつき、斜面と床の端、空中での出方- [ ] **ステージ1の曲がり角(11/07)をゲームで確認**: 7か所の角を走って通れるか、カメラが回りきるか、角の直後の壁走り(特に角1の先・角3の先・角5の先)の向き、角の外から建物の裏や空が見えないか、角4・角6の見張りを背中から暗殺できるか、スタートから角1までの約170mが長くないか
 - [ ] ガードブレイクのチャンスUIをゲームで確認。チャンスの長さを決める(今は `kChanceTime` 60F×スロー0.2で実時間約5秒。リングもこの長さで減る)、チャンス中の無敵を決める
 - [ ] ステージ1の仕上げ(11/06)をゲームで確認: 敵の増え方と谷の8体の戦いやすさ、小物に敵が引っかからないか、血殺の色変えが強すぎないか、スキル演出のカメラで建物の裏が欠けて見えないか

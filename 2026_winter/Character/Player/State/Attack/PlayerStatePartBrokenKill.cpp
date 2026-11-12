@@ -7,6 +7,7 @@
 #include "Math/Easing.h"
 #include "Render/BloodDecalManager.h"
 #include "Battle/BattleManager.h"
+#include "Battle/ResultRecorder.h"
 #include <algorithm>
 
 namespace
@@ -70,6 +71,7 @@ void PlayerStatePartBrokenKill::Enter()
 
 	auto partBrokenTarget = player->GetPartBrokenTarget();
 	if (!partBrokenTarget)return;
+	if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->AddTechnique(ResultData::Technique::PartBrokenKill);
 
 
 	//パターン分岐//もっと細かく分けてもいい

@@ -7,6 +7,7 @@
 #include "Collision/SphereShape.h"
 #include "Collision/CollisionManager.h"
 #include "Battle/BattleManager.h"
+#include "Battle/ResultRecorder.h"
 #include "Main/System.h"
 #include "EffekseerForDXLib.h"
 #include "Character/Enemy/EnemyBase.h"
@@ -53,6 +54,7 @@ void PlayerStateSkillAttack::Enter()
 	player->SetPreventFall(true);
 	//攻撃の方向を決める(入力→ロックオン→内部ターゲット)
 	DecideAttackDirection();
+	if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->AddTechnique(ResultData::Technique::Skill);
 
 	//スキル攻撃の何段目を再生するか決める
 	int currentComboIndex = SelectAnimInit();

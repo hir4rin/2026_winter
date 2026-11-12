@@ -147,6 +147,7 @@
     <ClCompile Include="Main\Application.cpp" />
     <ClCompile Include="Battle\AttackTokenManager.cpp" />
     <ClCompile Include="Battle\BattleManager.cpp" />
+    <ClCompile Include="Battle\ResultRecorder.cpp" />
     <ClCompile Include="Battle\PhaseManager.cpp" />
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\CameraManager.cpp" />
@@ -291,6 +292,7 @@
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Scene\PauseScene.cpp" />
     <ClCompile Include="Scene\StageSelectScene.cpp" />
+    <ClCompile Include="Scene\TitleScene.cpp" />
     <ClCompile Include="Scene\ResultScene.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\SceneController.cpp" />
@@ -314,12 +316,14 @@
     <ClCompile Include="UI\ScreenBloodUI.cpp" />
     <ClCompile Include="UI\PlayerHUD.cpp" />
     <ClCompile Include="UI\MenuUI.cpp" />
+    <ClCompile Include="UI\ResultUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Character\Animation.h" />
     <ClInclude Include="Main\Application.h" />
     <ClInclude Include="Battle\AttackTokenManager.h" />
     <ClInclude Include="Battle\BattleManager.h" />
+    <ClInclude Include="Battle\ResultRecorder.h" />
     <ClInclude Include="Battle\PhaseManager.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Camera\CameraManager.h" />
@@ -468,6 +472,7 @@
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Scene\PauseScene.h" />
     <ClInclude Include="Scene\StageSelectScene.h" />
+    <ClInclude Include="Scene\TitleScene.h" />
     <ClInclude Include="Scene\ResultScene.h" />
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Scene\SceneController.h" />
@@ -496,6 +501,7 @@
     <ClInclude Include="UI\ScreenBloodUI.h" />
     <ClInclude Include="UI\PlayerHUD.h" />
     <ClInclude Include="UI\MenuUI.h" />
+    <ClInclude Include="UI\ResultUI.h" />
   </ItemGroup>
   <ItemGroup>
     <!-- 実行時にD3DCompileFromFileでコンパイルするので、ビルドではコンパイルしない(Noneにしておく) -->
@@ -508,6 +514,7 @@
     <None Include="Render\Shader\DxShader_Common_D3D11.h" />
     <None Include="Render\Shader\DxShader_VS_D3D11.h" />
     <None Include="Render\Shader\CharacterLookPS.hlsl" />
+    <None Include="Render\Shader\TitleLogoPS.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -30,6 +30,7 @@ struct StageInfo
 	                     //フェーズ進行(data/Stage/PhaseFlow/PhaseStage003.csv)とエリア(data/Stage/PhaseAreas/Stage003.csv)の番号も兼ねる(SceneMain::Init で読む)
 	bool useNightFog = false;//遠くを夜の色(暗い青)にするか(ステージ1)
 	const char* skyDir = nullptr;//空の画像のフォルダ(無ければ空を描かない)
+	int targetClearSec = 300;//リザルトのタイムが満点になる秒数(仮)
 };
 
 

@@ -2,6 +2,7 @@
 #include "Main/System.h"
 #include "AttackTokenManager.h"
 #include "Render/BloodDecalManager.h"
+#include "ResultRecorder.h"
 
 BattleManager::BattleManager()
 {
@@ -15,6 +16,7 @@ void BattleManager::Init()
 {
 	m_attackTokenMgr = std::make_shared<AttackTokenManager>();
 	m_bloodDecalMgr = std::make_shared<BloodDecalManager>();
+	m_resultRecorder = std::make_shared<ResultRecorder>();
 }
 
 void BattleManager::Update()
@@ -33,6 +35,8 @@ void BattleManager::Update()
 	m_attackTokenMgr->Update();
 	//床の血の跡の更新
 	m_bloodDecalMgr->Update();
+	//クリアタイム・コンボの切れ目
+	m_resultRecorder->Update();
 }
 
 bool BattleManager::TakeScreenBloodRequest()
