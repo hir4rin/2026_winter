@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "DxLib.h"
 #include "Main/Game.h"
+#include "UIFont.h"
 
 namespace
 {
@@ -17,7 +18,6 @@ namespace
 	const char* const kVignettePath = "data/UI/Menu/vignette.png";
 	const char* const kButtonAPath = "data/UI/button/A.png";
 
-	const char* const kFontName = "游明朝";
 	constexpr int kTitleFontSize = 22;
 	constexpr int kItemFontSize = 22;
 	constexpr int kSmallFontSize = 17;
@@ -106,9 +106,9 @@ void MenuUI::Init()
 	m_buttonAHandle = LoadGraph(kButtonAPath);
 
 	const float scale = Game::GetScale();
-	m_titleFont = CreateFontToHandle(kFontName, static_cast<int>(kTitleFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
-	m_itemFont = CreateFontToHandle(kFontName, static_cast<int>(kItemFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
-	m_smallFont = CreateFontToHandle(kFontName, static_cast<int>(kSmallFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
+	m_titleFont = UIFont::Create(static_cast<int>(kTitleFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
+	m_itemFont = UIFont::Create(static_cast<int>(kItemFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
+	m_smallFont = UIFont::Create(static_cast<int>(kSmallFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
 	SetFontSpaceToHandle(static_cast<int>(kTitleSpace * scale), m_titleFont);
 	SetFontSpaceToHandle(static_cast<int>(3 * scale), m_itemFont);
 	SetFontSpaceToHandle(static_cast<int>(1 * scale), m_smallFont);

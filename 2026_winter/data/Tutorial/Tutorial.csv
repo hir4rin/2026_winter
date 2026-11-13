@@ -1,0 +1,5 @@
+#id,page,type,file,title,text
+#id:チュートリアルの名前(遷移表のeventParamと同じ) page:0から順番 type:Image/Movie file:data/Tutorial/からのパス text:説明(,は使えない)
+Move,0,Image,move_0.png,移動,左スティックで移動します。
+Move,1,Image,move_1.png,ダッシュ,移動中にRBを押し続けるとダッシュします。
+Attack,0,Image,attack_0.png,攻撃,Xで弱攻撃、Yで強攻撃を出します。

@@ -83,7 +83,7 @@ int ResultData::CalcRank() const
 
 const char* ResultData::GetRankName(int rank)
 {
-	static constexpr std::array<const char*, kRankNum> kNames = { "下忍", "中忍", "上忍", "頭領", "影" };
+	static constexpr std::array<const char*, kRankNum> kNames = { "下忍", "中忍", "上忍", "極忍", "鬼忍" };
 	return kNames[std::clamp(rank, 0, kRankNum - 1)];
 }
 

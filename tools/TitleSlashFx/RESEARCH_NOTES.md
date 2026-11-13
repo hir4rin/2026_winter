@@ -22,6 +22,10 @@
 - 斬り線の中心と向きは `data/UI/Title/logo_cut.csv`、長さはロゴ画像で 450px(斬り線は約394px)
 - `UpdateEffekseer2D()` は Update、`DrawEffekseer2D()` はロゴの後・画面の白い光の前
 
+## v2(2026-11-13)
+- 全ノードの `DrawingValues.Sprite.Billboard` を Fixed に。Billboard のままだと 2D の回転(`SetRotationPlayingEffekseer2DEffect` の z)が効かず、斬り線が斜めでも閃光が水平に出た
+- 斬り線を背景の斜めの筆(約29°)に合わせたので、ゲーム側の刃の長さは 510px(斬り線は約445px)
+
 ## 失敗・注意
 - 撮影でゲームを閉じそこねると、次の起動が DxLib の二重起動チェックで落ちる(Log.txt に「二重起動されています」)
 - 起動からタイトルまでの時間がぶれるので、斬る瞬間を撮るときは間隔の短い連写で広く撮る

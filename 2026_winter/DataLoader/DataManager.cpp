@@ -5,6 +5,7 @@
 #include <string>
 #include <iomanip>
 #include <filesystem>
+#include <algorithm>
 
 namespace
 {
@@ -72,6 +73,8 @@ namespace
         Param,
         To,
         Event,//空ならNone
+        EventParam,
+        EventDelay,//そのディレイが終わったら流す
     };
     constexpr int kPhaseFlowMinColumnNum = PhaseFlowColumn::Event;//event列は省略可
 
@@ -89,6 +92,20 @@ namespace
         AreaHalfExtentZ,
         AreaRotYDeg,
         PhaseAreaColumnNum,//列数
+    };
+
+    const std::string kTutorialPath = "data/Tutorial/Tutorial.csv";
+
+    //PhaseFlowColumn などと名前がぶつからないように頭に Tutorial を付ける
+    enum TutorialColumn : int
+    {
+        TutorialId,
+        TutorialPage,
+        TutorialType,
+        TutorialFile,
+        TutorialTitle,
+        TutorialText,
+        TutorialColumnNum
     };
 }
 
@@ -117,6 +134,8 @@ void DataManager::LoadAll()
     LoadComboRawData();
     LoadSpawnData();
     LoadPatrolRouteRawData();
+
+    LoadTutorial();
 	//今後追加する場合はここにLoad関数を呼び出すコード
 }
 
@@ -329,11 +348,56 @@ void DataManager::LoadPatrolRouteRawData()
     assert(!m_patrolRouteRawData.empty() && "PatrolRoute0.csvが開けませんでした");
 }
 
+void DataManager::LoadTutorial()
+{
+    std::vector<std::vector<std::string>> rawData;
+
+    LoadRawCsv(kTutorialPath, rawData);
+
+    m_tutorialPages.clear();
+    for (const auto& tokens : rawData)
+    {
+        if (tokens.size() < TutorialColumnNum)continue;//列不足は飛ばす
+
+        TutorialPageData page;
+        //id
+        page.id = tokens[TutorialId];
+        //page
+        page.page = std::stoi(tokens[TutorialPage]);
+        //type
+        page.type = tokens[TutorialType];
+        //file
+        page.file = tokens[TutorialFile];
+        //タイトル文字
+        page.title = tokens[TutorialTitle];
+        //text
+        page.text = tokens[TutorialText];
+
+        m_tutorialPages.push_back(page);
+
+    }
+
+}
+
 std::string DataManager::GetWallZoneFilePath(int stageNumber)
 {
     std::ostringstream oss;
     oss << kWallZoneDirectory << "Stage" << std::setw(3) << std::setfill('0') << stageNumber << ".csv";
     return oss.str();
+}
+
+const std::vector<TutorialPageData> DataManager::GetTutorialPages(const std::string& id) const
+{
+    std::vector<TutorialPageData> result;
+    for (const auto& page : m_tutorialPages)
+    {
+        if (page.id == id) result.push_back(page);
+    }
+
+    //pageが小さい順に並べ替える//一応
+    std::sort(result.begin(), result.end(),
+        [](const TutorialPageData& a, const TutorialPageData& b) { return a.page < b.page; });
+    return result;
 }
 
 void DataManager::LoadWallZoneData(int stageNumber)
@@ -604,6 +668,7 @@ bool DataManager::StringToPhaseEvent(const std::string& str, PhaseEvent& outEven
     if (str == "None") { outEvent = PhaseEvent::None; return true; }
     if (str == "BossAppear") { outEvent = PhaseEvent::BossAppear; return true; }
     if (str == "GameClear") { outEvent = PhaseEvent::GameClear; return true; }
+    if (str == "Tutorial") { outEvent = PhaseEvent::Tutorial; return true; }
     return false;
 }
 

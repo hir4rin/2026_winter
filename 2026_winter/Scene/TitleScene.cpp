@@ -3,6 +3,7 @@
 #include "StageSelectScene.h"
 #include "Main/Input.h"
 #include "Main/Game.h"
+#include "UI/UIFont.h"
 #include "Main/System.h"
 #include "Render/ModelShaderManager.h"
 #include <cmath>
@@ -24,7 +25,6 @@ namespace
 	const char* const kSlashEffectPath = "data/Effect/Title/TitleSlash.efk";
 	constexpr float kSlashEffectLength = 10.0f;//エフェクトの刃の長さ(Effekseer の単位)
 	constexpr float kSlashEffectPixel = 510.0f;//画面に出す刃の長さ(ロゴ画像のピクセル。斬り線は約445)
-	const char* const kFontName = "游明朝";
 	constexpr int kConstantSlot = 9;//TitleLogoPS.hlsl の register(b9)
 
 	constexpr int kFadeFrame = 30;
@@ -98,7 +98,7 @@ TitleScene::TitleScene(SceneController& controller) :Scene(controller)
 	m_slashEffect = LoadEffekseerEffect(kSlashEffectPath);
 
 	const float scale = Game::GetScale();
-	m_font = CreateFontToHandle(kFontName, static_cast<int>(kPressFontSize * scale), 3, DX_FONTTYPE_ANTIALIASING_4X4);
+	m_font = UIFont::Create(static_cast<int>(kPressFontSize * scale), 3, DX_FONTTYPE_ANTIALIASING_4X4);
 	SetFontSpaceToHandle(static_cast<int>(kPressSpace * scale), m_font);
 }
 

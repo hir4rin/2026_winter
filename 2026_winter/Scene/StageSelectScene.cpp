@@ -2,6 +2,7 @@
 #include "SceneController.h"
 #include "DxLib.h"
 #include "SceneMain.h"
+#include "TutorialScene.h"
 #include "Main/Input.h"
 #include "Main/Game.h"
 #include "Main/System.h"
@@ -84,6 +85,13 @@ void StageSelectScene::NormalUpdate()
 		s_cursor = (s_cursor + 1) % stageNum;
 	}
 	ApplyCursor();
+
+	//Yでチュートリアルを上に積む
+	if (input.IsTriggered("Y"))
+	{
+		m_controller.PushScene(std::make_shared<TutorialScene>(m_controller, "Move"));
+		return;
+	}
 
 	//Aで決定してフェードアウト
 	if (input.IsTriggered("A"))

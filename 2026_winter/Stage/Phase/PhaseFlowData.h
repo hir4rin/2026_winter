@@ -17,6 +17,7 @@ enum class PhaseEvent : int
 	None,
 	BossAppear,
 	GameClear,
+	Tutorial
 };
 
 //遷移表の1行
@@ -29,4 +30,6 @@ struct PhaseTransition
 	int areaIndex = -1;//EnterArea用
 	int to = -1;//-1なら終わり
 	PhaseEvent event = PhaseEvent::None;
+	std::string eventParam;//Tutorialならチュートリアルのid
+	int eventDelay = 0;//フェーズが始まってから出すまでのフレーム
 };

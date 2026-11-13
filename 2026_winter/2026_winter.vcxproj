@@ -291,6 +291,7 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Scene\PauseScene.cpp" />
+    <ClCompile Include="Scene\TutorialScene.cpp" />
     <ClCompile Include="Scene\StageSelectScene.cpp" />
     <ClCompile Include="Scene\TitleScene.cpp" />
     <ClCompile Include="Scene\ResultScene.cpp" />
@@ -317,9 +318,11 @@
     <ClCompile Include="UI\PlayerHUD.cpp" />
     <ClCompile Include="UI\MenuUI.cpp" />
     <ClCompile Include="UI\ResultUI.cpp" />
+    <ClCompile Include="UI\UIFont.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Character\Animation.h" />
+    <ClInclude Include="DataLoader\TutorialPageData.h" />
     <ClInclude Include="Main\Application.h" />
     <ClInclude Include="Battle\AttackTokenManager.h" />
     <ClInclude Include="Battle\BattleManager.h" />
@@ -471,6 +474,7 @@
     <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Scene\PauseScene.h" />
+    <ClInclude Include="Scene\TutorialScene.h" />
     <ClInclude Include="Scene\StageSelectScene.h" />
     <ClInclude Include="Scene\TitleScene.h" />
     <ClInclude Include="Scene\ResultScene.h" />
@@ -482,7 +486,8 @@
     <ClInclude Include="Render\StageColorGrade.h" />
     <ClInclude Include="Render\TempTopLight.h" />
     <ClInclude Include="Render\CharacterLook.h" />
-    <ClInclude Include="Main\FrameProfiler.h" />    <ClInclude Include="Stage\SkyBox.h" />
+    <ClInclude Include="Main\FrameProfiler.h" />
+    <ClInclude Include="Stage\SkyBox.h" />
     <ClInclude Include="Stage\Stage.h" />
     <ClInclude Include="Stage\StageLights.h" />
     <ClInclude Include="Stage\WallZone\WallZone.h" />
@@ -502,6 +507,7 @@
     <ClInclude Include="UI\PlayerHUD.h" />
     <ClInclude Include="UI\MenuUI.h" />
     <ClInclude Include="UI\ResultUI.h" />
+    <ClInclude Include="UI\UIFont.h" />
   </ItemGroup>
   <ItemGroup>
     <!-- 実行時にD3DCompileFromFileでコンパイルするので、ビルドではコンパイルしない(Noneにしておく) -->

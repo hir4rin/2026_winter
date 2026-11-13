@@ -48,6 +48,9 @@
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp">
       <Filter>imgui\backends</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\TutorialScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Scene\PauseScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -360,6 +363,9 @@
     <ClCompile Include="UI\ResultUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="UI\UIFont.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\State\EnemyStateBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -577,6 +583,9 @@
     </ClInclude>
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h">
       <Filter>imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\TutorialScene.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Scene\PauseScene.h">
       <Filter>ヘッダー ファイル</Filter>
@@ -914,6 +923,9 @@
     <ClInclude Include="UI\ResultUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="UI\UIFont.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="DataLoader\AnimData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1097,6 +1109,9 @@
     <ClInclude Include="Battle\PhaseManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="DataLoader\TutorialPageData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Render\Shader\MV1VertexShader.hlsl">
@@ -1130,4 +1145,4 @@
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>
-</Project>
+</Project>

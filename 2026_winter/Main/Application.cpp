@@ -12,6 +12,7 @@
 #include "FrameProfiler.h"
 #include "Render/ModelShaderManager.h"
 #include "Render/CharacterLook.h"
+#include "DataLoader/DataManager.h"
 #include <d3d11.h>
 #include <dxgi.h>
 #include <dwmapi.h>
@@ -104,6 +105,7 @@ bool Application::Init()
 
 	//どのステージでも使うもの(プレイヤー・エフェクト)の読み込み。ステージの分は入るときに読む(System::LoadStage)
 	System::GetInstance().LoadCommon();
+	DataManager::GetInstance().LoadTutorial();
 	while (GetASyncLoadNum() > 0)
 	{
 		if (ProcessMessage() == -1)

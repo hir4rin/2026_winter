@@ -1,0 +1,262 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- ランクの紋章(SSS/S/A/B/C)を透明な背景の PNG にする。MakeRankEmblem.ps1 が Edge のヘッドレスで開いて結果を保存する -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manufacturing+Consent&family=Yuji+Boku&display=swap">
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+(async function () {
+  //ランクの番号はゲームの ResultData::CalcRank と同じ(0:C 〜 4:SSS)
+  const RANKS = [
+    { file: "rank_0_C", letters: ["C"], kanji: "下",
+      top: "#e2ab80", bottom: "#71401f", grid: "#b46a3c", glow: null, ink: "#4a1d14",
+      aura: 0, chroma: 2, slash: 0, splat: 0, sparks: 0, cut: 0, drip: 0, glitch: false },
+    { file: "rank_1_B", letters: ["B"], kanji: "中",
+      top: "#eef3fa", bottom: "#66758e", grid: "#8299bb", glow: null, ink: "#5a2025",
+      aura: 0, chroma: 3, slash: 0, splat: 0, sparks: 0, cut: 0, drip: 0, glitch: false },
+    { file: "rank_2_A", letters: ["A"], kanji: "上",
+      top: "#fff0bd", bottom: "#b4802a", grid: "#d9a842", glow: "#e7ae35", ink: "#8a1c18",
+      aura: 0, chroma: 4, slash: 1, splat: 0, sparks: 1, cut: 5, drip: 0, glitch: false },
+    { file: "rank_3_S", letters: ["S"], kanji: "極",
+      top: "#ff9aa3", bottom: "#a00f1c", grid: "#e8364a", glow: "#ff2238", ink: "#b3101f",
+      aura: 0.35, chroma: 5, slash: 1, splat: 0.6, sparks: 0, cut: 7, drip: 0.6, glitch: false },
+    { file: "rank_4_SSS", letters: ["S", "S", "S"], kanji: "鬼",
+      top: "#fff8ee", bottom: "#cdb391", grid: "#ff3a4f", glow: "#ff2238", ink: "#d3142a",
+      aura: 0.6, chroma: 6, slash: 2, splat: 1.0, sparks: 0, cut: 9, drip: 1.0, glitch: true },
+  ];
+
+  const S = 480;//設計の大きさ(この座標で描く)
+  const OUT = Number(new URLSearchParams(location.search).get("size")) || 768;//書き出す PNG の大きさ
+  const CUT = { x1: 48, y1: 404, x2: 446, y2: 70 };
+
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function makeCanvas() { const c = document.createElement("canvas"); c.width = S; c.height = S; return c; }
+  function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")"; }
+  function shade(hex, k) {
+    const n = parseInt(hex.slice(1), 16);
+    const f = v => Math.max(0, Math.min(255, Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k)));
+    return "rgb(" + f(n >> 16 & 255) + "," + f(n >> 8 & 255) + "," + f(n & 255) + ")";
+  }
+  function layoutLetters(r) {
+    if (r.letters.length === 1) return { size: 290, items: [{ ch: r.letters[0], x: 150, y: 236 }] };
+    return { size: 150, items: r.letters.map((ch, i) => ({ ch, x: 140, y: 120 + i * 118 })) };
+  }
+  function forLetters(ctx, lay, dx, dy, stroke) {
+    ctx.font = lay.size + 'px "Manufacturing Consent"';
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    for (const it of lay.items) {
+      const m = ctx.measureText(it.ch);
+      const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+      const y = it.y + dy + h / 2 - m.actualBoundingBoxDescent;
+      if (stroke) ctx.strokeText(it.ch, it.x + dx, y); else ctx.fillText(it.ch, it.x + dx, y);
+    }
+  }
+  function tint(src, color) {
+    const c = makeCanvas(), x = c.getContext("2d");
+    x.drawImage(src, 0, 0); x.globalCompositeOperation = "source-in";
+    x.fillStyle = color; x.fillRect(0, 0, S, S);
+    return c;
+  }
+  function letterMask(lay) { const c = makeCanvas(), x = c.getContext("2d"); x.fillStyle = "#fff"; forLetters(x, lay, 0, 0, false); return c; }
+
+  function letterLayer(r, lay, mask) {
+    const c = makeCanvas(), x = c.getContext("2d");
+    const depth = tint(mask, shade(r.bottom, -0.72));
+    for (let i = 9; i >= 1; i--) { x.globalAlpha = 0.9; x.drawImage(depth, i * 0.8, i * 1.05); }
+    x.globalAlpha = 1;
+    x.lineJoin = "round"; x.strokeStyle = "#060304"; x.lineWidth = 8;
+    forLetters(x, lay, 0, 0, true);
+    const face = makeCanvas(), f = face.getContext("2d");
+    const g = f.createLinearGradient(0, 60, 0, 430);
+    g.addColorStop(0, shade(r.top, 0.35)); g.addColorStop(0.44, r.top);
+    g.addColorStop(0.5, shade(r.bottom, -0.55)); g.addColorStop(0.56, r.bottom);
+    g.addColorStop(0.85, shade(r.top, -0.1)); g.addColorStop(1, r.bottom);
+    f.fillStyle = g; f.fillRect(0, 0, S, S);
+    f.globalAlpha = 0.18; f.strokeStyle = "#fff"; f.lineWidth = 10;
+    f.beginPath(); f.moveTo(60, 470); f.lineTo(330, 0); f.stroke();
+    f.lineWidth = 3; f.beginPath(); f.moveTo(110, 470); f.lineTo(380, 0); f.stroke();
+    f.globalAlpha = 1;
+    f.fillStyle = "rgba(10,4,8,0.22)";
+    for (let y = Math.round(S * 0.55); y < S; y += 5) {
+      const rad = 0.3 + ((y - S * 0.55) / (S * 0.45)) * 1.6;
+      for (let xx = (y / 5) % 2 ? 2.5 : 0; xx < S; xx += 5) { f.beginPath(); f.arc(xx, y, rad, 0, Math.PI * 2); f.fill(); }
+    }
+    f.globalCompositeOperation = "destination-in"; f.drawImage(mask, 0, 0);
+    x.drawImage(face, 0, 0);
+    const rim = (ox, oy, color) => {
+      const rc = makeCanvas(), rx = rc.getContext("2d");
+      rx.drawImage(mask, 0, 0); rx.globalCompositeOperation = "destination-out"; rx.drawImage(mask, ox, oy);
+      rx.globalCompositeOperation = "source-in"; rx.fillStyle = color; rx.fillRect(0, 0, S, S);
+      return rc;
+    };
+    x.drawImage(rim(3, 3, "rgba(255,255,255,0.75)"), 0, 0);
+    x.drawImage(rim(-3, -3, "rgba(0,0,0,0.55)"), 0, 0);
+    x.strokeStyle = hexA(r.glow || "#ffffff", 0.55); x.lineWidth = 1.2;
+    forLetters(x, lay, 0, 0, true);
+    return c;
+  }
+  function drawCut(ctx, layer, amount) {
+    const dx = CUT.x2 - CUT.x1, dy = CUT.y2 - CUT.y1, len = Math.hypot(dx, dy);
+    const ux = dx / len, uy = dy / len, far = 2000;
+    const half = side => {
+      ctx.save(); ctx.beginPath();
+      ctx.moveTo(CUT.x1 - ux * far, CUT.y1 - uy * far);
+      ctx.lineTo(CUT.x2 + ux * far, CUT.y2 + uy * far);
+      ctx.lineTo(CUT.x2 + ux * far + side * -uy * far, CUT.y2 + uy * far + side * ux * far);
+      ctx.lineTo(CUT.x1 - ux * far + side * -uy * far, CUT.y1 - uy * far + side * ux * far);
+      ctx.closePath(); ctx.clip();
+    };
+    half(1); ctx.drawImage(layer, 0, 0); ctx.restore();
+    half(-1); ctx.drawImage(layer, ux * amount, uy * amount); ctx.restore();
+  }
+  function drawDrips(ctx, r, mask, rand) {
+    const data = mask.getContext("2d").getImageData(0, 0, S, S).data;
+    const n = Math.round(7 * r.drip);
+    ctx.save(); ctx.fillStyle = r.ink; ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 4;
+    let made = 0, tries = 0;
+    while (made < n && tries < 200) {
+      tries++;
+      const x = Math.round(40 + rand() * 240);
+      let bottom = -1;
+      for (let y = S - 1; y > 0; y--) { if (data[(y * S + x) * 4 + 3] > 140) { bottom = y; break; } }
+      if (bottom < 0) continue;
+      const len = 14 + rand() * 46 * r.drip, w = 2.5 + rand() * 3.5;
+      ctx.beginPath();
+      ctx.moveTo(x - w, bottom - 4); ctx.lineTo(x + w, bottom - 4);
+      ctx.lineTo(x + w * 0.55, bottom + len); ctx.arc(x, bottom + len, w * 0.95, 0, Math.PI);
+      ctx.lineTo(x - w * 0.55, bottom + len); ctx.closePath(); ctx.fill();
+      made++;
+    }
+    ctx.restore();
+  }
+  function drawGlitch(ctx, layer, rand) {
+    ctx.save();
+    for (let i = 0; i < 5; i++) {
+      const y = 70 + rand() * 330, h = 4 + rand() * 14, shift = (rand() < 0.5 ? -1 : 1) * (8 + rand() * 16);
+      ctx.globalAlpha = 0.85; ctx.drawImage(layer, 0, y, S, h, shift, y, S, h);
+    }
+    ctx.restore();
+  }
+  function drawGrid(ctx, r) {
+    ctx.save(); ctx.translate(262, 236); ctx.rotate(Math.PI / 4);
+    const half = 128, step = 25.6;
+    ctx.strokeStyle = r.grid; ctx.globalAlpha = r.glow ? 0.55 : 0.38; ctx.lineWidth = 1;
+    for (let v = -half; v <= half + 0.1; v += step) {
+      ctx.beginPath(); ctx.moveTo(v, -half); ctx.lineTo(v, half); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-half, v); ctx.lineTo(half, v); ctx.stroke();
+    }
+    ctx.globalAlpha = r.glow ? 0.95 : 0.7; ctx.lineWidth = 2;
+    ctx.strokeRect(-half, -half, half * 2, half * 2);
+    ctx.lineWidth = 1; ctx.strokeRect(-half - 9, -half - 9, half * 2 + 18, half * 2 + 18);
+    ctx.restore();
+  }
+  function kanjiLayer(r, rand) {
+    const c = makeCanvas(), x = c.getContext("2d");
+    x.fillStyle = "#f3ece1"; x.textAlign = "center"; x.textBaseline = "middle";
+    x.save(); x.translate(330, 252); x.rotate(-0.06);
+    x.font = '250px "Yuji Boku"'; x.fillText(r.kanji, 0, 0);
+    x.restore();
+    x.globalCompositeOperation = "destination-out"; x.lineCap = "round";
+    for (let i = 0; i < 150; i++) {
+      const cx = 230 + Math.sqrt(rand()) * 240, cy = 120 + Math.sqrt(rand()) * 320;
+      const a = -0.35 + (rand() - 0.5) * 0.4, l = 8 + rand() * 34;
+      x.globalAlpha = 0.3 + rand() * 0.6; x.lineWidth = 0.6 + rand() * 1.2;
+      x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * l, cy + Math.sin(a) * l); x.stroke();
+    }
+    x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
+    return c;
+  }
+  function drawSlash(ctx, x1, y1, x2, y2, w, color) {
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+    const nx = -dy / len, ny = dx / len, mx = x1 + dx * 0.55, my = y1 + dy * 0.55;
+    ctx.save(); ctx.shadowColor = color; ctx.shadowBlur = 18; ctx.fillStyle = "#fff6f0";
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(mx + nx * w, my + ny * w); ctx.lineTo(x2, y2);
+    ctx.lineTo(mx - nx * w * 0.4, my - ny * w * 0.4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function drawSplat(ctx, r, rand) {
+    const n = Math.round(70 * r.splat);
+    ctx.save(); ctx.fillStyle = r.ink;
+    const blobs = [[96, 360, 34], [404, 118, 26], [420, 352, 18]];
+    for (let b = 0; b < Math.ceil(3 * r.splat); b++) {
+      const [bx, by, br] = blobs[b];
+      for (let i = 0; i < 9; i++) {
+        const a = rand() * Math.PI * 2, d = rand() * br * 0.7;
+        ctx.beginPath(); ctx.arc(bx + Math.cos(a) * d, by + Math.sin(a) * d, br * (0.35 + rand() * 0.4), 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      const a = rand() * Math.PI * 2, d = 150 + rand() * 90;
+      ctx.globalAlpha = 0.6 + rand() * 0.4;
+      ctx.beginPath(); ctx.arc(250 + Math.cos(a) * d, 240 + Math.sin(a) * d * 0.9, 1 + rand() * 4.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawSparks(ctx, r, rand) {
+    ctx.save(); ctx.fillStyle = r.top; ctx.shadowColor = r.glow; ctx.shadowBlur = 10;
+    for (let i = 0; i < 9; i++) {
+      const x = 70 + rand() * 340, y = 60 + rand() * 340, s = 4 + rand() * 9;
+      ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s * 0.22, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s * 0.22, y); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x - s, y); ctx.lineTo(x, y + s * 0.22); ctx.lineTo(x + s, y); ctx.lineTo(x, y - s * 0.22); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  //背景は塗らない(透明)。走査線も入れない
+  function drawEmblem(r, idx) {
+    const canvas = document.createElement("canvas");
+    canvas.width = OUT; canvas.height = OUT;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(OUT / S, OUT / S);
+    const rand = rng(1234 + (4 - idx) * 97);
+    if (r.aura > 0) {
+      const g = ctx.createRadialGradient(190, 240, 10, 190, 240, 230);
+      g.addColorStop(0, hexA(r.glow, r.aura)); g.addColorStop(1, hexA(r.glow, 0));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+    }
+    drawGrid(ctx, r);
+    if (r.splat > 0) drawSplat(ctx, r, rand);
+    const lay = layoutLetters(r);
+    const mask = letterMask(lay);
+    ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.5;
+    ctx.drawImage(tint(mask, "#ff2d48"), -r.chroma, 0);
+    ctx.drawImage(tint(mask, "#27d9ff"), r.chroma, 1);
+    ctx.restore();
+    const layer = letterLayer(r, lay, mask);
+    const lit = makeCanvas(), lx = lit.getContext("2d");
+    if (r.glow) { lx.shadowColor = r.glow; lx.shadowBlur = 30; }
+    lx.drawImage(layer, 0, 0);
+    if (r.cut > 0) drawCut(ctx, lit, r.cut); else ctx.drawImage(lit, 0, 0);
+    if (r.glitch) drawGlitch(ctx, lit, rand);
+    if (r.drip > 0) drawDrips(ctx, r, mask, rand);
+    const kanji = kanjiLayer(r, rand);
+    if (r.aura > 0) { ctx.save(); ctx.globalAlpha = 0.9; ctx.drawImage(tint(kanji, r.ink), 7, 6); ctx.restore(); }
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 14; ctx.drawImage(kanji, 0, 0); ctx.restore();
+    if (r.slash >= 1) drawSlash(ctx, CUT.x1, CUT.y1, CUT.x2, CUT.y2, 5, r.glow || "#ffffff");
+    if (r.slash >= 2) drawSlash(ctx, 70, 300, 420, 150, 3, r.glow);
+    if (r.sparks) drawSparks(ctx, r, rand);
+    return canvas.toDataURL("image/png");
+  }
+
+  await Promise.all([
+    document.fonts.load('300px "Manufacturing Consent"', "SABC"),
+    document.fonts.load('250px "Yuji Boku"', "鬼極上中下"),
+  ]);
+  const ok = document.fonts.check('300px "Manufacturing Consent"', "S") && document.fonts.check('250px "Yuji Boku"', "鬼");
+  const lines = [ok ? "FONTS_OK" : "FONTS_MISSING"];
+  RANKS.forEach((r, i) => lines.push("PNG " + r.file + " " + drawEmblem(r, i)));
+  document.getElementById("out").textContent = lines.join("\n");
+})();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "DxLib.h"
 #include "Main/Game.h"
+#include "UIFont.h"
 
 namespace
 {
@@ -14,19 +15,14 @@ namespace
 	const char* const kGridPath = "data/UI/Menu/grid.png";
 	const char* const kRainPath = "data/UI/Menu/rain.png";
 	const char* const kVignettePath = "data/UI/Menu/vignette.png";
-	const char* const kSplatPath0 = "data/UI/ScreenBlood/splat_0.png";
-	const char* const kSplatPath1 = "data/UI/ScreenBlood/splat_1.png";
-	const char* const kSplatPath2 = "data/UI/ScreenBlood/splat_2.png";
 	const char* const kButtonAPath = "data/UI/button/A.png";
 	const char* const kButtonYPath = "data/UI/button/Y.png";
 
-	const char* const kFontName = "游明朝";
 	constexpr int kFontThick = 6;
 
 	//色
 	constexpr int kRedR = 230, kRedG = 45, kRedB = 70;
 	constexpr int kBgR = 14, kBgG = 8, kBgB = 16;
-	constexpr int kInkR = 175, kInkG = 22, kInkB = 34;//ハンコの墨
 	const unsigned int kWhite = 0xE8E2D6;
 	const unsigned int kDim = 0x9A9389;
 	const unsigned int kRed = 0xE62D46;
@@ -57,9 +53,8 @@ namespace
 	constexpr float kDetailRowY = 262.0f, kDetailPitch = 46.0f;
 	constexpr float kDetailCountRight = 1124.0f;//回数は右揃え
 	constexpr float kLeftX = 46.0f;
-	constexpr float kStampX = 188.0f, kStampY = 252.0f;
-	constexpr float kStampHalf = 98.0f, kStampBorder = 9.0f;
-	constexpr float kStampAngle = -6.0f * DX_PI_F / 180.0f;
+	constexpr float kStampX = 196.0f, kStampY = 232.0f;//紋章の中心
+	constexpr float kEmblemSize = 320.0f;//紋章を描く大きさ(画像は正方形)
 	constexpr float kRankLabelY = 394.0f, kRankLineY = 424.0f, kRankLineX2 = 330.0f;
 	constexpr float kTotalLabelY = 452.0f, kTotalY = 492.0f;
 	constexpr float kNewRecordY = 104.0f;
@@ -76,19 +71,16 @@ namespace
 	constexpr int kTotalStart = 186, kTotalCountStart = 189, kTotalCountLen = 40;
 	constexpr int kDarkStart = 228, kDarkInLen = 12, kDarkOutLen = 8, kDarkAlpha = 110;
 	constexpr int kStampStart = 249, kStampLen = 12, kShakeLen = 17;
-	constexpr int kSplatStart = 251, kSplatLen = 7;
 	constexpr int kNewRecordStart = 273, kBlinkLen = 45, kBlinkPeriod = 15;
 	constexpr int kGuideStart = 288;
 	constexpr int kEndFrame = 300;
 	constexpr int kPopLen = 13;
 
-	//ハンコ
+	//紋章(上から押す)
 	constexpr float kStampStartScale = 2.8f;
 	constexpr float kStampOverScale = 0.93f;
 	constexpr float kStampHitRate = 0.8f;
-	constexpr float kStampCharPitch = 0.98f;//縦に並べる文字の間隔(フォントの大きさに対して)
 	constexpr float kShakePower = 10.0f;
-	constexpr float kSplatBaseScale = 0.16f;
 }
 
 ResultUI::~ResultUI()
@@ -100,7 +92,7 @@ ResultUI::~ResultUI()
 	DeleteGraph(m_gridHandle);
 	DeleteGraph(m_rainHandle);
 	DeleteGraph(m_vignetteHandle);
-	for (int handle : m_splatHandle) DeleteGraph(handle);
+	DeleteGraph(m_emblemHandle);
 	DeleteGraph(m_buttonAHandle);
 	DeleteGraph(m_buttonYHandle);
 	DeleteFontToHandle(m_headerFont);
@@ -110,8 +102,6 @@ ResultUI::~ResultUI()
 	DeleteFontToHandle(m_smallFont);
 	DeleteFontToHandle(m_scoreFont);
 	DeleteFontToHandle(m_iconFont);
-	DeleteFontToHandle(m_stampFont);
-	DeleteFontToHandle(m_stampFontOne);
 }
 
 void ResultUI::Init(const ResultData& data, const std::string& stageName, bool isNewRecord)
@@ -130,16 +120,14 @@ void ResultUI::Init(const ResultData& data, const std::string& stageName, bool i
 	m_gridHandle = LoadGraph(kGridPath);
 	m_rainHandle = LoadGraph(kRainPath);
 	m_vignetteHandle = LoadGraph(kVignettePath);
-	m_splatHandle[0] = LoadGraph(kSplatPath0);
-	m_splatHandle[1] = LoadGraph(kSplatPath1);
-	m_splatHandle[2] = LoadGraph(kSplatPath2);
+	m_emblemHandle = LoadEmblem(m_rank);
 	m_buttonAHandle = LoadGraph(kButtonAPath);
 	m_buttonYHandle = LoadGraph(kButtonYPath);
 
 	const float scale = Game::GetScale();
 	auto create = [scale](int size, int space)
 		{
-			const int font = CreateFontToHandle(kFontName, static_cast<int>(size * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
+			const int font = UIFont::Create(static_cast<int>(size * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
 			SetFontSpaceToHandle(static_cast<int>(space * scale), font);
 			return font;
 		};
@@ -150,8 +138,24 @@ void ResultUI::Init(const ResultData& data, const std::string& stageName, bool i
 	m_smallFont = create(18, 1);
 	m_scoreFont = create(60, 2);
 	m_iconFont = create(24, 0);
-	m_stampFont = create(84, 6);
-	m_stampFontOne = create(130, 0);
+}
+
+int ResultUI::LoadEmblem(int rank)
+{
+	//tools/RankEmblemGen/MakeRankEmblem.ps1 で作る(番号は ResultData::CalcRank と同じ)
+	static constexpr const char* kEmblemPaths[ResultData::kRankNum] =
+	{
+		"data/UI/Result/rank_0_C.png",
+		"data/UI/Result/rank_1_B.png",
+		"data/UI/Result/rank_2_A.png",
+		"data/UI/Result/rank_3_S.png",
+		"data/UI/Result/rank_4_SSS.png",
+	};
+	//ふちの光がにじまないように乗算済みアルファで読む
+	SetUsePremulAlphaConvertLoad(TRUE);
+	const int handle = LoadGraph(kEmblemPaths[std::clamp(rank, 0, ResultData::kRankNum - 1)]);
+	SetUsePremulAlphaConvertLoad(FALSE);
+	return handle;
 }
 
 void ResultUI::Update()
@@ -317,6 +321,8 @@ void ResultUI::DrawTotal()
 	if (alpha <= 0) return;
 	DrawLabel(kLeftX, kRankLabelY, "クリア評価", kDim, m_smallFont, alpha);
 	DrawGrowLineH(kLeftX, kRankLineX2, kRankLineY, kTotalStart, kRailLen, kDarkRed);
+	//ランクの名前は紋章が当たってから出す
+	DrawLabelRight(kRankLineX2, kRankLabelY - 8.0f, ResultData::GetRankName(m_rank), kWhite, m_valueFont, FadeAlpha(kStampStart + kStampLen * 4 / 5));
 
 	//「総合スコア」の枠
 	const int labelW = GetDrawStringWidthToHandle("総合スコア", static_cast<int>(strlen("総合スコア")), m_labelFont);
@@ -347,29 +353,6 @@ void ResultUI::DrawStamp()
 	const float cx = ToScreenX(kStampX);
 	const float cy = ToScreenY(kStampY);
 
-	//墨のはね(ハンコの下)
-	const float splatRate = Rate(kSplatStart, kSplatLen);
-	if (splatRate > 0.0f)
-	{
-		const float power = 0.7f + 0.15f * m_rank;
-		const float ease = 1.0f - (1.0f - splatRate) * (1.0f - splatRate);
-		const float offsets[3][4] =
-		{
-			//x, y, 角度, 大きさ
-			{ -88.0f, 70.0f, 2.6f, 1.0f },
-			{ 96.0f, -82.0f, -0.7f, 0.8f },
-			{ 104.0f, 92.0f, 0.9f, 0.55f },
-		};
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 230);
-		SetDrawBright(kInkR, kInkG, kInkB);
-		for (int i = 0; i < 3; ++i)
-		{
-			const float s = kSplatBaseScale * offsets[i][3] * power * ease * scaleUI;
-			DrawRotaGraphF(cx + offsets[i][0] * scaleUI, cy + offsets[i][1] * scaleUI, s, offsets[i][2], m_splatHandle[i], TRUE);
-		}
-		SetDrawBright(255, 255, 255);
-	}
-
 	//上から押す
 	const float t = Rate(kStampStart, kStampLen);
 	float scale = 1.0f;
@@ -384,36 +367,14 @@ void ResultUI::DrawStamp()
 		scale = kStampOverScale + (1.0f - kStampOverScale) * k;
 	}
 	const int alpha = static_cast<int>(255 * (std::min)(1.0f, t * 3.0f));
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
 
-	//枠(4辺を回した四角で描く)
-	const float outer = kStampHalf * scale * scaleUI;
-	const float inner = (kStampHalf - kStampBorder) * scale * scaleUI;
-	const float c = std::cos(kStampAngle);
-	const float s = std::sin(kStampAngle);
-	auto rot = [&](float x, float y) { return VGet(cx + x * c - y * s, cy + x * s + y * c, 0.0f); };
-	const VECTOR o[4] = { rot(-outer, -outer), rot(outer, -outer), rot(outer, outer), rot(-outer, outer) };
-	const VECTOR in[4] = { rot(-inner, -inner), rot(inner, -inner), rot(inner, inner), rot(-inner, inner) };
-	const unsigned int ink = GetColor(kInkR + 40, kInkG + 10, kInkB + 20);
-	for (int i = 0; i < 4; ++i)
-	{
-		const int n = (i + 1) % 4;
-		DrawQuadrangleAA(o[i].x, o[i].y, o[n].x, o[n].y, in[n].x, in[n].y, in[i].x, in[i].y, ink, TRUE);
-	}
-
-	//ランクの名前(1文字ずつ縦に並べる。Shift-JISなので2バイトずつ)
-	const std::string name = ResultData::GetRankName(m_rank);
-	const int charNum = static_cast<int>(name.size()) / 2;
-	const int font = (charNum <= 1) ? m_stampFontOne : m_stampFont;
-	const float pitch = GetFontSizeToHandle(font) * kStampCharPitch * scale;
-	for (int i = 0; i < charNum; ++i)
-	{
-		const std::string ch = name.substr(i * 2, 2);
-		const int w = GetDrawStringWidthToHandle(ch.c_str(), 2, font);
-		const int h = GetFontSizeToHandle(font);
-		const VECTOR pos = rot(0.0f, (i - (charNum - 1) * 0.5f) * pitch);
-		DrawRotaStringToHandle(static_cast<int>(pos.x), static_cast<int>(pos.y), scale, scale, w * 0.5, h * 0.5, kStampAngle, ink, font, 0, FALSE, ch.c_str());
-	}
+	//紋章の画像(乗算済みアルファ)
+	int imageW = 0, imageH = 0;
+	GetGraphSize(m_emblemHandle, &imageW, &imageH);
+	if (imageW <= 0) return;
+	const float exRate = kEmblemSize / imageW * scale * scaleUI;
+	SetDrawBlendMode(DX_BLENDMODE_PMA_ALPHA, alpha);
+	DrawRotaGraphF(cx, cy, exRate, 0.0, m_emblemHandle, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 }
 

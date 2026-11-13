@@ -30,6 +30,8 @@ private:
 	void DrawStamp();
 	void DrawNewRecord();
 	void DrawGuide();
+	//ランクの紋章の画像を読む
+	static int LoadEmblem(int rank);
 
 	//丸に漢字のアイコン(出るときに大きく出て縮む)
 	void DrawIcon(float cx, float cy, const char* kanji, int start);
@@ -72,7 +74,7 @@ private:
 	int m_gridHandle = -1;
 	int m_rainHandle = -1;
 	int m_vignetteHandle = -1;
-	int m_splatHandle[3] = { -1, -1, -1 };
+	int m_emblemHandle = -1;//ランクの紋章
 	int m_buttonAHandle = -1;
 	int m_buttonYHandle = -1;
 
@@ -83,6 +85,4 @@ private:
 	int m_smallFont = -1;
 	int m_scoreFont = -1;
 	int m_iconFont = -1;
-	int m_stampFont = -1;
-	int m_stampFontOne = -1;//1文字のランク用
 };

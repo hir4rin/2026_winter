@@ -1583,7 +1583,9 @@
   - Illustrator の `Shinobu_vertical` に `layers: true` を付けると、`exportLayers` がこれらを書き出す(steel / red は完成形の書き出しのときは隠しておく。斬り線は見えない目印の線 `cutMarker` を置いて、縮小・移動の後の位置を読む)。
 - 背景は暗い色＋メニューの周辺減光(`data/UI/Menu/vignette.png` を乗算)。
 - **斬り線は後ろの暗い赤の斜めの筆と同じ線**(約29°。Illustrator で筆をまっすぐな1本にして、その線で斬る。前は 8° で筆とずれていた)。
-- **斬った瞬間の閃光(Effekseer、2D)**: `data/Effect/Title/TitleSlash.efk`。85F(斬り口の光が走り始める)に `PlaySlashEffect` で、斬り線の中心・角度に合わせ、刃の長さをロゴ画像で 510px(斬り線は約445px)にして出す。**29° にしてからはゲームの画面でまだ確認していない**。`Effekseer_Set2DSetting` はコンストラクタ、`UpdateEffekseer2D` は Update、`DrawEffekseer2D` はロゴの後・画面の白い光の前。
+- **斬った瞬間の閃光(Effekseer、2D)**: `data/Effect/Title/TitleSlash.efk`。85F(斬り口の光が走り始める)に `PlaySlashEffect` で、斬り線の中心・角度に合わせ、刃の長さをロゴ画像で 510px(斬り線は約445px)にして出す。
+  - **エフェクトのスプライトは Billboard=Fixed にすること**。Billboard(カメラを向く)のままだと `SetRotationPlayingEffekseer2DEffect` の回転が効かず、閃光がいつも水平に出ていた(8° のときも実はずれていた)。元データは `TitleSlash_v2/`(v1 は Billboard のまま)。
+  - 29° で、閃光・斬り口の光・ずれ・赤く染まる境目が背景の筆とそろうのを連写で確認。**垂れ切った後の画面はまだ見ていない**(撮影が別のウィンドウに隠れたため)。`Effekseer_Set2DSetting` はコンストラクタ、`UpdateEffekseer2D` は Update、`DrawEffekseer2D` はロゴの後・画面の白い光の前。
   - 作り方・数値は `../tools/TitleSlashFx/RESEARCH_NOTES.md`(元の .efkefc は `TitleSlash_v1/`、テクスチャは `gen_slash_tex.ps1`)。画面の白い光と斬り口の光の画像は残して重ねている。
 - Debug(x64)でビルドは通った。起動して時間をずらして画面を撮り、斬る・染まる・垂れるまで動くのを確認。閃光が斬り線に沿って走るのも連写で確認した。**A でステージセレクトへ進むところ・A で飛ばすところはまだ試していない**。Release はまだビルドしていない。
 
@@ -1622,7 +1624,14 @@
   - 技 = 最大コンボ×20 + 技ごとの点×回数(部位破壊300・確殺800・暗殺800・スキル技150・スキル血殺1000・真必殺技1500)。上限なし。
   - 切 = 倒した数 / 配置CSVの敵の数 × 20000。時 = 目標(`StageInfo::targetClearSec`、今は全部300秒)以内なら20000、目標の3倍で0。
   - 道・死 = 1回ごとに -0.1(最低0.5)。**アイテム・死亡の仕組みが無いので、今はいつも0回(×1.0)**。
-  - ランク: 下忍 / 中忍(20000〜) / 上忍(32000〜) / 頭領(40000〜) / 影(46000〜)。
+  - ランク: C 下忍 / B 中忍(20000〜) / A 上忍(32000〜) / S 極忍(40000〜) / SSS 鬼忍(46000〜)。(11/13 頭領・影から改名。超忍は NG4 の最上位なので使わない)
+  - ランクの紋章(SSS・S・A・B・C)の案: アルファベットは Manufacturing Consent(OFL、ゲームに同梱できる)、筆の漢字を半分重ね、後ろにひし形の格子・網点・色ずれ。色は C 銅 / B 鋼 / A 金 / S 血の赤 / SSS 白銀＋赤い光、上ほど飾り(斬撃・火花・血しぶき)が増える。紋章の漢字は「忍」を外した1文字(下・中・上・極・鬼)。イメージは Artifact「ランク紋章案」。
+  - (11/13)**紋章をゲームに入れた**。`data/UI/Result/rank_0_C.png` 〜 `rank_4_SSS.png`(768px、透明な背景。番号は `CalcRank` と同じ)。
+    作り直しは `../tools/RankEmblemGen/MakeRankEmblem.ps1`: `rank_emblem_gen.html`(Artifact と同じ描き方の canvas)を Edge のヘッドレスで開き、`--dump-dom` で出した PNG を保存する。フォントは Google Fonts から読むのでネットが要る(Manufacturing Consent・Yuji Boku とも OFL)。
+  - `ResultUI::DrawStamp` は紋章の画像を `DrawRotaGraphF` で描くだけになった(上から押す・揺れはそのまま)。乗算済みアルファで読み(`LoadEmblem`)、`DX_BLENDMODE_PMA_ALPHA` で描く。大きさは `kEmblemSize`(320)、中心は `kStampX/Y`(196, 232)。
+    前の仮のハンコ(四角の枠・縦書きの文字・`ScreenBlood/splat` の墨)とハンコ用のフォントは削除。
+  - ハンコをやめたので、ランクの名前は「クリア評価」の線の右に出す(紋章が当たってから)。
+  - `-result` で撮って S(極忍)の紋章が出ることを確認した。ほかの4つのランクはゲームの画面ではまだ見ていない(PNG は5枚とも書き出せている)。
 - 記録: `ResultRecorder`(`BattleManager` が持つ。`GetResultRecorder().lock()`)。クリアタイムは `BattleManager::Update` で実フレームを数える(ポーズ・フォトモード中は数えない)。
   コンボは攻撃が当たるたびに+1、90F当たらないか被弾で0(`AttackCol` / `Player::OnDamage`)。技は `EnemyBase::OnDamage`(部位破壊)、`PlayerStatePartBrokenKill::Enter`、`PlayerStateAssasin` / `AirAssasin::Enter`、`PlayerStateSkillAttack::Enter`、`Player::StartSkillKessatsu`、`AttackCol` の必殺技の開始で数える。
 - `SceneMain`: フェードアウトが終わったら `ResetScene<ResultScene>(stageType, result)`。
@@ -1685,6 +1694,43 @@
   - 押すたびに Gangway を消して作り直すので、車両を動かしたらもう一度押して 2. Export。
 - 置いたのは9枚: y=0 が7か所全部、上りスロープ–4両目と4両目–下りスロープは屋根の高さ(y=6.02、幅 x=±4)も。屋根の高さの板に手すりは無い(横から落ちても下の板に着く)。
 - 確認: `probe.exe` で TrainStageCol.mv1 の連結部(z=1950/4150/8397/10597/14844/17044/21291、x=0/600/-750)が全部 y=0(屋根の2か所の中央は y=602)。`preview.exe` で見た目もつながっている。**実際にゲームで歩いての確認はまだ**。
+
+### 2026-11-13 UIのフォントを1か所にまとめた(UIFont)
+- `UI/UIFont.h/.cpp`(vcxproj/filters に登録)。`UIFont::Create(size, thick, fontType, edgeSize)` が `CreateFontToHandle` の代わりで、フォント名は .cpp 先頭の `kFontName`(今は `游明朝`)。**フォントを変えるときはここだけ直す**。
+- 置き換えた所: `MenuUI`(ステージセレクト)、`ResultUI`、`AssasinTargetUI`、`GuardBreakChanceUI`(「ガードブレイク」の文字。Yの文字の Arial はそのまま)、`TitleScene`。**新しくUIで文字を出すときも `UIFont::Create` を使う**。
+- 一度 FOT-マティス(Adobe Fonts)にして画面で確認したが、ユーザーの判断で游明朝に戻した。見た目は前と同じ(太さもそのまま)。
+  - Adobe Fonts のフォントはアプリに入れて配れない(公式 FAQ)。使うなら、フォントを追加した PC でだけ表示される形になる。
+- Debug・Release のビルドは通った。
+
+### 2026-11-13 チュートリアルシーンの土台(TutorialScene)
+- `Scene/TutorialScene.h/.cpp`(vcxproj/filters に登録)。PauseScene と同じく `PushScene` で上に積み、自分で `Input::Update` する。FadeIn 15F(後ろを暗くする) → Normal(B でフェードアウト) → FadeOut 15F → `PopScene`。
+- 仮の入口: ステージセレクトで **Y** を押すと `"Move"` を積む。あとで SceneMain から id を渡して積む形にする。
+- (追記)**内容の読み込みとページ送り**:
+  - `data/Tutorial/Tutorial.csv`(Shift-JIS・CRLF、`#id,page,type,file,title,text`。説明に半角の `,` は使えない)と仮の画像 `move_0/move_1/attack_0.png`(640x360)。
+  - `DataLoader/TutorialPageData.h`(1行分)、`DataManager::LoadTutorial()` / `GetTutorialPages(id)`(id が同じ行を page 順に返す)。
+    **`LoadAll` は SceneMain::Init でしか呼ばれない**ので、ステージセレクトでも使えるように `Application::Init` の `LoadCommon` の後でも `LoadTutorial` を呼ぶ(LoadAll の中の呼び出しも残してあり、ステージに入るたびに読み直す)。
+  - `TutorialScene(controller, id)`: コンストラクタで画像を `LoadGraph`、デストラクタで `DeleteGraph`。id が CSV に無いと assert。
+  - A / → で次、← で前、最後のページの A と B で閉じる(`StartFadeOut`)。タイトル・画像(320,140 から 640x360)・説明・「1 / 2」・右下に操作。座標は画面のピクセルのまま(.cpp 先頭)。type(Movie)はまだ見ていない。
+- Debug(x64)でビルドは通った。起動してキーを送り、ステージセレクト → Y → 1/2 → A → 2/2 → ← → 1/2 → B で閉じる、を画面で確認した。
+
+### 2026-11-13 フェーズの進行でチュートリアルを開く(途中・ユーザーが実装中)
+- 目標: 列車ステージに入って60F後に「Move」を開く。遷移表の行 → PhaseManager が頼みを覚える → `m_phaseFrame` が待つ数に届いたら SceneMain が `PushScene`。
+- **済み**:
+  - 手順1: `data/Stage/PhaseFlow/PhaseStage004.csv`(列車)。見出しに `eventParam,eventDelay`、Start の行を `0,Start,,1,Tutorial,Move,60`。ほかの行は event の後ろの空の2列をそのまま使う。
+  - 手順2: `PhaseEvent::Tutorial`、`PhaseTransition::eventParam`(id) / `eventDelay`(フレーム)。
+  - 手順3の一部: `PhaseFlowColumn` に `EventParam` / `EventDelay`、`StringToPhaseEvent` に `"Tutorial"`。
+- **次(手順3の残り)**: `LoadPhaseFlow` で2列を読む。
+  - eventParam: `t.param = ...` の下で `tokens.size() > EventParam` なら入れる(空でもそのまま)。
+  - eventDelay: try の中(intParam の後)で `tokens.size() > EventDelay && !empty()` なら `std::stoi`(空の文字を stoi に渡すと catch で行ごと消える)。
+  - 確認: 列車ステージで Start の行の `ChangePhase` にブレークポイント。eventParam "Move"・eventDelay 60。
+- **手順4**: PhaseManager に頼みを持たせる。
+  - `ChangePhase(int next, PhaseEvent event, const std::string& eventParam = "", int eventDelay = 0)`(デフォルト付きなので F4 の2か所は直さない)。遷移表から呼ぶ2か所(Init の Start・Update)は `t.eventParam, t.eventDelay` も渡す。
+  - switch の `case PhaseEvent::Tutorial` で `m_tutorialId` / `m_tutorialDelay` に入れる。
+  - `IsTutorialReady()`(`!m_tutorialId.empty() && m_phaseFrame >= m_tutorialDelay`)、`TakeTutorial()`(id を返して空にする)。
+- **手順5**: `SceneMain::NormalUpdate` の最後、`GetIsBattleEnd()` の if の `else if` で `IsTutorialReady() && CanOpenTutorial()` なら `PushScene(TutorialScene(m_controller, TakeTutorial()))`。PhaseManager の Update の中では Push しない。
+  - `CanOpenTutorial()`(SceneMain の private): 血殺中・イベント中・暗殺中・確殺中は false(頼みは残り、終わったフレームで開く)。
+- **手順6**: 確認(約1秒後に出る・出ている間は全部止まる・閉じた A で攻撃しない・eventDelay 空欄ならすぐ出る)。確認が済んだらステージセレクトの Y の仮の入口を消す。
+- 注意: `StringToPhaseEvent` が "Tutorial" を知らないと Start の行が読み飛ばされ、列車ステージで「遷移表にStartの行がありません」の assert になる(今は足してあるので止まらないはず。未確認)。頼みは1つだけ(開く前に次の Tutorial のフェーズへ進むと上書き)。Tutorial.csv に無い id は開いたときに assert。
 
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。

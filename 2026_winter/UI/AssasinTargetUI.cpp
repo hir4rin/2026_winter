@@ -1,6 +1,7 @@
 ﻿#include "AssasinTargetUI.h"
 #include "DxLib.h"
 #include "Main/Game.h"
+#include "UIFont.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
 #include "Character/Player/Player.h"
@@ -15,7 +16,6 @@ namespace
 
 	//文字
 	const char* const kLabel = "暗殺";
-	const char* const kFontName = "游明朝";
 	constexpr int kFontSize = 26;
 	constexpr int kFontThick = 6;
 	constexpr int kFontSpace = 8;//文字の間隔
@@ -88,7 +88,7 @@ void AssasinTargetUI::Init()
 	m_bandHandle = LoadGraph(kBandPath);
 
 	const float scale = Game::GetScale() * kUIScale;
-	m_fontHandle = CreateFontToHandle(kFontName, static_cast<int>(kFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
+	m_fontHandle = UIFont::Create(static_cast<int>(kFontSize * scale), kFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
 	SetFontSpaceToHandle(static_cast<int>(kFontSpace * scale), m_fontHandle);
 
 	m_isVisible = false;

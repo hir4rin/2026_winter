@@ -4,6 +4,7 @@
 #include "Stage/Phase/EnemySpawnData.h"
 #include "Stage/Phase/PhaseFlowData.h"
 #include "Stage/Phase/PhaseAreaData.h"
+#include "TutorialPageData.h"
 #include <vector>
 #include <string>
 
@@ -23,6 +24,8 @@ public:
 	/// 起動時に一度だけ呼び出す
 	/// </summary>
 	void LoadAll();
+	//ステージセレクトでも使うので起動時にも呼ぶ
+	void LoadTutorial();
 
 	/// <summary>
 	/// ComboChain.csvを読み込み直す(デバッグ用)
@@ -89,6 +92,7 @@ public:
 	//今後追加する場合はここにgetterを追加する
 	const std::vector<std::vector<std::string>>& GetSpawnData() const { return m_spawnData; }//敵のスポーンデータを返す
 	const std::vector<std::vector<std::vector<std::string>>>& GetPatrolRouteRawData() const { return m_patrolRouteRawData; }//巡回ルートの生データを返す//[ルート番号][行][列]
+	const std::vector<TutorialPageData> GetTutorialPages(const std::string& id)const;
 
 	//壁ゾーン(WallKickZone/WallRunZone)------------------------------------------
 	/// <summary>
@@ -154,6 +158,8 @@ private:
 	void LoadSpawnData(); //敵のスポーンデータを読み込む関数
 	void LoadPatrolRouteRawData(); //巡回ルートの生データを読み込む関数
 
+
+
 	//CSV読み書き用の補助関数-----------------------------------------------------
 	//壁ゾーンのtypeとCSVに書く文字列の変換
 	static const char* WallZoneTypeToString(Collider::ColRole type);
@@ -199,6 +205,7 @@ private:
 	std::vector<EnemySpawnData> m_enemySpawnData;//敵配置のデータ(最後にLoadしたステージのもの)
 	std::vector<PhaseTransition> m_phaseFlow;//遷移表
 	std::vector<PhaseArea> m_phaseAreas;//フェーズ進行のエリア
+	std::vector<TutorialPageData> m_tutorialPages;//チュートリアルのデータ
 
 };
 

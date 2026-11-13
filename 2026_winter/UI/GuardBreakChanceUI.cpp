@@ -2,6 +2,7 @@
 #include <cmath>
 #include "DxLib.h"
 #include "Main/Game.h"
+#include "UIFont.h"
 #include "Character/Player/Player.h"
 #include "Character/Enemy/EnemyBase.h"
 
@@ -18,7 +19,6 @@ namespace
 
 	//文字
 	const char* const kLabel = "ガードブレイク";
-	const char* const kLabelFontName = "游明朝";
 	constexpr int kLabelFontSize = 22;
 	constexpr int kLabelFontThick = 6;
 	constexpr int kLabelFontSpace = 3;//文字の間隔
@@ -145,7 +145,7 @@ void GuardBreakChanceUI::Init()
 	SetUsePremulAlphaConvertLoad(FALSE);
 
 	const float scale = Game::GetScale() * kUIScale;
-	m_labelFontHandle = CreateFontToHandle(kLabelFontName, static_cast<int>(kLabelFontSize * scale), kLabelFontThick, DX_FONTTYPE_ANTIALIASING_EDGE_4X4, -1, kLabelFontEdge);
+	m_labelFontHandle = UIFont::Create(static_cast<int>(kLabelFontSize * scale), kLabelFontThick, DX_FONTTYPE_ANTIALIASING_EDGE_4X4, kLabelFontEdge);
 	SetFontSpaceToHandle(static_cast<int>(kLabelFontSpace * scale), m_labelFontHandle);
 	m_buttonFontHandle = CreateFontToHandle(kButtonFontName, static_cast<int>(kButtonFontSize * scale), kButtonFontThick, DX_FONTTYPE_ANTIALIASING_4X4);
 
