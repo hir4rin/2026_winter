@@ -10,6 +10,21 @@ CollisionChecker::CollisionChecker()
 {
 }
 
+bool CollisionChecker::IsFarFromPolygon(const Collider& other, const PolygonShape& polygon) const
+{
+	const float bound = polygon.GetBoundRadius();
+	if (bound <= 0.0f)return false;
+	const Vector3& center = polygon.GetBoundCenter();
+	//相手の線分(カプセルは根元〜先、球は点)を、今の位置と次の位置の両方で見る(CCDで通り抜けを調べるため)
+	Vector3 end;
+	if (other.GetType() == ColliderType::Capsule)end = static_cast<const CapsuleShape&>(other.GetShape()).GetEndPos();
+	const Vector3 now = other.GetWorldPos();
+	const Vector3 next = other.GetNextPos();
+	const float move = (next - now).Magnitude();
+	const float reach = bound + other.GetRadius() + end.Magnitude() + move;
+	return (now - center).sqMagnitude() > reach * reach && (next - center).sqMagnitude() > reach * reach;
+}
+
 CollisionChecker::~CollisionChecker()
 {
 }
@@ -19,6 +34,10 @@ bool CollisionChecker::IsCollide(Collider& colA, Collider& colB)
 	//コライダーのタイプによって当たり判定の関数を分ける
 	auto typeA = colA.GetType();
 	auto typeB = colB.GetType();
+
+	//囲む球を持つポリゴン(扉)は、遠い相手ならポリゴンを調べない
+	if (typeA == ColliderType::Polygon && IsFarFromPolygon(colB, static_cast<PolygonShape&>(colA.GetShape())))return false;
+	if (typeB == ColliderType::Polygon && IsFarFromPolygon(colA, static_cast<PolygonShape&>(colB.GetShape())))return false;
 
 	bool isHit = false;
 	//typeAによって分ける

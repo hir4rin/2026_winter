@@ -1,0 +1,12 @@
+#name,model,posX,posY,posZ,rotYDeg,closePhase,openPhase,delayFrame,moveFrame,moveX,moveY,moveZ,scaleX,scaleY,scaleZ,colOffsetX,colOffsetY,colOffsetZ,colHalfX,colHalfY,colHalfZ
+#通路車両の入口を赤さびの波板の仕切り(いつも閉)でふさぎ、真ん中の貨車の扉(列車のアセット WagonDoor を左右に切った物)を仕切りの裏へ左右に引き込む。作り方は tools/GateModel/build_train_bulkhead.py
+Car3_Bulkhead,Train/Bulkhead,0,0,4256,0,0,99999,0,1,0,0,0,1,1,1,-465,285,25,156,285,30
+Car3_BulkheadR,,0,0,4256,0,0,99999,0,1,0,0,0,1,1,1,465,285,25,156,285,30
+Car3_BulkheadTop,,0,0,4256,0,0,99999,0,1,0,0,0,1,1,1,0,477,25,309,93,30
+Car3_DoorL,Train/WagonDoor_L,-154.4,0,4256,0,0,3,30,60,-310,0,0,1,1,1,154.4,193,30,309,193,40
+Car3_DoorR,Train/WagonDoor_R,154.4,0,4256,0,0,3,30,60,310,0,0,1,1,1,0,0,0,0,0,0
+Car5_Bulkhead,Train/Bulkhead,0,0,17150,0,0,99999,0,1,0,0,0,1,1,1,-465,285,25,156,285,30
+Car5_BulkheadR,,0,0,17150,0,0,99999,0,1,0,0,0,1,1,1,465,285,25,156,285,30
+Car5_BulkheadTop,,0,0,17150,0,0,99999,0,1,0,0,0,1,1,1,0,477,25,309,93,30
+Car5_DoorL,Train/WagonDoor_L,-154.4,0,17150,0,0,5,30,60,-310,0,0,1,1,1,154.4,193,30,309,193,40
+Car5_DoorR,Train/WagonDoor_R,154.4,0,17150,0,0,5,30,60,310,0,0,1,1,1,0,0,0,0,0,0

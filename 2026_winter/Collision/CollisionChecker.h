@@ -15,6 +15,10 @@ public:
 	/// <returns></returns>
 	bool IsCollide(Collider& colA, Collider& colB);
 private:
+	/// <summary>
+	/// ポリゴンが囲む球を持っていて、相手(今の位置〜次の位置)がその球より遠いか(扉の当たり判定を毎回調べないため)
+	/// </summary>
+	bool IsFarFromPolygon(const Collider& other, const class PolygonShape& polygon)const;
 
 	/// <summary>
 	/// 球と球の当たり判定

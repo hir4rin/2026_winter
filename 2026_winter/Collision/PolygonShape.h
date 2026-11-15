@@ -26,7 +26,13 @@ public:
 	//CCDをしたか
 	bool IsCCD()const { return m_isCCD; };
 	void SetIsCCD(bool isCCD) { m_isCCD = isCCD; };
+	//囲む球(扉など小さいモデル用)。半径が0より大きければ、遠い相手はポリゴンを調べずに外す
+	void SetBoundSphere(const Vector3& center, float radius) { m_boundCenter = center; m_boundRadius = radius; }
+	const Vector3& GetBoundCenter()const { return m_boundCenter; }
+	float GetBoundRadius()const { return m_boundRadius; }
 private:
+	Vector3 m_boundCenter;
+	float m_boundRadius = 0.0f;//0ならいつもポリゴンを調べる(ステージ)
 	//当たり判定をするステージモデル
 	int m_modelHandle = -1;
 	//当たったポリゴンの情報

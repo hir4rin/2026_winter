@@ -540,6 +540,14 @@ void DataManager::LoadPhaseFlow(int stageNumber)
             if (!StringToPhaseEvent(tokens[PhaseFlowColumn::Event], t.event)) continue;//知らないイベントは飛ばす
         }
         t.param = tokens[PhaseFlowColumn::Param];//条件の値
+
+        if (tokens.size() > PhaseFlowColumn::EventParam)
+        {
+			t.eventParam = tokens[PhaseFlowColumn::EventParam];//チュートリアルのidなどのイベントのパラメータ
+
+        }
+     
+
         //try catchは失敗するかもしれない処理を試して、失敗したら別の処理をする
         try
         {
@@ -549,6 +557,11 @@ void DataManager::LoadPhaseFlow(int stageNumber)
             if (t.condition == PhaseConditionType::Timer || t.condition == PhaseConditionType::KillCount)
             {
                 t.intParam = std::stoi(t.param);
+            }
+            //空欄なら0のまま
+            if (tokens.size() > PhaseFlowColumn::EventDelay && !tokens[PhaseFlowColumn::EventDelay].empty())
+            {
+                t.eventDelay = std::stof(tokens[PhaseFlowColumn::EventDelay]);
             }
 
         }

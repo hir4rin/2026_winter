@@ -22,6 +22,12 @@ private:
 	bool m_isFullScreen = false;//現在フルスクリーンかどうか
 	bool m_wasF2Pressed = false;//F2キーの押しっぱなし判定用
 	bool m_isVSyncPacing = false;//モニターが60Hz前後か
+	//モニターの更新を待った後、絵を出すまで空ける時間(マイクロ秒)
+	//更新の直後に出すと Windows の画面の合成とぶつかり、1回前・1回後に出てカクつく
+	long long m_presentDelayMicroSec = 0;
+	void* m_presentTimer = nullptr;//待つのに使う高精度のタイマー(HANDLE)
+	/// <summary>フレームの始まり(start)から m_presentDelayMicroSec たつまで待つ</summary>
+	void WaitPresentTime(long long start);
 	//60fps の合わせ方
 	enum class PaceMode
 	{

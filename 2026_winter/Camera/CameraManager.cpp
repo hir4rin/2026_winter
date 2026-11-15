@@ -124,7 +124,7 @@ Vector3 CameraManager::FixStageCollision(const Vector3& pos, const Vector3& targ
 
 	//注視点からカメラへ線分を引く
 	float goalDist = rawDist;
-	auto hit = MV1CollCheck_Line(stage->GetStageModelHandle(), -1, target.ToDxLibVector(), pos.ToDxLibVector());
+	auto hit = stage->CollCheckCameraLine(target, pos);//ステージと扉
 	if (hit.HitFlag)
 	{
 		float hitDist = (Vector3::FromDxLibVector(hit.HitPosition) - target).Magnitude();
@@ -158,7 +158,7 @@ bool CameraManager::IsStageHit(const Vector3& start, const Vector3& end) const
 	auto stage = m_stage.lock();
 	if (!stage || !Switch().isStageCollision) return false;
 
-	auto hit = MV1CollCheck_Line(stage->GetStageModelHandle(), -1, start.ToDxLibVector(), end.ToDxLibVector());
+	auto hit = stage->CollCheckCameraLine(start, end);//ステージと扉
 	return hit.HitFlag != 0;
 }
 

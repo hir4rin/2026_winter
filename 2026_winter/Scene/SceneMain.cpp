@@ -25,6 +25,7 @@
 #include "Main/FrameProfiler.h"
 #include "Scene/PauseScene.h"
 #include "Scene/ResultScene.h"
+#include "Scene/TutorialScene.h"
 #include "Battle/ResultRecorder.h"
 #include "Stage/WallZone/WallZoneEditor.h"
 #include "Stage/Phase/PhaseAreaEditor.h"
@@ -281,7 +282,7 @@ void SceneMain::NormalUpdate()
 	FrameProfiler::GetInstance().Mark("Upd:Player");
 	m_enemyManager->Update();
 	m_phaseManager->Update();
-	FrameProfiler::GetInstance().Mark("Upd:Enemy");
+	m_stage->UpdateGates(m_phaseManager->GetCurrentPhase());//押し戻しの前に開け閉めする	FrameProfiler::GetInstance().Mark("Upd:Enemy");
 	m_stage->Update();
 	CollisionManager::GetInstance().Update();
 	FrameProfiler::GetInstance().Mark("Upd:Collision");
@@ -331,6 +332,13 @@ void SceneMain::NormalUpdate()
 		m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::FadeOutUpdate);
 		m_drawFunc = static_cast<DrawFunc_t>(&SceneMain::FadeOutDraw);
 	}
+	//チュートリアルを開く
+	if (m_phaseManager->IsTutorialReady() && CanOpenTutorial())
+	{
+		m_controller.PushScene(std::make_shared<TutorialScene>(m_controller, m_phaseManager->TakeTutorial()));
+	}
+
+
 }
 
 void SceneMain::PlayDebugSkillEffect(int effectHandle)
@@ -344,6 +352,15 @@ void SceneMain::PlayDebugSkillEffect(int effectHandle)
 	//プレイヤーと同じ向きにする
 	SetRotationPlayingEffekseer3DEffect(playingHandle, 0.0f, atan2f(forward.x, forward.z), 0.0f);
 	SetScalePlayingEffekseer3DEffect(playingHandle, kDebugSkillEffectScale, kDebugSkillEffectScale, kDebugSkillEffectScale);
+}
+
+bool SceneMain::CanOpenTutorial() const
+{
+	if (m_battleManager->GetIsUltimating())return false;//血殺中
+	if (m_battleManager->GetIsEventPlaying())return false;//イベント中
+	if (m_player->GetIsAssasinating())return false;//暗殺中
+	if (m_player->GetGuardBreakChanceState())return false;//ガードブレイクのチャンス中
+	return true;
 }
 
 void SceneMain::FadeOutUpdate()
@@ -421,6 +438,7 @@ void SceneMain::NormalDraw()
 	m_player->GetLockOnManager()->DebugDraw();
 	//ステージ編集中はエディタ側で(選択中を白にして)描く
 	if (!System::GetInstance().GetBattleMgr()->GetStageEditMode())m_phaseManager->DrawAreas();
+	m_stage->DrawGateCols();//扉の当たり判定(赤=閉、緑=開)
 	DrawFormatString(0, 0, GetColor(255, 255, 255), "FRAME:%d", m_frameCount);
 #endif
 

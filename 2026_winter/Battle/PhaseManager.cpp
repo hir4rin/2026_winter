@@ -41,7 +41,7 @@ void PhaseManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<
 	for (const auto& t : m_transitions)
 	{
 		if (t.from != 0 || t.condition != PhaseConditionType::Start)continue;
-		ChangePhase(t.to, t.event);
+		ChangePhase(t.to, t.event,t.eventParam,t.eventDelay);
 		return;
 	}
 	assert(false && "遷移表にStartの行がありません");
@@ -78,12 +78,12 @@ void PhaseManager::Update()
 		//条件が満たされているかチェック
 		if (!IsConditionFulfilled(trans))continue;
 
-		ChangePhase(trans.to, trans.event);
+		ChangePhase(trans.to, trans.event,trans.eventParam,trans.eventDelay);
 		return;
 	}
 }
 
-void PhaseManager::ChangePhase(int next, PhaseEvent event)
+void PhaseManager::ChangePhase(int next, PhaseEvent event, const std::string& eventParam, int eventDelay)
 {
 	m_currentPhase = next;
 	m_phaseFrame = 0;
@@ -120,6 +120,10 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event)
 		break;
 	case PhaseEvent::GameClear:
 		//printfDx("GameClear\n");//仮
+		break;
+	case PhaseEvent::Tutorial:
+		m_tutorialId = eventParam;
+		m_tutorialDelay = eventDelay;
 		break;
 	default:
 		break;
@@ -208,6 +212,19 @@ void PhaseManager::DebugSkipToBossPrevPhase()
 	float rad = area.rotYDeg * DX_PI_F / 180.0f;
 	player->SetPos(area.position + Vector3(-sinf(rad) * back, 0.0f, -cosf(rad) * back));
 	player->GetRigidBody().ResetVel();
+}
+
+bool PhaseManager::IsTutorialReady() const
+{
+	return !m_tutorialId.empty() && m_phaseFrame >= m_tutorialDelay;
+}
+
+std::string PhaseManager::TakeTutorial()
+{
+	std::string id = m_tutorialId;
+	m_tutorialId.clear();//2回開かないように
+	m_tutorialDelay = 0;
+	return id;
 }
 
 bool PhaseManager::IsInArea(const PhaseArea& area, const Vector3& pos) const

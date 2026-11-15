@@ -1,0 +1,4 @@
+# name centerX(cm)
+WagonDoor_L -154.4
+WagonDoor_R 154.4
+Bulkhead 0 doorHalf 308.8 doorH 385.0

@@ -1,29 +1,44 @@
-C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/TrainStage\TrainStage.x meshes=24 mats=24 polys=177260 min=(-801.2 -150.0 -7872.4) max=(801.2 1233.9 23490.9)
-  mat[0] M0 tex=0 dif=(0.95 0.95 0.95)
-  mat[1] M1 tex=1 dif=(0.95 0.95 0.95)
-  mat[2] M2 tex=2 dif=(0.95 0.95 0.95)
-  mat[3] M3 tex=3 dif=(0.95 0.95 0.95)
-  mat[4] M4 tex=4 dif=(0.95 0.95 0.95)
-  mat[5] M5 tex=5 dif=(0.95 0.95 0.95)
-  mat[6] M6 tex=6 dif=(0.60 0.60 0.62)
-  mat[7] M7 tex=-1 dif=(0.08 0.08 0.09)
-  mat[8] M8 tex=-1 dif=(0.22 0.22 0.24)
-  mat[9] M9 tex=7 dif=(0.70 0.70 0.70)
-  mat[10] M10 tex=8 dif=(1.00 1.00 1.00)
-  mat[11] M11 tex=9 dif=(0.50 0.50 0.53)
-  mat[12] M12 tex=-1 dif=(1.00 0.95 0.85)
-  mat[13] M13 tex=-1 dif=(0.91 0.02 0.07)
-  mat[14] M14 tex=-1 dif=(0.22 0.22 0.22)
-  mat[15] M15 tex=-1 dif=(1.00 0.95 0.85)
-  mat[16] M16 tex=10 dif=(0.70 0.70 0.70)
-  mat[17] M17 tex=10 dif=(0.70 0.70 0.70)
-  mat[18] M18 tex=7 dif=(0.70 0.70 0.70)
-  mat[19] M19 tex=11 dif=(1.00 1.00 1.00)
-  mat[20] M20 tex=12 dif=(0.50 0.50 0.53)
-  mat[21] M21 tex=-1 dif=(0.10 0.10 0.11)
-  mat[22] M22 tex=-1 dif=(0.30 0.07 0.05)
-  mat[23] M23 tex=-1 dif=(0.90 0.10 0.05)
-save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/TrainStage\TrainStage.mv1 ret=0
-C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/TrainStage\TrainStageCol.x meshes=1 mats=1 polys=864 min=(-1117.3 -170.0 -7922.4) max=(1114.5 1200.0 23590.9)
-  mat[0] M0 tex=-1 dif=(0.50 0.50 0.50)
-save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/TrainStage\TrainStageCol.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_PlazaExit_Static.x meshes=1 mats=1 polys=16 min=(-125.0 0.0 -7.8) max=(125.0 400.0 19.3)
+  mat[0] M0 tex=0 dif=(0.62 0.62 0.86)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_PlazaExit_Static.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_PlazaExit_Shutter.x meshes=1 mats=1 polys=22 min=(-87.2 -320.0 -18.3) max=(87.2 0.0 18.3)
+  mat[0] M0 tex=0 dif=(0.62 0.62 0.86)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_PlazaExit_Shutter.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_GreatGate_Static.x meshes=1 mats=1 polys=16 min=(-450.0 0.0 -7.8) max=(450.0 600.0 19.3)
+  mat[0] M0 tex=0 dif=(0.50 0.58 0.86)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_GreatGate_Static.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_GreatGate_Shutter.x meshes=1 mats=1 polys=22 min=(-313.8 -479.9 -18.3) max=(313.8 0.0 18.3)
+  mat[0] M0 tex=0 dif=(0.50 0.58 0.86)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_GreatGate_Shutter.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Warehouse_Static.x meshes=1 mats=1 polys=16 min=(-300.0 0.0 -7.8) max=(300.0 500.0 19.3)
+  mat[0] M0 tex=0 dif=(0.72 0.52 0.82)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Warehouse_Static.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Warehouse_Shutter.x meshes=1 mats=1 polys=22 min=(-209.2 -400.0 -18.3) max=(209.2 0.0 18.3)
+  mat[0] M0 tex=0 dif=(0.72 0.52 0.82)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Warehouse_Shutter.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Shaft2_Static.x meshes=1 mats=1 polys=16 min=(-125.0 0.0 -7.8) max=(125.0 400.0 19.3)
+  mat[0] M0 tex=0 dif=(0.70 0.73 0.50)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Shaft2_Static.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Shaft2_Shutter.x meshes=1 mats=1 polys=22 min=(-87.2 -320.0 -18.3) max=(87.2 0.0 18.3)
+  mat[0] M0 tex=0 dif=(0.70 0.73 0.50)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_Shaft2_Shutter.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_RoomExit_Static.x meshes=1 mats=1 polys=16 min=(-400.0 0.0 -7.8) max=(400.0 500.0 19.3)
+  mat[0] M0 tex=0 dif=(0.84 0.54 0.42)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_RoomExit_Static.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_RoomExit_Shutter.x meshes=1 mats=1 polys=22 min=(-278.9 -400.0 -18.3) max=(278.9 0.0 18.3)
+  mat[0] M0 tex=0 dif=(0.84 0.54 0.42)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_RoomExit_Shutter.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_ValleyExit_Static.x meshes=1 mats=1 polys=16 min=(-200.0 0.0 -7.8) max=(200.0 400.0 19.3)
+  mat[0] M0 tex=0 dif=(0.80 0.44 0.44)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_ValleyExit_Static.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_ValleyExit_Shutter.x meshes=1 mats=1 polys=22 min=(-139.5 -320.0 -18.3) max=(139.5 0.0 18.3)
+  mat[0] M0 tex=0 dif=(0.80 0.44 0.44)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_ValleyExit_Shutter.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_BossBack_Static.x meshes=3 mats=3 polys=558 min=(-820.0 0.0 -41.7) max=(820.0 332.4 41.7)
+  mat[0] M0 tex=0 dif=(0.72 0.38 0.48)
+  mat[1] M1 tex=1 dif=(0.72 0.38 0.48)
+  mat[2] M2 tex=2 dif=(0.72 0.38 0.48)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_BossBack_Static.mv1 ret=0
+C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_BossBack_Shutter.x meshes=1 mats=1 polys=38 min=(-144.8 -272.5 -14.2) max=(144.8 0.0 14.2)
+  mat[0] M0 tex=0 dif=(0.72 0.38 0.48)
+save C:/Users/tsyts/GitHub/2026_winter/2026_winter/data/Stage/Gates/Cyber/Gate_BossBack_Shutter.mv1 ret=0

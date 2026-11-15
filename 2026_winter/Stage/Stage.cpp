@@ -7,6 +7,10 @@
 #include "Render/ModelShaderManager.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 namespace
 {
@@ -122,6 +126,9 @@ void Stage::GameInit(const StageInfo& info)
 	//明かりのCSV(番号は敵配置と同じ。無いステージは何もしない)
 	m_lights.Load(info.enemySpawnNumber, m_pos_graphic);
 	if (m_useNightFog) m_lights.SetFogRange(kNightFogStart, kNightFogEnd);
+
+	//扉(無いステージは何もしない)
+	LoadGates(info.enemySpawnNumber);
 }
 
 Stage::~Stage()
@@ -133,6 +140,7 @@ Stage::~Stage()
 		MV1DeleteModel(m_tunnelHandle);
 	}
 	ClearWallZones();
+	ClearGates();
 }
 
 void Stage::Update()
@@ -173,6 +181,10 @@ void Stage::Draw() const
 	//いつもの光＋明かりを1回で描く(明かりの無いステージはいつもの描画)
 	CullMeshes();
 	ModelShaderManager::GetInstance().DrawModel(m_stageViewHandle);
+	for (auto& gate : m_gates)
+	{
+		gate->Draw();
+	}
 	DrawTunnel();
 
 	//キャラやエフェクトにはかけない
@@ -354,4 +366,101 @@ void Stage::ClearWallZones()
 		CollisionManager::GetInstance().ReleaseCollider(zone);
 	}
 	m_wallZones.clear();
+}
+
+void Stage::LoadGates(int stageNumber)
+{
+	ClearGates();
+	char path[64];
+	snprintf(path, sizeof(path), "data/Stage/Gates/Stage%03d.csv", stageNumber);
+	std::ifstream file(path);
+	if (!file.is_open()) return;
+
+	//name,model,pos(3),rotYDeg,closePhase,openPhase,delayFrame,moveFrame,move(3),scale(3),colOffset(3),colHalf(3)[,size(3)]
+	constexpr int kColumnNum = 22;
+	std::string line;
+	while (std::getline(file, line))
+	{
+		if (!line.empty() && line.back() == '\r') line.pop_back();
+		if (line.empty() || line[0] == '#') continue;
+
+		std::istringstream ss(line);
+		std::string token;
+		std::vector<std::string> t;
+		while (std::getline(ss, token, ','))
+		{
+			t.push_back(token);
+		}
+		if (t.size() < kColumnNum) continue;
+
+		GateData data;
+		try
+		{
+			auto vec = [&](int i) { return Vector3(std::stof(t[i]), std::stof(t[i + 1]), std::stof(t[i + 2])); };
+			data.name = t[0];
+			data.model = t[1];
+			data.pos = vec(2);
+			data.rotYDeg = std::stof(t[5]);
+			data.closePhase = std::stoi(t[6]);
+			data.openPhase = std::stoi(t[7]);
+			data.delayFrame = std::stoi(t[8]);
+			data.moveFrame = std::stoi(t[9]);
+			data.openMove = vec(10);
+			data.openScale = vec(13);
+			data.colOffset = vec(16);
+			data.colHalf = vec(19);
+			if (t.size() >= kColumnNum + 3) data.size = vec(22);
+		}
+		catch (...)
+		{
+			continue;//数値にできない行は飛ばす
+		}
+		auto gate = std::make_shared<Gate>();
+		gate->Init(data, m_pos_graphic);
+		m_gates.push_back(gate);
+	}
+}
+
+void Stage::ClearGates()
+{
+	for (auto& gate : m_gates)
+	{
+		CollisionManager::GetInstance().ReleaseCollider(gate);
+	}
+	m_gates.clear();
+}
+
+void Stage::UpdateGates(int currentPhase)
+{
+	for (auto& gate : m_gates)
+	{
+		gate->Update(currentPhase);
+	}
+}
+
+MV1_COLL_RESULT_POLY Stage::CollCheckCameraLine(const Vector3& start, const Vector3& end) const
+{
+	MV1_COLL_RESULT_POLY best = MV1CollCheck_Line(m_stageModelHandle, -1, start.ToDxLibVector(), end.ToDxLibVector());
+	float bestDist = best.HitFlag ? (Vector3::FromDxLibVector(best.HitPosition) - start).sqMagnitude() : -1.0f;
+	for (auto& gate : m_gates)
+	{
+		MV1_COLL_RESULT_POLY hit;
+		if (!gate->CollCheckCameraLine(start, end, hit)) continue;
+		const float dist = (Vector3::FromDxLibVector(hit.HitPosition) - start).sqMagnitude();
+		if (bestDist < 0.0f || dist < bestDist)
+		{
+			best = hit;
+			bestDist = dist;
+		}
+	}
+	return best;
+}
+
+void Stage::DrawGateCols() const
+{
+	for (auto& gate : m_gates)
+	{
+		gate->DrawCol(gate->GetIsActive() ? GetColor(255, 60, 60) : GetColor(80, 255, 80));
+		gate->DrawCameraBox(GetColor(80, 200, 255));
+	}
 }

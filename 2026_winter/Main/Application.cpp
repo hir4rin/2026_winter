@@ -28,6 +28,9 @@ namespace
 	constexpr int kBenchFrame = 660;//-bench のときに動かすフレーム数(11秒)
 	constexpr int kVSyncPacingMinHz = 58;//この範囲のリフレッシュレートなら VSync で60fpsに合わせる
 	constexpr int kVSyncPacingMaxHz = 62;
+	//更新を待った後、絵を出すまで空ける時間(-presentdelay= で変えられる)
+	//更新の直後に出すと Windows の画面の合成とぶつかり、画面で同じ絵が2回出る(35秒で49回 → 8msで0〜1回。12msだと次の更新に近すぎて2回)
+	constexpr long long kPresentDelayMicroSec = 8000;
 
 }
 
@@ -185,6 +188,12 @@ void Application::Run()
 		//描画した内容をすぐ画面に出す
 		//待ってから出すと絵が1フレーム古くなる
 		FrameProfiler::GetInstance().MarkGpuFrameEnd();
+		//更新の直後(Windows の画面の合成と同じころ)を避けて出す
+		if (m_paceMode == PaceMode::VBlank || m_paceMode == PaceMode::WaitVSync)
+		{
+			WaitPresentTime(start);
+			FrameProfiler::GetInstance().Mark("PresentWait");
+		}
 		ScreenFlip();
 		FrameProfiler::GetInstance().Mark("Flip");
 		//外に出したImGuiのウィンドウはゲームの画面を出した後に描く
@@ -233,6 +242,8 @@ void Application::Terminate()
 {
 	FrameProfiler::GetInstance().Terminate();
 	ReleaseVBlankOutput();
+	if (m_presentTimer) CloseHandle(m_presentTimer);
+	m_presentTimer = nullptr;
 	//ImGuiのリソースを解放する(DxLib_Endより前)
 	imguiApp::GetInstance().Uninit();
 
@@ -266,6 +277,27 @@ void Application::InitFramePacing()
 	else m_paceMode = m_isVSyncPacing ? PaceMode::VBlank : PaceMode::Busy;
 	//ScreenFlip の VSync 待ちは前のやり方(both)のときだけ
 	SetWaitVSyncFlag(m_paceMode == PaceMode::VSyncAndBusy ? TRUE : FALSE);
+	//(確認用)-presentdelay=6 のように、更新から絵を出すまでの時間(ms)を変えられる
+	const char* delayArg = strstr(commandLine, "-presentdelay=");
+	m_presentDelayMicroSec = delayArg ? static_cast<long long>(atof(delayArg + 14) * 1000.0) : kPresentDelayMicroSec;
+	if (!m_presentTimer) m_presentTimer = CreateWaitableTimerExW(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+}
+
+void Application::WaitPresentTime(long long start)
+{
+	const long long target = start + m_presentDelayMicroSec;
+	long long remain = target - GetNowHiPerformanceCount();
+	//1.5ms より先はタイマーで眠り、最後は回して合わせる
+	if (remain > 1500 && m_presentTimer)
+	{
+		LARGE_INTEGER due;
+		due.QuadPart = -(remain - 1000) * 10;//100ナノ秒単位、マイナスは今からの時間
+		if (SetWaitableTimer(m_presentTimer, &due, 0, nullptr, nullptr, FALSE)) WaitForSingleObject(m_presentTimer, INFINITE);
+	}
+	while (GetNowHiPerformanceCount() < target)
+	{
+		YieldProcessor();
+	}
 }
 
 bool Application::WaitVBlank()

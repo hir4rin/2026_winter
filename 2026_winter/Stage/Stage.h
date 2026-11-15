@@ -4,6 +4,7 @@
 #include "Main/System.h"
 #include "StageInfo.h"
 #include "StageLights.h"
+#include "Gate/Gate.h"
 #include <memory>
 #include <vector>
 
@@ -24,6 +25,15 @@ public:
 	int GetStageViewHandle()const { return m_stageViewHandle; }
 	/// <summary>ステージの明かり(プレイヤーに近いものを点ける)</summary>
 	StageLights& GetLights() { return m_lights; }
+
+	/// <summary>扉(ゲート)を今のフェーズに合わせて開け閉めする</summary>
+	void UpdateGates(int currentPhase);
+	/// <summary>扉の当たり判定の線枠(デバッグ用。閉まっているものは赤)</summary>
+	void DrawGateCols()const;
+	/// <summary>
+	/// カメラ用の線分の当たり判定。ステージの当たり判定のモデルと扉(カメラ用の箱)を調べ、始点に一番近い当たりを返す
+	/// </summary>
+	MV1_COLL_RESULT_POLY CollCheckCameraLine(const Vector3& start, const Vector3& end)const;
 
 	//壁ゾーン(WallKickZone/WallRunZone)----------------------------------------------
 	/// <summary>指定したステージ番号の壁ゾーンCSVを読み込み、今あるゾーンと入れ替える</summary>
@@ -84,5 +94,10 @@ private:
 	void ClearWallZones();
 	//壁キック/壁走りできるゾーン(ステージ編集で配置したもの)
 	std::vector<std::shared_ptr<WallZone>> m_wallZones;
+
+	//扉(data/Stage/Gates/Stage%03d.csv。番号は敵配置と同じ)
+	std::vector<std::shared_ptr<Gate>> m_gates;
+	void LoadGates(int stageNumber);
+	void ClearGates();
 };
 

@@ -1,0 +1,23 @@
+#name,model,posX,posY,posZ,rotYDeg,closePhase,openPhase,delayFrame,moveFrame,moveX,moveY,moveZ,scaleX,scaleY,scaleZ,colOffsetX,colOffsetY,colOffsetZ,colHalfX,colHalfY,colHalfZ
+#Unity の GateAssetTool.ExportCyberGates で書き出し。_Shutter は上へ巻き上げる(原点=シャッターの上の真ん中)。_Static / _SideR は塀・壁(いつも通れない)
+PlazaExit_Shutter,Cyber/Gate_PlazaExit_Shutter,600,319.96,13219.01,0,0,2,30,50,0,0,0,1,0.04,1,0,430.04,0,87.17,750,30
+PlazaExit_Static,Cyber/Gate_PlazaExit_Static,600,0,13220,0,0,99999,0,1,0,0,0,1,1,1,-106.08,250,0,18.92,250,30
+PlazaExit_SideR,,600,0,13220,0,0,99999,0,1,0,0,0,1,1,1,106.08,250,0,18.92,250,30
+GreatGate_Shutter,Cyber/Gate_GreatGate_Shutter,3619.01,1079.94,15800,90,0,4,30,50,0,0,0,1,0.04,1,0,270.06,0,313.81,750,30
+GreatGate_Static,Cyber/Gate_GreatGate_Static,3620,600,15800,90,0,99999,0,1,0,0,0,1,1,1,-381.9,350,0,68.1,350,30
+GreatGate_SideR,,3620,600,15800,90,0,99999,0,1,0,0,0,1,1,1,381.9,350,0,68.1,350,30
+Warehouse_Shutter,Cyber/Gate_Warehouse_Shutter,8650,-0.05,22899.01,0,0,6,30,50,0,0,0,1,0.04,1,0,350.05,0,209.2,750,30
+Warehouse_Static,Cyber/Gate_Warehouse_Static,8650,-400,22900,0,0,99999,0,1,0,0,0,1,1,1,-254.6,300,0,45.4,300,30
+Warehouse_SideR,,8650,-400,22900,0,0,99999,0,1,0,0,0,1,1,1,254.6,300,0,45.4,300,30
+Shaft2_Shutter,Cyber/Gate_Shaft2_Shutter,-2150,219.96,29889.01,0,0,8,30,50,0,0,0,1,0.04,1,0,430.04,0,87.17,750,30
+Shaft2_Static,Cyber/Gate_Shaft2_Static,-2150,-100,29890,0,0,99999,0,1,0,0,0,1,1,1,-106.08,250,0,18.92,250,30
+Shaft2_SideR,,-2150,-100,29890,0,0,99999,0,1,0,0,0,1,1,1,106.08,250,0,18.92,250,30
+RoomExit_Shutter,Cyber/Gate_RoomExit_Shutter,-980.99,899.95,32969,90,0,10,30,50,0,0,0,1,0.04,1,0,350.05,0,278.94,750,30
+RoomExit_Static,Cyber/Gate_RoomExit_Static,-980,500,32969,90,0,99999,0,1,0,0,0,1,1,1,-339.47,300,0,60.53,300,30
+RoomExit_SideR,,-980,500,32969,90,0,99999,0,1,0,0,0,1,1,1,339.47,300,0,60.53,300,30
+ValleyExit_Shutter,Cyber/Gate_ValleyExit_Shutter,6950,319.96,36907.01,0,0,12,30,50,0,0,0,1,0.04,1,0,430.04,0,139.47,750,30
+ValleyExit_Static,Cyber/Gate_ValleyExit_Static,6950,0,36908,0,0,99999,0,1,0,0,0,1,1,1,-169.73,250,0,30.27,250,30
+ValleyExit_SideR,,6950,0,36908,0,0,99999,0,1,0,0,0,1,1,1,169.73,250,0,30.27,250,30
+BossBack_Shutter,Cyber/Gate_BossBack_Shutter,9440.64,272.49,44090,90,13,9999,20,50,0,0,0,1,0.04,1,0,477.51,0,144.76,750,30
+BossBack_Static,Cyber/Gate_BossBack_Static,9450,0,44090,90,0,99999,0,1,0,0,0,1,1,1,-482.38,216.18,0,337.62,216.18,30
+BossBack_SideR,,9450,0,44090,90,0,99999,0,1,0,0,0,1,1,1,482.38,216.18,0,337.62,216.18,30

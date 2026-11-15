@@ -1732,6 +1732,68 @@
 - **手順6**: 確認(約1秒後に出る・出ている間は全部止まる・閉じた A で攻撃しない・eventDelay 空欄ならすぐ出る)。確認が済んだらステージセレクトの Y の仮の入口を消す。
 - 注意: `StringToPhaseEvent` が "Tutorial" を知らないと Start の行が読み飛ばされ、列車ステージで「遷移表にStartの行がありません」の assert になる(今は足してあるので止まらないはず。未確認)。頼みは1つだけ(開く前に次の Tutorial のフェーズへ進むと上書き)。Tutorial.csv に無い id は開いたときに assert。
 
+### 2026-11-15 フェーズで開く扉(Gate)・列車の通路車両の扉
+- 方針(会話で決めた): 区画の間に扉を置き、フェーズをクリアしたら開く。列車ステージの通路車両の扉から始めた。ステージ1(大門・閉じた部屋のシャッター・地下鉄のドアなど)は次。
+- `Stage/Gate/GateData.h` / `Gate.h/.cpp`(vcxproj/filters に登録)。`Collider` 継承、扉1枚=1つ。
+  - **閉まる条件は扉の CSV に書く**: `closePhase <= 今のフェーズ < openPhase` の間だけ閉(フェーズ -1(終わり)は開)。遷移表・PhaseManager は変えていない。F4 などでフェーズを飛ばしてもずれない。閉じ込め(入ったら後ろが閉まる)も closePhase で書ける。
+  - 開き方: `openMove`(移動、扉の向き基準)と `openScale`(大きさ)へ、`delayFrame` 待ってから `moveFrame` かけて動く(smoothstep、タイムスケールで進む)。スライド・巻き上げ・縮めるを全部これで書く。
+  - 当たり判定: `GateBox.mv1`(1m角の箱)を `colOffset` / `colHalf` に合わせて置き、`PolygonShape` で登録(ステージと同じ押し戻しの処理。カプセルと Box の押し戻しは作られていないため)。開くときは開き具合 0.3 で通れる、閉まるときは動き出したら通れない。`colHalf.x` が0なら当たり判定なし。カメラの当たり判定(ステージのモデルだけを見る)は扉を見ない。
+  - `Stage`: `GameInit` の最後で `data/Stage/Gates/Stage%03d.csv`(番号は enemySpawnNumber)を読む(`LoadGates`、無ければ何もしない)。モデルはその都度 `MV1LoadModel`(小さいので System の AsyncData には入れていない)。`Draw` でステージの直後に描く(フォグ・色変えもかかる)。`UpdateGates(phase)`。
+  - `SceneMain::NormalUpdate`: `m_phaseManager->Update()` の直後に `m_stage->UpdateGates(GetCurrentPhase())`(押し戻しの前)。Debug は `DrawGateCols`(赤=閉・緑=開の線枠)。
+- CSV の列: `name,model,posX,posY,posZ,rotYDeg,closePhase,openPhase,delayFrame,moveFrame,moveX,moveY,moveZ,scaleX,scaleY,scaleZ,colOffsetX,colOffsetY,colOffsetZ,colHalfX,colHalfY,colHalfZ`(22列。モデルは `data/Stage/Gates/〜.mv1`)。
+- **扉の見た目はステージのアセットで作る**(Blender で自作した扉は「雰囲気が違って浮いている」と言われてやめた)。
+  - model は `data/Stage/Gates/` からの相対(`Cyber/Gate_〜` / `Train/TrainDoor_〜`)。**model が空の行は当たり判定だけ**(塀の横など)。
+  - CSV の最後に**閉じているときの大きさ** `sizeX,sizeY,sizeZ`(省略で1)を足せる(今は使っていない)。
+- **ランプ**(今はどの扉にも無い): モデルの中で自発光が赤(r≥0.5、g・b≤0.2)のマテリアルがあれば `Gate` が閉は赤く明滅、開くにつれて緑にする(`MV1SetMaterialEmiColor`)。値は `Gate.cpp` 先頭。信号機のアセット(`CP_Traffic_Light_01`)を付けるならここを使う。
+- 列車ステージ(`data/Stage/Gates/Stage004.csv`): 3両目の入口(z≈4268.6、フェーズ3で開く)と5両目の入口(z≈17162.6、フェーズ5で開く)。
+  **入口(幅12.4m・高さ5.7m)を赤さびの波板の仕切り(`Train/Bulkhead`、車体の横と同じ `roof_rust.png`、扉のまわりに黄黒のテープ)でふさぎ、真ん中に貨車の扉(列車のアセット `WagonDoor`、6.18m×3.8m)を左右に切った引き戸(`Train/WagonDoor_L/R`)**。開くと左右に310ずつ動いて仕切りの裏へ入る。仕切りは z=4256 / 17150(車体の端の面の6cm奥)、扉は仕切りの裏。
+  - 前の版(車両の元の扉 `CorrDoors` を3本に切って重ねる)は、灰色の板で壁にしか見えず、斜めから切れ目が棒のように見えたのでやめた。
+  - 当たり判定: 仕切りの左・右・扉の上はいつも閉の行(`_Bulkhead`(モデルあり)/ `_BulkheadR` / `_BulkheadTop`、model が空の行)、扉の穴は `_DoorL` の行。
+  - 作り方: `../tools/GateModel/build_train_bulkhead.py`(Blender。WagonDoor.fbx を読み、表を手前(-Y)に向けて真ん中で切る。仕切りは箱で作る)→ export_x → convert flat → `copy_mat.exe ... 19,10 Bulkhead.mv1`(波板・テープの色を `TrainStage.mv1` の材質19・10と同じに)。貨車の扉は export_props.py と同じ TINT 0.8。
+  - 扉の裏は面が無いので、閉じたまま車内から見ると透ける(開く前に車内へは入れないのでそのまま)。
+  - 扉に合わせて**フェーズを分けた**: 1 A 1両目 → 2 B 2両目 → 3 C 3両目 → 4 D 4両目の屋根 → 5 E 5両目 → 6 F 6両目 → GameClear(`Enemies004.csv` のフェーズ・グループ、`PhaseStage004.csv`)。敵の位置は同じ。
+    **Unity の TrainStageTool の 2. Export は Enemies004.csv を上書きする**ので、Unity で書き出す前に `Tools > Enemy Spawn > Import CSV...` で読み込み直すこと。
+- **ステージ1**(`data/Stage/Gates/Stage005.csv`、`Cyber/Gate_〜`): Cyberpunk Megapolis のアセットを並べた扉。
+  **Unity の `Assets/Editor/GateAssetTool.cs` の `ExportCyberGates`(バッチモードで動く)がモデルと CSV を両方書く**ので、扉を直すときは CSV ではなくこのツールの表(`CyberGates`)を直して流し直す:
+  `Unity.exe -batchmode -projectPath ninja_motion -executeMethod GateAssetTool.ExportCyberGates -quit -logFile ...`(Unity のエディタが開いていたら閉じてから)。
+  - **シャッター付きの壁 `CP_Wall_Roller_Shutters_01` を開口の幅・高さに合わせて伸ばし、開口の中(壁の面から20cm奥)に埋める**。最初は4mの壁を開口の手前に立てたり、通りの真ん中に塀(`CP_Fence_B_Gate`＋フェンス)を置いたりしたが、壁から箱が飛び出す・既存の柱や壁走りの看板とずれて「変」と言われた。塀はボス広場の後ろ(何も無い16mの道)だけ。
+  - 材質 `CP_Roller_Shutters` のサブメッシュだけを `_Shutter`(原点=シャッターの上の真ん中、Y を0.04倍に縮めて巻き上げる)、残りを `_Static`(いつも閉 = 当たり判定がずっと効く)に分ける。右側の当たり判定は model が空の `_SideR` の行。横の当たり判定の高さは部品の高さ+1m(縦穴の入口に高い柱が残らないように)、シャッターは15m。
+  - 壁の部品は表だけなので、閉じたまま裏から見ると透ける(閉じている間は裏へは行けない)。
+  - 区画の名前(`05_` など)の子にして **`CyberStageTool.WriteX` で書き出す**(区画の色・テクスチャのコントラスト・発光の焼き込みがステージと同じ)→ `convert.exe night`。テクスチャは `CyberStage/tex` から `Gates/Cyber/tex` へ写す。
+  場所は当たり判定のモデルを真上から撮った地図(`map_stage.exe`)と、線を当てて測った幅(`probe_gap.exe`)で決めた。**座標は 11/07 に曲げた後の今のステージに合わせた値なので、Unity でステージの道を動かしたら `CyberGates` の表も直すこと**。
+  | 扉 | 部品 | 位置(床の真ん中) | 閉じている間 |
+  |---|---|---|---|
+  | PlazaExit 広場の出口(壁蹴りの縦穴、幅2.5m) | シャッターの壁 2.5×4m | (600, 0, 13220) | フェーズ0〜1(A 全滅で開く) |
+  | GreatGate 大門(ぬれた通りの大門の柱の間、向き90) | シャッターの壁 9×6m | (3620, 600, 15800) | 〜3(B) |
+  | Warehouse 倉庫の入口(ホロ通りの先) | シャッターの壁 6×5m | (8650, -400, 22900) | 〜5(C) |
+  | Shaft2 縦穴②(工業区画の先、幅2.5m) | シャッターの壁 2.5×4m | (-2150, -100, 29890) | 〜7(D) |
+  | RoomExit 閉じた部屋の東の壁の開口(向き90) | シャッターの壁 8×5m | (-980, 500, 32969) | 〜9(E) |
+  | ValleyExit 谷の出口(連続壁走りの入口、幅4m) | シャッターの壁 4×4m | (6950, 0, 36908) | 〜11(F) |
+  | BossBack ボス広場の後ろ(向き90) | 塀 5m+ゲート+5m、16.4m | (9450, 0, 44090) | **13(ボス戦)で閉まる**、終わり(-1)で開く |
+  - 開くのはシャッターの部分(壁の約7割の幅。縦穴は1.7m、塀のゲートは2.9m)だけ。
+  - 閉じた部屋の入口で閉じ込める案は、入口が床に開いた縦穴で縦の扉ではふさげないのでやめた。
+- `GateBox.mv1`(当たり判定の1m角の箱、面は外向き)は `extract_door.exe` で作った。作り方の全体は `../tools/GateModel/README.md`。
+- **Blender**: Steam の Blender は blender.exe が無くなっていた(フォルダだけ残っている)。**`C:\Users\tsyts\tools\blender-5.3.0-windows-x64\blender.exe`(公式の zip 版、管理者の権限なしで置いた)** を使う。`../tools/TrainStage/build_all.sh` などは Steam のパスのままなので、使うときは BLENDER を直す。
+- **カメラと扉の当たり判定**(11/15): カメラの線(`CameraManager::FixStageCollision` / `IsStageHit`)は `Stage::CollCheckCameraLine` を呼び、ステージの当たり判定のモデルと扉の**カメラ用の箱**を調べて一番手前の当たりを使う。
+  - カメラ用の箱(`Gate::UpdateCameraBox`、`GateBox.mv1` をもう1つ): **プレイヤー用の箱と見た目のモデルの範囲が重なった部分**(見た目だけの行は見た目の範囲、箱だけの行は箱)。プレイヤー用の箱は高さ15mなので、そのままだと何も無い所でカメラが寄るため。シャッターが巻き上がる・貨車の扉が引き込まれると一緒に縮む・動く(動いたときだけ置き直して `MV1RefreshCollInfo`)。各方向に5cm広げる(左右2枚の扉の継ぎ目の面の上を線が通ると、どちらにも当たらなかった)。
+  - 囲む球と線分の距離で、遠い扉は調べない。Debug の `DrawGateCols` で水色の線枠。
+  - 確認: 一時コードで閉じた扉の奥にプレイヤーを置き、カメラが扉の手前で止まる(列車 z4339・ステージ1 z13261)こと、開くと開口を通って後ろへ戻る(列車 z4117・ステージ1 z13017)ことをログと画面で確認した。
+- **当たり判定の重さ**: CollisionManager は全部の組み合わせを毎フレーム調べるので、扉(ステージ1は20行)も全員と調べていた。`PolygonShape::SetBoundSphere`(扉の箱を囲む球)を足し、`CollisionChecker::IsFarFromPolygon` で相手(今の位置〜次の位置、カプセルの長さ・半径込み)が球より遠ければポリゴンを調べない。ステージの当たり判定は球を持たないので今まで通り。
+  Release のベンチ(スタート地点・待ちなし)で、扉あり/なしの1フレームの処理は ステージ1 0.40 / 0.32ms、列車 0.43 / 0.41ms(当たり判定 0.10 / 0.05ms。計測の細かさが0.1ms なので差はほぼ無い)。
+  ユーザーが遊んだ記録でも処理は軽く、カクッとした瞬間(約15回/15分)は全部 `Wait`(モニターの更新を待つ所)から戻るのが遅れたもので、扉とは関係ない(前からある問題。下の「カクつきの本当の原因」で直した)。
+
+### 2026-11-15 カクつきの本当の原因 = 絵を出すタイミングが Windows の画面の合成とぶつかっていた
+- **画面に実際に出た更新**を測るツールを作った(`../tools/FrameCheck/dupmon.exe`。Desktop Duplication で、ゲームのウィンドウの範囲が書き換わった時刻を記録。使い方は README)。
+  CPU 側の記録(FrameSpikes の period)では35秒で5回しか出ていなかったが、**画面では同じ絵が2回出た所が35秒で25〜49回**あった。間隔は 16.7ms の間に、4ms・12〜14ms の短いものと 26〜30ms の長いものが組で混ざっていた。
+- 原因: モニターの更新(WaitForVBlank)の直後に起きて約1msで ScreenFlip していたので、Windows(DWM)が画面を合成するタイミング(更新の直後)とぶつかり、1回前の合成に間に合ったり1回後になったりしていた。
+- **直したこと**: `Application::Run` で、更新を待ってから**8ms たつまで待って ScreenFlip** する(`WaitPresentTime`、`kPresentDelayMicroSec` = 8000。高精度の待てるタイマーで眠り、最後の1.5msだけ回す)。区切り `PresentWait` が増えた。VBlank / WaitVSync の待ち方のときだけ。
+  - 起動の引数 `-presentdelay=ミリ秒` で変えられる。35秒で同じ絵が2回出た回数: 0ms 49回 / 4ms 14回 / **8ms 0〜1回** / 10ms 0回 / 12ms 2回(次の更新に近すぎる)。
+  - CPU に負荷(論理コア28本を回す)をかけても、0ms 51回 → 8ms 2回。
+  - 既定のままで Release・Debug とも 35秒で0回。遅れの目安(F2 の Lag)は 33.5ms のまま(表示されるのは前と同じ「次の合成」)。処理が8msを超えるフレームは待たずにすぐ出す。
+- 試してだめだったもの: ScreenFlip を VSync あり＋`SetMaximumFrameLatency(1)`(DXGI の表示の列で待つ)にすると、画面の更新の間隔がばらばらになり、1秒止まる所も出た(消した)。
+- まだ分からないこと: Release で `Update`(SceneMain の区切りの後)が1回だけ 16ms かかったフレームがあった(11/03 にも20msが1回)。何をしているときかはまだ調べていない。
+- 確認: Debug・Release(x64)のビルドは通った。一時コード(撮る位置を `Log/GateShots.txt` から読む)で両ステージの扉をプレイヤーの目の高さで表・斜め・裏から撮り、開口に収まっていること、列車の扉が仕切りの裏へ引き込まれること、広場の出口が巻き上がることを確認した。押し戻しは 列車 4240 → 4205、ステージ1 13190 → 13148、開いた後は扉の位置に立てる(一時コードは消した)。**実際に遊んでの確認はまだ**(敵が扉に引っかからないか、音、扉を開けたときにカメラを向けるかは未対応)。
+
 ## 10/27 やること: 背中の腕の切り離し Step2〜
 **手順とコードは全部 `../進捗/背中の腕の切り離し_手順.md` に書いてある。** ここは順番と進み具合だけ。
 

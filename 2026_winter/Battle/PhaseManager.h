@@ -31,6 +31,9 @@ public:
 	//ボスのフェーズ中なら次のフェーズへ飛ぶ
 	void DebugSkipToBossPrevPhase();
 
+	bool IsTutorialReady()const;//待ち終わったチュートリアルがあるか
+	std::string TakeTutorial();//idを受け取って頼みを消す
+
 	//エリア(エディタ用)-----------------------------------------------------
 	const std::vector<PhaseArea>& GetAreas()const { return m_areas; }
 	void SetAreas(const std::vector<PhaseArea>& areas);//名前→番号も引き直す
@@ -44,7 +47,7 @@ private:
 	void ResolveAreaIndex();
 
 	//次のフェーズ
-	void ChangePhase(int next, PhaseEvent event);
+	void ChangePhase(int next, PhaseEvent event,const std::string& eventParam = "",int eventDelay = 0);
 
 	//条件が満たされたかどうか
 	bool IsConditionFulfilled(const PhaseTransition& trans)const;
@@ -61,4 +64,7 @@ private:
 	int m_currentPhase = 0;
 	int m_phaseFrame = 0;//経過フレーム
 	int m_killCountAtPhaseStart = 0;//フェーズ開始時の撃破数
+
+	std::string m_tutorialId;//開くチュートリアル(空なら無し)
+	int m_tutorialDelay = 0;//フェーズが始まってから開くまでのフレーム
 };

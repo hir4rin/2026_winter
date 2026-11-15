@@ -46,6 +46,9 @@ private:
 	//デバッグ用//プレイヤーの正面にスキルエフェクトを再生する
 	void PlayDebugSkillEffect(int effectHandle);
 
+	//チュートリアルを開いてよいか(演出の最中は待つ)
+	bool CanOpenTutorial()const;
+
 private:
 	int m_frameCount;
 	int m_fadeFrame;//フェードの経過フレーム
@@ -53,7 +56,6 @@ private:
 	int m_lightHandle = -1;
 
 	StageType m_stageType;//遊ぶステージ(StageSelectSceneで選んだもの)
-
 	std::shared_ptr<Player> m_player;
 	std::shared_ptr<EnemyManager> m_enemyManager;
 	std::shared_ptr<PhaseManager> m_phaseManager;//フェーズ進行
