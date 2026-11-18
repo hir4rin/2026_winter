@@ -33,14 +33,21 @@ struct PS_INPUT
 	float3 WorldNormal     : Normal1;
 };
 
-#define LIGHT_MAX 16
+// ステージの明かり(b4)
+#include "StageLight.hlsli"
 
-// ステージの明かり(ModelShaderManager が b4 に入れる)
-cbuffer StageLightBuffer : register(b4)
+// ステージの空気感(列車ステージなど。ModelShaderManager が b10 に入れる)
+// いつもの光の環境光を、面の向き(上・下)・平行光・横からの光で色分けする
+cbuffer AtmosphereBuffer : register(b10)
 {
-	float4 g_LightPosRange[LIGHT_MAX];	// xyz:位置 w:届く距離の2乗
-	float4 g_LightColor[LIGHT_MAX];		// rgb:色×強さ w:1/届く距離
-	float4 g_Param;						// x:数 y,z:(使っていない) w:裏側への回り込み
+	float4 g_AtmoSky;			// rgb:上を向いた面の倍率 a:1なら使う
+	float4 g_AtmoGround;		// rgb:下を向いた面の倍率
+	float4 g_AtmoIndoorSky;		// rgb:車内の上を向いた面の倍率
+	float4 g_AtmoIndoorGround;	// rgb:車内の下を向いた面の倍率
+	float4 g_AtmoKeyDir;		// xyz:平行光の来る向き
+	float4 g_AtmoKeyColor;		// rgb:平行光の倍率
+	float4 g_AtmoSideDir;		// xyz:横からの光の来る向き
+	float4 g_AtmoSideColor;		// rgb:横からの光の倍率(車内では使わない)
 };
 
 // ステージの色変え(ModelShaderManager が b7 に入れる)
@@ -72,7 +79,8 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float3 toCamera = normalize(-input.VPosition);
 	float3 diffuse = float3(0.0f, 0.0f, 0.0f);
 	float3 specular = float3(0.0f, 0.0f, 0.0f);
-	float3 ambient = g_Common.Material.Ambient_Emissive.rgb;	// 発光 + マテリアルの環境光 × 全体の環境光
+	float3 emissive = g_Common.Material.Ambient_Emissive.rgb;	// 発光 + マテリアルの環境光 × 全体の環境光
+	float3 lightAmbient = float3(0.0f, 0.0f, 0.0f);
 	for (int i = 0; i < DX_D3D11_COMMON_CONST_LIGHT_NUM; ++i)
 	{
 		if (g_Common.Light[i].Type != LIGHTTYPE_DIRECTIONAL) continue;
@@ -81,26 +89,25 @@ float4 main(PS_INPUT input) : SV_TARGET
 		diffuse += g_Common.Light[i].Diffuse * nl;
 		float3 halfVec = normalize(toLight + toCamera);
 		specular += g_Common.Light[i].Specular * pow(saturate(dot(normal, halfVec)), max(g_Common.Material.Power, 1.0f)) * (nl > 0.0f ? 1.0f : 0.0f);
-		ambient += g_Common.Light[i].Ambient.rgb;				// ライトの環境光 × マテリアルの環境光
+		lightAmbient += g_Common.Light[i].Ambient.rgb;			// ライトの環境光 × マテリアルの環境光
 	}
-	float3 color = tex.rgb * saturate(diffuse * input.Diffuse.rgb + ambient) + specular * input.Specular.rgb;
 
-	// ステージの明かり(明かりの色 × 距離の減り方 × 面の向き を足してから、テクスチャの色を1回掛ける)
 	float3 worldNormal = normalize(input.WorldNormal);
-	float3 lightSum = float3(0.0f, 0.0f, 0.0f);
-	int count = (int)g_Param.x;
-	for (int k = 0; k < count; ++k)
+	float indoor = IsIndoor(input.WorldPosition);
+
+	// 空気感: 環境光(=マテリアルの明るさ)を面の向きで色分けする
+	if (g_AtmoSky.a > 0.5f)
 	{
-		float3 toPoint = g_LightPosRange[k].xyz - input.WorldPosition;
-		float distSq = dot(toPoint, toPoint);
-		if (distSq >= g_LightPosRange[k].w) continue;	// 届かない明かりは計算しない
-		float invDist = rsqrt(max(distSq, 1e-6f));		// 平方根と割り算の代わり
-		float atten = saturate(1.0f - distSq * invDist * g_LightColor[k].w);
-		atten *= atten;
-		float ndl = saturate(dot(worldNormal, toPoint * invDist) * (1.0f - g_Param.w) + g_Param.w);
-		lightSum += g_LightColor[k].rgb * (atten * ndl);
+		float up = worldNormal.y * 0.5f + 0.5f;
+		float3 hemi = lerp(lerp(g_AtmoGround.rgb, g_AtmoSky.rgb, up), lerp(g_AtmoIndoorGround.rgb, g_AtmoIndoorSky.rgb, up), indoor);
+		float key = saturate(dot(worldNormal, g_AtmoKeyDir.xyz));
+		float side = saturate(dot(worldNormal, g_AtmoSideDir.xyz));
+		lightAmbient *= hemi + g_AtmoKeyColor.rgb * key + g_AtmoSideColor.rgb * (side * (1.0f - indoor));
 	}
-	color += tex.rgb * lightSum;
+	float3 color = tex.rgb * saturate(diffuse * input.Diffuse.rgb + emissive + lightAmbient) + specular * input.Specular.rgb;
+
+	// ステージの明かり(足してからテクスチャの色を1回掛ける)
+	color += tex.rgb * CalcStageLights(input.WorldPosition, worldNormal, indoor);
 
 	// フォグ(頂点シェーダーが Fog.x に計算済み。フォグが無いときは 1)
 	color = lerp(g_Common.Fog.Color.rgb, color, saturate(input.Fog.x * input.Fog.y));

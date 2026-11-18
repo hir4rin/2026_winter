@@ -102,6 +102,12 @@
     <ClCompile Include="Stage\StageLights.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Stage\TrainLighting.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Stage\TrainSparks.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Stage\Gate\Gate.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -653,6 +659,12 @@
     <ClInclude Include="Stage\StageLights.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Stage\TrainLighting.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage\TrainSparks.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Stage\Gate\Gate.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1136,6 +1148,9 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\LitModelPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\StageLight.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\EnemyCutPS.hlsl">

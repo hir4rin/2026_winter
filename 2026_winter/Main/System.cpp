@@ -61,6 +61,9 @@ namespace
 	//ガードブレイク
 	const std::string kGuardBreakFlashEffectPath = "data/Effect/GuardBreak/GuardBreakFlash.efk";
 	const std::string kGuardBreakShardsEffectPath = "data/Effect/GuardBreak/GuardBreakShards.efk";
+	//斬ったときの風
+	const std::string kHitWindEffectPath = "data/Effect/Hit/HitWind.efk";
+	const std::string kSkillHitEffectPath = "data/Effect/Hit/SkillHit.efk";
 
 	//Kingmechのミサイルの雨
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
@@ -100,6 +103,8 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::BloodUltEffect] = LoadEffekseerEffect(kBloodUltEffectPath.c_str());
 	m_asyncHandles[AsyncData::GuardBreakFlashEffect] = LoadEffekseerEffect(kGuardBreakFlashEffectPath.c_str());
 	m_asyncHandles[AsyncData::GuardBreakShardsEffect] = LoadEffekseerEffect(kGuardBreakShardsEffectPath.c_str());
+	m_asyncHandles[AsyncData::HitWindEffect] = LoadEffekseerEffect(kHitWindEffectPath.c_str());
+	m_asyncHandles[AsyncData::SkillHitEffect] = LoadEffekseerEffect(kSkillHitEffectPath.c_str());
 }
 
 void System::LoadStage(StageType type)
@@ -277,6 +282,8 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodUltEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GuardBreakFlashEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GuardBreakShardsEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::HitWindEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::SkillHitEffect]);
 
 }
 

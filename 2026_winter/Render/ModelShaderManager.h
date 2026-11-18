@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <array>
 #include <string>
+#include <utility>
 #include <vector>
 #include <d3dcompiler.h>
 #include "DxLib.h"
@@ -52,16 +53,41 @@ public:
 	//それ以外は DxLib のいつもの光＋ステージの明かりを1回で描く(LitModelPS.hlsl)
 	void DrawModel(int modelHandle);
 
+	//明かりが照らす場所(車内の箱の中か外か)
+	enum class LightArea
+	{
+		Any,
+		OutdoorOnly,//車内の箱の外だけ(トンネルの明かり)
+		IndoorOnly,//車内の箱の中だけ(車内の明かり)
+	};
 	//ステージの明かり(点光源)1つ分
 	struct StageLightParam
 	{
 		VECTOR pos;
 		float range;//届く距離
 		COLOR_F color;//色×強さ
+		LightArea area = LightArea::Any;
 	};
-	static constexpr int kStageLightMax = 16;//シェーダーに渡せる明かりの数(LitModelPS.hlsl の LIGHT_MAX と同じ)
+	static constexpr int kStageLightMax = 16;//シェーダーに渡せる明かりの数(StageLight.hlsli の LIGHT_MAX と同じ)
+	static constexpr int kIndoorBoxMax = 4;//車内の箱の数(StageLight.hlsli の INDOOR_MAX と同じ)
 	//今のフレームの明かりを渡す(kStageLightMax を超えた分は使わない)。遠くはフォグで消えるので fogStart/fogEnd は使っていない
 	void SetStageLights(const std::vector<StageLightParam>& lights, float fogStart, float fogEnd, float wrap);
+	//車内の箱(ワールド座標)。次の SetStageLights から使う。kIndoorBoxMax を超えた分は使わない
+	void SetIndoorBoxes(const std::vector<std::pair<VECTOR, VECTOR>>& boxes);
+	//ステージの空気感(LitModelPS.hlsl の AtmosphereBuffer)。環境光を面の向きで色分けする
+	struct StageAtmosphere
+	{
+		COLOR_F sky;//上を向いた面に掛ける色
+		COLOR_F ground;//下を向いた面に掛ける色
+		COLOR_F indoorSky;//車内の上を向いた面
+		COLOR_F indoorGround;//車内の下を向いた面
+		VECTOR keyDir;//平行光の来る向き
+		COLOR_F keyColor;
+		VECTOR sideDir;//横からの光の来る向き
+		COLOR_F sideColor;//(車内では使わない)
+	};
+	void SetAtmosphere(const StageAtmosphere& atmosphere);
+	void ClearAtmosphere();
 
 	bool IsInit()const { return m_isInit; }
 	//今のフレームの明かりの定数バッファを、ピクセルシェーダーの b4 に付ける(CharacterLook が自分のシェーダーで明かりを足すとき)
@@ -90,9 +116,25 @@ private:
 	{
 		FLOAT4 posRange[kStageLightMax];//xyz:位置 w:届く距離の2乗
 		FLOAT4 color[kStageLightMax];//rgb:色×強さ w:1/届く距離
-		FLOAT4 param;//x:数 y:フォグの始まり z:フォグの終わり w:裏側への回り込み
+		FLOAT4 param;//x:数 y:車内の箱の数 z:(使っていない) w:裏側への回り込み
+		FLOAT4 indoorMin[kIndoorBoxMax];
+		FLOAT4 indoorMax[kIndoorBoxMax];
 	};
-	static constexpr int kStageLightSlot = 4;//定数バッファのスロット(LitModelPS.hlsl の register(b4))
+	static constexpr int kStageLightSlot = 4;//定数バッファのスロット(StageLight.hlsli の register(b4))
+
+	//LitModelPS.hlsl の AtmosphereBuffer と同じ並び
+	struct AtmosphereConstant
+	{
+		FLOAT4 sky;//a:1なら使う
+		FLOAT4 ground;
+		FLOAT4 indoorSky;
+		FLOAT4 indoorGround;
+		FLOAT4 keyDir;
+		FLOAT4 keyColor;
+		FLOAT4 sideDir;
+		FLOAT4 sideColor;
+	};
+	static constexpr int kAtmosphereSlot = 10;//LitModelPS.hlsl の register(b10)
 
 	//EnemyCutPS.hlsl の cbuffer と同じ並び
 	struct CutConstant
@@ -132,6 +174,8 @@ private:
 	int m_guardRimBuffer = -1;
 	bool m_isGuardRim = false;
 	int m_lightConstantBuffer = -1;
+	int m_atmosphereBuffer = -1;
+	std::vector<std::pair<VECTOR, VECTOR>> m_indoorBoxes;
 	int m_lookPixelShader = -1;
 	int m_lookBumpPixelShader = -1;
 	int m_stageLightNum = 0;

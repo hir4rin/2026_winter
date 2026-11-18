@@ -27,15 +27,8 @@ struct PS_INPUT
 	float3 WorldNormal     : Normal1;
 };
 
-#define LIGHT_MAX 16
-
-// ステージの明かり(LitModelPS.hlsl と同じ。ModelShaderManager が b4 に入れる)
-cbuffer StageLightBuffer : register(b4)
-{
-	float4 g_LightPosRange[LIGHT_MAX];	// xyz:位置 w:届く距離の2乗
-	float4 g_LightColor[LIGHT_MAX];		// rgb:色×強さ w:1/届く距離
-	float4 g_Param;						// x:数 y:フォグの始まり z:フォグの終わり w:裏側への回り込み
-};
+// ステージの明かり(LitModelPS.hlsl と同じ。b4)
+#include "StageLight.hlsli"
 
 // 光と、今描くマテリアルの値(CharacterLook::LookConstant と同じ並び)
 cbuffer LookBuffer : register(b5)
@@ -127,20 +120,7 @@ float4 main(PS_INPUT input) : SV_TARGET
 	color += pow(saturate(1.0f - nv), g_Rim.w) * g_Rim.rgb * ao;	// nv は 1 を少し超えることがあり、負の数の pow は NaN になる
 
 	// ステージの明かり(LitModelPS.hlsl と同じ。足してから色と遮蔽を1回掛ける)
-	float3 lightSum = float3(0.0f, 0.0f, 0.0f);
-	int count = (int)g_Param.x;
-	for (int i = 0; i < count; ++i)
-	{
-		float3 toLight = g_LightPosRange[i].xyz - pos;
-		float distSq = dot(toLight, toLight);
-		if (distSq >= g_LightPosRange[i].w) continue;	// 届かない明かりは計算しない
-		float invDist = rsqrt(max(distSq, 1e-6f));
-		float atten = saturate(1.0f - distSq * invDist * g_LightColor[i].w);
-		atten *= atten;
-		float ndl = saturate(dot(normal, toLight * invDist) * (1.0f - g_Param.w) + g_Param.w);
-		lightSum += g_LightColor[i].rgb * (atten * ndl);
-	}
-	color += albedo * lightSum * ao;
+	color += albedo * CalcStageLights(pos, normal, IsIndoor(pos)) * ao;
 
 	return float4(color, alpha);
 }

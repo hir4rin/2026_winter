@@ -289,7 +289,7 @@ void SceneMain::NormalUpdate()
 	System::GetInstance().Update();
 	m_battleManager->Update();//Systemでタイムスケールを戻した後に更新する
 	//押し戻しの後のプレイヤーの位置で、近い明かりを点ける
-	m_stage->GetLights().Update(m_player->GetRigidBody().GetPos());
+	m_stage->UpdateLights(m_player->GetRigidBody().GetPos());
 
 	m_cameraManager->Update();
 
@@ -431,7 +431,7 @@ void SceneMain::NormalDraw()
 	//ボスのデバッグウィンドウ(F2で表示/非表示)
 	if (imguiApp::GetInstance().IsDebugUIVisible())m_enemyManager->DrawDebugWindows();
 	//ステージの明かりの調整(F2で表示/非表示。明かりの無いステージでは出ない)
-	if (imguiApp::GetInstance().IsDebugUIVisible())m_stage->GetLights().DrawDebugWindow();
+	if (imguiApp::GetInstance().IsDebugUIVisible())m_stage->DrawLightDebugWindow();
 	//キャラの見た目(光の色・ふちの光など)の調整
 	if (imguiApp::GetInstance().IsDebugUIVisible())CharacterLook::DrawDebugWindow();
 	m_phaseManager->DebugDraw();

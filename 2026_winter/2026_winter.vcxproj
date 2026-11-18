@@ -305,6 +305,8 @@
     <ClCompile Include="Stage\SkyBox.cpp" />
     <ClCompile Include="Stage\Stage.cpp" />
     <ClCompile Include="Stage\StageLights.cpp" />
+    <ClCompile Include="Stage\TrainLighting.cpp" />
+    <ClCompile Include="Stage\TrainSparks.cpp" />
     <ClCompile Include="Stage\Gate\Gate.cpp" />
     <ClCompile Include="Render\CharacterLook.cpp" />
     <ClCompile Include="Main\FrameProfiler.cpp" />
@@ -493,6 +495,8 @@
     <ClInclude Include="Stage\SkyBox.h" />
     <ClInclude Include="Stage\Stage.h" />
     <ClInclude Include="Stage\StageLights.h" />
+    <ClInclude Include="Stage\TrainLighting.h" />
+    <ClInclude Include="Stage\TrainSparks.h" />
     <ClInclude Include="Stage\Gate\Gate.h" />
     <ClInclude Include="Stage\Gate\GateData.h" />
     <ClInclude Include="Stage\WallZone\WallZone.h" />
@@ -519,6 +523,7 @@
     <None Include="Render\Shader\MV1VertexShader.hlsl" />
     <None Include="Render\Shader\EnemyBlackPS.hlsl" />
     <None Include="Render\Shader\LitModelPS.hlsl" />
+    <None Include="Render\Shader\StageLight.hlsli" />
     <None Include="Render\Shader\EnemyCutPS.hlsl" />
     <None Include="Render\Shader\VertexShader.h" />
     <None Include="Render\Shader\DataType.h" />

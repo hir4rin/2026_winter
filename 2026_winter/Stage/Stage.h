@@ -4,6 +4,8 @@
 #include "Main/System.h"
 #include "StageInfo.h"
 #include "StageLights.h"
+#include "TrainLighting.h"
+#include "TrainSparks.h"
 #include "Gate/Gate.h"
 #include <memory>
 #include <vector>
@@ -25,6 +27,10 @@ public:
 	int GetStageViewHandle()const { return m_stageViewHandle; }
 	/// <summary>ステージの明かり(プレイヤーに近いものを点ける)</summary>
 	StageLights& GetLights() { return m_lights; }
+	/// <summary>プレイヤーに近い明かりをシェーダーに渡す(CSV の明かり・列車ステージのライティング)。列車ステージの火花もここで出す</summary>
+	void UpdateLights(const Vector3& playerPos);
+	/// <summary>明かりの調整の ImGui ウィンドウ</summary>
+	void DrawLightDebugWindow();
 
 	/// <summary>扉(ゲート)を今のフェーズに合わせて開け閉めする</summary>
 	void UpdateGates(int currentPhase);
@@ -76,6 +82,8 @@ private:
 	float m_tunnelScroll = 0.0f;//流した距離(トンネル1本の長さで折り返す)
 	bool m_useNightFog = false;//遠くを夜の色にする(StageInfo::useNightFog)
 	StageLights m_lights;
+	std::unique_ptr<TrainLighting> m_trainLighting;//列車ステージのライティング(トンネルがあるときだけ)
+	std::unique_ptr<TrainSparks> m_trainSparks;//列車ステージの車輪の火花(トンネルがあるときだけ)
 	void DrawTunnel()const;
 
 	//画面に映らないメッシュは描かない(MV1DrawModel は画面の外のメッシュも全部描くため)

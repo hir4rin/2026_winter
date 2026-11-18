@@ -35,9 +35,11 @@ namespace
 	//列車ステージの明るさ(戦う場所を明るく、トンネルと遠くを暗くする)
 	constexpr float kTunnelColorScale = 0.45f;//トンネルの明るさ
 	constexpr float kTrainColorScale = 1.15f;//列車の明るさ
-	constexpr float kTrainFogStart = 2000.0f;//フォグがかかり始める距離
+	constexpr float kTrainFogStart = 1500.0f;//フォグがかかり始める距離
 	constexpr float kTrainFogEnd = 5000.0f;//真っ暗になる距離(SceneMainのファークリップ)
-	constexpr int kTrainFogColor = 8;//フォグの色(ほぼ黒)
+	constexpr int kTrainFogR = 3;//フォグの色(紺に近い黒)
+	constexpr int kTrainFogG = 5;
+	constexpr int kTrainFogB = 12;
 
 	//ステージ1の夜のフォグ(近くはそのまま、遠くの建物を空の地平線の色に沈める。カメラのファー5000より手前で消しきる)
 	constexpr float kNightFogStart = 2200.0f;
@@ -127,12 +129,23 @@ void Stage::GameInit(const StageInfo& info)
 	m_lights.Load(info.enemySpawnNumber, m_pos_graphic);
 	if (m_useNightFog) m_lights.SetFogRange(kNightFogStart, kNightFogEnd);
 
+	//列車ステージのライティング(トンネルと一緒に流れる明かり・車内の暖色)
+	if (m_tunnelHandle != -1)
+	{
+		m_trainLighting = std::make_unique<TrainLighting>();
+		m_trainLighting->Init(m_tunnelHandle, m_pos_graphic, kTunnelOffsetY);
+		m_trainSparks = std::make_unique<TrainSparks>();
+		m_trainSparks->Init(m_pos_graphic);
+	}
+
 	//扉(無いステージは何もしない)
 	LoadGates(info.enemySpawnNumber);
 }
 
 Stage::~Stage()
 {
+	m_trainLighting.reset();//キャラの光・空気感を戻す
+	m_trainSparks.reset();//再生中の火花を止めてエフェクトを消す
 	MV1DeleteModel(m_stageModelHandle);
 	MV1DeleteModel(m_stageViewHandle);
 	if (m_tunnelHandle != -1)
@@ -156,6 +169,19 @@ void Stage::Update()
 	}
 }
 
+void Stage::UpdateLights(const Vector3& playerPos)
+{
+	m_lights.Update(playerPos);
+	if (m_trainLighting) m_trainLighting->Update(playerPos, m_tunnelScroll, kTunnelLength);
+	if (m_trainSparks) m_trainSparks->Update(playerPos);
+}
+
+void Stage::DrawLightDebugWindow()
+{
+	m_lights.DrawDebugWindow();
+	if (m_trainLighting) m_trainLighting->DrawDebugWindow();
+}
+
 void Stage::Draw() const
 {
 	//MV1DrawModel(m_stageModelHandle);
@@ -166,7 +192,7 @@ void Stage::Draw() const
 	{
 		SetFogEnable(TRUE);
 		SetFogMode(DX_FOGMODE_LINEAR);
-		SetFogColor(kTrainFogColor, kTrainFogColor, kTrainFogColor);
+		SetFogColor(kTrainFogR, kTrainFogG, kTrainFogB);
 		SetFogStartEnd(kTrainFogStart, kTrainFogEnd);
 	}
 	const bool useNightFog = m_useNightFog;

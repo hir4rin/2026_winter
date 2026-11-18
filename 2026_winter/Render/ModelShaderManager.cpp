@@ -49,6 +49,7 @@ void ModelShaderManager::Init()
 	m_lightConstantBuffer = CreateShaderConstantBuffer(sizeof(StageLightConstant));
 	m_colorGradeBuffer = CreateShaderConstantBuffer(sizeof(ColorGradeConstant));
 	m_guardRimBuffer = CreateShaderConstantBuffer(sizeof(GuardRimConstant));
+	m_atmosphereBuffer = CreateShaderConstantBuffer(sizeof(AtmosphereConstant));
 	m_cutPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
 	m_cutBumpPixelShader = LoadShaderWithMacro(kCutPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 	m_cutConstantBuffer = CreateShaderConstantBuffer(sizeof(CutConstant));
@@ -59,6 +60,7 @@ void ModelShaderManager::Init()
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);//明かりの数を0で入れておく(明かりの無いステージでも CharacterLook が b4 を読むため)
 	ClearColorGrade();
 	ClearGuardRim();
+	ClearAtmosphere();
 }
 
 void ModelShaderManager::Terminate()
@@ -84,6 +86,8 @@ void ModelShaderManager::Terminate()
 	if (m_guardRimBuffer != -1)DeleteShaderConstantBuffer(m_guardRimBuffer);
 	m_guardRimBuffer = -1;
 	m_isGuardRim = false;
+	if (m_atmosphereBuffer != -1)DeleteShaderConstantBuffer(m_atmosphereBuffer);
+	m_atmosphereBuffer = -1;
 	if (m_cutPixelShader != -1)DeleteShader(m_cutPixelShader);
 	m_cutPixelShader = -1;
 	if (m_cutBumpPixelShader != -1)DeleteShader(m_cutBumpPixelShader);
@@ -104,9 +108,11 @@ void ModelShaderManager::ResetSceneState()
 {
 	m_isBlackMode = false;
 	m_isCutPlane = false;
+	m_indoorBoxes.clear();
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);
 	ClearColorGrade();
 	ClearGuardRim();
+	ClearAtmosphere();
 }
 
 void ModelShaderManager::SetColorGrade(const COLOR_F& dark, const COLOR_F& bright, float blackLevel, float whiteLevel, float rate)
@@ -185,6 +191,7 @@ void ModelShaderManager::DrawModel(int modelHandle)
 	BindStageLights();
 	SetShaderConstantBuffer(m_colorGradeBuffer, DX_SHADERTYPE_PIXEL, kColorGradeSlot);
 	SetShaderConstantBuffer(m_guardRimBuffer, DX_SHADERTYPE_PIXEL, kGuardRimSlot);
+	SetShaderConstantBuffer(m_atmosphereBuffer, DX_SHADERTYPE_PIXEL, kAtmosphereSlot);
 	DrawModelWithShader(modelHandle, m_litPixelShader, m_litBumpPixelShader);
 }
 
@@ -197,11 +204,51 @@ void ModelShaderManager::SetStageLights(const std::vector<StageLightParam>& ligh
 	{
 		const auto& light = lights[i];
 		//2乗と逆数はここで計算しておく(シェーダーでピクセルごとにしないため)
-		buffer->posRange[i] = { light.pos.x, light.pos.y, light.pos.z, light.range * light.range };
-		buffer->color[i] = { light.color.r, light.color.g, light.color.b, light.range > 0.0f ? 1.0f / light.range : 0.0f };
+		//車内だけは距離の2乗、外だけは1/距離を負にして渡す
+		const float rangeSq = light.range * light.range;
+		const float invRange = light.range > 0.0f ? 1.0f / light.range : 0.0f;
+		buffer->posRange[i] = { light.pos.x, light.pos.y, light.pos.z, light.area == LightArea::IndoorOnly ? -rangeSq : rangeSq };
+		buffer->color[i] = { light.color.r, light.color.g, light.color.b, light.area == LightArea::OutdoorOnly ? -invRange : invRange };
 	}
-	buffer->param = { static_cast<float>(m_stageLightNum), fogStart, fogEnd, wrap };
+	const int boxNum = (std::min)(static_cast<int>(m_indoorBoxes.size()), kIndoorBoxMax);
+	for (int i = 0; i < boxNum; ++i)
+	{
+		const auto& [boxMin, boxMax] = m_indoorBoxes[i];
+		buffer->indoorMin[i] = { boxMin.x, boxMin.y, boxMin.z, 0.0f };
+		buffer->indoorMax[i] = { boxMax.x, boxMax.y, boxMax.z, 0.0f };
+	}
+	buffer->param = { static_cast<float>(m_stageLightNum), static_cast<float>(boxNum), 0.0f, wrap };
 	UpdateShaderConstantBuffer(m_lightConstantBuffer);
+}
+
+void ModelShaderManager::SetIndoorBoxes(const std::vector<std::pair<VECTOR, VECTOR>>& boxes)
+{
+	m_indoorBoxes = boxes;
+}
+
+void ModelShaderManager::SetAtmosphere(const StageAtmosphere& a)
+{
+	if (!m_isInit || m_atmosphereBuffer == -1)return;
+	auto* buffer = static_cast<AtmosphereConstant*>(GetBufferShaderConstantBuffer(m_atmosphereBuffer));
+	const VECTOR key = VNorm(a.keyDir);
+	const VECTOR side = VNorm(a.sideDir);
+	buffer->sky = { a.sky.r, a.sky.g, a.sky.b, 1.0f };
+	buffer->ground = { a.ground.r, a.ground.g, a.ground.b, 0.0f };
+	buffer->indoorSky = { a.indoorSky.r, a.indoorSky.g, a.indoorSky.b, 0.0f };
+	buffer->indoorGround = { a.indoorGround.r, a.indoorGround.g, a.indoorGround.b, 0.0f };
+	buffer->keyDir = { key.x, key.y, key.z, 0.0f };
+	buffer->keyColor = { a.keyColor.r, a.keyColor.g, a.keyColor.b, 0.0f };
+	buffer->sideDir = { side.x, side.y, side.z, 0.0f };
+	buffer->sideColor = { a.sideColor.r, a.sideColor.g, a.sideColor.b, 0.0f };
+	UpdateShaderConstantBuffer(m_atmosphereBuffer);
+}
+
+void ModelShaderManager::ClearAtmosphere()
+{
+	if (m_atmosphereBuffer == -1)return;
+	auto* buffer = static_cast<AtmosphereConstant*>(GetBufferShaderConstantBuffer(m_atmosphereBuffer));
+	buffer->sky.w = 0.0f;
+	UpdateShaderConstantBuffer(m_atmosphereBuffer);
 }
 
 void ModelShaderManager::BindStageLights()

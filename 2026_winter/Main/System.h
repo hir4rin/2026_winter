@@ -79,6 +79,8 @@ enum class AsyncData : int
 	BloodUltEffect,//血殺・トドメの白い血
 	GuardBreakFlashEffect,//ガードブレイクの紫の閃光
 	GuardBreakShardsEffect,//ガードブレイクで飛び散るガラス片
+	HitWindEffect,//斬ったときの風(敵を巻く白い弧)
+	SkillHitEffect,//スキル攻撃が当たったときの風(赤黒)
 	Goal,
 };
 

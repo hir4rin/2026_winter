@@ -1,11 +1,11 @@
 #type,posX,posY,posZ,rotYDeg,phase,initialState,groupId,route
 Gunner,223,-27,9435,90,1,Watch,A,
-Swordman,0,0,11600,180,1,Watch,A,
-Swordman,400,0,10800,180,1,Watch,A,
+Swordman,0,0,11600,180,1,Patrol,A,0:0:11559:60|0:0:10618:60|-545:0:10671:60
+Swordman,400,0,10800,180,1,Patrol,A,400:0:9999:60|400:0:11006:60|918.5:0:11012:60|918:0:10006:60
 Gunner,3600,615,15500,-90,3,Watch,B,
-Swordman,2400,600,16100,-90,3,Watch,B,
+Swordman,2400,600,16100,-90,3,Patrol,B,2681:600:16100:60|1997:600:16100:60|1029:600:16100:60
 Swordman,3300,600,15800,-90,3,Watch,B,
-Swordman,3000,600,15500,-90,3,Watch,B,
+Swordman,3000,600,15500,-90,3,Patrol,B,2048:600:15500:60|2990:600:15807:60|3013:600:15417:60
 Gunner,8650,-400,22450,180,5,Watch,C,
 Swordman,8950,-400,18850,0,5,Watch,C,
 Swordman,8950,-400,21850,180,5,Watch,C,

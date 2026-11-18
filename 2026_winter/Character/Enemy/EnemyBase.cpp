@@ -723,6 +723,19 @@ void EnemyBase::PlayBloodSplash(Collider& other)
 	const Vector3 bloodPos(m_rb.m_pos.x, m_rb.m_pos.y + kBloodSplashHeight, m_rb.m_pos.z);
 	const int playingHandle = PlayBlood(effect, bloodPos);
 
+	//斬ったときの風(必殺技中・スキル血殺は出さない)//スキル攻撃は色付きの豪華な方
+	//スキル血殺になるのは、必殺技状態でのスキル1・2と着地(AttackCol と同じ条件)
+	const int comboIndex = m_attackData.comboIndex;
+	const bool isKessatsuSkill = player->GetIsUltimating() &&
+		(comboIndex == ComboIndex::SkillAttack1 || comboIndex == ComboIndex::AirSkillAttack1 ||
+			comboIndex == ComboIndex::SkillAttack2 || m_attackData.attackType == AttackType::ImpactSkillAttack);
+	if (!isUltimating && !isKessatsuSkill)
+	{
+		const bool isSkill = m_attackData.attackType == AttackType::SkillAttack ||
+			m_attackData.attackType == AttackType::ImpactSkillAttack;
+		PlayBlood(isSkill ? AsyncData::SkillHitEffect : AsyncData::HitWindEffect, bloodPos);
+	}
+
 	//必殺技中の血は、タイムスケールに関係なくkBloodSplashUltSpeedの速さで飛ばす
 	//(当たった直後にスローがかかるので、EffectManagerが毎フレーム速さを設定し直す)
 	if (isUltimating)

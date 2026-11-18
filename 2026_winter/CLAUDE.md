@@ -1906,3 +1906,59 @@
 - `data/Effect/Slash/SwordSlash.efk`・`SwordSlashSpin.efk`(弧のエフェクト)と `Model/` は今は使っていない(読み込みもしていない)。
 - 確認: Debug・Release のビルドは通った。一時コードで攻撃を順番に出して3Fおきに撮り、刀に沿って軌跡が伸びて縮んで消えること、空中弱5を空中で出すと回った通りに出ることを確認した(一時コードは消した。画像は `../EffectTools/SwordTrail/game_shots/trail2_sheet_*.png`・`trail_spin_2.png`)。
   空中弱5は地上で出すとすぐ着地するので軌跡がほぼ出ない。**実際に操作しての確認・ヒットストップやスロー中の見え方はまだ**。
+### 2026-11-18 ヒットの風のエフェクト(HitWind・NG4 の Y長押しの絶技を参考に)
+- 参考: YouTube「ヤクモの技構成紹介｜全武器」の Final Charge(2:46〜3:07)をコマ送りで見た。ヒットの作り = 0〜2F 放射状の白い光とブラー → 3F〜 煙っぽい半透明の弧(中に細い筋)が敵を巻いて広がる(〜0.2秒) → 細い名残が0.5秒ほど。色は白〜薄い青灰色だけ。
+- 決定: **通常・強・溜めでヒットを分けない**(全部この強い版)。スキル技は色・光る粒・地面の輪・長く残る、でヒットと分ける。
+- `data/Effect/Hit/HitWind.efk`(テクスチャは `Hit/Texture/HW_*`)。BloodHit と同じ大きさの基準(Dummy=幅3・高さ9。`kBloodSplashScale` の20倍)。
+- ゲーム: `AsyncData::HitWindEffect`(System で読み込み・解放)。`EnemyBase::PlayBloodSplash` で血と同じ位置・向き(+Z=プレイヤー→敵)に再生。**必殺技中は出さない**(ボスも PlayBloodSplash 経由なので出る)。
+- 確認: Release のビルドは通った。一時コードで `-bench` のステージ1、プレイヤーの前に風と血を出して3Fおきに撮った(一時コードは消した。画像は `../EffectTools/HitWind/game_sheet_v1.png`・`game_crop_v1.png`)。3Fで放射の線、6〜15Fで弧が巻いて消える。
+- 作業ファイル `../EffectTools/HitWind/HitWind_v1/HitWind.efkefc`(Dummy 入り。書き出す前に Dummy を消して、書き出したら元に戻す)。テクスチャは `../EffectTools/HitWind/gen_hitwind_textures.ps1 出力先 接尾辞`。
+  - ノード: Arc(Ring の三日月5枚。開始/終了角をイージングで動かして弧が走る・HW_Arc_b)、Wisp(名残の大きな弧2枚・HW_Wisp_b)、Flash(加算の光4F)、Haze(画面を覆う薄い青白5F)、Rays(引っかいた線70本・2〜5F・HW_Ray_c)、Smoke(薄い煙7個)。
+- Effekseer MCP の注意: node_xml_set でテクスチャを相対パス(`Texture/x.png`)で入れると、撮影・自動保存で UriFormatException になりエディタが落ちる。テクスチャは param_set で絶対パスを入れる。
+- まだ: ゲームで敵を斬っての見え方(血と重ねたとき・連打で多すぎないか・重さ)。NG4 の暗転・画面のズームブラーはエフェクトだけでは出せないので、やるならゲーム側。
+### 2026-11-19 スキル攻撃が当たったときの風(SkillHit・赤黒に決定)
+- 通常のヒット(HitWind・白)と分けるため、スキルは色付き・量が多い・長く残る。HitWind を元に、弧を8枚(暗い色)＋光る弧6枚(加算)、衝撃の輪(Shock)、飛び散る光の粒50個(Sparks)、名残3枚(〜60F)、画面を色で暗くする Haze(10F)。
+- 赤黒と青白を作ってゲームで比べ、**赤黒に決めた**(青白はゲームから外した)。
+- (追記 v2) 「もっと通常ヒットのように風っぽく・風の量を多めに」→ 作業ファイル `SkillHitRed_v2.efkefc`(今の SkillHit.efk はこれ)。衝撃の輪(Shock)を消し、粒を18個に減らした。風の弧を白に近い色(240,214,218)で14枚＋外側の大きな弧 ArcOuter 8枚(HW_Arc2_b・4Fから・〜30F)＋赤く光る弧10枚(加算)、名残6枚。赤は光る弧・放射の線・粒・画面の暗い赤だけ。比較の画像 `../EffectTools/HitWind/game_normal_vs_skill_v2.png`(上が通常・下がスキル)。
+- `data/Effect/Hit/SkillHit.efk`(テクスチャは HitWind と共通＋`SH_Ring_a`)。作業ファイル `../EffectTools/HitWind/SkillHit_v1/SkillHitRed.efkefc`(Dummy 入り。書き出し先の名前は SkillHit.efk)。青白の作業ファイル `SkillHitBlue.efkefc` も残してある(ノード構成は同じで色だけ違う)。
+- ゲーム: `AsyncData::SkillHitEffect`。`EnemyBase::PlayBloodSplash` で `m_attackData.attackType` が `SkillAttack`・`ImpactSkillAttack` なら HitWind の代わりに出す。
+  - Kingmech の `CutGatling` は `m_attackData` を入れずに PlayBloodSplash を呼ぶので、前の攻撃の種類で決まる(ずれる可能性あり)。
+- 確認: Release のビルドは通った。一時コードでステージ1に赤黒→青白の順に出して撮った(一時コードは消した。`../EffectTools/HitWind/game_skillhit_red_blue.png`)。**実際にスキルで敵を斬っての確認はまだ**。
+- (追記 11/19)**スキル血殺では風(HitWind / SkillHit)を出さない**(ユーザーの指示)。`EnemyBase::PlayBloodSplash` で、`Player::GetIsUltimating()`(必殺技状態)かつ スキル1・空中スキル1・スキル2・スキル3の着地(`AttackCol` の血殺の条件と同じ)なら出さない。
+  血殺になるスキルの全部の当たり(最後の一撃の前も)で消える。血(BloodHit)はそのまま。Release のビルドは通った。**ゲームで実際にスキル血殺を出しての確認はまだ**。
+### 2026-11-19 列車ステージのライティング(TrainLighting・NG4 の列車を参考に)
+- 参考: YouTube「NINJA GAIDEN 4 - Normal - Tutorial」(列車の場面は0:20〜6:40)。全体はかなり暗い紺〜黒、トンネルの輪に水色の管の光が並んで流れ、近くを通ると床とキャラが青く染まる。床の縁・キャラの横は橙。車内は橙の環境光と赤い縦の灯。遠くは黒に沈む。
+- 決定(会話で): しっかり暗く / トンネルの天井灯とリングに明かりを置いて一緒に流す / 通路の車両の中は暖色にしてトンネルの明かりを入れない。
+- `Stage/TrainLighting.h/.cpp`(vcxproj/filters に登録)。`Stage` がトンネルのあるときだけ作る(`GameInit` の最後)。`SceneMain` は `m_stage->UpdateLights(プレイヤーの位置)`(CSV の明かり＋これ)・`DrawLightDebugWindow()` を呼ぶ。値は .cpp 先頭。
+  - **流れる明かり**: トンネル1本(13200)の区間(3300)ごとに、真ん中にリング照明(水色・強い・届く距離1300)、前後833に天井灯(水色がかった白・弱い)。`Stage::DrawTunnel` と同じ位置の計算でトンネルと一緒に流す。
+    プレイヤーから **2500** 以内の近い順に最大16灯(車内の明かりと合わせて)、遠い端800でフェード。リングの光の帯が床を後ろへ流れていく。
+  - トンネルの発光の色を変えた(`MV1SetMaterialEmiColor`。白い天井灯 → 水色がかった白、黄色いリング → 水色)。mv1 は変えていない。
+  - **車内**: 通路の車両3両(z 4250〜8296 / 10697〜14744 / 17144〜21190、x±780、y-40〜590)を「車内の箱」にして、箱の中はトンネルの明かりを使わず、橙の明かり(各車両に1000おき)だけ。屋根の上(y602)は外。
+  - **空気感**: `ModelShaderManager::SetAtmosphere`(`LitModelPS.hlsl` の b10)。いつもの光の環境光(=マテリアルの明るさ)に、上向きの面は紺・下向きは暗い紺・平行光(ほぼ上から青)・横から橙(+X、車内では無し)を掛ける。車内の箱の中は橙。ステージ・敵・扉に効く。
+  - **プレイヤー**: `CharacterLook::Settings()` を列車用(上から青、環境光は紺、ふちの光は橙)にし、車内に入ると10F少しで橙に切り替える。ステージを出るとき(`~TrainLighting`)に元の設定に戻す。
+  - フォグ: 色 8,8,8 → 紺に近い黒(3,5,12)、始まり 2000 → 1500。
+- シェーダー: 明かりの計算を `Render/Shader/StageLight.hlsli`(b4・`IsIndoor`・`CalcStageLights`)にまとめ、`LitModelPS` と `CharacterLookPS` から include。
+  明かりごとに照らす場所を選べる(`ModelShaderManager::LightArea`: Any / OutdoorOnly / IndoorOnly。シェーダーには距離の2乗・1/距離の符号で渡す)。車内の箱は `SetIndoorBoxes`(最大4つ)。ステージ1(CSV の明かり)は Any・箱0個なので今まで通り。
+  **hlsli も BOM なし**で保存すること。
+- F2 の「Train Lighting」(Debug): 明かりのオン・オフ、天井灯・リング・車内の強さ、空気感の色。
+- 重さ(Release・`-bench=900 -stage=2 -pace=none`・スタート地点、2回ずつ): 1フレーム 0.47 → 0.56ms(+0.09ms。60fps の 0.5%)。
+  - 内訳(一時コードで部分ごとに切った): 増えたのは全部 GPU(Flip が伸びる。CPU の Draw:Stage は同じ)。スタート地点の明かりは6灯(リング2・天井灯4)で、**1灯あたり約0.013ms**(天井灯なしで 0.51ms)。車内の箱の判定 約0.02ms、空気感(b10)はほぼ0。
+  - トンネルだけ車内の箱・車内の明かりを省くのは効かなかった(0.56ms のまま)。
+  - 天井灯の明かりを外すと 0.563 → 0.514ms で絵もほぼ同じだった(`../tools/TrainStage/lighting/lamp_on_off.png`)が、**ユーザーの判断で天井灯の明かりは残した**。
+  - **明かりを使う距離を 3600 → 2500 にした**: 列車の上の位置ごとの灯の数(流れるので平均/最大)は 3600 で 6〜12灯 → 2500 で 4〜9灯(約3割減)。スタート地点の1フレームは 0.562 → 0.539ms(3回の平均。6灯 → 4灯)。灯の多い車両のあたりはもっと減るはず(そこでは測っていない)。
+    同じカメラの絵は一番大きい差 10/255 で見分けられない(`dist_3600_2500.png`、上が3600・下が2500)。
+- 確認: Debug・Release のビルドは通った。4ステージとも `-bench=200` で最後まで動いた。一時コード(決めたカメラで撮る)で前後を撮って比べた(一時コードは消した。`../tools/TrainStage/lighting/before.png`・`after.png`、同じカメラで6Fおきに撮ってリングの光が流れるのを見た `after_flow.png`。after の2枚は今の設定(天井灯あり・距離2500))。
+  **実際に遊んでの確認はまだ**(戦っているときの見やすさ、白い敵がリングの光の下で明るすぎないか、車両の出入りでのプレイヤーの光の切り替わり)。床の白い格子の線はデバッグの `DrawGrid`。
+### 2026-11-19 列車ステージの車輪の火花(TrainSparks・NG4 の列車を参考に)
+- 参考: NG4 チュートリアルの動画(0:40 あたり)。車体の横の床の高さから、橙〜黄の短い火の粉が後ろ上へ飛び、出る所が橙に光る。
+- 決定(会話で): 作るのは**車輪の火花(橙)だけ**(青白い電光・流れる光の筋は今回は作っていない)。置き方は**列車の決まった場所**(各車両の前後の台車の左右)。
+- エフェクト: `data/Effect/Train/TrainSpark.efk`(右用、+X へ飛ぶ)・`TrainSparkL.efk`(左用、-X へ飛ぶ)、テクスチャ `Texture/TS_Glow.png`。1/20 で作成。
+  作業ファイルは `../EffectTools/TrainSpark/TrainSpark_v1/TrainSpark.efkefc`・`TrainSparkL.efkefc`(**左右は X の速さの符号だけ違う。片方を直したらもう片方も同じに直して両方書き出す**)。
+  - ノード: Glow(出る所の橙の光 14F)、Sparks(70個、移動方向ビルボードの細長い光、+Z(後ろ)へ 0.35〜1.1/F・上へ、重力)、Embers(22個、ゆっくり落ちる火の粉)。約30Fで消える。
+  - **マイナスの大きさ(SetScale の X を負)で左右反転すると、ビルボードが壊れるので使わない**(最初そうして画面がおかしくなったので2つに分けた)。
+- `Stage/TrainSparks.h/.cpp`(vcxproj/filters に登録)。`Stage` がトンネルのあるときだけ作り、`Stage::UpdateLights` で毎フレーム呼ぶ。エフェクトは自分で読み・消す(System の AsyncData には入れていない)。値は .cpp 先頭。
+  - 発生点: 車両9つ(機関車も)の前後の台車(端から350)× 左右 = 36か所。位置は車体の横(±800)のすぐ外 x=±825、y=-75(内側だと車体に隠れて見えなかった)。
+  - 各点が 40〜160F のランダムな間隔(タイムスケールで進む)で、プレイヤーから3000以内なら出す。大きさは45倍(20倍だと小さかった)。シーンの終わりに再生中のものを止める。
+  - 重さ: Draw:Effect 0.01〜0.02ms、1フレーム全体は変わらない(Release・待ちなし約0.52ms)。
+- 確認: Release のビルドは通った。4ステージとも `-bench` で最後まで動いた。一時コード(決めたカメラで撮る・火花を多めに出す)で車体の横から撮った(一時コードは消した。`../EffectTools/TrainSpark/game_spark.png`・`game_spark_left.png`、エディタの絵 `editor_timeline.png`)。**実際に遊んでの確認はまだ**(出る頻度・大きさ、プレイヤーの後ろからのカメラでの見え方)。
+- 気づいたこと(前から・未対応): 列車の横の外側(x が ±1100 より外)から +Z を見ると、トンネルの遠く(カメラのファー5000の先)が**白く**見える。ライティングを切っても出るので今回の変更ではない。遊ぶ範囲(x ±800)のカメラで出るかは見ていない。
