@@ -2,6 +2,7 @@
 #include "SceneController.h"
 #include "DxLib.h"
 #include "SceneMain.h"
+#include "TitleScene.h"
 #include "TutorialScene.h"
 #include "Main/Input.h"
 #include "Main/Game.h"
@@ -99,6 +100,11 @@ void StageSelectScene::NormalUpdate()
 		m_fadeFrame = 0;
 		m_updateFunc = static_cast<UpdateFunc_t>(&StageSelectScene::FadeOutUpdate);
 		m_drawFunc = static_cast<DrawFunc_t>(&StageSelectScene::FadeOutDraw);
+	}
+	//Bでタイトル画面に行く
+	if (input.IsTriggered("B"))
+	{
+		m_controller.ResetScene<TitleScene>();
 	}
 }
 
