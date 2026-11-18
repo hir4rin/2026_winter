@@ -1,5 +1,6 @@
 ﻿#include "PlayerWeapon.h"
 #include "DxLib.h"
+#include <cfloat>
 #include "Player.h"
 #include "Main/System.h"
 #include "Render/ModelShaderManager.h"
@@ -19,6 +20,8 @@ namespace
 	constexpr float kWeaponScale = 0.6f;//武器モデルのスケール
 
 	constexpr float kDegToRad = DX_PI_F / 180.0f;
+
+	constexpr float kBladeBaseRate = 0.25f;//刀身の根元(刀の先までの長さに対する割合。手元から)
 }
 
 PlayerWeapon::PlayerWeapon(std::weak_ptr<Player> owner)
@@ -36,6 +39,8 @@ PlayerWeapon::PlayerWeapon(std::weak_ptr<Player> owner)
 
 	m_modelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::PlayerWeaponModel));
 	m_ultModelHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::PlayerUltWeaponModel));
+	m_tipLocal = CalcTipLocal(m_modelHandle);
+	m_ultTipLocal = CalcTipLocal(m_ultModelHandle);
 
 	//右手のボーンを名前で探す//見つからなければ固定の番号を使う
 	m_slotIndex = MV1SearchFrame(player->m_modelHandle, kHandFrameName);
@@ -54,11 +59,64 @@ int PlayerWeapon::GetCurrentModelHandle() const
 	return m_modelHandle;
 }
 
+VECTOR PlayerWeapon::CalcTipLocal(int modelHandle)
+{
+	if (modelHandle < 0) return VGet(0.0f, 0.0f, 0.0f);
+	//メッシュの頂点はフレームの空間なので、フレームの行列を掛けてモデルの空間の範囲にする
+	MV1SetMatrix(modelHandle, MGetIdent());
+	VECTOR minPos = VGet(FLT_MAX, FLT_MAX, FLT_MAX);
+	VECTOR maxPos = VGet(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	for (int frame = 0; frame < MV1GetFrameNum(modelHandle); ++frame)
+	{
+		if (MV1GetFrameMeshNum(modelHandle, frame) == 0) continue;
+		const VECTOR localMin = MV1GetFrameMinVertexLocalPosition(modelHandle, frame);
+		const VECTOR localMax = MV1GetFrameMaxVertexLocalPosition(modelHandle, frame);
+		const MATRIX frameMat = MV1GetFrameLocalWorldMatrix(modelHandle, frame);
+		for (int corner = 0; corner < 8; ++corner)
+		{
+			const VECTOR local = VGet((corner & 1) ? localMax.x : localMin.x, (corner & 2) ? localMax.y : localMin.y, (corner & 4) ? localMax.z : localMin.z);
+			const VECTOR pos = VTransform(local, frameMat);
+			minPos = VGet(fminf(minPos.x, pos.x), fminf(minPos.y, pos.y), fminf(minPos.z, pos.z));
+			maxPos = VGet(fmaxf(maxPos.x, pos.x), fmaxf(maxPos.y, pos.y), fmaxf(maxPos.z, pos.z));
+		}
+	}
+	if (minPos.x > maxPos.x) return VGet(0.0f, 0.0f, 0.0f);
+	const float minArr[3] = { minPos.x, minPos.y, minPos.z };
+	const float maxArr[3] = { maxPos.x, maxPos.y, maxPos.z };
+	int axis = 0;
+	for (int i = 1; i < 3; ++i)
+	{
+		if (maxArr[i] - minArr[i] > maxArr[axis] - minArr[axis]) axis = i;
+	}
+	float tip[3] = { 0.0f, 0.0f, 0.0f };
+	tip[axis] = (fabsf(maxArr[axis]) > fabsf(minArr[axis])) ? maxArr[axis] : minArr[axis];
+	return VGet(tip[0], tip[1], tip[2]);
+}
+
+void PlayerWeapon::GetBladePos(Vector3& base, Vector3& tip) const
+{
+	const int modelHandle = GetCurrentModelHandle();
+	if (modelHandle < 0) return;
+	const VECTOR local = (modelHandle == m_ultModelHandle) ? m_ultTipLocal : m_tipLocal;
+	const MATRIX mat = CalcWeaponMatrix();
+	tip = Vector3(VTransform(local, mat));
+	base = Vector3(VTransform(VScale(local, kBladeBaseRate), mat));
+}
+
 void PlayerWeapon::Update()
 {
 	auto player = m_owner.lock();
 	int modelHandle = GetCurrentModelHandle();
 	if (!player || modelHandle < 0)return;
+
+	//モデルにマトリクスをセット
+	MV1SetMatrix(modelHandle, CalcWeaponMatrix());
+}
+
+MATRIX PlayerWeapon::CalcWeaponMatrix() const
+{
+	auto player = m_owner.lock();
+	if (!player) return MGetIdent();
 
 	//右手のボーンのローカル→ワールド行列を取得
 	MATRIX mat = MV1GetFrameLocalWorldMatrix(player->m_modelHandle, m_slotIndex);
@@ -74,10 +132,7 @@ void PlayerWeapon::Update()
 
 	//スケール→回転・移動→ボーンの行列の順に掛ける
 	MATRIX scale = MGetScale(VGet(m_scale, m_scale, m_scale));
-	mat = MMult(MMult(scale, rotmat), mat);
-
-	//モデルにマトリクスをセット
-	MV1SetMatrix(modelHandle, mat);
+	return MMult(MMult(scale, rotmat), mat);
 }
 
 void PlayerWeapon::Draw()

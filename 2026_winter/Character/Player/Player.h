@@ -32,6 +32,7 @@
 #include "Character/Player/State/Attack/PlayerStateBossFinisher.h"//以下同文
 #include "DataLoader/AnimData.h"
 #include "Render/CharacterLook.h"
+#include "PlayerSwordTrail.h"
 #include <memory>
 
 class PlayerState;
@@ -73,6 +74,7 @@ struct ComboNode
 	float comboInputEndFrame = -1.0f;//コンボの入力の受付終了フレーム//負の値なら進行率のデフォルト値を使う
 	float cancelFrame = -1.0f;//予約済みの次のコンボに移行するフレーム//負の値なら進行率のデフォルト値を使う
 	float actionCancelFrame = -1.0f;//回避・ジャンプ・確殺でキャンセルできるフレーム//負の値なら進行率のデフォルト値を使う
+	std::vector<std::pair<float, float>> slashWindows;//刀の軌跡を伸ばすフレームの区間(開始, 終了)//空なら出さない
 
 };
 struct ComboInfo
@@ -117,7 +119,9 @@ enum ComboNodeType : int
 	ComboInputEndFrame = 23,
 	CancelFrame = 24,
 	ActionCancelFrame = 25,
-	Size = 26,
+	Size = 26,//ここまでは必須の列
+	SlashStart = 26,//ここから後ろは省略できる
+	SlashEnd = 27,
 
 };
 namespace ComboIndex
@@ -369,6 +373,9 @@ private:
 	int m_whiteHandle;
 
 	CharacterLook m_look;//法線マップ・遮蔽・光沢つきで描く(CharacterLookPS.hlsl)
+	PlayerSwordTrail m_swordTrail;//刀の軌跡(白い風切り)
+	bool m_isTrailSamplePending = false;//Updateが進んだので、描くときに刀の位置を軌跡に足す
+	float m_trailTimeScale = 1.0f;//そのフレームのタイムスケール
 
 
 	//エフェクトマネージャー作るからいったん表示させる

@@ -247,10 +247,14 @@ void Player::Update(Camera& camera)
 		else ChangeState(std::make_shared<PlayerStateBossFinisher>(GetWeakPtr()));
 	}
 
+	m_swordTrail.SetEmitting(false);//攻撃のStateがCSVの区間の間だけtrueにする
 	if (m_currentState)
 	{
 		m_currentState->Update();//状態の更新
 	}
+	//軌跡に刀の位置を足すのは、押し戻しの後の位置で描くときに行う
+	m_isTrailSamplePending = true;
+	m_trailTimeScale = System::GetInstance().GetTimeScale() * m_ownTimeScale;
 	//頭を敵やカメラの方に向ける//アニメーションの更新(各Stateの中)の後に呼ぶ
 	UpdatePlayerHeadLook();
 
@@ -293,6 +297,15 @@ void Player::Draw()
 
 		m_weapon->Draw();//武器
 	}
+	//刀の軌跡//画面の刀と同じ位置になるよう、描く直前の刀の位置を足す
+	if (m_isTrailSamplePending)
+	{
+		Vector3 base, tip;
+		m_weapon->GetBladePos(base, tip);
+		m_swordTrail.Sample(base, tip, m_trailTimeScale);
+		m_isTrailSamplePending = false;
+	}
+	m_swordTrail.Draw();
 	//コンボチェーンの描画
 	for (int i = 0; i < m_comboChain.size(); ++i)
 	{
@@ -763,6 +776,30 @@ void Player::InitializeComboChain()
 		node.comboInputEndFrame = tokens[ComboNodeType::ComboInputEndFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::ComboInputEndFrame]);
 		node.cancelFrame = tokens[ComboNodeType::CancelFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::CancelFrame]);
 		node.actionCancelFrame = tokens[ComboNodeType::ActionCancelFrame].empty() ? -1.0f : std::stof(tokens[ComboNodeType::ActionCancelFrame]);
+		//刀の軌跡を伸ばす区間//開始と終了を別の列に;区切りで(当たり判定の列と同じ)//列が無い・空欄なら出さない
+		{
+			auto readFrames = [&tokens](int col)
+				{
+					std::vector<float> frames;
+					if (col >= static_cast<int>(tokens.size())) return frames;
+					std::string text = tokens[col];
+					if (!text.empty() && text.back() == '\r') text.pop_back();
+					std::istringstream ss(text);
+					std::string frame;
+					while (std::getline(ss, frame, ';'))
+					{
+						if (!frame.empty()) frames.push_back(std::stof(frame));
+					}
+					return frames;
+				};
+			const std::vector<float> starts = readFrames(ComboNodeType::SlashStart);
+			const std::vector<float> ends = readFrames(ComboNodeType::SlashEnd);
+			assert(starts.size() == ends.size() && "slashStartとslashEndの数が合ってない");
+			for (size_t i = 0; i < starts.size() && i < ends.size(); ++i)
+			{
+				node.slashWindows.push_back({ starts[i], ends[i] });
+			}
+		}
 		m_comboChain.push_back(node);
 	}
 

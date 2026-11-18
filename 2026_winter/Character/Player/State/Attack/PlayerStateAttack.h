@@ -28,6 +28,7 @@ private:
 	int  SelectAnimInit();//アニメーションの初期化//コンボの段数によってアニメーションを変える
 
 	void SwingSeCheck();//振りのSEを出すタイミング(ComboNodeのseFrameRate/seNameを使う)
+	void UpdateSlashEffect();//CSVの区間の間、刀の軌跡を伸ばす
 private:
 	AttackType m_attackType;//攻撃のタイプ//弱攻撃か強攻撃か
 	int m_nextComboIndex = -1;//次のコンボの段数

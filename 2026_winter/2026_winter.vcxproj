@@ -206,6 +206,7 @@
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallStay.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallRunKick.cpp" />
     <ClCompile Include="Character\Player\PlayerWeapon.cpp" />
+    <ClCompile Include="Character\Player\PlayerSwordTrail.cpp" />
     <ClCompile Include="Collision\CapsuleShape.cpp" />
     <ClCompile Include="Collision\BoxShape.cpp" />
     <ClCompile Include="Collision\Collider.cpp" />
@@ -388,6 +389,7 @@
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallStay.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallRunKick.h" />
     <ClInclude Include="Character\Player\PlayerWeapon.h" />
+    <ClInclude Include="Character\Player\PlayerSwordTrail.h" />
     <ClInclude Include="Collision\CapsuleShape.h" />
     <ClInclude Include="Collision\BoxShape.h" />
     <ClInclude Include="Collision\Collider.h" />

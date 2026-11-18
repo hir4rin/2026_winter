@@ -1889,3 +1889,20 @@
     `Add Collision Box For Selection` で選んだ物の外形の当たり判定を作れる。2. Export は敵配置(EnemySpawns)も Enemies004.csv に書き出す(1. Import で読み込む)
   - Unity の敵配置ツールを直した: `EnemySpawnInitialState.Guard` → `Watch`(ゲームの名前。保存値は同じなのでデモの敵もそのまま)、`EnemySpawnType` に `BossEnemyPirateR1` / `BossEnemyPirateR0` を追加、
     `Tools > Enemy Spawn > Import CSV...`(ゲームのCSVをシーンに読み込む)を追加。デモステージの Enemies003.csv も Unity から書き出し直せるようになった
+### 2026-11-18 刀の軌跡(NG4 のヤクモの白い風切り)
+- 調査と制作の記録は `../EffectTools/SwordTrail/RESEARCH_NOTES.md`。画像の素材は `../EffectTools/SwordTrail/gen_slash_assets.ps1`。
+- **刀身の根元と先を毎フレーム覚えて帯を描く(ソードトレイル)**。Effekseer の弧を置く方式(向きを計算する・CSV の角度で置く)は試して合わなかったのでやめた(経緯は RESEARCH_NOTES)。
+- `Character/Player/PlayerSwordTrail.h/.cpp`(vcxproj/filters に登録)。`Player` が `m_swordTrail` で持つ。
+  - `Player::Update`: State の前に `SetEmitting(false)`、攻撃の State が CSV の区間の間だけ `SetEmitting(true)`(`PlayerStateAttack::UpdateSlashEffect`)。
+  - `Player::Draw`: Update が進んだフレームだけ、刀の位置(`PlayerWeapon::GetBladePos`)を `Sample` で足してから `Draw`。押し戻しの後の位置なので画面の刀と重なる。点の古くなり方はタイムスケール×自分のタイムスケール。
+  - 点は `kLife`(8F)で消える。点の間は Catmull-Rom で5分割。区間が切れたら区切りを変えて、前の帯とつながない。
+  - 画像は `data/Effect/Slash/Texture/` の `ST_Streaks_d`(線の束。アルファと加算で2回)・`ST_Haze_e`(もや)・`ST_Edge_e`(先のふち、加算)。u は古い側0〜新しい側0.95、v は根元0〜先1。値は .cpp 先頭。
+  - DrawPolygon3D で描く。Z は書かない、裏面カリングを切って描いた後に戻す(`Application::Init` で有効)。
+- `PlayerWeapon`: `GetBladePos(根元, 先)`(今の手のボーンから計算)・`CalcWeaponMatrix()`。刀のメッシュは拡大されたフレームの下にあるので、先の位置はフレームの行列を掛けて求める(`CalcTipLocal`。katana_blend は +Y に約160)。根元は先の25%(`kBladeBaseRate`)。
+- CSV: `ComboChain01.csv` の最後に `slashStart`(軌跡を伸ばし始めるアニメのフレーム)・`slashEnd`(やめるフレーム)。当たり判定の列と同じく ; 区切りで複数、数は同じにする(違うと assert)。空欄なら出さない。列が無くても読める。
+  - 最初は1列に「3-9」と書いていたが、**Excel で開くと日付(3月9日)に化ける**ので2列に分けた。CSV の欄に「数-数」「数/数」を書かないこと。
+  - 地上弱1〜4・地上強1〜3・切り上げ・空中弱1/4/5 に入れた(空中弱2・3は蹴りなので無し)。空中弱5(回転)は 5-17。
+  - 目安は `../tools/SwordSlashProbe/probe.exe` の `fast` の区間(刀の先が速く動いている所)。
+- `data/Effect/Slash/SwordSlash.efk`・`SwordSlashSpin.efk`(弧のエフェクト)と `Model/` は今は使っていない(読み込みもしていない)。
+- 確認: Debug・Release のビルドは通った。一時コードで攻撃を順番に出して3Fおきに撮り、刀に沿って軌跡が伸びて縮んで消えること、空中弱5を空中で出すと回った通りに出ることを確認した(一時コードは消した。画像は `../EffectTools/SwordTrail/game_shots/trail2_sheet_*.png`・`trail_spin_2.png`)。
+  空中弱5は地上で出すとすぐ着地するので軌跡がほぼ出ない。**実際に操作しての確認・ヒットストップやスロー中の見え方はまだ**。

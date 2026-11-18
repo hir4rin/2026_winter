@@ -1,0 +1,39 @@
+weapon min(-9.8,-23.2,-9.8) max(9.8,160.8,9.8) axis 1 tip 160.8
+[0] Combo_Attack_03_01 win0 1.8-23.0 : fast 0.0-8.0 peak 7.0 v 131.3 sweep 143 roll 170 n(0.15,-0.90,-0.41) tipDist 137 chestY 95 midYaw 54 midY 29
+SLASH [0] yaw -39 roll -159 spin -33 [f8.0 dist 139 sweepStart 2.0]
+[1] Combo_Attack_03_02 win0 2.6-19.0 : fast 0.0-7.0 peak 6.5 v 164.5 sweep 98 roll 147 n(0.23,-0.35,0.91) tipDist 133 chestY 80 midYaw -73 midY 11
+SLASH [1] yaw 81 roll 8 spin -51 [f7.0 dist 137 sweepStart 1.0]
+[2] Combo_Attack_03_03 win0 20.0-40.0 : fast 20.0-26.0 peak 25.0 v 118.2 sweep 53 roll -108 n(-0.92,-0.30,0.24) tipDist 125 chestY 100 midYaw -14 midY 64
+SLASH [2] yaw -5 roll 53 spin -24 [f26.0 dist 156 sweepStart 20.0]
+[3] Combo_Attack_03_04 win0 22.0-39.0 : fast 20.0-24.0 peak 24.0 v 130.2 sweep 60 roll -61 n(-0.87,0.49,0.11) tipDist 124 chestY 59 midYaw -2 midY 20
+SLASH [3] yaw 1 roll -156 spin -69 [f24.0 dist 133 sweepStart 20.0]
+[4] Combo_Attack_02_02 win0 9.1-12.0 : fast 7.1-10.1 peak 9.6 v 236.8 sweep 74 roll -8 n(-0.13,0.89,-0.44) tipDist 124 chestY 109 midYaw 0 midY 51
+[4] Combo_Attack_02_02 win1 17.0-30.0 : fast 15.5-20.0 peak 19.0 v 142.1 sweep 95 roll -165 n(-0.25,-0.91,0.33) tipDist 127 chestY 79 midYaw -62 midY 36
+SLASH [4] yaw 6;15 roll -125;10 spin -36;12 [f10.0 dist 138 sweepStart 7.0] [f20.0 dist 125 sweepStart 15.5]
+[5] Combo_Attack_02_03 win0 6.0-15.0 : fast 2.0-7.0 peak 6.0 v 158.6 sweep 65 roll -85 n(-0.99,0.09,0.09) tipDist 124 chestY 78 midYaw -54 midY 94
+SLASH [5] yaw -50 roll -138 spin -126 [f7.0 dist 148 sweepStart 1.0]
+[6] Combo_Attack_02_04 win0 4.0-22.0 : fast 3.0-10.0 peak 4.5 v 126.9 sweep 29 roll 129 n(0.54,-0.44,0.71) tipDist 93 chestY 78 midYaw 68 midY 22
+SLASH [6] yaw 55 roll 5 spin 9 [f10.0 dist 114 sweepStart 4.0]
+[7] Attack_Up_Floor_To_Air_02 win0 9.6-23.0 : fast 9.1-15.1 peak 13.6 v 163.1 sweep 103 roll -91 n(-0.99,-0.02,-0.11) tipDist 139 chestY 188 midYaw -66 midY 130
+SLASH [7] yaw 4 roll 77 spin 51 [f15.0 dist 240 sweepStart 9.0]
+[8] Combo_Attack_Air_06_01 win0 6.0-18.0 : fast 4.0-8.0 peak 8.0 v 197.6 sweep 77 roll -128 n(-0.77,-0.61,-0.19) tipDist 131 chestY 111 midYaw 5 midY 24
+SLASH [8] yaw -60 roll -162 spin -130 [f8.0 dist 135 sweepStart 4.0]
+[9] Combo_Attack_Air_06_02 win0 3.0-12.0 : fast 0.0-7.0 peak 5.0 v 133.0 sweep 151 roll 37 n(0.51,0.67,0.54) tipDist 109 chestY 111 midYaw -13 midY 19
+[10] Combo_Attack_Air_06_03 win0 17.0-28.9 : fast 15.0-25.0 peak 23.0 v 69.8 sweep 87 roll -39 n(-0.47,0.58,0.67) tipDist 98 chestY 112 midYaw -15 midY 17
+[11] Combo_Attack_Air_06_04 win0 6.0-16.0 : fast 5.0-11.0 peak 10.0 v 127.0 sweep 25 roll -99 n(-0.96,-0.15,-0.23) tipDist 111 chestY 122 midYaw -146 midY -16
+SLASH [11] yaw 8 roll -35 spin 90 [f11.0 dist 113 sweepStart 5.0]
+[12] Combo_Attack_01_04 win0 8.0-11.0 : fast 9.0-13.0 peak 11.0 v 302.8 sweep 71 roll -61 n(-0.73,0.40,-0.55) tipDist 116 chestY 121 midYaw -112 midY -87
+[12] Combo_Attack_01_04 win1 13.0-17.0 : fast 9.0-14.0 peak 11.0 v 302.8 sweep 147 roll 156 n(0.31,-0.70,0.64) tipDist 116 chestY 121 midYaw -112 midY -87
+SLASH [12] yaw -14 roll -61 spin -24 [f14.0 dist 149 sweepStart 9.0]
+[13] Attack_Air_To_Floor_Start_01 win0 0.4-0.8 : fast 1.0-2.5 peak 2.5 v 65.8 sweep 42 roll -177 n(-0.04,-0.97,-0.26) tipDist 118 chestY 109 midYaw -26 midY 30
+[14] anim  not found
+[15] Attack_Up_01 win0 9.6-23.0 : fast 9.1-15.1 peak 14.1 v 140.9 sweep 43 roll -99 n(-0.99,-0.15,-0.08) tipDist 150 chestY 106 midYaw -144 midY 135
+[16] Attack_Up_01 win0 9.6-19.0 : fast 9.1-15.1 peak 14.1 v 140.9 sweep 43 roll -99 n(-0.99,-0.15,-0.08) tipDist 150 chestY 106 midYaw -144 midY 135
+[16] Attack_Up_01 win1 30.0-38.0 : fast 26.0-34.0 peak 27.5 v 20.8 sweep 65 roll 176 n(0.08,-0.99,-0.12) tipDist 115 chestY 111 midYaw -110 midY -12
+[17] Attack_Up_01 win0 9.6-19.0 : fast 9.1-15.1 peak 14.1 v 140.9 sweep 43 roll -99 n(-0.99,-0.15,-0.08) tipDist 150 chestY 106 midYaw -144 midY 135
+[17] Attack_Up_01 win1 30.0-38.0 : fast 26.0-34.0 peak 27.5 v 20.8 sweep 65 roll 176 n(0.08,-0.99,-0.12) tipDist 115 chestY 111 midYaw -110 midY -12
+[18] Attack_Up_01 win0 9.6-23.0 : fast 9.1-15.1 peak 14.1 v 140.9 sweep 43 roll -99 n(-0.99,-0.15,-0.08) tipDist 150 chestY 106 midYaw -144 midY 135
+[19] Attack_Up_01 win0 9.6-19.0 : fast 9.1-15.1 peak 14.1 v 140.9 sweep 43 roll -99 n(-0.99,-0.15,-0.08) tipDist 150 chestY 106 midYaw -144 midY 135
+[19] Attack_Up_01 win1 30.0-38.0 : fast 26.0-34.0 peak 27.5 v 20.8 sweep 65 roll 176 n(0.08,-0.99,-0.12) tipDist 115 chestY 111 midYaw -110 midY -12
+[20] Attack_Up_01 win0 9.6-23.0 : fast 9.1-15.1 peak 14.1 v 140.9 sweep 43 roll -99 n(-0.99,-0.15,-0.08) tipDist 150 chestY 106 midYaw -144 midY 135
+[21] Attack_Up_Floor_To_Air_02 win0 9.6-23.0 : fast 9.1-15.1 peak 13.6 v 163.1 sweep 103 roll -91 n(-0.99,-0.02,-0.11) tipDist 139 chestY 188 midYaw -66 midY 130

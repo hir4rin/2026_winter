@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include <memory>
+#include "DxLib.h"
+#include "Math/Vector3.h"
 
 class Player;
 
@@ -17,9 +19,19 @@ public:
 	//必殺技中の刀身の長い刀に持ち替える//falseで通常の刀に戻す
 	void SetUltWeapon(bool isUlt) { m_isUltWeapon = isUlt; }
 
+	//刀身の根元と先のワールド座標(今の手のボーンから計算する)
+	void GetBladePos(Vector3& base, Vector3& tip) const;
+
 private:
 	//今持っている刀のモデルのハンドル//長い刀が読めていなければ通常の刀
 	int GetCurrentModelHandle() const;
+	//今の手のボーンに合わせた刀の行列
+	MATRIX CalcWeaponMatrix() const;
+	//モデルの一番長い軸の、原点から遠いほうの端(刀の先)
+	static VECTOR CalcTipLocal(int modelHandle);
+
+	VECTOR m_tipLocal = {};//刀の先(刀のモデルの空間)
+	VECTOR m_ultTipLocal = {};//長い刀の先
 
 	std::weak_ptr<Player> m_owner;//持ち主のプレイヤー
 	int m_modelHandle = -1;//刀のモデルのハンドル

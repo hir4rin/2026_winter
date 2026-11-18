@@ -98,6 +98,8 @@ void PlayerStateAttack::Update()
 	AttackMoveMent();
 	//振りのSEを出す
 	SwingSeCheck();
+	//刀の軌跡//CSVの区間の間だけ伸ばす
+	UpdateSlashEffect();
 
 
 	//コンボ予約の入力を取る//予約を取ったらもうここは通らないようにする
@@ -535,6 +537,22 @@ int PlayerStateAttack::SelectAnimInit()
 
 
 	return currentComboIndex;
+}
+
+void PlayerStateAttack::UpdateSlashEffect()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+	const ComboNode& node = player->m_comboChain[player->m_comboInfo.currentComboIndex];
+	const float nowFrame = player->m_anim.GetNowAnimFrame();
+	for (const auto& window : node.slashWindows)
+	{
+		if (nowFrame >= window.first && nowFrame <= window.second)
+		{
+			player->m_swordTrail.SetEmitting(true);
+			return;
+		}
+	}
 }
 
 void PlayerStateAttack::SwingSeCheck()
