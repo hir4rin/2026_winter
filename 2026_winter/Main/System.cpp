@@ -64,6 +64,8 @@ namespace
 	//斬ったときの風
 	const std::string kHitWindEffectPath = "data/Effect/Hit/HitWind.efk";
 	const std::string kSkillHitEffectPath = "data/Effect/Hit/SkillHit.efk";
+	//地上からのジャンプ
+	const std::string kJumpKickEffectPath = "data/Effect/Move/JumpKick.efk";
 
 	//Kingmechのミサイルの雨
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
@@ -105,6 +107,7 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::GuardBreakShardsEffect] = LoadEffekseerEffect(kGuardBreakShardsEffectPath.c_str());
 	m_asyncHandles[AsyncData::HitWindEffect] = LoadEffekseerEffect(kHitWindEffectPath.c_str());
 	m_asyncHandles[AsyncData::SkillHitEffect] = LoadEffekseerEffect(kSkillHitEffectPath.c_str());
+	m_asyncHandles[AsyncData::JumpKickEffect] = LoadEffekseerEffect(kJumpKickEffectPath.c_str());
 }
 
 void System::LoadStage(StageType type)
@@ -284,6 +287,7 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GuardBreakShardsEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::HitWindEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::SkillHitEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::JumpKickEffect]);
 
 }
 

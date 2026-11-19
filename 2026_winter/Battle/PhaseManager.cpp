@@ -96,7 +96,7 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event, const std::string& ev
 		{
 			enemyMgr->StartPhase(next);
 		}
-		else if(next == -1)
+		else if(next == -1 && event != PhaseEvent::Ending)//エンディングはその後に合図を出す
 		{
 			//終了の合図だけ出す(遷移はSceneMain)
 			System::GetInstance().GetBattleMgr()->SetIsBattleEnd(true);
@@ -124,6 +124,9 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event, const std::string& ev
 	case PhaseEvent::Tutorial:
 		m_tutorialId = eventParam;
 		m_tutorialDelay = eventDelay;
+		break;
+	case PhaseEvent::Ending:
+		m_isEndingRequested = true;
 		break;
 	default:
 		break;
@@ -225,6 +228,13 @@ std::string PhaseManager::TakeTutorial()
 	m_tutorialId.clear();//2回開かないように
 	m_tutorialDelay = 0;
 	return id;
+}
+
+bool PhaseManager::TakeEndingRequest()
+{
+	const bool isRequested = m_isEndingRequested;
+	m_isEndingRequested = false;
+	return isRequested;
 }
 
 bool PhaseManager::IsInArea(const PhaseArea& area, const Vector3& pos) const

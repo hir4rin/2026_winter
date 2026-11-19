@@ -40,7 +40,8 @@ public:
 		AirAssasinCameraStart,
 		BattleSmoothCamera,
 		BossPartThrowCamera,
-		BossFinisherCamera
+		BossFinisherCamera,
+		EndingCamera
 
 	};
 

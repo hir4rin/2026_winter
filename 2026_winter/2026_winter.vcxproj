@@ -169,6 +169,9 @@
     <ClCompile Include="Character\Enemy\Kingmech\State\KingmechFinisher.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateBossFinisher.cpp" />
     <ClCompile Include="UI\FinisherUI.cpp" />
+    <ClCompile Include="UI\EndingUI.cpp" />
+    <ClCompile Include="Camera\CameraState\EndingCamera.cpp" />
+    <ClCompile Include="Stage\TunnelEnding.cpp" />
     <ClCompile Include="UI\AssasinTargetUI.cpp" />
     <ClCompile Include="UI\PartBrokenKillUI.cpp" />
     <ClCompile Include="UI\GuardBreakChanceUI.cpp" />
@@ -201,6 +204,7 @@
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateMove.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateFastRun.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateResultMove.cpp" />
+    <ClCompile Include="Character\Player\State\Locomotion\PlayerStateStartMovie.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallRun.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallKick.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallStay.cpp" />
@@ -352,6 +356,9 @@
     <ClInclude Include="Character\Enemy\Kingmech\State\KingmechFinisher.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateBossFinisher.h" />
     <ClInclude Include="UI\FinisherUI.h" />
+    <ClInclude Include="UI\EndingUI.h" />
+    <ClInclude Include="Camera\CameraState\EndingCamera.h" />
+    <ClInclude Include="Stage\TunnelEnding.h" />
     <ClInclude Include="UI\AssasinTargetUI.h" />
     <ClInclude Include="UI\PartBrokenKillUI.h" />
     <ClInclude Include="UI\GuardBreakChanceUI.h" />
@@ -386,6 +393,7 @@
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateMove.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateFastRun.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateResultMove.h" />
+    <ClInclude Include="Character\Player\State\Locomotion\PlayerStateStartMovie.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallRun.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallKick.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallStay.h" />

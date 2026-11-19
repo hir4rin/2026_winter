@@ -18,7 +18,10 @@ namespace
 
 	constexpr float kPlayerCenter = 100.0f;//プレイヤーの当たり判定の中心点までのy軸の距離
 
+	//落下攻撃
 	constexpr float kHitStopTime = 0.1f;//攻撃ヒット時のヒットストップ時間
+	constexpr float kHitStopFrame = 12.0f;
+
 	constexpr float kAttackColOffset = 30.0f;//攻撃の当たり判定を前に出す距離
 	constexpr float kAttackColRadius = 150.0f;//攻撃の当たり判定の半径
 
@@ -431,6 +434,8 @@ void PlayerStateAttackBase::InpuctAttackSetUp()
 			.knockBackPower = kDropAttackKnockBack,
 			.knockBackFrame = totalAnimFrame,
 			.hitStopTime = kHitStopTime,
+			.hitStopFrame = kHitStopFrame,
+			.allTimeScaleFlag = true,
 			.kAttackColOffset = kAttackColOffset,
 			.isKirimomi = true,
 			.attackType = node.attackType == AttackType::SkillAttack ? AttackType::ImpactSkillAttack : AttackType::ImpactAttack,
@@ -465,7 +470,11 @@ void PlayerStateAttackBase::CreateAttackCol(const ComboNode& node)
 	.knockBackPower = Vector3(node.knockBackXZ, node.knockBackY,0),
 	//.knockBackPower = Vector3(0.0f,node.knockBackY,0.0f),//吹き飛ばない攻撃にする
 	.knockBackFrame = totalAnimFrame,
-	.hitStopTime = kHitStopTime,
+	.hitStopTime = node.hitStopTime,
+	.hitStopFrame = node.hitStopFrame,
+	.ownHitStop = node.ownHitStop,
+	.ownHitStopFrame = node.ownHitStopFrame,
+	.allTimeScaleFlag = node.allTimeScaleFlag,
 	.kAttackColOffset = kAttackColOffset,
 	.isKirimomi = node.isKirimomi,
 	.attackType = node.attackType,

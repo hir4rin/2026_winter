@@ -18,6 +18,15 @@ public:
 		float slashRate = 0.0f;//斬撃の線
 	};
 
+	//エンディングの画面(クレジット・ロゴ)
+	struct EndingScreen
+	{
+		bool isPlaying = false;//HUDを消す
+		int creditIndex = -1;//出しているクレジット(-1なら無し)
+		int creditFrame = 0;//そのクレジットが出てからのフレーム
+		int logoFrame = -1;//ロゴが出てからのフレーム(-1なら無し)
+	};
+
 	BattleManager();
 	virtual ~BattleManager();
 
@@ -54,6 +63,7 @@ public:
 	std::weak_ptr<BloodDecalManager> GetBloodDecalMgr() { return m_bloodDecalMgr; }
 	std::weak_ptr<ResultRecorder> GetResultRecorder() { return m_resultRecorder; }
 	FinisherScreen& GetFinisherScreen() { return m_finisherScreen; }
+	EndingScreen& GetEndingScreen() { return m_endingScreen; }
 
 	//画面に血を付ける(暗殺・確殺。ScreenBloodUIが受け取る)
 	void RequestScreenBlood() { m_isScreenBloodRequested = true; }
@@ -77,6 +87,7 @@ private:
 
 	bool m_isBattleEnd = false;//バトルが終わったか
 	FinisherScreen m_finisherScreen;
+	EndingScreen m_endingScreen;
 	bool m_isScreenBloodRequested = false;//画面の血
 
 };

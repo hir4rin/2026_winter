@@ -74,6 +74,10 @@ void EnemyAttack::Enter()
 	.knockBackPower = Vector3(node.knockBackXZ,node.knockBackY,0.0f),
 	.knockBackFrame = owner->m_anim.GetAnimTotalFrame(owner->GetAnimName("Attack")),//ここはどういう値がいいかかなり不明
 	.hitStopTime = node.hitStopTime,
+	.hitStopFrame = node.hitStopFrame,
+	.ownHitStop = node.ownHitStop,
+	.ownHitStopFrame = node.ownHitStopFrame,
+	.allTimeScaleFlag = node.allTimeScaleFlag,
 	.kAttackColOffset = 0.0f,
 	.isKirimomi = node.isKirimomi
 	};

@@ -189,16 +189,16 @@ void BossEnemyPirateR1::Update()
 		m_isPartBroken = true;
 	}
 
-	//デバッグ用//Qを押した瞬間だけBossEnemyPirateR1Attack.csvを読み込み直して攻撃データを更新する
-	bool isQPressed = CheckHitKey(KEY_INPUT_Q) != 0;
-	if (isQPressed && !m_wasQPressed)
+	//デバッグ用//F8を押した瞬間だけBossEnemyPirateR1Attack.csvを読み込み直して攻撃データを更新する
+	bool isReloadPressed = CheckHitKey(KEY_INPUT_F8) != 0;
+	if (isReloadPressed && !m_wasReloadPressed)
 	{
 		DataManager::GetInstance().ReloadBossEnemyPirateR1AttackRawData();
 		InitializeAttackList(DataManager::GetInstance().GetBossEnemyPirateR1AttackRawData());
 		DataManager::GetInstance().ReloadEnemyStatusRawData();
 		InitializeStatus(DataManager::GetInstance().GetEnemyStatusRawData(), kStatusType);
 	}
-	m_wasQPressed = isQPressed;
+	m_wasReloadPressed = isReloadPressed;
 
 	//デバッグ用//Iを押した瞬間だけBossEnemyPirateR1Anim.csvを読み込み直す//次にアニメが切り替わったときから効く
 	bool isIPressed = CheckHitKey(KEY_INPUT_I) != 0;

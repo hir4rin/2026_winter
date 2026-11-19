@@ -21,6 +21,7 @@ namespace
 
 PlayerSwordTrail::PlayerSwordTrail()
 {
+	m_style = { kLife, kMinMove, kHazeAlpha, kStreakAlpha, kStreakGlowAlpha, kEdgeAlpha, kFadePower };
 	m_streakGraph = LoadGraph(kStreakPath);
 	m_edgeGraph = LoadGraph(kEdgePath);
 	m_hazeGraph = LoadGraph(kHazePath);
@@ -36,13 +37,14 @@ PlayerSwordTrail::~PlayerSwordTrail()
 void PlayerSwordTrail::Sample(const Vector3& base, const Vector3& tip, float timeScale)
 {
 	for (auto& point : m_points) point.age += timeScale;
-	std::erase_if(m_points, [](const Point& point) { return point.age >= kLife; });
+	const float life = m_style.life;
+	std::erase_if(m_points, [life](const Point& point) { return point.age >= life; });
 
 	if (m_isEmitting)
 	{
 		if (!m_wasEmitting) ++m_segment;
 		const bool isMoved = m_points.empty() || m_points.back().segment != m_segment
-			|| (m_points.back().tip - tip).Magnitude() >= kMinMove;
+			|| (m_points.back().tip - tip).Magnitude() >= m_style.minMove;
 		if (isMoved) m_points.push_back({ base, tip, 0.0f, m_segment });
 	}
 	m_wasEmitting = m_isEmitting;
@@ -85,7 +87,7 @@ void PlayerSwordTrail::DrawStrip(const std::vector<Vertex>& vertices, int graph,
 			VERTEX3D vertex = {};
 			vertex.pos = pos.ToDxLibVector();
 			vertex.norm = VGet(0.0f, 1.0f, 0.0f);
-			const float fade = powf(std::clamp(1.0f - age / kLife, 0.0f, 1.0f), kFadePower);
+			const float fade = powf(std::clamp(1.0f - age / m_style.life, 0.0f, 1.0f), m_style.fadePower);
 			vertex.dif = GetColorU8(255, 255, 255, static_cast<int>(alpha * fade));
 			vertex.spc = GetColorU8(0, 0, 0, 0);
 			vertex.u = u;
@@ -129,10 +131,10 @@ void PlayerSwordTrail::Draw()
 		if (i - begin >= 2)
 		{
 			BuildVertices(m_points, begin, i, m_vertices);
-			DrawStrip(m_vertices, m_hazeGraph, DX_BLENDMODE_ALPHA, kHazeAlpha);
-			DrawStrip(m_vertices, m_streakGraph, DX_BLENDMODE_ALPHA, kStreakAlpha);
-			DrawStrip(m_vertices, m_streakGraph, DX_BLENDMODE_ADD, kStreakGlowAlpha);
-			DrawStrip(m_vertices, m_edgeGraph, DX_BLENDMODE_ADD, kEdgeAlpha);
+			if (m_style.hazeAlpha > 0.0f) DrawStrip(m_vertices, m_hazeGraph, DX_BLENDMODE_ALPHA, m_style.hazeAlpha);
+			if (m_style.streakAlpha > 0.0f) DrawStrip(m_vertices, m_streakGraph, DX_BLENDMODE_ALPHA, m_style.streakAlpha);
+			if (m_style.streakGlowAlpha > 0.0f) DrawStrip(m_vertices, m_streakGraph, DX_BLENDMODE_ADD, m_style.streakGlowAlpha);
+			if (m_style.edgeAlpha > 0.0f) DrawStrip(m_vertices, m_edgeGraph, DX_BLENDMODE_ADD, m_style.edgeAlpha);
 		}
 		begin = i;
 	}

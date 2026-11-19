@@ -81,6 +81,7 @@ public:
 		BattleSmoothCamera = 22,
 		BossPartThrowCamera = 23,
 		BossFinisherCamera = 24,
+		EndingCamera = 25,
 
 		
 

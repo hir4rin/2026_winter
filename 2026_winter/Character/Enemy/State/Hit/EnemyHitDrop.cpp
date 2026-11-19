@@ -7,6 +7,7 @@
 namespace
 {
 	constexpr float kAnimEndFrame = 51.53f;
+	constexpr float kAnimBlendFrame = 5.0f;
 }
 
 EnemyHitDrop::EnemyHitDrop(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
@@ -23,7 +24,7 @@ void EnemyHitDrop::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Kirimomi"), false,owner->GetAnimSpeed("Kirimomi"), kAnimEndFrame);
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Kirimomi"), false,owner->GetAnimSpeed("Kirimomi"), kAnimEndFrame, kAnimBlendFrame);
 	//縦の速度は初速(m_info.knockBackVel.y)と重力の累積(m_gravity)から作る
 	m_gravity = 0.0f;
 }

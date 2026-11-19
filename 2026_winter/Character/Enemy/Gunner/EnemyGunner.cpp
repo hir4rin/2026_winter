@@ -141,16 +141,16 @@ void EnemyGunner::Update()
 		m_isPartBroken = true;
 	}
 
-	//デバッグ用//Qを押した時だけEnemyGunnerAttack.csvを読み込み直して攻撃データを更新する
-	bool isQPressed = CheckHitKey(KEY_INPUT_Q) != 0;
-	if (isQPressed && !m_wasQPressed)
+	//デバッグ用//F8を押した時だけEnemyGunnerAttack.csvを読み込み直して攻撃データを更新する
+	bool isReloadPressed = CheckHitKey(KEY_INPUT_F8) != 0;
+	if (isReloadPressed && !m_wasReloadPressed)
 	{
 		DataManager::GetInstance().ReloadEnemyGunnerAttackRawData();
 		InitializeAttackList(DataManager::GetInstance().GetEnemyGunnerAttackRawData());
 		DataManager::GetInstance().ReloadEnemyStatusRawData();
 		InitializeStatus(DataManager::GetInstance().GetEnemyStatusRawData(), kStatusType);
 	}
-	m_wasQPressed = isQPressed;
+	m_wasReloadPressed = isReloadPressed;
 
 	if (m_isBreakLeftArm)
 	{

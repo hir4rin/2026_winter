@@ -17,7 +17,8 @@ enum class PhaseEvent : int
 	None,
 	BossAppear,
 	GameClear,
-	Tutorial
+	Tutorial,
+	Ending//最後のフェーズの後のエンディング(終わったらリザルト)
 };
 
 //遷移表の1行

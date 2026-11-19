@@ -81,6 +81,7 @@ enum class AsyncData : int
 	GuardBreakShardsEffect,//ガードブレイクで飛び散るガラス片
 	HitWindEffect,//斬ったときの風(敵を巻く白い弧)
 	SkillHitEffect,//スキル攻撃が当たったときの風(赤黒)
+	JumpKickEffect,//地上からジャンプしたときの地面を蹴った衝撃と砂ぼこり
 	Goal,
 };
 

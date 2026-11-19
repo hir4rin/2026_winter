@@ -83,7 +83,7 @@ private:
     bool m_isFinisherHidden = false;//爆発で消えた
     FinisherCut m_finisherCut;
 
-    bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
+    bool m_wasReloadPressed = false;//前のフレームにF8を押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
     bool m_wasIPressed = false;//前のフレームにIを押していたか//デバッグ用のアニメCSV読み込み直し
     bool m_wasMPressed = false;//前のフレームにMを押していたか//デバッグ用のミサイル発射
 

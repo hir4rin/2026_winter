@@ -207,6 +207,9 @@
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateResultMove.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Player\State\Locomotion\PlayerStateStartMovie.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallRun.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -283,6 +286,15 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\FinisherUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\EndingUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\CameraState\EndingCamera.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Stage\TunnelEnding.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\AssasinTargetUI.cpp">
@@ -782,6 +794,9 @@
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateResultMove.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\Player\State\Locomotion\PlayerStateStartMovie.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallRun.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -858,6 +873,15 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="UI\FinisherUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\EndingUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\CameraState\EndingCamera.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage\TunnelEnding.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="UI\AssasinTargetUI.h">

@@ -141,16 +141,16 @@ void EnemyBazooka::Update()
 		m_isPartBroken = true;
 	}
 
-	//デバッグ用//Qを押した時だけEnemyBazookaAttack.csvを読み込み直して攻撃データを更新する
-	bool isQPressed = CheckHitKey(KEY_INPUT_Q) != 0;
-	if (isQPressed && !m_wasQPressed)
+	//デバッグ用//F8を押した時だけEnemyBazookaAttack.csvを読み込み直して攻撃データを更新する
+	bool isReloadPressed = CheckHitKey(KEY_INPUT_F8) != 0;
+	if (isReloadPressed && !m_wasReloadPressed)
 	{
 		DataManager::GetInstance().ReloadEnemyBazookaAttackRawData();
 		InitializeAttackList(DataManager::GetInstance().GetEnemyBazookaAttackRawData());
 		DataManager::GetInstance().ReloadEnemyStatusRawData();
 		InitializeStatus(DataManager::GetInstance().GetEnemyStatusRawData(), kStatusType);
 	}
-	m_wasQPressed = isQPressed;
+	m_wasReloadPressed = isReloadPressed;
 
 	if (m_isBreakLeftArm)
 	{

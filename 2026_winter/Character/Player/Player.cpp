@@ -17,7 +17,7 @@
 #include "Camera/Camera.h"
 #include "Collision/SphereShape.h"
 #include "Collision/CapsuleShape.h"
-//#include "../../../Stage/Stage.h"
+#include "Stage/Stage.h"
 #include "Main/Input.h"
 #include "EffekseerForDXLib.h"
 //#include "../Effect/EffectManager.h"
@@ -74,6 +74,23 @@ namespace
 	constexpr float kHeadLookCameraDistance = 1000.0f;//カメラの向きを見るときに、前方のどれくらい先の点を見るか
 
 	const char* const kLookCsvPath = "data/Player/Look/PlayerLook.csv";//マテリアルごとの法線マップ・マスク画像と強さ(CharacterLook が読む)
+
+	//足の軌跡(ジャンプの白いもや)
+	const char* const kLeftCalfFrameName = "calf_l";
+	const char* const kLeftFootFrameName = "foot_l";
+	const char* const kLeftBallFrameName = "ball_l";
+	const char* const kRightCalfFrameName = "calf_r";
+	const char* const kRightFootFrameName = "foot_r";
+	const char* const kRightBallFrameName = "ball_r";
+	constexpr float kFootTrailBaseRate = 0.6f;//帯の根元//足首からすねへの割合
+	constexpr float kFootTrailTipExtend = 0.5f;//帯の先//つま先をさらに伸ばす割合(足首→つま先)
+	constexpr float kFootTrailLife = 14.0f;
+	constexpr float kFootTrailMinMove = 1.0f;
+	constexpr float kFootTrailHazeAlpha = 160.0f;
+	constexpr float kFootTrailStreakAlpha = 80.0f;
+	constexpr float kFootTrailStreakGlowAlpha = 25.0f;
+	constexpr float kFootTrailEdgeAlpha = 0.0f;
+	constexpr float kFootTrailFadePower = 0.8f;
 }
 
 
@@ -108,6 +125,17 @@ Player::Player()
 
 	//必殺技状態の翼の付け根のボーン
 	m_bloodWingFrame = MV1SearchFrame(m_modelHandle, kBloodWingFrameName);
+
+	//足の軌跡
+	m_calfFrame[0] = MV1SearchFrame(m_modelHandle, kLeftCalfFrameName);
+	m_footFrame[0] = MV1SearchFrame(m_modelHandle, kLeftFootFrameName);
+	m_ballFrame[0] = MV1SearchFrame(m_modelHandle, kLeftBallFrameName);
+	m_calfFrame[1] = MV1SearchFrame(m_modelHandle, kRightCalfFrameName);
+	m_footFrame[1] = MV1SearchFrame(m_modelHandle, kRightFootFrameName);
+	m_ballFrame[1] = MV1SearchFrame(m_modelHandle, kRightBallFrameName);
+	const PlayerSwordTrail::Style footStyle = { kFootTrailLife, kFootTrailMinMove, kFootTrailHazeAlpha,
+		kFootTrailStreakAlpha, kFootTrailStreakGlowAlpha, kFootTrailEdgeAlpha, kFootTrailFadePower };
+	for (auto& trail : m_footTrail) trail.SetStyle(footStyle);
 
 	//法線マップ・遮蔽・光沢の画像と強さ(マテリアルの名前で当てる)
 	m_look.Load(m_modelHandle, kLookCsvPath);
@@ -180,10 +208,21 @@ void Player::Init()
 	m_lockOnManager->Init(GetWeakPtr(), m_cameraManager, m_enemyManager);
 }
 
+int g_trailCapture = 0;//[TEMP_TRAIL]
 void Player::Update(Camera& camera)
 {
 	//ライト(雑実装)
 	auto& input = Input::GetInstance();
+
+	//[TEMP_TRAIL] 確認用
+	{
+		static int s_trailFrame = 0;
+		if (strstr(GetCommandLineA(), "-trailtest") && ++s_trailFrame >= 100 && g_trailCapture == 0 && IsFloor())
+		{
+			ChangeState(std::make_shared<PlayerStateJump>(GetWeakPtr()));
+			g_trailCapture = 1;
+		}
+	}
 
 	//被ダメ後の無敵時間の更新
 	if (m_damageInfo.damageTimer > 0.0f)
@@ -203,17 +242,32 @@ void Player::Update(Camera& camera)
 		{
 			m_isUltimating = false;
 		}
+
+		/*if (input.IsTriggered("A"))
+		{
+			if (!std::dynamic_pointer_cast<PlayerStateStartMovie>(m_currentState))
+			{
+				ChangeState(std::make_shared< PlayerStateStartMovie>(GetWeakPtr()));
+				return;
+			}
+			else
+			{
+				ChangeState(std::make_shared< PlayerStateIdle>(GetWeakPtr()));
+				return;
+			}
+		}*/
+
 	}
 #endif
 
-	//デバッグ用//Qを押した瞬間だけComboChain.csvを読み込み直してコンボノードを更新する
-	bool isQPressed = CheckHitKey(KEY_INPUT_Q) != 0;
-	if (isQPressed && !m_wasQPressed)
+	//デバッグ用//F8を押した瞬間だけComboChain.csvを読み込み直してコンボノードを更新する
+	bool isReloadPressed = CheckHitKey(KEY_INPUT_F8) != 0;
+	if (isReloadPressed && !m_wasReloadPressed)
 	{
 		DataManager::GetInstance().ReloadComboRawData();
 		InitializeComboChain();
 	}
-	m_wasQPressed = isQPressed;
+	m_wasReloadPressed = isReloadPressed;
 
 
 	//LTを押したとき
@@ -234,6 +288,9 @@ void Player::Update(Camera& camera)
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(Jump,Fall,Attack)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
 
+	//落下死したら止める(リスポーンまで)
+	if (m_deathCause == DeathCause::Fall || CheckFallDeath())return;
+
 	//ロックオンと内部ターゲットの更新
 	m_lockOnManager->Update();
 	UpdateSoftTarget();
@@ -248,6 +305,7 @@ void Player::Update(Camera& camera)
 	}
 
 	m_swordTrail.SetEmitting(false);//攻撃のStateがCSVの区間の間だけtrueにする
+	SetFootTrailEmitting(false);//ジャンプの間だけtrueにする
 	if (m_currentState)
 	{
 		m_currentState->Update();//状態の更新
@@ -303,9 +361,15 @@ void Player::Draw()
 		Vector3 base, tip;
 		m_weapon->GetBladePos(base, tip);
 		m_swordTrail.Sample(base, tip, m_trailTimeScale);
+		for (int i = 0; i < 2; ++i)
+		{
+			GetFootTrailPos(i, base, tip);
+			m_footTrail[i].Sample(base, tip, m_trailTimeScale);
+		}
 		m_isTrailSamplePending = false;
 	}
 	m_swordTrail.Draw();
+	for (auto& trail : m_footTrail) trail.Draw();
 	//コンボチェーンの描画
 	for (int i = 0; i < m_comboChain.size(); ++i)
 	{
@@ -361,6 +425,7 @@ void Player::OnDamage(Collider& other, AttackData& data)
 		if (m_hp <= 0)
 		{
 			//死亡ステートにする
+			m_deathCause = DeathCause::Hp;
 			ChangeState(std::make_shared<PlayerStateDie>(GetWeakPtr(), data));
 			return;
 		}
@@ -425,11 +490,31 @@ Vector3 Player::CalcKnockBackDir(Collider& other)
 	return dir.Normalize();
 }
 
+bool Player::CheckFallDeath()
+{
+	//HPで死んでいる最中は見ない
+	if (m_deathCause != DeathCause::None)return false;
+	auto stage = m_stage.lock();
+	if (!stage)return false;
+
+	bool isFall = m_rb.m_pos.y < stage->GetKillY() ||
+		stage->IsInWallZone(Collider::ColRole::DeathZone, *this);
+	if (!isFall)return false;
+
+	m_deathCause = DeathCause::Fall;
+	m_isDead = true;
+	m_rb.m_moveVel = Vector3(0, 0, 0);
+	return true;
+}
+
 void Player::OnParried()
 {
 	//死亡中は何もしない
 	if (std::dynamic_pointer_cast<PlayerStateDie>(m_currentState))return;
 	if (std::dynamic_pointer_cast<PlayerAttackParried>(m_currentState))return;
+	
+	//空中ならはじかせない
+	if (!m_wasFloor)return;
 
 	//敵パリィに遷移
 	ChangeState(std::make_shared<PlayerAttackParried>(GetWeakPtr()));
@@ -650,6 +735,25 @@ bool Player::IsMoveState() const
 		std::dynamic_pointer_cast<PlayerStateFastRun>(m_currentState);
 }
 
+void Player::SetFootTrailEmitting(bool isEmitting)
+{
+	for (auto& trail : m_footTrail) trail.SetEmitting(isEmitting);
+}
+
+void Player::GetFootTrailPos(int side, Vector3& base, Vector3& tip) const
+{
+	if (m_calfFrame[side] < 0 || m_footFrame[side] < 0 || m_ballFrame[side] < 0)
+	{
+		base = tip = m_rb.m_pos;
+		return;
+	}
+	const Vector3 calf = Vector3(MV1GetFramePosition(m_modelHandle, m_calfFrame[side]));
+	const Vector3 foot = Vector3(MV1GetFramePosition(m_modelHandle, m_footFrame[side]));
+	const Vector3 ball = Vector3(MV1GetFramePosition(m_modelHandle, m_ballFrame[side]));
+	base = foot + (calf - foot) * kFootTrailBaseRate;
+	tip = ball + (ball - foot) * kFootTrailTipExtend;
+}
+
 bool Player::CanInputAssasinState() const
 {
 	return std::dynamic_pointer_cast<PlayerStateIdle>(m_currentState) ||
@@ -750,6 +854,11 @@ void Player::InitializeComboChain()
 		node.knockBackXZ = std::stof(tokens[ComboNodeType::knockBackXZ]);
 		node.knockBackY = std::stof(tokens[ComboNodeType::knockBackY]);
 		node.isKirimomi = tokens[ComboNodeType::IsKirimomi] == "1" ? true : false;//CSVの値が1ならtrue、0ならfalse
+		node.hitStopTime = tokens[ComboNodeType::HitStopTime].empty() ? 0.0f : std::stof(tokens[ComboNodeType::HitStopTime]);
+		node.hitStopFrame = tokens[ComboNodeType::HitStopFrame].empty() ? 0.0f : std::stof(tokens[ComboNodeType::HitStopFrame]);
+		node.ownHitStop = tokens[ComboNodeType::OwnHitStop].empty() ? 0.0f : std::stof(tokens[ComboNodeType::OwnHitStop]);
+		node.ownHitStopFrame = tokens[ComboNodeType::OwnHitStopFrame].empty() ? 0.0f : std::stof(tokens[ComboNodeType::OwnHitStopFrame]);
+		node.allTimeScaleFlag = tokens[ComboNodeType::AllTimeScaleFlag] == "1";
 		node.seFrameRate = std::stof(tokens[ComboNodeType::SeFrameRate]);
 		node.seName = tokens[ComboNodeType::SeName];
 		//当たり判定のフレーム//;で区切って複数書いたら多段ヒット

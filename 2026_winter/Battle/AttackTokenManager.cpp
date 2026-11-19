@@ -6,7 +6,7 @@
 
 namespace
 {
-    constexpr float kGlobalAttackInterval = 30.0f;//攻撃権を渡す間隔(同時に斬りかからないように)
+    constexpr float kGlobalAttackInterval = 15.0f;//攻撃権を渡す間隔(同時に斬りかからないように)
 }
 
 bool AttackTokenManager::Request(EnemyBase& enemy, int cost)

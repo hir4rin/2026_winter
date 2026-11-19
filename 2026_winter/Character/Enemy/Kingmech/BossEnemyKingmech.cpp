@@ -138,16 +138,16 @@ void BossEnemyKingmech::Update()
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(HitAir,HitDrop,AirFall)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
 
-	//デバッグ用//Qを押した瞬間だけBossEnemyKingmechAttack.csvを読み込み直して攻撃データを更新する
-	bool isQPressed = CheckHitKey(KEY_INPUT_Q) != 0;
-	if (isQPressed && !m_wasQPressed)
+	//デバッグ用//F8を押した瞬間だけBossEnemyKingmechAttack.csvを読み込み直して攻撃データを更新する
+	bool isReloadPressed = CheckHitKey(KEY_INPUT_F8) != 0;
+	if (isReloadPressed && !m_wasReloadPressed)
 	{
 		DataManager::GetInstance().ReloadBossEnemyKingmechAttackRawData();
 		InitializeAttackList(DataManager::GetInstance().GetBossEnemyKingmechAttackRawData());
 		DataManager::GetInstance().ReloadEnemyStatusRawData();
 		InitializeStatus(DataManager::GetInstance().GetEnemyStatusRawData(), kStatusType);
 	}
-	m_wasQPressed = isQPressed;
+	m_wasReloadPressed = isReloadPressed;
 
 	//デバッグ用//Iを押した瞬間だけBossEnemyKingmechAnim.csvを読み込み直す//次にアニメが切り替わったときから効く
 	bool isIPressed = CheckHitKey(KEY_INPUT_I) != 0;

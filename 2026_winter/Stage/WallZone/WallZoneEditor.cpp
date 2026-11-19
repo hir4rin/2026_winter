@@ -19,7 +19,7 @@ namespace
 	constexpr float kListHeight = 180.0f;//ゾーン一覧の高さ
 	constexpr float kDuplicateOffset = 50.0f;//複製したときにずらす量(X方向)
 
-	const char* const kTypeNames[] = { "WallKickZone", "WallRunZone" };
+	const char* const kTypeNames[] = { "WallKickZone", "WallRunZone", "DeathZone" };
 
 	constexpr size_t kMaxHistoryNum = 100;//Undoで戻れる最大回数
 }
@@ -447,17 +447,23 @@ bool WallZoneEditor::FindFloorY(const Stage& stage, const Vector3& pos, float& o
 
 int WallZoneEditor::TypeToIndex(Collider::ColRole type)
 {
-	return (type == Collider::ColRole::WallRunZone) ? 1 : 0;
+	if (type == Collider::ColRole::WallRunZone)return 1;
+	if (type == Collider::ColRole::DeathZone)return 2;
+	return 0;
 }
 
 Collider::ColRole WallZoneEditor::IndexToType(int index)
 {
-	return (index == 1) ? Collider::ColRole::WallRunZone : Collider::ColRole::WallKickZone;
+	if (index == 1)return Collider::ColRole::WallRunZone;
+	if (index == 2)return Collider::ColRole::DeathZone;
+	return Collider::ColRole::WallKickZone;
 }
 
 const char* WallZoneEditor::TypeShortName(Collider::ColRole type)
 {
-	return (type == Collider::ColRole::WallRunZone) ? "Run " : "Kick";
+	if (type == Collider::ColRole::WallRunZone)return "Run ";
+	if (type == Collider::ColRole::DeathZone)return "Dead";
+	return "Kick";
 }
 
 bool WallZoneEditor::DragVector3(const char* label, Vector3& value, float speed, float min, float max)
@@ -497,6 +503,9 @@ bool WallZoneEditor::IsSameZones(const std::vector<WallZoneData>& a, const std::
 std::string WallZoneEditor::MakeDefaultName(Collider::ColRole type, int index)
 {
 	char buf[kNameBufferSize];
-	snprintf(buf, sizeof(buf), "%s_%d", (type == Collider::ColRole::WallRunZone) ? "Run" : "Kick", index);
+	const char* prefix = "Kick";
+	if (type == Collider::ColRole::WallRunZone)prefix = "Run";
+	if (type == Collider::ColRole::DeathZone)prefix = "Death";
+	snprintf(buf, sizeof(buf), "%s_%d", prefix, index);
 	return buf;
 }

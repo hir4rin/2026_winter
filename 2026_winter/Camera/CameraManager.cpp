@@ -20,6 +20,7 @@
 #include "CameraState/BattleSmoothCamera.h"
 #include "CameraState/BossPartThrowCamera.h"
 #include "CameraState/BossFinisherCamera.h"
+#include "CameraState/EndingCamera.h"
 #include "Collision/CollisionManager.h"
 #include "Stage/Stage.h"
 #include "Main/System.h"
@@ -165,6 +166,8 @@ bool CameraManager::IsStageHit(const Vector3& start, const Vector3& end) const
 bool CameraManager::IsStageCollisionCamera() const
 {
 	//ここはよう悩み//一旦全部の判定をする
+	//エンディングは後ろのコンテナに当たって前へ飛ぶので判定しない
+	if (m_currentState && m_currentState->GetCameraType() == CameraStateBase::Type::EndingCamera) return false;
 	return true;
 
 
@@ -245,6 +248,7 @@ const char* CameraManager::GetCameraTypeName(int type)
 	case CameraStateBase::Type::BattleSmoothCamera: return "BattleSmoothCamera";
 	case CameraStateBase::Type::BossPartThrowCamera: return "BossPartThrowCamera";
 	case CameraStateBase::Type::BossFinisherCamera: return "BossFinisherCamera";
+	case CameraStateBase::Type::EndingCamera: return "EndingCamera";
 	default: return "Other";
 	}
 }
@@ -676,6 +680,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::BossFinisherCamera:
 		newState = std::make_shared<BossFinisherCamera>(shared_from_this());
+		break;
+	case CameraStateName::EndingCamera:
+		newState = std::make_shared<EndingCamera>(shared_from_this());
 		break;
 	default:
 		return;

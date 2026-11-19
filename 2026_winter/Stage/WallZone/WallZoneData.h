@@ -9,7 +9,7 @@
 /// </summary>
 struct WallZoneData
 {
-	Collider::ColRole type = Collider::ColRole::WallKickZone;//WallKickZoneかWallRunZone
+	Collider::ColRole type = Collider::ColRole::WallKickZone;//WallKickZone / WallRunZone / DeathZone
 	std::string name;//編集画面の一覧に出す名前(メモ用)
 	Vector3 position;//ワールド座標での中心位置
 	Vector3 halfExtents = Vector3(100.0f, 100.0f, 100.0f);//Boxの半分の大きさ

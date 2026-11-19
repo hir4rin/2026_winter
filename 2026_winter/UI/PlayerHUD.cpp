@@ -87,7 +87,8 @@ void PlayerHUD::Init()
 void PlayerHUD::Update()
 {
 	auto player = m_player.lock();
-	m_isVisible = (player != nullptr) && !System::GetInstance().GetBattleMgr()->GetFinisherScreen().isPlaying;
+	auto battle = System::GetInstance().GetBattleMgr();
+	m_isVisible = (player != nullptr) && !battle->GetFinisherScreen().isPlaying && !battle->GetEndingScreen().isPlaying;
 	if (!player) return;
 
 	const float hpRate = static_cast<float>(player->GetHp()) / player->GetMaxHp();

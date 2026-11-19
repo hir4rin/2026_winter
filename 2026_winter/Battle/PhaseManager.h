@@ -30,9 +30,13 @@ public:
 	//デバッグ用//ボスの一つ手前のフェーズにして、敵を消し、プレイヤーをボスのエリアの手前に移す
 	//ボスのフェーズ中なら次のフェーズへ飛ぶ
 	void DebugSkipToBossPrevPhase();
+	//デバッグ用//フェーズを終わったことにする(敵を出さない・リザルトの合図も出さない)
+	void DebugFinish() { m_currentPhase = -1; }
 
 	bool IsTutorialReady()const;//待ち終わったチュートリアルがあるか
 	std::string TakeTutorial();//idを受け取って頼みを消す
+
+	bool TakeEndingRequest();//エンディングを始める合図(受け取ったら消える)
 
 	//エリア(エディタ用)-----------------------------------------------------
 	const std::vector<PhaseArea>& GetAreas()const { return m_areas; }
@@ -67,4 +71,6 @@ private:
 
 	std::string m_tutorialId;//開くチュートリアル(空なら無し)
 	int m_tutorialDelay = 0;//フェーズが始まってから開くまでのフレーム
+
+	bool m_isEndingRequested = false;
 };

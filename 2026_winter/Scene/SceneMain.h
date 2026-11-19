@@ -18,6 +18,7 @@ class SkyBox;
 class WallZoneEditor;
 class PhaseAreaEditor;
 class UIManager;
+class TunnelEnding;
 
 class SceneMain : public Scene
 {
@@ -49,6 +50,9 @@ private:
 	//チュートリアルを開いてよいか(演出の最中は待つ)
 	bool CanOpenTutorial()const;
 
+	//エンディングを始める(トンネルが無いステージはすぐリザルトへ)
+	void StartEnding();
+
 private:
 	int m_frameCount;
 	int m_fadeFrame;//フェードの経過フレーム
@@ -69,9 +73,11 @@ private:
 	std::unique_ptr<UIManager> m_uiManager;//このシーンで表示するUIをまとめて管理する
 	StageColorGrade m_stageColorGrade;//血殺中に背景とステージの色を変える
 	TempTopLight m_tempTopLight;//[TempTopLight]暗くて見づらいので真上から照らす(一時的)
+	std::unique_ptr<TunnelEnding> m_ending;//列車ステージのエンディング(始まったら作る)
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか
 	bool m_wasF4Pressed = false;//前フレームにF4キーが押されていたか(ボスの手前へ飛ぶ)
 	bool m_wasF5Pressed = false;//前フレームにF5キーが押されていたか(スキルエフェクト確認用)
 	bool m_wasF6Pressed = false;//前フレームにF6キーが押されていたか(スキルエフェクト確認用)
+	bool m_wasF7Pressed = false;//前フレームにF7キーが押されていたか(エンディング確認用)
 };

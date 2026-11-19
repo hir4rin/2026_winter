@@ -69,6 +69,10 @@ struct EnemyAttackNode
 	float knockBackY = 0.0f;//吹き飛ばし(縦)
 	bool isKirimomi = false;//キリモミ吹っ飛びするかどうか
 	float hitStopTime = 0.0f;//ヒットストップ(秒)
+	float hitStopFrame = 0.0f;//ヒットストップの長さ(フレーム)
+	float ownHitStop = 0.0f;//攻撃した側のヒットストップ
+	float ownHitStopFrame = 0.0f;//攻撃した側のヒットストップの長さ(フレーム)
+	bool allTimeScaleFlag = false;//trueなら個々ではなく全体のタイムスケールでヒットストップ
 
 	//当たり判定
 	float colRadius = 0.0f;//判定の半径
@@ -116,6 +120,10 @@ struct EnemyAttackNodeType
 		KnockBackY,
 		IsKirimomi,
 		HitStopTime,
+		HitStopFrame,
+		OwnHitStop,
+		OwnHitStopFrame,
+		AllTimeScaleFlag,
 		ColRadius,
 		ColForwardOffset,
 		ColOffsetY,

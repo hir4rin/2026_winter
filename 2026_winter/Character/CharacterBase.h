@@ -41,6 +41,10 @@ public:
 		Vector3 knockBackPower;//攻撃が当たったときの吹き飛ばしの力//YがY方向の吹き飛ばしの力、Xが水平面での吹き飛ばしの力
 		float knockBackFrame;//攻撃が当たった時の吹き飛ばす時間の割合
 		float hitStopTime;//攻撃が当たったときのヒットストップの時間
+		float hitStopFrame = 0.0f;//ヒットストップの長さ(フレーム)
+		float ownHitStop = 0.0f;//攻撃した側のヒットストップ
+		float ownHitStopFrame = 0.0f;//攻撃した側のヒットストップの長さ(フレーム)
+		bool allTimeScaleFlag = false;//trueなら個々ではなく全体のタイムスケールでヒットストップ
 		float kAttackColOffset;//攻撃判定を前に出す距離
 		bool isKirimomi;//吹っ飛ぶかどうか
 		AttackType attackType = AttackType::None;//弱攻撃か強攻撃か//プレイヤーの通常攻撃以外はNone

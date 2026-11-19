@@ -3,6 +3,7 @@
 #include "KessatsuUI.h"
 #include "PlayerHUD.h"
 #include "FinisherUI.h"
+#include "EndingUI.h"
 #include "AssasinTargetUI.h"
 #include "PartBrokenKillUI.h"
 #include "GuardBreakChanceUI.h"
@@ -40,6 +41,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	Add(std::make_shared<GuardBreakChanceUI>(player));
 	//トドメのムービーの黒帯・フラッシュ
 	Add(std::make_shared<FinisherUI>());
+	//エンディングのクレジット・ロゴ
+	Add(std::make_shared<EndingUI>());
 
 	//登録したUIのハンドルを生成する
 	InitAll();

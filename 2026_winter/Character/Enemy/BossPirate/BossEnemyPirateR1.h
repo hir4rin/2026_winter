@@ -52,7 +52,7 @@ private:
 
     int m_attackCountSinceLarge = 0;//前の全体攻撃から何回攻撃したか
 
-    bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
+    bool m_wasReloadPressed = false;//前のフレームにF8を押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
     bool m_wasIPressed = false;//前のフレームにIを押していたか//デバッグ用のアニメCSV読み込み直し
 
     std::shared_ptr<EnemyPart> m_leftArmPart;//切り離された左腕(当たり判定・落下・回転を持つ)

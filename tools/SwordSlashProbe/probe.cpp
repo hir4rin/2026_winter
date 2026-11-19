@@ -73,11 +73,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	{
 		if (line.empty() || line[0] == '#') continue;
 		auto t = Split(line, ',');
-		if (t.size() < 20) continue;
+		if (t.size() < 25) continue;
 		const std::string anim = t[1];
 		const int idx = MV1GetAnimIndex(pl, anim.c_str());
 		if (idx < 0) { fprintf(fp, "[%s] anim %s not found\n", t[3].c_str(), anim.c_str()); continue; }
-		auto starts = Split(t[18], ';'), ends = Split(t[19], ';');
+		auto starts = Split(t[23], ';'), ends = Split(t[24], ';');
 		const int at = MV1AttachAnim(pl, idx, -1, FALSE);
 		const float total = MV1GetAttachAnimTotalTime(pl, at);
 		for (size_t w = 0; w < starts.size() && w < ends.size(); ++w)
@@ -117,11 +117,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 		// 風切りを出すフレームごとに、ゲームの PlayerSlashEffect と同じ決まりで yaw / roll / spin を出す
 		// 弧の中心は足元+110、真ん中から刃先側の端まで75°、刃先側の端=そのフレームの刀の先
-		if (t.size() > 26 && !t[26].empty())
+		if (t.size() > 31 && !t[31].empty())
 		{
 			const VECTOR pivot = VGet(0, kPivotHeight, 0);
 			std::string yaws, rolls, spins, info;
-			for (const auto& sfText : Split(t[26], ';'))
+			for (const auto& sfText : Split(t[31], ';'))
 			{
 				const float sf = std::stof(sfText);
 				std::vector<VECTOR> tp;

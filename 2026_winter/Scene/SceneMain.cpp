@@ -2,6 +2,7 @@
 #include "Scene/SceneController.h"
 #include "DxLib.h"
 #include <cmath>
+#include <cstring>
 #include <unordered_map>
 #include "Character/Player/Player.h"
 #include "Character/Enemy/Swordman/EnemySwordman.h"
@@ -16,6 +17,7 @@
 #include "Render/ModelShaderManager.h"
 #include "Stage/Stage.h"
 #include "Stage/SkyBox.h"
+#include "Stage/TunnelEnding.h"
 #include "Main/Input.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
@@ -288,6 +290,19 @@ void SceneMain::NormalUpdate()
 	FrameProfiler::GetInstance().Mark("Upd:Collision");
 	System::GetInstance().Update();
 	m_battleManager->Update();//Systemでタイムスケールを戻した後に更新する
+
+	//エンディング(最後のフェーズの遷移表の event が Ending)
+	//F7 か起動の引数 -ending で、敵を消してすぐ始める(確認用)
+	const bool isF7Pressed = CheckHitKey(KEY_INPUT_F7) != 0;
+	const bool isDebugEnding = (isF7Pressed && !m_wasF7Pressed) || (m_frameCount == 2 && strstr(GetCommandLineA(), "-ending"));
+	m_wasF7Pressed = isF7Pressed;
+	if (isDebugEnding && !m_ending)
+	{
+		m_enemyManager->DebugClearEnemies();
+		m_phaseManager->DebugFinish();
+	}
+	if ((m_phaseManager->TakeEndingRequest() || isDebugEnding) && !m_ending) StartEnding();
+	if (m_ending) m_ending->Update();
 	//押し戻しの後のプレイヤーの位置で、近い明かりを点ける
 	m_stage->UpdateLights(m_player->GetRigidBody().GetPos());
 
@@ -363,6 +378,16 @@ bool SceneMain::CanOpenTutorial() const
 	return true;
 }
 
+void SceneMain::StartEnding()
+{
+	if (!m_stage->HasTunnel())
+	{
+		m_battleManager->SetIsBattleEnd(true);
+		return;
+	}
+	m_ending = std::make_unique<TunnelEnding>(m_stage, m_player, m_cameraManager);
+}
+
 void SceneMain::FadeOutUpdate()
 {
 	m_fadeFrame++;
@@ -418,6 +443,18 @@ void SceneMain::NormalDraw()
 	Effekseer_Sync3DSetting();
 	DrawEffekseer3D();
 	FrameProfiler::GetInstance().Mark("Draw:Effect");
+	//[TEMP_TRAIL] 確認用
+	{
+		extern int g_trailCapture;
+		if (g_trailCapture > 0 && g_trailCapture <= 30)
+		{
+			char path[64];
+			sprintf_s(path, "Log/trail_%03d.png", g_trailCapture++);
+			int w = 0, h = 0;
+			GetDrawScreenSize(&w, &h);
+			SaveDrawScreenToPNG(0, 0, w, h, path);
+		}
+	}
 
 	
 	m_uiManager->Draw();

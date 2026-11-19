@@ -161,8 +161,28 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				hitCol->OnDamageInterFace(*this, *m_attackData);
 				//リザルトのコンボ
 				if (auto recorder = System::GetInstance().GetBattleMgr()->GetResultRecorder().lock()) recorder->OnPlayerAttackHit();
-				//ヒットストップの受け渡し
-				//hitCol->SetTimeScaleInterFace(0.3f, 10.0f);
+				//ヒットストップ//フレーム0は無し、スロー中(必殺技・ジャスト回避)は入れない
+				const bool canHitStop = System::GetInstance().GetTimeScale() >= 1.0f && GetTag().role != Collider::ColRole::UltAttack;
+				if (m_attackData->allTimeScaleFlag)
+				{
+					//全体のタイムスケールで止める
+					if (canHitStop && m_attackData->hitStopFrame > 0.0f)
+					{
+						System::GetInstance().SetTimeScaleForFrames(m_attackData->hitStopTime, static_cast<int>(m_attackData->hitStopFrame));
+					}
+				}
+				else
+				{
+					if (canHitStop && m_attackData->hitStopFrame > 0.0f)
+					{
+						hitCol->SetTimeScaleInterFace(m_attackData->hitStopTime, m_attackData->hitStopFrame);
+					}
+					//自分のヒットストップは1振りで1回だけ
+					if (canHitStop && m_hitIds.empty() && m_attackData->ownHitStopFrame > 0.0f)
+					{
+						player->SetOwnTimeScale(m_attackData->ownHitStop, m_attackData->ownHitStopFrame);
+					}
+				}
 
 				//プレイヤーの攻撃が当たった時の処理//カメラシェイクや、内部ターゲットのセット
 				player->OnAttackHit(otherId);
@@ -307,6 +327,28 @@ void AttackCol::EnemyAttackOnCollision(Collider& other)
 			if (hitCol)
 			{
 				hitCol->OnDamageInterFace(*this, *m_attackData);
+
+				//ヒットストップ//フレーム0は無し、スロー中は入れない
+				if (System::GetInstance().GetTimeScale() >= 1.0f && m_attackData->allTimeScaleFlag)
+				{
+					//全体のタイムスケールで止める
+					if (m_attackData->hitStopFrame > 0.0f)
+					{
+						System::GetInstance().SetTimeScaleForFrames(m_attackData->hitStopTime, static_cast<int>(m_attackData->hitStopFrame));
+					}
+				}
+				else if (System::GetInstance().GetTimeScale() >= 1.0f)
+				{
+					if (m_attackData->hitStopFrame > 0.0f)
+					{
+						hitCol->SetTimeScaleInterFace(m_attackData->hitStopTime, m_attackData->hitStopFrame);
+					}
+					auto owner = m_owner.lock();
+					if (owner && m_attackData->ownHitStopFrame > 0.0f)
+					{
+						owner->SetOwnTimeScale(m_attackData->ownHitStop, m_attackData->ownHitStopFrame);
+					}
+				}
 			}
 		}
 	}

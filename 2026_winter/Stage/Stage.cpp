@@ -25,12 +25,17 @@ namespace
 	constexpr float kFloorCheckStartY = 800.0f;//床を調べる線分の開始高さ(モデル座標)//以前の配置(-800)でキャラが立っていた床を拾うため
 	constexpr float kFloorCheckEndY = -100000.0f;//床を調べる線分の終了高さ(モデル座標)
 	constexpr float kGameStageDefaultPosY = -800.0f;//床が見つからなかったときのステージの高さ
+	constexpr float kKillYMargin = 500.0f;//当たり判定のモデルの一番下からどれだけ下で落下死にするか
 
 	//列車ステージのトンネル
 	constexpr float kTunnelLength = 13200.0f;//トンネル1本の長さ(この長さで継ぎ目なくつながる)
 	constexpr float kTunnelOffsetY = -150.0f;//トンネルのレール上面の高さ(列車のデッキの上面=0から見て)
 	constexpr float kTunnelScrollSpeed = -20.0f;//1フレームに流す距離(列車の速さ)
 	constexpr float kTunnelDrawRange = 6000.0f;//カメラから前後この距離までのトンネルを描く(SceneMainのファークリップより少し長く)
+	constexpr float kTunnelExitSizeRate = 0.85f;//出口の穴の大きさ(トンネルの外側の大きさに対して)
+	constexpr int kTunnelExitArchDiv = 24;//出口の丸い所の分け方
+	constexpr float kTunnelExitHaloRate = 1.15f;//出口のまわりの光のにじみの大きさ
+	constexpr int kTunnelExitHaloAlpha = 90;
 
 	//列車ステージの明るさ(戦う場所を明るく、トンネルと遠くを暗くする)
 	constexpr float kTunnelColorScale = 0.45f;//トンネルの明るさ
@@ -91,6 +96,15 @@ void Stage::GameInit(const StageInfo& info)
 		const COLOR_F tunnelScale = GetColorF(kTunnelColorScale, kTunnelColorScale, kTunnelColorScale, 1.0f);
 		MV1SetAmbColorScale(m_tunnelHandle, tunnelScale);
 		MV1SetDifColorScale(m_tunnelHandle, tunnelScale);
+		//置いた位置から見た、進む向きの端(モデルのフレームがずれているので実際に測る)
+		MV1SetPosition(m_tunnelHandle, VGet(0.0f, 0.0f, 0.0f));
+		MV1SetupReferenceMesh(m_tunnelHandle, -1, TRUE);
+		const MV1_REF_POLYGONLIST ref = MV1GetReferenceMesh(m_tunnelHandle, -1, TRUE);
+		m_tunnelFrontOffset = (GetTrainForwardZ() > 0.0f) ? ref.MaxPosition.z : ref.MinPosition.z;
+		m_tunnelHalfWidth = (ref.MaxPosition.x - ref.MinPosition.x) * 0.5f;
+		m_tunnelMinY = ref.MinPosition.y;
+		m_tunnelMaxY = ref.MaxPosition.y;
+		MV1TerminateReferenceMesh(m_tunnelHandle, -1, TRUE);
 		//列車はマテリアルの環境光が明るさのほとんどなので、環境光だけ上げる
 		MV1SetAmbColorScale(m_stageViewHandle, GetColorF(kTrainColorScale, kTrainColorScale, kTrainColorScale, 1.0f));
 	}
@@ -124,6 +138,12 @@ void Stage::GameInit(const StageInfo& info)
 	MV1SetMatrix(m_stageViewHandle, transmat_graphic);
 	MV1RefreshCollInfo(m_stageModelHandle, -1);//ずらした位置で当たり判定を作り直す
 	BuildMeshBoxes();
+
+	//当たり判定のモデルの一番下より下に落ちたら落下死
+	MV1SetupReferenceMesh(m_stageModelHandle, -1, TRUE);
+	MV1_REF_POLYGONLIST ref = MV1GetReferenceMesh(m_stageModelHandle, -1, TRUE);
+	m_killY = ref.MinPosition.y - kKillYMargin;
+	MV1TerminateReferenceMesh(m_stageModelHandle, -1, TRUE);
 
 	//明かりのCSV(番号は敵配置と同じ。無いステージは何もしない)
 	m_lights.Load(info.enemySpawnNumber, m_pos_graphic);
@@ -164,9 +184,46 @@ void Stage::Update()
 	if (m_tunnelHandle != -1)
 	{
 		//スローのときはトンネルもゆっくり流す
-		m_tunnelScroll += kTunnelScrollSpeed * System::GetInstance().GetTimeScale();
+		const float move = kTunnelScrollSpeed * m_tunnelSpeedScale * System::GetInstance().GetTimeScale();
+		m_tunnelScroll += move;
 		m_tunnelScroll = std::fmod(m_tunnelScroll, kTunnelLength);
+		if (m_hasTunnelExit) m_tunnelExitZ += move;
 	}
+}
+
+float Stage::GetTunnelSpeed() const
+{
+	return std::fabs(kTunnelScrollSpeed) * m_tunnelSpeedScale;
+}
+
+float Stage::GetTrainForwardZ() const
+{
+	//トンネルが流れる向きの逆へ進む
+	return (kTunnelScrollSpeed < 0.0f) ? 1.0f : -1.0f;
+}
+
+Stage::FogSetting Stage::GetTrainFog() const
+{
+	return { kTrainFogR, kTrainFogG, kTrainFogB, kTrainFogStart, kTrainFogEnd };
+}
+
+float Stage::StartTunnelExit(float baseZ, float minDistance)
+{
+	if (m_tunnelHandle == -1) return 0.0f;
+	//minDistance 先より向こうで、一番近いトンネルの継ぎ目を出口にする
+	const float forward = GetTrainForwardZ();
+	const float target = baseZ + forward * minDistance;
+	const float origin = m_pos_graphic.z + m_tunnelScroll + m_tunnelFrontOffset;
+	const float index = forward > 0.0f ? std::ceil((target - origin) / kTunnelLength) : std::floor((target - origin) / kTunnelLength);
+	m_tunnelExitZ = origin + index * kTunnelLength;
+	m_hasTunnelExit = true;
+	return GetTunnelExitDistance(baseZ);
+}
+
+float Stage::GetTunnelExitDistance(float z) const
+{
+	if (!m_hasTunnelExit) return 1.0e9f;
+	return (m_tunnelExitZ - z) * GetTrainForwardZ();
 }
 
 void Stage::UpdateLights(const Vector3& playerPos)
@@ -192,8 +249,9 @@ void Stage::Draw() const
 	{
 		SetFogEnable(TRUE);
 		SetFogMode(DX_FOGMODE_LINEAR);
-		SetFogColor(kTrainFogR, kTrainFogG, kTrainFogB);
-		SetFogStartEnd(kTrainFogStart, kTrainFogEnd);
+		const FogSetting fog = m_hasFogOverride ? m_fogOverride : GetTrainFog();
+		SetFogColor(fog.r, fog.g, fog.b);
+		SetFogStartEnd(fog.start, fog.end);
 	}
 	const bool useNightFog = m_useNightFog;
 	if (useNightFog)
@@ -203,6 +261,9 @@ void Stage::Draw() const
 		SetFogColor(kNightFogR, kNightFogG, kNightFogB);
 		SetFogStartEnd(kNightFogStart, kNightFogEnd);
 	}
+
+	//出口の光は背景として先に描く(出口より先の列車も上に重なって見える)
+	DrawTunnelExitLight();
 
 	//いつもの光＋明かりを1回で描く(明かりの無いステージはいつもの描画)
 	CullMeshes();
@@ -235,8 +296,56 @@ void Stage::DrawTunnel() const
 	for (int i = first; i <= last; ++i)
 	{
 		const float z = m_pos_graphic.z + i * kTunnelLength + m_tunnelScroll;
+		//出口より先のトンネルは描かない
+		if (m_hasTunnelExit && GetTunnelExitDistance(z + m_tunnelFrontOffset) < -1.0f) continue;
 		MV1SetPosition(m_tunnelHandle, VGet(m_pos_graphic.x, m_pos_graphic.y + kTunnelOffsetY, z));
 		ModelShaderManager::GetInstance().DrawModel(m_tunnelHandle);
+	}
+}
+
+void Stage::DrawTunnelExitLight() const
+{
+	if (!m_hasTunnelExit || GetTunnelExitDistance(GetCameraPosition().z) <= 0.0f) return;
+	//出口の穴(上が丸いアーチ)を明るい色で塗る
+	const float bottom = m_pos_graphic.y + kTunnelOffsetY + m_tunnelMinY;
+	const float spring = m_pos_graphic.y;//ここから上を丸くする
+	const float halfWidth = m_tunnelHalfWidth * kTunnelExitSizeRate;
+	const float archHeight = (m_pos_graphic.y + kTunnelOffsetY + m_tunnelMaxY - spring) * kTunnelExitSizeRate;
+	const float centerX = m_pos_graphic.x;
+	const unsigned int color = GetColor(m_exitLightR, m_exitLightG, m_exitLightB);
+	SetFogEnable(FALSE);
+	SetUseLighting(FALSE);
+	SetUseBackCulling(FALSE);//どちらから見ても描く
+	SetUseZBuffer3D(FALSE);//後から描くステージが上に重なるように
+	SetWriteZBuffer3D(FALSE);
+	//外側にうっすら光のにじみ、その内側に穴
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, kTunnelExitHaloAlpha);
+	DrawArch(centerX, bottom, spring, halfWidth * kTunnelExitHaloRate, archHeight * kTunnelExitHaloRate, color);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	DrawArch(centerX, bottom, spring, halfWidth, archHeight, color);
+	SetWriteZBuffer3D(TRUE);//Application::Init で有効にしている
+	SetUseZBuffer3D(TRUE);
+	SetUseBackCulling(TRUE);
+	SetUseLighting(TRUE);
+	SetFogEnable(TRUE);
+}
+
+void Stage::DrawArch(float centerX, float bottom, float spring, float halfWidth, float archHeight, unsigned int color) const
+{
+	const VECTOR baseL = VGet(centerX - halfWidth, bottom, m_tunnelExitZ);
+	const VECTOR baseR = VGet(centerX + halfWidth, bottom, m_tunnelExitZ);
+	const VECTOR springL = VGet(centerX - halfWidth, spring, m_tunnelExitZ);
+	const VECTOR springR = VGet(centerX + halfWidth, spring, m_tunnelExitZ);
+	DrawTriangle3D(baseL, baseR, springR, color, TRUE);
+	DrawTriangle3D(baseL, springR, springL, color, TRUE);
+	const VECTOR center = VGet(centerX, spring, m_tunnelExitZ);
+	for (int i = 0; i < kTunnelExitArchDiv; ++i)
+	{
+		const float a0 = DX_PI_F * i / kTunnelExitArchDiv;
+		const float a1 = DX_PI_F * (i + 1) / kTunnelExitArchDiv;
+		const VECTOR p0 = VGet(centerX + cosf(a0) * halfWidth, spring + sinf(a0) * archHeight, m_tunnelExitZ);
+		const VECTOR p1 = VGet(centerX + cosf(a1) * halfWidth, spring + sinf(a1) * archHeight, m_tunnelExitZ);
+		DrawTriangle3D(center, p0, p1, color, TRUE);
 	}
 }
 
@@ -376,6 +485,10 @@ void Stage::DrawWallZones(int selectedIndex) const
 		else if (zone->GetRole() == Collider::ColRole::WallKickZone)
 		{
 			color = GetColor(255, 128, 0);//壁キックはオレンジ
+		}
+		else if (zone->GetRole() == Collider::ColRole::DeathZone)
+		{
+			color = GetColor(255, 0, 0);//落下死は赤
 		}
 		else
 		{

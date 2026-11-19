@@ -21,7 +21,8 @@ bool CollisionManager::IsSameOwner(const std::weak_ptr<Collider>& a, const std::
 bool CollisionManager::IsWallZone(const Collider& col)
 {
 	return col.GetRole() == Collider::ColRole::WallKickZone ||
-		col.GetRole() == Collider::ColRole::WallRunZone;
+		col.GetRole() == Collider::ColRole::WallRunZone ||
+		col.GetRole() == Collider::ColRole::DeathZone;
 }
 
 void CollisionManager::RegisterCollider(std::weak_ptr<Collider> collider)

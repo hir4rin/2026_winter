@@ -2,14 +2,28 @@
 #include <vector>
 #include "Math/Vector3.h"
 
-//刀の軌跡(白い風切り)
+//刀の軌跡(白い風切り)//足の軌跡にも使う
 //刀身の根元と先の位置を毎フレーム覚え、直近の数フレームをなめらかにつないだ帯を描く
 //古い点から消えるので、刃先の側へ縮んで消える
 class PlayerSwordTrail
 {
 public:
+	//長さ・濃さ//標準は刀
+	struct Style
+	{
+		float life;//点が消えるまでのフレーム数
+		float minMove;//先がこれより動いていなければ点を足さない
+		float hazeAlpha;//もや
+		float streakAlpha;//線の束
+		float streakGlowAlpha;//線の束(加算)
+		float edgeAlpha;//先のふち(加算)
+		float fadePower;//薄くなり方
+	};
+
 	PlayerSwordTrail();
 	~PlayerSwordTrail();
+
+	void SetStyle(const Style& style) { m_style = style; }
 
 	//このフレームに軌跡を伸ばすか//毎フレーム呼ぶ(呼ばなければ伸ばさない)
 	void SetEmitting(bool isEmitting) { m_isEmitting = isEmitting; }
@@ -36,6 +50,7 @@ private:
 	static Vector3 CatmullRom(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, float t);
 	void DrawStrip(const std::vector<Vertex>& vertices, int graph, int blendMode, float alpha);
 
+	Style m_style;
 	std::vector<Point> m_points;
 	std::vector<Vertex> m_vertices;//描くときの作業用
 	bool m_isEmitting = false;

@@ -19,6 +19,7 @@
 #include "Character/Player/State/Defence/PlayerStateDodge.h"//以下同文
 #include "Character/Player/State/Defence/PlayerStateJustDodge.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateResultMove.h"//以下同文
+#include "Character/Player/State/Locomotion/PlayerStateStartMovie.h"
 #include "Character/Player/State/Locomotion/PlayerStateWallRun.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateWallKick.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateWallStay.h"//以下同文
@@ -62,6 +63,11 @@ struct ComboNode
 	float knockBackXZ = 0;//XZ方向のノックバックの距離//攻撃を受けたときに、どれくらいふっとぶか
 	float knockBackY = 0;//Y方向のノックバックの距離//攻撃を受けたときにY軸に飛ぶ量
 	bool isKirimomi = false;//吹っ飛ぶかどうか//吹っ飛ばない攻撃は、相手を引き寄せるような攻撃にする<-かなりあり！！！！！！！！
+	float hitStopTime = 0.0f;//ヒットストップ(秒)
+	float hitStopFrame = 0.0f;//ヒットストップの長さ(フレーム)
+	float ownHitStop = 0.0f;//攻撃した側のヒットストップ
+	float ownHitStopFrame = 0.0f;//攻撃した側のヒットストップの長さ(フレーム)
+	bool allTimeScaleFlag = false;//trueなら個々ではなく全体のタイムスケールでヒットストップ
 	float seFrameRate = -1;//攻撃のSEを鳴らすフレームの割合//アニメーションの再生時間に対する割合で指定
 	std::string seName;//攻撃のSEの名前
 	//当たり判定のON/OFFフレーム//StartとEndは同じ番号どうしでペア
@@ -109,19 +115,24 @@ enum ComboNodeType : int
 	knockBackXZ = 13,
 	knockBackY = 14,
 	IsKirimomi = 15,
-	SeFrameRate = 16,
-	SeName = 17,
-	AttackColStartFrame = 18,
-	AttackColEndFrame = 19,
-	EndFrame = 20,
-	BlendFrame = 21,
-	ComboInputStartFrame = 22,
-	ComboInputEndFrame = 23,
-	CancelFrame = 24,
-	ActionCancelFrame = 25,
-	Size = 26,//ここまでは必須の列
-	SlashStart = 26,//ここから後ろは省略できる
-	SlashEnd = 27,
+	HitStopTime = 16,
+	HitStopFrame = 17,
+	OwnHitStop = 18,
+	OwnHitStopFrame = 19,
+	AllTimeScaleFlag = 20,
+	SeFrameRate = 21,
+	SeName = 22,
+	AttackColStartFrame = 23,
+	AttackColEndFrame = 24,
+	EndFrame = 25,
+	BlendFrame = 26,
+	ComboInputStartFrame = 27,
+	ComboInputEndFrame = 28,
+	CancelFrame = 29,
+	ActionCancelFrame = 30,
+	Size = 31,//ここまでは必須の列
+	SlashStart = 31,//ここから後ろは省略できる
+	SlashEnd = 32,
 
 };
 namespace ComboIndex
@@ -241,6 +252,18 @@ public:
 
 	bool IsMoveState()const;//Move,FastRunのときtrue
 
+	//このフレームに足の軌跡を伸ばすか//毎フレーム呼ぶ
+	void SetFootTrailEmitting(bool isEmitting);
+
+	//死んだ原因
+	enum class DeathCause
+	{
+		None,
+		Hp,//HPが0
+		Fall,//落下
+	};
+	DeathCause GetDeathCause()const { return m_deathCause; }
+
 	//暗殺
 	void SetAssasinTarget(std::shared_ptr<EnemyBase> target) { m_assasinTarget = target; }
 	void ClearAssasinTarget() { m_assasinTarget.reset(); }
@@ -318,6 +341,7 @@ private:
 	void InitializeComboChain();//CSVからコンボデータの読み込みをする
 	void UpdateAngle();//回転処理
 	void BloodWingUpdate();//必殺技状態の翼エフェクトの再生・停止と、背中への追従
+	void GetFootTrailPos(int side, Vector3& base, Vector3& tip)const;//足の軌跡の帯の根元(すね)と先(つま先)
 	static MATRIX ScaleRotation(const MATRIX& rot, float rate);//回転行列の回転量だけを割合で弱める(回転軸はそのまま)
 	static MATRIX GetRotationOnly(const MATRIX& mat);//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
 	static MATRIX GetFrameBaseModelMatrix(int modelHandle, int frameIndex);//アニメーションが付いていない初期姿勢での、フレームのモデル空間の行列
@@ -344,7 +368,11 @@ private:
 	ComboInfo m_comboInfo = {};//コンボの情報//現在のコンボの段数などを管理するためのもの
 	DamageInfo m_damageInfo = {};//被ダメ後無敵時間の情報
 	std::shared_ptr<AttackCol> m_burstAttackCol;//吹き飛ばしようのCollider
-	bool m_wasQPressed = false;//Qキーの押しっぱなし判定用(ComboChain.csvの読み込み直し)
+	bool m_wasReloadPressed = false;//F8キーの押しっぱなし判定用(ComboChain.csvの読み込み直し)
+
+	DeathCause m_deathCause = DeathCause::None;
+	//DeathZoneに入った・落下死の高さより下に落ちたら死ぬ
+	bool CheckFallDeath();
 
 
 	//リザルト集計用
@@ -374,6 +402,10 @@ private:
 
 	CharacterLook m_look;//法線マップ・遮蔽・光沢つきで描く(CharacterLookPS.hlsl)
 	PlayerSwordTrail m_swordTrail;//刀の軌跡(白い風切り)
+	PlayerSwordTrail m_footTrail[2];//足の軌跡(ジャンプの白いもや)//0が左、1が右
+	int m_calfFrame[2] = { -1, -1 };//すね
+	int m_footFrame[2] = { -1, -1 };//足首
+	int m_ballFrame[2] = { -1, -1 };//つま先
 	bool m_isTrailSamplePending = false;//Updateが進んだので、描くときに刀の位置を軌跡に足す
 	float m_trailTimeScale = 1.0f;//そのフレームのタイムスケール
 
@@ -438,6 +470,7 @@ private:
 	friend class PlayerStateDodge;
 	friend class PlayerStateJustDodge;
 	friend class PlayerStateResultMove;
+	friend class PlayerStateStartMovie;
 	friend class PlayerStateWallRun;
 	friend class PlayerStateWallKick;
 	friend class PlayerStateWallStay;

@@ -4,6 +4,7 @@
 #include "Main/Game.h"
 #include "Main/Input.h"
 #include "Main/System.h"
+#include "Render/EffectManager.h"
 
 
 namespace
@@ -15,6 +16,8 @@ namespace
 	constexpr float kJumpForWallStayFrame = 10.0f;//壁に沿って移動する状態に遷移するまでのフレーム数
 
 	constexpr float kJumpPowerRate = 2.0f;
+
+	constexpr float kJumpKickEffectScale = 20.0f;//エフェクトは1/20で作っている
 }
 
 
@@ -39,14 +42,20 @@ void PlayerStateJump::Enter()
 	if (!player) return;
 	//animationの初期化
 	
+	//地面を蹴った衝撃と砂ぼこり//地上から跳んだときだけ(コヨーテタイムのジャンプは出さない)
+	if (player->IsFloor())
+	{
+		const Vector3& dir = player->m_targetVec;//足跡の光をプレイヤーの向きに合わせる
+		EffectManager::GetInstance().Play(AsyncData::JumpKickEffect, player->m_rb.m_pos, atan2f(dir.x, dir.z), kJumpKickEffectScale);
+	}
+
 	//上昇速度を与える//Enterは前のステートのUpdate中に呼ばれるので、このフレームから上昇させる
 	player->m_rb.m_vel.y = kJumpInitVel;//ジャンプの初速//この数値を変えることで、ジャンプの高さを調整できる
 	m_gravity = 0.0f;
 	//ジャンプ状態
 	player->m_isGround = false;//地面にいない状態にする
 	player->SetIsFloor(false);//地面にいない状態にする
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("JumpUp"), false, 1.0f, Game::kPlayerAnimJumpUpEndFrame);
-	//System::GetInstance().GetSoundManager().PlaySE("JumpUpAndDown");
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("JumpUp"), false, 1.0f, Game::kPlayerAnimJumpUpEndFrame);	//System::GetInstance().GetSoundManager().PlaySE("JumpUpAndDown");
 	//printfDx("baseVel %.2f %.2f\n", m_baseVel.x, m_baseVel.z);
 
 }
@@ -57,6 +66,8 @@ void PlayerStateJump::Update()
 	auto player = m_owner.lock();
 	if (!player) return;
 	auto& input = Input::GetInstance();
+
+	player->SetFootTrailEmitting(true);//足の軌跡(白いもや)
 
 	//重力の処理//m_velはCollisionManager::AddVelocityでタイムスケールを掛けて上書きされるので、初速と累積から毎フレーム作り直す
 	float timeScale = System::GetInstance().GetTimeScale();

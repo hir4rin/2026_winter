@@ -1962,3 +1962,69 @@
   - 重さ: Draw:Effect 0.01〜0.02ms、1フレーム全体は変わらない(Release・待ちなし約0.52ms)。
 - 確認: Release のビルドは通った。4ステージとも `-bench` で最後まで動いた。一時コード(決めたカメラで撮る・火花を多めに出す)で車体の横から撮った(一時コードは消した。`../EffectTools/TrainSpark/game_spark.png`・`game_spark_left.png`、エディタの絵 `editor_timeline.png`)。**実際に遊んでの確認はまだ**(出る頻度・大きさ、プレイヤーの後ろからのカメラでの見え方)。
 - 気づいたこと(前から・未対応): 列車の横の外側(x が ±1100 より外)から +Z を見ると、トンネルの遠く(カメラのファー5000の先)が**白く**見える。ライティングを切っても出るので今回の変更ではない。遊ぶ範囲(x ±800)のカメラで出るかは見ていない。
+
+### 2026-11-19 落下死の条件(リスポーンはまだ)
+- 壁ゾーンに種類 `DeathZone` を足した(`Collider::ColRole::DeathZone`、CSV の type も `DeathZone`)。壁ゾーンのエディタで選べる。線は赤。押し戻しはしない(`CollisionManager::IsWallZone` に入れた)。
+- `Stage::GetKillY()`: 当たり判定のモデルの一番下 − 500(`kKillYMargin`)。`GameInit` で参照メッシュから求める。テスト -600 / デモ -1800 / 列車 -670 / ステージ1 -1900(一時コードで確認)。タイトルのステージは -1e9(落ちない)。
+- `Player::CheckFallDeath()`(`Player::Update` の速度を0にした直後): DeathZone に入った か `GetKillY` より下 なら `m_deathCause = Fall`・`m_isDead = true`。そのあと `Update` はそこで return(その場で止まる)。HP が0のときは `m_deathCause = Hp`(PlayerStateDie は今まで通り)。`GetDeathCause()`。
+- **死んだあとは何も起きない**。リスポーンはユーザーが実装する。手順は `../進捗/note_リスポーンの実装手順.md`(落下 → 最後に安全に着地した場所、HP0 → フェーズのチェックポイント＋フェーズのやり直し)。進行方向の案内の点とは別のデータにする(会話で決めた)。
+- Debug(x64)でビルドは通った。4ステージとも `-bench=60` で正常終了。**DeathZone を置いて入る確認・落ちる確認はまだ**。
+- (追記)**列車とステージ1の下に DeathZone の板を1枚ずつ敷いた**(すり抜けたとき用。落ちない作りなので普段は入らない)。名前は `Death_Floor`。
+  - 当たり判定のモデルの範囲(一時コードで測った)の一番下から 100 下を上の面、厚さ 400(下の面 = `GetKillY`)、横は範囲より 3000 ずつ広い。
+  - 列車 `Stage004.csv`: 中心 (0, -470, 7834)・半分の大きさ (4117, 200, 18757)。範囲は x ±1117 / y -170〜1200 / z -7922〜23591。
+  - ステージ1 `Stage005.csv`: 中心 (5555, -1700, 22645)・半分の大きさ (12345, 200, 26295)。範囲は x -3790〜14900 / y -1400〜4400 / z -650〜45940。
+  - 一時コードで、スタート地点ではゾーンの外、板の中(落下死の高さ +200)に移すと落下死になることを両方で確認した。ステージを作り直して範囲が変わったら直すこと。
+
+### 2026-11-19 列車ステージのエンディング(トンネルを抜ける → クレジット → ロゴ。NG4 の Ch0 8:30〜を参考に)
+- 参考: YouTube の NG4 のプレイ動画(vz9_ruDj4JI)の 8:30〜9:18。歩いて出口を抜ける → 青い霧 → カメラが低く寄って見上げる → 霧が晴れる → 引いて歩ける → 赤いクレジット3枚 → タイトルロゴ。抜けた先に見せる景色は**まだ無い**(ユーザーが後回しにした)。
+- きっかけ: 遷移表の最後の行の event を `Ending` にする(`PhaseStage004.csv` の `6,AllDead,F,-1,Ending`)。`PhaseEvent::Ending` のときは `SetIsBattleEnd` を立てず `PhaseManager::TakeEndingRequest()` を出す。SceneMain が `TunnelEnding` を作り、ロゴが終わったら `SetIsBattleEnd` → いつもの暗転でリザルト。トンネルの無いステージで Ending を使うとすぐリザルト。
+- **確認用: F7 か起動の引数 `-ending`**(敵を消し、`PhaseManager::DebugFinish()` でフェーズを止めてすぐ始める)。例 `2026_winter.exe -bench=2400 -stage=2 -ending`。スキップは無い。全体で約36秒。
+- `Stage/TunnelEnding.h/.cpp`(進行役。値は .cpp 先頭): Wait(90F、血殺・演出中は数えない)→ Approach → WhiteOut(100F)→ Clear(240F)→ Gaze(200F)→ Credit → Logo → Done。時間は実フレーム。
+  - Approach: `Stage::StartTunnelExit` で 2500 より先のトンネルの継ぎ目を出口にし、それより先のトンネルは描かない。継ぎ目は 13200 おきなので、遠いときは列車を速くして約300Fで着くようにする(`SetTunnelSpeedScale`)。
+  - トンネルの中は背景を黒いままにする(トンネルのモデルは天井が続いていないので、背景を明るくすると頭の上が空に見える)。代わりに出口の位置にアーチ形の光(`Stage::DrawTunnelExitLight`)を**ステージより先に・Zを使わずに**描く(出口より先の列車も上に重なって見える)。大きさはトンネルのモデルの範囲から測る。
+  - 抜けたら背景を白に、フォグを 0〜700 の白い霧に。30F後にプレイヤーを止め(`SetIsEventPlaying` + `ForceIdleState`)、`EndingCamera` で低い所から見上げる。Clear で霧を晴らして空の色(背景・フォグとも暗い青)に。
+  - Gaze の後にカメラを引いて歩けるようにし、クレジット(1枚 216F + 間 42F)× 3 → ロゴ 366F。
+  - 背景の色は `SetBackgroundColor`。`TunnelEnding` のデストラクタで黒に戻す。フォグは `Stage::SetFogOverride`(列車のフォグの代わりに使う)。
+- `Camera/CameraState/EndingCamera`(`Type` 25): プレイヤーの足元から「後ろの距離・高さ・注視点の前の距離・高さ・視野角」(`Shot`)で置き、`MoveTo(shot, frame)` で次の置き方へなめらかに動く。`SetForward` で移動の入力の基準の向きも決まる。**ステージとの当たり判定はしない**(後ろのコンテナに当たってカメラが前へ飛んでいた)。
+- `UI/EndingUI`(Front): `BattleManager::EndingScreen` を見て描く。エンディング中は HUD を消す(`PlayerHUD`)。
+  - クレジット: Times New Roman の赤い文字。赤い四角のノイズ → 少し大きい X がちらつく → 左から順に本当の文字に変わる → 約3.3秒 → 赤い四角で消える。色ずれ・横のにじみ・走査線つき。中身は仮(`DrawCredit` の表)。
+  - ロゴ: タイトルの画像(`data/UI/Title/`)を使う。赤い忍が左から出る → 赤がまだらに抜けて鋼に → 斬り口の光 → 完成形がまだらに出る・血のしずく → 約4.7秒 → 赤くなって横にぶれ、まだらに消える → 後ろの筆だけ赤く少し残る。
+  - まだらに出す・消すのは `SetBlendGraphParam(..., DX_BLENDGRAPHTYPE_WIPE, ...)`。ブレンド画像(まだら・左からのワイプ)は Init で SoftImage に作る。`DrawRotaGraphF` でも効く。
+- 気づいたこと: `SetUseBackCulling(true)` が全体で入っているので、`DrawTriangle3D` などは向きによって描かれない。トンネルのモデルの範囲は z ±約6700(置いた位置が真ん中)。
+- 確認: Debug・Release のビルドは通った。Release の `-ending` で15Fごとに画面を撮って(一時コード・消した)、出口の光が近づく・白い霧・見上げ・霧が晴れる・クレジット・ロゴ・リザルトまで流れることを見た。**実際に最後のフェーズを倒しての確認はまだ**。プレイヤーを動かしたときのカメラ・抜けた後のトンネルの明かり(TrainLighting)の見え方もまだ見ていない。
+
+### 2026-11-19 攻撃CSVにヒットストップのフレーム数(hitStopFrame)
+- 敵の攻撃CSV 6つ: `hitStopTime` の後に `hitStopFrame`(空欄なら0)。`EnemyAttackNode::hitStopFrame` / `EnemyAttackNodeType::HitStopFrame`、Enemy Debug の詳細に「HitStop Frame」。
+- プレイヤーの `ComboChain01.csv`: 今までヒットストップの列は無かった(`PlayerStateAttackBase.cpp` の定数 `kHitStopTime` 0.1 を使っていた)。`isKirimomi` の後に `hitStopTime`(0.1) / `hitStopFrame`(0) を足し、後ろの `ComboNodeType` を2つずつずらした(SlashStart は 28)。落下攻撃の着地の判定は定数のまま。
+- `AttackData::hitStopFrame` に入れて AttackCol まで届く。**まだどこからも使っていない**(ヒットストップの処理は `AttackCol.cpp` の `SetTimeScaleInterFace` がコメントアウトのまま)。
+- `tools/SwordSlashProbe/probe.cpp` の列番号も2つずらした(ツールのビルドはしていない)。
+- MSBuild(Debug x64)は出力先を一時フォルダにしてビルド・リンクまで通った。ゲームでの確認はまだ。
+- (追記)`hitStopFrame` の後に **`ownHitStop` / `ownHitStopFrame`**(攻撃した側のヒットストップ、空欄なら0)を敵・プレイヤーの CSV に足した(今の値は 0.1 / 0)。`AttackData` / `EnemyAttackNode` / `ComboNode`、Enemy Debug(Own HitStop / Own HitStop Frame)。`ComboNodeType` はまた2つずらした(SlashStart は 30)。probe.cpp も同じ。ビルドは通った。
+- (追記)**ヒットストップの処理を入れた**(`AttackCol.cpp`)。プレイヤーの攻撃: 当たった敵に `SetTimeScaleInterFace(hitStopTime, hitStopFrame)`、プレイヤーに `SetOwnTimeScale(ownHitStop, ownHitStopFrame)`(1振りで最初の1体のときだけ)。敵の攻撃: 当たったプレイヤーと攻撃した敵に同じく。
+  - フレームが0なら呼ばない(`SetOwnTimeScale` は time=0 だと1.0に戻らないため)。全体のタイムスケールが1未満(必殺技・ジャスト回避・ガードブレイクのチャンス)と必殺技の攻撃(`UltAttack`)では入れない(ジャスト回避の `ownTimeScale` を上書きしないため)。
+  - 今の CSV は hitStopFrame / ownHitStopFrame が全部0なので、**値を入れるまで何も起きない**。ビルドは通った。ゲームでの確認はまだ。
+
+### 2026-11-19 CSVの読み直しのキーを Q → F8 に
+- Q はキーボードの LT と同じで、必殺技と一緒に読み直しが起きていたので、空いていた **F8** にした(プレイヤーの ComboChain、敵・ボスの攻撃CSV・ステータス。押した瞬間だけ)。変数は `m_wasReloadPressed`。
+- **このメモの前の欄に出てくる「Q で読み直す」は今は F8**。I キー(ボスのアニメCSV)はそのまま。ビルドは通った。
+
+### 2026-11-19 攻撃CSVに allTimeScaleFlag(ヒットストップを全体のタイムスケールで行うか)
+- 敵の攻撃CSV 6つは `ownHitStopFrame` の後、`ComboChain01.csv` も `ownHitStopFrame` の後に `allTimeScaleFlag`(1なら全体、0・空欄なら個々。今は全部0)。
+- `AttackData` / `EnemyAttackNode` / `ComboNode::allTimeScaleFlag`、`EnemyAttackNodeType::AllTimeScaleFlag`、Enemy Debug の「All TimeScale」。`ComboNodeType` は `AllTimeScaleFlag = 20` を足して後ろを1つずらした(SlashStart は 31)。probe.cpp の列番号も同じ。
+- **値は AttackCol まで届くだけで、まだ使っていない**(全体で止める処理はユーザーが書く)。ビルドは通った。
+- (追記)**`allTimeScaleFlag` が true の攻撃は全体のタイムスケールで止める**(`AttackCol.cpp`、プレイヤーと敵の攻撃の両方)。`System::SetTimeScaleForFrames(hitStopTime, hitStopFrame)`(実フレームで数えて1.0に戻る。フレームは int に切り捨て)。このとき個々のヒットストップ・`ownHitStop` は使わない。false なら今まで通り個々。
+  - 全体のタイムスケールが1未満のときは入れない条件はそのままなので、全体のヒットストップの最中に別の攻撃が当たっても延びない。ビルドは通った。ゲームでの確認はまだ。
+
+### 2026-11-19 ジャンプの足の軌跡(NG4 のヤクモの白いもや)
+- 参考: ユーザーの録画 `Videos/画面録画/画面録画 2026-11-19 153129.mp4` の 35.1〜35.6 秒(宙返りのジャンプ)。足の通り道に白い半透明の筋が尾を引く(調査は `../EffectTools/YakumoMoveRef/README.md` の追記)。
+- **刀の軌跡(`PlayerSwordTrail`)を足にも使う**。`PlayerSwordTrail::Style`(長さ・最小移動・もや/線の束/加算/ふちの濃さ・薄くなり方)を足し、`SetStyle` で変えられるようにした。標準は今までの刀の値(刀の見た目は変わらない)。濃さが0の層は描かない。
+- `Player::m_footTrail[2]`(0が左、1が右)。帯の根元 = 足首からすね(`calf_l/r`)へ `kFootTrailBaseRate`(0.6)、先 = つま先(`ball_l/r`)を足首→つま先の向きに `kFootTrailTipExtend`(0.5)伸ばした所(`GetFootTrailPos`)。値は `Player.cpp` 先頭の `kFootTrail〜`(長さ14F、もや160・線の束80・加算25・ふち0)。
+- `Player::Update` で毎フレーム `SetFootTrailEmitting(false)`、`PlayerStateJump::Update` の最初で true(ジャンプの間だけ伸ばす)。点を足すのは刀と同じく `Player::Draw`(押し戻しの後の位置)。
+- 確認: Debug・Release(x64)のビルドは通った。一時コードでステージ1のスタート地点で自動でジャンプさせて2Fおきに撮り、宙返りの間に両足の弧が出て消えることを確認した(一時コードは消した。画像は `../EffectTools/MoveWind/FootTrail/game_v1_crop.png`(最初の値)・`game_v2_crop.png`(今の値))。**実際に操作しての確認はまだ**(走りながらのジャンプ・壁走りの蹴り・落下(Fall)で出さなくてよいか)。
+- 同じ日に Effekseer でダッシュの入り・ダッシュ中の膜・踏み切り・着地を作った(`../EffectTools/MoveWind/MoveWind_v1・v2`)。**まだゲームには入れていない**。v2 の踏み切り(足元から飛ぶ帯)は「足に追従していない」ので不採用。
+- (追記)**壁キック(`PlayerStateWallKick`)・壁走りからの蹴り(`PlayerStateWallRunKick`)の間も足の軌跡を出す**(どちらも Update の最初で `SetFootTrailEmitting(true)`)。
+- (追記)**踏み切りのもや**(録画の 35.15〜35.3 秒: 踏み切った地面の点から上がっていく足へ、太い白いもやの帯が伸びて約0.15秒で消える。`../EffectTools/MoveWind/FootTrail/ref_takeoff_3495.png`)。
+  - これも `PlayerSwordTrail`(`Player::m_takeoffTrail`)。`PlayerStateJump::Enter` で `Player::StartTakeoffMist()`。`kTakeoffMistFrame`(10F)の間だけ伸ばす(`Player::Update` で減らす)。
+  - 帯は両足首の真ん中を通り、カメラの右向き(水平)に `kTakeoffMistHalfWidth`(38)ずつ広げる(`GetTakeoffMistPos`)。最初の1回だけ、先に踏み切った地面の位置(`m_takeoffGroundPos`)の点を足すので、帯の下の端は地面に付く。
+  - 値は `Player.cpp` 先頭の `kTakeoffMist〜`(長さ12F、もや255・線の束100・加算25)。地面からのジャンプだけ(壁キックでは出さない)。
+  - 確認: Debug・Release(x64)のビルドは通った。一時コードでステージ1で自動でジャンプさせて1Fずつ撮った(一時コードは消した。`game_takeoff_v1〜v3_crop.png`、v3 が今の値)。**実際に操作しての確認はまだ**(走りながらのジャンプで帯が斜めに伸びるか、カメラが横から見たとき)。

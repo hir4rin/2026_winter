@@ -636,6 +636,7 @@ const char* DataManager::WallZoneTypeToString(Collider::ColRole type)
     {
     case Collider::ColRole::WallKickZone: return "WallKickZone";
     case Collider::ColRole::WallRunZone: return "WallRunZone";
+    case Collider::ColRole::DeathZone: return "DeathZone";
     default: return "Unknown";
     }
 }
@@ -644,6 +645,7 @@ bool DataManager::StringToWallZoneType(const std::string& str, Collider::ColRole
 {
     if (str == "WallKickZone") { outType = Collider::ColRole::WallKickZone; return true; }
     if (str == "WallRunZone") { outType = Collider::ColRole::WallRunZone; return true; }
+    if (str == "DeathZone") { outType = Collider::ColRole::DeathZone; return true; }
     return false;
 }
 
@@ -682,6 +684,7 @@ bool DataManager::StringToPhaseEvent(const std::string& str, PhaseEvent& outEven
     if (str == "BossAppear") { outEvent = PhaseEvent::BossAppear; return true; }
     if (str == "GameClear") { outEvent = PhaseEvent::GameClear; return true; }
     if (str == "Tutorial") { outEvent = PhaseEvent::Tutorial; return true; }
+    if (str == "Ending") { outEvent = PhaseEvent::Ending; return true; }
     return false;
 }
 

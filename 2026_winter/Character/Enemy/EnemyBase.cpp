@@ -1043,6 +1043,10 @@ void EnemyBase::InitializeAttackList(const std::vector<std::vector<std::string>>
 		node.knockBackY = std::stof(tokens[EnemyAttackNodeType::KnockBackY]);
 		node.isKirimomi = tokens[EnemyAttackNodeType::IsKirimomi] == "1" ? true : false;//CSVの値が1ならtrue、0ならfalse
 		node.hitStopTime = std::stof(tokens[EnemyAttackNodeType::HitStopTime]);
+		node.hitStopFrame = tokens[EnemyAttackNodeType::HitStopFrame].empty() ? 0.0f : std::stof(tokens[EnemyAttackNodeType::HitStopFrame]);
+		node.ownHitStop = tokens[EnemyAttackNodeType::OwnHitStop].empty() ? 0.0f : std::stof(tokens[EnemyAttackNodeType::OwnHitStop]);
+		node.ownHitStopFrame = tokens[EnemyAttackNodeType::OwnHitStopFrame].empty() ? 0.0f : std::stof(tokens[EnemyAttackNodeType::OwnHitStopFrame]);
+		node.allTimeScaleFlag = tokens[EnemyAttackNodeType::AllTimeScaleFlag] == "1";
 
 		//当たり判定
 		node.colRadius = std::stof(tokens[EnemyAttackNodeType::ColRadius]);

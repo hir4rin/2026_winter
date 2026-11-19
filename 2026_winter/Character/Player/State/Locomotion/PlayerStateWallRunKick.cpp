@@ -69,6 +69,8 @@ void PlayerStateWallRunKick::Update()
 	if (!player) return;
 	auto& input = Input::GetInstance();
 
+	player->SetFootTrailEmitting(true);//足の軌跡(白いもや)
+
 	//重力の処理//だんだん落ちていくようにする//累積から毎フレーム作り直す(タイムスケールで減衰しないように)
 	m_gravity += -Game::kGravity * System::GetInstance().GetTimeScale() * player->m_ownTimeScale;
 

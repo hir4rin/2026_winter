@@ -32,7 +32,7 @@ private:
     bool m_isBreakLeftArm = false;//左腕を部位破壊したか
     bool m_isBreakHead = false;//頭を部位破壊したか
 
-    bool m_wasQPressed = false;//前のフレームにQを押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
+    bool m_wasReloadPressed = false;//前のフレームにF8を押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
 
     std::shared_ptr<EnemyGunnerWeapon> m_weapon;//武器
     std::shared_ptr<EnemyPart> m_leftArmPart;//切り離された左腕(当たり判定・落下・回転を持つ)

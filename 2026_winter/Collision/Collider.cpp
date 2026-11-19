@@ -37,6 +37,10 @@ void Collider::DebugDraw() const
 	{
 		color = GetColor(0, 200, 255);//壁走りゾーンは水色
 	}
+	else if (m_tag.role == ColRole::DeathZone)
+	{
+		color = GetColor(255, 0, 0);//落下死ゾーンは赤
+	}
 	else if (m_tag.role == ColRole::JustDodge)
 	{
 		color = GetColor(255, 0, 255);//ジャスト回避判定はマゼンタ

@@ -212,7 +212,7 @@ void EnemyBase::DrawDebugWindowAttack()
 		if (!m_isDebugStopAI)ImGui::TextColored(kWarningColor, "Turn on Stop AI to loop the same attack");
 	}
 
-	//選んだ攻撃のデータ//ここで変えた値はQでCSVを読み直すと元に戻る
+	//選んだ攻撃のデータ//ここで変えた値はF8でCSVを読み直すと元に戻る
 	EnemyAttackNode& node = m_attackList[m_debugSelectedAttack];
 	const std::string detailTitle = std::format("Attack #{} Detail###AttackDetail", node.index);
 	if (!ImGui::TreeNode(detailTitle.c_str()))return;
@@ -246,6 +246,10 @@ void EnemyBase::DrawDebugWindowAttack()
 	ImGui::DragFloat("KnockBack Y", &node.knockBackY, kRateDragSpeed);
 	ImGui::Checkbox("Kirimomi", &node.isKirimomi);
 	ImGui::DragFloat("HitStop (sec)", &node.hitStopTime, kRateDragSpeed);
+	ImGui::DragFloat("HitStop Frame", &node.hitStopFrame, kFrameDragSpeed);
+	ImGui::DragFloat("Own HitStop", &node.ownHitStop, kRateDragSpeed);
+	ImGui::DragFloat("Own HitStop Frame", &node.ownHitStopFrame, kFrameDragSpeed);
+	ImGui::Checkbox("All TimeScale", &node.allTimeScaleFlag);
 	ImGui::DragFloat("Col Radius", &node.colRadius, kFrameDragSpeed);
 	ImGui::DragFloat("Col Forward Offset", &node.colForwardOffset, kFrameDragSpeed);
 	ImGui::DragFloat("Col Offset Y", &node.colOffsetY, kFrameDragSpeed);
@@ -261,7 +265,7 @@ void EnemyBase::DrawDebugWindowAttack()
 
 void EnemyBase::DrawDebugWindowStatusEdit()
 {
-	//ここで変えた値はQでCSVを読み直すと元に戻る//HP・当たり判定は生成時にしか使わないので変えても効かない
+	//ここで変えた値はF8でCSVを読み直すと元に戻る//HP・当たり判定は生成時にしか使わないので変えても効かない
 	if (!ImGui::CollapsingHeader("Status Edit"))return;
 
 	ImGui::TextDisabled("Edits are lost when Q reloads the CSV");

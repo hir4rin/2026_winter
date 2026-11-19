@@ -234,15 +234,18 @@ void TitleScene::NormalDraw()
 {
 	DrawBox(0, 0, Game::GetScreenWidth(), Game::GetScreenHeight(), GetColor(kBgR, kBgG, kBgB), TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_MUL, 255);
-	DrawExtendGraph(0, 0, Game::GetScreenWidth(), Game::GetScreenHeight(), m_vignetteHandle, FALSE);
+	DrawExtendGraph(0, 0, Game::GetScreenWidth(), Game::GetScreenHeight(), m_vignetteHandle, FALSE);//美ネット
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
+
+	//キャラクター表示
+
 	SetDrawMode(DX_DRAWMODE_BILINEAR);
-	DrawLogo();
+	DrawLogo();//タイトルロゴ
 	SetDrawMode(DX_DRAWMODE_NEAREST);
 	DrawEffekseer2D();
-	DrawFlash();
-	DrawPressButton();
+	DrawFlash();//閃光
+	DrawPressButton();//ボタンUI
 }
 
 void TitleScene::FadeOutDraw()
