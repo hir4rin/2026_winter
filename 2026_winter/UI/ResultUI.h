@@ -33,8 +33,8 @@ private:
 	//ランクの紋章の画像を読む
 	static int LoadEmblem(int rank);
 
-	//丸に漢字のアイコン(出るときに大きく出て縮む)
-	void DrawIcon(float cx, float cy, const char* kanji, int start);
+	//項目のアイコン(出るときに大きく出て縮む)
+	void DrawIcon(float cx, float cy, int handle, int start);
 	//値・見出し・補足の3行
 	void DrawRowText(float x, float y, const std::string& value, const std::string& valueSub, const char* label, const std::string& sub, int start, bool isPop);
 	void DrawSelectBand(float x1, float y1, float x2, float y2, int start);
@@ -77,6 +77,11 @@ private:
 	int m_emblemHandle = -1;//ランクの紋章
 	int m_buttonAHandle = -1;
 	int m_buttonYHandle = -1;
+	int m_iconTechHandle = -1;
+	int m_iconKillHandle = -1;
+	int m_iconTimeHandle = -1;
+	int m_iconItemHandle = -1;
+	int m_iconDeathHandle = -1;
 
 	int m_headerFont = -1;
 	int m_valueFont = -1;
@@ -84,5 +89,4 @@ private:
 	int m_labelFont = -1;
 	int m_smallFont = -1;
 	int m_scoreFont = -1;
-	int m_iconFont = -1;
 };

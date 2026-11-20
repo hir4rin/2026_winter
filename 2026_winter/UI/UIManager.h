@@ -19,6 +19,8 @@ public:
 	void InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak_ptr<Player> player);
 
 	void Add(std::shared_ptr<UIBase> ui);
+	//登録されたUIのInitをまとめて呼ぶ
+	void InitAll();
 	//登録しているUIをすべて外す(ハンドルは各UIのデストラクタで解放する)
 	void Clear();
 	void Update();
@@ -29,9 +31,6 @@ public:
 private:
 	//指定したレイヤーのUIだけを描く
 	void DrawLayer(UILayer layer);
-
-	//登録されたUIのInitをまとめて呼ぶ
-	void InitAll();
 
 	//管理しているUI
 	std::vector<std::shared_ptr<UIBase>> m_uiList;

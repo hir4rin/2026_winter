@@ -49,7 +49,8 @@ void PlayerStateWallRun::Enter()
 	}
 	else
 	{
-		inputDir = inputDir.Normalize();
+		//inputDir = inputDir.Normalize();
+		inputDir = player->m_targetVec;
 	}
 
 	//内積

@@ -26,6 +26,8 @@ public:
 	void LoadAll();
 	//ステージセレクトでも使うので起動時にも呼ぶ
 	void LoadTutorial();
+	//タイトルのプレイヤーでも使うので起動時にも呼ぶ
+	void LoadPlayerAnimData();
 
 	/// <summary>
 	/// ComboChain.csvを読み込み直す(デバッグ用)
@@ -142,7 +144,6 @@ private:
 
 	void LoadAnimData(const std::string& filePath,AnimData& animData);
 
-	void LoadPlayerAnimData(); //プレイヤーのアニメーションデータを読み込む関数
 	void LoadEnemySwordmanAnimData();
 	void LoadEnemySwordmanAttackRawData(); //敵(ソードマン)の攻撃の生データを読み込む関数
 	void LoadEnemyGunnerAttackRawData(); //敵(ガンナー)の攻撃の生データを読み込む関数

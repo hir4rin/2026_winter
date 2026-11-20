@@ -18,12 +18,17 @@ public:
 		float streakGlowAlpha;//線の束(加算)
 		float edgeAlpha;//先のふち(加算)
 		float fadePower;//薄くなり方
+		int tintR = 255;//もや・加算の線・ふちの色(芯の線は白のまま)
+		int tintG = 255;
+		int tintB = 255;
 	};
 
 	PlayerSwordTrail();
 	~PlayerSwordTrail();
 
 	void SetStyle(const Style& style) { m_style = style; }
+	//画像を差し替える//線の束(アルファと加算)・先のふち・もや
+	void SetTextures(const char* streakPath, const char* edgePath, const char* hazePath);
 
 	//このフレームに軌跡を伸ばすか//毎フレーム呼ぶ(呼ばなければ伸ばさない)
 	void SetEmitting(bool isEmitting) { m_isEmitting = isEmitting; }
@@ -48,7 +53,7 @@ private:
 	//点の並び(古い順)をなめらかにした頂点を作る
 	static void BuildVertices(const std::vector<Point>& points, int begin, int end, std::vector<Vertex>& out);
 	static Vector3 CatmullRom(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, float t);
-	void DrawStrip(const std::vector<Vertex>& vertices, int graph, int blendMode, float alpha);
+	void DrawStrip(const std::vector<Vertex>& vertices, int graph, int blendMode, float alpha, bool isTint);
 
 	Style m_style;
 	std::vector<Point> m_points;

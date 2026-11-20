@@ -13,6 +13,7 @@
 #include "Render/ModelShaderManager.h"
 #include "Render/CharacterLook.h"
 #include "DataLoader/DataManager.h"
+#include "Render/Mv1LikeUnity.h"
 #include <d3d11.h>
 #include <dxgi.h>
 #include <dwmapi.h>
@@ -28,6 +29,7 @@ namespace
 	constexpr int kBenchFrame = 660;//-bench のときに動かすフレーム数(11秒)
 	constexpr int kVSyncPacingMinHz = 58;//この範囲のリフレッシュレートなら VSync で60fpsに合わせる
 	constexpr int kVSyncPacingMaxHz = 62;
+	const char* const kMv1LikeUnityShaderDir = "data\\Title\\IdaFaber\\shaders\\bin\\";
 	//更新を待った後、絵を出すまで空ける時間(-presentdelay= で変えられる)
 	//更新の直後に出すと Windows の画面の合成とぶつかり、画面で同じ絵が2回出る(35秒で49回 → 8msで0〜1回。12msだと次の更新に近すぎて2回)
 	constexpr long long kPresentDelayMicroSec = 8000;
@@ -62,6 +64,7 @@ bool Application::Init()
 	// DirectX11を使用するようにする。(DirectX9も可、一部機能不可)
 	// Effekseerを使用するには必ず設定する。
 	SetUseDirect3DVersion(DX_DIRECT3D_11);
+	if (strstr(GetCommandLineA(), "-dashtest")) SetDoubleStartValidFlag(TRUE);//[TEMP_TRAIL]
 	if (DxLib_Init() == -1)		// ＤＸライブラリ初期化処理
 	{
 		return false;			// エラーが起きたら直ちに終了
@@ -109,6 +112,7 @@ bool Application::Init()
 	//どのステージでも使うもの(プレイヤー・エフェクト)の読み込み。ステージの分は入るときに読む(System::LoadStage)
 	System::GetInstance().LoadCommon();
 	DataManager::GetInstance().LoadTutorial();
+	DataManager::GetInstance().LoadPlayerAnimData();
 	while (GetASyncLoadNum() > 0)
 	{
 		if (ProcessMessage() == -1)
@@ -118,6 +122,9 @@ bool Application::Init()
 	}
 	//モデル用のシェーダーは起動時に1回だけコンパイルする(シーンをまたいで使う)
 	ModelShaderManager::GetInstance().Init();
+	//タイトルのプレイヤー(Unity と同じ描き方)のシェーダー。カメラを設定する前に1回
+	Mv1LikeUnity::ShaderDir() = kMv1LikeUnityShaderDir;
+	Mv1LikeUnity::InitLoadShaders();
 
 	return true;
 }

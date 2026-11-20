@@ -91,6 +91,42 @@ namespace
 	constexpr float kFootTrailStreakGlowAlpha = 25.0f;
 	constexpr float kFootTrailEdgeAlpha = 0.0f;
 	constexpr float kFootTrailFadePower = 0.8f;
+
+	//肩から光の帯(ダッシュ中)
+	const char* const kLeftClavicleFrameName = "clavicle_l";
+	const char* const kLeftUpperarmFrameName = "upperarm_l";
+	const char* const kRightClavicleFrameName = "clavicle_r";
+	const char* const kRightUpperarmFrameName = "upperarm_r";
+	constexpr float kShoulderTrailBack = 12.0f;//肩から背中側へずらす
+	constexpr float kShoulderTrailDown = 4.0f;//肩から下へずらす
+	constexpr float kShoulderTrailOut = 10.0f;//肩から外側へずらす
+	constexpr float kShoulderTrailHalfWidth = 2.0f;//筋の幅の半分//外側に45°傾けた向きに広げる
+	constexpr float kShoulderTrailSwaySide = 6.0f;//なびきの横の幅
+	constexpr float kShoulderTrailSwayUp = 4.0f;//なびきの縦の幅
+	constexpr float kShoulderTrailSwaySpeed = 0.3f;//なびきの速さ(1フレームに進む角度)
+	constexpr float kShoulderTrailLife = 12.0f;
+	constexpr float kShoulderTrailMinMove = 1.0f;
+	constexpr float kShoulderTrailHazeAlpha = 34.0f;//まわりのぼんやりした光
+	constexpr float kShoulderTrailStreakAlpha = 173.0f;//筋
+	constexpr float kShoulderTrailStreakGlowAlpha = 120.0f;//筋を加算で重ねる
+	constexpr float kShoulderTrailEdgeAlpha = 0.0f;
+	constexpr float kShoulderTrailFadePower = 0.7f;
+	constexpr int kShoulderTrailTintR = 150;//もや・加算の線の色(淡い水色)
+	constexpr int kShoulderTrailTintG = 215;
+	constexpr int kShoulderTrailTintB = 255;
+	//出直すたびの場所のばらつき(x 外側 / y 上 / z 後ろ)
+	constexpr float kShoulderStrandOutMin = -4.0f;
+	constexpr float kShoulderStrandOutMax = 14.0f;
+	constexpr float kShoulderStrandUpMin = -6.0f;
+	constexpr float kShoulderStrandUpMax = 10.0f;
+	constexpr float kShoulderStrandBackMin = 0.0f;
+	constexpr float kShoulderStrandBackMax = 10.0f;
+	constexpr float kShoulderStrandOnMin = 8.0f;//出ている長さ
+	constexpr float kShoulderStrandOnMax = 16.0f;
+	constexpr float kShoulderStrandOffMin = 2.0f;//消えている長さ
+	constexpr float kShoulderStrandOffMax = 7.0f;
+	const char* const kShoulderTrailTexturePath = "data/Effect/Move/Texture/MW_WindStrand_a.png";
+	const char* const kShoulderTrailGlowTexturePath = "data/Effect/Move/Texture/MW_RibbonGlow_a.png";
 }
 
 
@@ -136,6 +172,27 @@ Player::Player()
 	const PlayerSwordTrail::Style footStyle = { kFootTrailLife, kFootTrailMinMove, kFootTrailHazeAlpha,
 		kFootTrailStreakAlpha, kFootTrailStreakGlowAlpha, kFootTrailEdgeAlpha, kFootTrailFadePower };
 	for (auto& trail : m_footTrail) trail.SetStyle(footStyle);
+
+	//肩の光の帯
+	m_clavicleFrame[0] = MV1SearchFrame(m_modelHandle, kLeftClavicleFrameName);
+	m_upperarmFrame[0] = MV1SearchFrame(m_modelHandle, kLeftUpperarmFrameName);
+	m_clavicleFrame[1] = MV1SearchFrame(m_modelHandle, kRightClavicleFrameName);
+	m_upperarmFrame[1] = MV1SearchFrame(m_modelHandle, kRightUpperarmFrameName);
+	const PlayerSwordTrail::Style shoulderStyle = { kShoulderTrailLife, kShoulderTrailMinMove, kShoulderTrailHazeAlpha,
+		kShoulderTrailStreakAlpha, kShoulderTrailStreakGlowAlpha, kShoulderTrailEdgeAlpha, kShoulderTrailFadePower,
+		kShoulderTrailTintR, kShoulderTrailTintG, kShoulderTrailTintB };
+	for (auto& strands : m_shoulderStrand)
+	{
+		for (int i = 0; i < kShoulderStrandNum; ++i)
+		{
+			auto& strand = strands[i];
+			strand.trail.SetStyle(shoulderStyle);
+			strand.trail.SetTextures(kShoulderTrailTexturePath, kShoulderTrailTexturePath, kShoulderTrailGlowTexturePath);
+			//最初から全部そろって出ないようにずらす
+			strand.timer = static_cast<float>(GetRand(static_cast<int>(kShoulderStrandOnMax)));
+			strand.phase = static_cast<float>(GetRand(628)) * 0.01f;
+		}
+	}
 
 	//法線マップ・遮蔽・光沢の画像と強さ(マテリアルの名前で当てる)
 	m_look.Load(m_modelHandle, kLookCsvPath);
@@ -217,10 +274,17 @@ void Player::Update(Camera& camera)
 	//[TEMP_TRAIL] 確認用
 	{
 		static int s_trailFrame = 0;
-		if (strstr(GetCommandLineA(), "-trailtest") && ++s_trailFrame >= 100 && g_trailCapture == 0 && IsFloor())
+		++s_trailFrame;
+		if (strstr(GetCommandLineA(), "-trailtest") && s_trailFrame >= 100 && g_trailCapture == 0 && IsFloor())
 		{
 			ChangeState(std::make_shared<PlayerStateJump>(GetWeakPtr()));
 			g_trailCapture = 1;
+		}
+		if (strstr(GetCommandLineA(), "-dashtest"))
+		{
+			if (s_trailFrame == 100) input.StartRecord({ { 10, { "Up" } }, { 1, { "Up", "L3" } }, { 80, { "Up" } }, { 40, {} } });
+			if (g_trailCapture == 0 && (std::dynamic_pointer_cast<PlayerStateFastRun>(m_currentState) || s_trailFrame == 200)) g_trailCapture = 1;
+			if (s_trailFrame % 10 == 0) { FILE* fp = nullptr; fopen_s(&fp, "Log/dashtest.txt", "a"); if (fp) { fprintf(fp, "f%d %s up=%d floor=%d y=%.1f\n", s_trailFrame, typeid(*m_currentState).name(), input.IsPressed("Up") ? 1 : 0, IsFloor() ? 1 : 0, m_rb.m_pos.y); fclose(fp); } }
 		}
 	}
 
@@ -306,6 +370,9 @@ void Player::Update(Camera& camera)
 
 	m_swordTrail.SetEmitting(false);//攻撃のStateがCSVの区間の間だけtrueにする
 	SetFootTrailEmitting(false);//ジャンプの間だけtrueにする
+	SetShoulderTrailEmitting(false);//ダッシュの間だけtrueにする
+	m_shoulderSwayFrame += System::GetInstance().GetTimeScale() * m_ownTimeScale;
+	UpdateShoulderStrands();
 	if (m_currentState)
 	{
 		m_currentState->Update();//状態の更新
@@ -365,11 +432,22 @@ void Player::Draw()
 		{
 			GetFootTrailPos(i, base, tip);
 			m_footTrail[i].Sample(base, tip, m_trailTimeScale);
+			for (int j = 0; j < kShoulderStrandNum; ++j)
+			{
+				auto& strand = m_shoulderStrand[i][j];
+				strand.trail.SetEmitting(m_isShoulderTrailEmitting && strand.isOn);
+				GetShoulderTrailPos(i, j, base, tip);
+				strand.trail.Sample(base, tip, m_trailTimeScale);
+			}
 		}
 		m_isTrailSamplePending = false;
 	}
 	m_swordTrail.Draw();
 	for (auto& trail : m_footTrail) trail.Draw();
+	for (auto& strands : m_shoulderStrand)
+	{
+		for (auto& strand : strands) strand.trail.Draw();
+	}
 	//コンボチェーンの描画
 	for (int i = 0; i < m_comboChain.size(); ++i)
 	{
@@ -738,6 +816,66 @@ bool Player::IsMoveState() const
 void Player::SetFootTrailEmitting(bool isEmitting)
 {
 	for (auto& trail : m_footTrail) trail.SetEmitting(isEmitting);
+}
+
+void Player::SetShoulderTrailEmitting(bool isEmitting)
+{
+	m_isShoulderTrailEmitting = isEmitting;
+}
+
+void Player::UpdateShoulderStrands()
+{
+	auto randRange = [](float min, float max) { return min + (max - min) * static_cast<float>(GetRand(1000)) * 0.001f; };
+	const float speed = System::GetInstance().GetTimeScale() * m_ownTimeScale;
+	for (auto& strands : m_shoulderStrand)
+	{
+		for (auto& strand : strands)
+		{
+			strand.timer -= speed;
+			if (strand.timer > 0.0f) continue;
+			strand.isOn = !strand.isOn;
+			if (strand.isOn)
+			{
+				//出直すたびに別の場所から
+				strand.timer = randRange(kShoulderStrandOnMin, kShoulderStrandOnMax);
+				strand.offset = Vector3(randRange(kShoulderStrandOutMin, kShoulderStrandOutMax),
+					randRange(kShoulderStrandUpMin, kShoulderStrandUpMax),
+					randRange(kShoulderStrandBackMin, kShoulderStrandBackMax));
+				strand.phase = randRange(0.0f, DX_TWO_PI_F);
+			}
+			else
+			{
+				strand.timer = randRange(kShoulderStrandOffMin, kShoulderStrandOffMax);
+			}
+		}
+	}
+}
+
+void Player::GetShoulderTrailPos(int side, int index, Vector3& base, Vector3& tip) const
+{
+	if (m_clavicleFrame[side] < 0 || m_upperarmFrame[side] < 0)
+	{
+		base = tip = m_rb.m_pos;
+		return;
+	}
+	const Vector3 clavicle = Vector3(MV1GetFramePosition(m_modelHandle, m_clavicleFrame[side]));
+	const Vector3 upperarm = Vector3(MV1GetFramePosition(m_modelHandle, m_upperarmFrame[side]));
+	Vector3 forward = Vector3(m_targetVec.x, 0.0f, m_targetVec.z);
+	if (forward.Magnitude() > 0.0f) forward = forward.Normalize();
+	//体の中心から肩への横の向き(外側)
+	Vector3 out = upperarm - clavicle;
+	out.y = 0.0f;
+	if (out.Magnitude() > 0.0f) out = out.Normalize();
+	//筋ごとにずらしてなびかせる
+	const ShoulderStrand& strand = m_shoulderStrand[side][index];
+	const float phase = m_shoulderSwayFrame * kShoulderTrailSwaySpeed + strand.phase;
+	Vector3 center = upperarm - forward * (kShoulderTrailBack + strand.offset.z) + out * (kShoulderTrailOut + strand.offset.x);
+	center = center + out * (sinf(phase) * kShoulderTrailSwaySide)
+		+ Vector3(0.0f, sinf(phase * 1.3f) * kShoulderTrailSwayUp - kShoulderTrailDown + strand.offset.y, 0.0f);
+	//筋の面を外側へ45°傾ける(真後ろから見ても幅が出るように)
+	const Vector3 widthDir = (out + Vector3(0.0f, 1.0f, 0.0f)).Normalize();
+	base = center - widthDir * kShoulderTrailHalfWidth;
+	tip = center + widthDir * kShoulderTrailHalfWidth;
 }
 
 void Player::GetFootTrailPos(int side, Vector3& base, Vector3& tip) const

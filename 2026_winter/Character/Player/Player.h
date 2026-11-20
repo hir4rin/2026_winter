@@ -254,6 +254,8 @@ public:
 
 	//このフレームに足の軌跡を伸ばすか//毎フレーム呼ぶ
 	void SetFootTrailEmitting(bool isEmitting);
+	//このフレームに肩の光の帯を伸ばすか//毎フレーム呼ぶ
+	void SetShoulderTrailEmitting(bool isEmitting);
 
 	//死んだ原因
 	enum class DeathCause
@@ -299,6 +301,8 @@ public:
 	//ボスのトドメのムービーの通知//次のUpdateでPlayerStateBossFinisherへ
 	void RequestBossFinisher(std::shared_ptr<EnemyBase> target) { m_bossFinisherTarget = target; }
 	std::shared_ptr<PlayerStateBossFinisher> GetBossFinisherState()const { return std::dynamic_pointer_cast<PlayerStateBossFinisher>(m_currentState); }
+	//登場演出を始める
+	void StartStartMovie(const PlayerStartMovieFrame& frame) { ChangeState(std::make_shared<PlayerStateStartMovie>(GetWeakPtr(), frame)); }
 	//必殺技状態中かどうか
 	bool GetIsUltimating() { return m_isUltimating; }
 
@@ -342,6 +346,8 @@ private:
 	void UpdateAngle();//回転処理
 	void BloodWingUpdate();//必殺技状態の翼エフェクトの再生・停止と、背中への追従
 	void GetFootTrailPos(int side, Vector3& base, Vector3& tip)const;//足の軌跡の帯の根元(すね)と先(つま先)
+	void UpdateShoulderStrands();//風の筋を出したり消したりする
+	void GetShoulderTrailPos(int side, int index, Vector3& base, Vector3& tip)const;//肩の風の筋の端
 	static MATRIX ScaleRotation(const MATRIX& rot, float rate);//回転行列の回転量だけを割合で弱める(回転軸はそのまま)
 	static MATRIX GetRotationOnly(const MATRIX& mat);//行列から回転だけを取り出す(拡大縮小と平行移動を除く)
 	static MATRIX GetFrameBaseModelMatrix(int modelHandle, int frameIndex);//アニメーションが付いていない初期姿勢での、フレームのモデル空間の行列
@@ -406,6 +412,21 @@ private:
 	int m_calfFrame[2] = { -1, -1 };//すね
 	int m_footFrame[2] = { -1, -1 };//足首
 	int m_ballFrame[2] = { -1, -1 };//つま先
+	//ダッシュ中に肩から伸びる細い風の筋//短く出ては消え、出直すたびに場所を移る
+	struct ShoulderStrand
+	{
+		PlayerSwordTrail trail;
+		Vector3 offset;//x 外側 / y 上 / z 後ろ
+		float phase = 0.0f;//なびきの位相
+		float timer = 0.0f;//今の状態の残りフレーム
+		bool isOn = false;
+	};
+	static constexpr int kShoulderStrandNum = 5;//片方の肩の筋の数
+	ShoulderStrand m_shoulderStrand[2][kShoulderStrandNum];
+	bool m_isShoulderTrailEmitting = false;
+	int m_clavicleFrame[2] = { -1, -1 };//鎖骨
+	int m_upperarmFrame[2] = { -1, -1 };//二の腕の付け根
+	float m_shoulderSwayFrame = 0.0f;//筋をなびかせる時間
 	bool m_isTrailSamplePending = false;//Updateが進んだので、描くときに刀の位置を軌跡に足す
 	float m_trailTimeScale = 1.0f;//そのフレームのタイムスケール
 

@@ -4,9 +4,12 @@
 #include "Camera/Camera.h"
 #include "Main/Game.h"
 #include "Main/System.h"
+#include "Render/EffectManager.h"
+#include "EffekseerForDXLib.h"
 
 namespace
 {
+	constexpr float kDashEffectScale = 20.0f;//エフェクトは1/20で作っている
 	constexpr float kTitleModeWalkAnimSpeed = 1.15f;//タイトル画面での歩きアニメーションの再生速度
 	constexpr float kAccelFrame = 15.0f;//止まった状態からダッシュの最高速になるまでのフレーム数//Moveより長めにして、グッと加速する感じを出す
 	constexpr float kAccel = Game::kRunSpeed / kAccelFrame;//1フレームに増える速さ
@@ -39,6 +42,15 @@ void PlayerStateFastRun::Enter()
 	//切り替わったフレームも止まらないように、今の速度を入れておく(前のステートで0にされているため)
 	player->m_rb.m_vel = player->m_rb.m_moveVel;
 	//System::GetInstance().GetSoundManager().PlaySELoop("WalkSE");
+
+	//ダッシュの入りの風と、肩の帯からこぼれる光の粒(ループ)//+Zを進む向きに合わせる
+	if (!player->m_isTitleMode)
+	{
+		const Vector3& dir = player->m_targetVec;
+		const float rotY = atan2f(dir.x, dir.z);
+		EffectManager::GetInstance().Play(AsyncData::DashStartEffect, player->m_rb.m_pos, rotY, kDashEffectScale);
+		m_runEffectHandle = EffectManager::GetInstance().Play(AsyncData::DashSparkleEffect, player->m_rb.m_pos, rotY, kDashEffectScale);
+	}
 }
 
 void PlayerStateFastRun::Update()
@@ -111,11 +123,28 @@ void PlayerStateFastRun::Update()
 	player->m_anim.Update();
 	//移動処理
 	Move(input);
+	UpdateRunEffect();
+	//肩から光の帯
+	if (!player->m_isTitleMode) player->SetShoulderTrailEmitting(true);
 }
 
 void PlayerStateFastRun::Exit()
 {
 	//System::GetInstance().GetSoundManager().StopSE("WalkSE");
+	if (m_runEffectHandle != -1) StopEffekseer3DEffect(m_runEffectHandle);
+	m_runEffectHandle = -1;
+}
+
+void PlayerStateFastRun::UpdateRunEffect()
+{
+	if (m_runEffectHandle == -1) return;
+	auto player = m_owner.lock();
+	if (!player) return;
+	//このフレームに進む分も足して、体からずれないようにする
+	const Vector3 pos = player->m_rb.m_pos + player->m_rb.m_vel;
+	const Vector3& dir = player->m_targetVec;
+	SetPosPlayingEffekseer3DEffect(m_runEffectHandle, pos.x, pos.y, pos.z);
+	SetRotationPlayingEffekseer3DEffect(m_runEffectHandle, 0.0f, atan2f(dir.x, dir.z), 0.0f);
 }
 
 void PlayerStateFastRun::DebugDraw()

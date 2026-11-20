@@ -99,6 +99,7 @@ void CharacterLook::Draw(int modelHandle)
 		for (int mesh = 0; mesh < meshNum; ++mesh)
 		{
 			if (MV1GetMeshTListNum(modelHandle, mesh) <= 0) continue;
+			if (!MV1GetMeshVisible(modelHandle, mesh)) continue;//MV1SetMeshVisible で隠したメッシュ
 			const int material = MV1GetMeshMaterial(modelHandle, mesh);
 			if (material < 0 || material >= static_cast<int>(m_materials.size())) continue;
 			const MaterialLook& look = m_materials[material];

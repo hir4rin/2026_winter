@@ -348,6 +348,11 @@ void DataManager::LoadPatrolRouteRawData()
     assert(!m_patrolRouteRawData.empty() && "PatrolRoute0.csvが開けませんでした");
 }
 
+void DataManager::LoadPlayerAnimData()
+{
+	LoadAnimData(kPlayerAnimPath, m_playerAnimData);
+}
+
 void DataManager::LoadTutorial()
 {
     std::vector<std::vector<std::string>> rawData;

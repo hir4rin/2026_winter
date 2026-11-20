@@ -1,7 +1,10 @@
 # Usage: powershell -ExecutionPolicy Bypass -File gen_movewind.ps1 <outDir> <suffix>
 # MW_Film_<s>.png      : tileable thin strands along U (film surface, scrolled)
 # MW_Cocoon_<s>.efkmodel: shell around the body (feet at y=0, height 9, +Z forward). U = front->back, V = around
-param([string]$OutDir, [string]$Suffix = "a")
+# MW_Ribbon_<s>.png / MW_RibbonGlow_<s>.png : light ribbon for the shoulder trail (-Only ribbon)
+# MW_WindStrand_<s>.png : thin broken wind strand for the shoulder trail (-Only strand)
+# MW_SpeedLine_<s>.png : thin line for the dash speed lines (only this with -Only line)
+param([string]$OutDir, [string]$Suffix = "a", [string]$Only = "")
 
 Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @'
 using System;
@@ -89,6 +92,72 @@ public static class MoveWind
                 float strands = Sm(0.55f, 0.85f, VNp(u * 3, v * 20, 3, 20, seed));
                 float edge = Sm(0.55f, 0.8f, d) * (1 - Sm(0.8f, 1.0f, d));
                 al[y * w + x] = C((body * 0.35f + strands * body * 0.6f + edge * 0.5f) * along);
+            }
+        Save(al, w, h, path);
+    }
+
+    // silky light ribbon for the trail: U = old(0) -> new(1), V = across. glow=true makes a wide soft version
+    public static void Ribbon(string path, int w, int h, int seed, bool glow)
+    {
+        float[] al = new float[w * h];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float u = (x + 0.5f) / w, v = (y + 0.5f) / h;
+                float along = (float)Math.Pow(Sm(0.0f, 0.75f, u), 1.3) * (1 - Sm(0.96f, 1.0f, u));
+                float d = Math.Abs(v - 0.5f) * 2;
+                float a;
+                if (glow)
+                {
+                    a = (float)Math.Exp(-d * d * 2.2) * 0.9f;
+                }
+                else
+                {
+                    float body = (1 - Sm(0.55f, 0.95f, d)) * 0.38f;
+                    float center = (float)Math.Exp(-(d / 0.07f) * (d / 0.07f)) * 0.9f;
+                    float edge = (float)Math.Exp(-((d - 0.78f) / 0.06f) * ((d - 0.78f) / 0.06f)) * 0.75f;
+                    float strands = Sm(0.6f, 0.9f, VNp(u * 3, v * 16, 3, 16, seed)) * (1 - Sm(0.7f, 0.95f, d)) * 0.35f;
+                    float ripple = 0.85f + 0.15f * (float)Math.Sin(u * 18.85f + v * 3.0f);
+                    a = (body + center + edge + strands) * ripple;
+                }
+                al[y * w + x] = C(a * along);
+            }
+        Save(al, w, h, path);
+    }
+
+    // thin broken wind strand for the trail: U = old(0) -> new(1), V = across
+    public static void WindStrand(string path, int w, int h, int seed)
+    {
+        float[] al = new float[w * h];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float u = (x + 0.5f) / w, v = (y + 0.5f) / h;
+                float along = (float)Math.Pow(Sm(0.0f, 0.8f, u), 1.4) * (1 - Sm(0.95f, 1.0f, u));
+                float wob = (VNp(u * 4, 0.5f, 4, 2, seed + 5) - 0.5f) * 0.25f;
+                float d = Math.Abs(v - 0.5f + wob) * 2;
+                float core = (float)Math.Exp(-(d / 0.16f) * (d / 0.16f));
+                float soft = (float)Math.Exp(-(d / 0.5f) * (d / 0.5f)) * 0.25f;
+                float hair = (float)Math.Exp(-((d - 0.45f) / 0.05f) * ((d - 0.45f) / 0.05f)) * 0.4f * Sm(0.5f, 0.8f, VNp(u * 8, v * 2, 8, 2, seed + 9));
+                float breaks = Sm(0.3f, 0.55f, VNp(u * 7, 0.5f, 7, 2, seed));
+                al[y * w + x] = C((core + soft + hair) * breaks * along);
+            }
+        Save(al, w, h, path);
+    }
+
+    // thin speed line: U = along (head at u=1 bright, tail fades to u=0), V = across (very thin)
+    public static void SpeedLine(string path, int w, int h)
+    {
+        float[] al = new float[w * h];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float u = (x + 0.5f) / w, v = (y + 0.5f) / h;
+                float along = (float)Math.Pow(Sm(0.0f, 0.85f, u), 1.6) * (1 - Sm(0.93f, 1.0f, u));
+                float d = Math.Abs(v - 0.5f) * 2;
+                float width = L(0.12f, 0.35f, u);
+                float core = (float)Math.Exp(-(d / width) * (d / width) * 3.0);
+                al[y * w + x] = C(core * along);
             }
         Save(al, w, h, path);
     }
@@ -195,6 +264,9 @@ public static class MoveWind
 
 $tex = Join-Path $OutDir "Texture"
 $mdl = Join-Path $OutDir "Model"
+if ($Only -eq "line") { [MoveWind]::SpeedLine((Join-Path $tex "MW_SpeedLine_$Suffix.png"), 256, 32); "done"; return }
+if ($Only -eq "ribbon") { [MoveWind]::Ribbon((Join-Path $tex "MW_Ribbon_$Suffix.png"), 256, 64, 31, $false); [MoveWind]::Ribbon((Join-Path $tex "MW_RibbonGlow_$Suffix.png"), 256, 64, 31, $true); "done"; return }
+if ($Only -eq "strand") { [MoveWind]::WindStrand((Join-Path $tex "MW_WindStrand_$Suffix.png"), 256, 32, 41); "done"; return }
 [MoveWind]::Film((Join-Path $tex "MW_Film_$Suffix.png"), 512, 256, 17)
 [MoveWind]::Band((Join-Path $tex "MW_Band_$Suffix.png"), 256, 64, 23)
 [MoveWind]::Cocoon((Join-Path $mdl "MW_Cocoon_$Suffix.efkmodel"), 2.2, -5.5, 2.1, 4.9, 4.4, 0.6)

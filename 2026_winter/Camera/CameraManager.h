@@ -41,7 +41,8 @@ public:
 		BattleSmoothCamera,
 		BossPartThrowCamera,
 		BossFinisherCamera,
-		EndingCamera
+		EndingCamera,
+		TitleCamera
 
 	};
 

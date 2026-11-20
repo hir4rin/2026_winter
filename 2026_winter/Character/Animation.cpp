@@ -245,8 +245,8 @@ int Animation::AttachAnim(int animNo)
 	{
 		return MV1AttachAnim(m_modelHandle, animNo, -1, -1);
 	}
-	//別のモデルのアニメーションはフレームの番号で当てる(名前で当てると動かなかった)
-	return MV1AttachAnim(m_modelHandle, animNo, m_animSrcHandle, FALSE);
+	//別のモデルのアニメーションは基本フレームの番号で当てる(ボスの腕は名前で当てると動かなかった)
+	return MV1AttachAnim(m_modelHandle, animNo, m_animSrcHandle, m_isAnimNameCheck ? TRUE : FALSE);
 }
 
 float Animation::GetAnimRate()

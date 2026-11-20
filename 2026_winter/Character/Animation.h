@@ -43,8 +43,9 @@ public:
 	//モデルハンドルの取得//確認用
 	int GetModelHandleForCheck() { return m_modelHandle; }
 	//アニメーションを持っている別のモデルを設定する(-1なら自分のモデル)//Initより前に呼ぶ
-	//フレームの番号で当てるので、フレームの並びが同じモデルにすること(ボスの腕など)
-	void SetAnimSourceModel(int animSrcHandle) { m_animSrcHandle = animSrcHandle; }	//アニメーションを再生するのを止める
+	//isNameCheck が false ならフレームの番号で当てるので、フレームの並びが同じモデルにすること(ボスの腕など)
+	//true なら骨の名前で当てる(骨の数が違うモデル。タイトルの IdaFaber のモーション)
+	void SetAnimSourceModel(int animSrcHandle, bool isNameCheck = false) { m_animSrcHandle = animSrcHandle; m_isAnimNameCheck = isNameCheck; }	//アニメーションを再生するのを止める
 	void StopAnim();
 
 
@@ -92,6 +93,7 @@ private:
 
 	int m_modelHandle;//モデルのハンドル
 	int m_animSrcHandle = -1;//アニメーションを持っている別のモデル(-1なら自分)
+	bool m_isAnimNameCheck = false;//別のモデルのアニメーションを骨の名前で当てるか
 	int m_currentAnimHandle;//現在のアニメーションのハンドル
 	int m_prevAnimHandle;//前のアニメーションのハンドル
 

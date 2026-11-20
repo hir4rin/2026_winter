@@ -17,6 +17,12 @@ namespace
 	const char* const kVignettePath = "data/UI/Menu/vignette.png";
 	const char* const kButtonAPath = "data/UI/button/A.png";
 	const char* const kButtonYPath = "data/UI/button/Y.png";
+	//項目のアイコン(tools/ResultIconGen で作る)
+	const char* const kIconTechPath = "data/UI/Result/icon_tech.png";
+	const char* const kIconKillPath = "data/UI/Result/icon_kill.png";
+	const char* const kIconTimePath = "data/UI/Result/icon_time.png";
+	const char* const kIconItemPath = "data/UI/Result/icon_item.png";
+	const char* const kIconDeathPath = "data/UI/Result/icon_death.png";
 
 	constexpr int kFontThick = 6;
 
@@ -45,7 +51,7 @@ namespace
 	constexpr float kItemY = 146.0f, kDeathY = 286.0f;
 	constexpr float kTextOffsetX = 42.0f;
 	constexpr float kIconOffsetY = 22.0f;
-	constexpr float kIconRadius = 24.0f;
+	constexpr float kIconSize = 80.0f;//アイコンの画像を描く大きさ(画像は正方形)
 	constexpr float kLabelOffsetY = 48.0f, kSubOffsetY = 78.0f;
 	constexpr float kFormulaY = 586.0f;
 	constexpr float kPanelX1 = 932.0f, kPanelY1 = 146.0f, kPanelX2 = 1246.0f, kPanelY2 = 632.0f;
@@ -95,13 +101,17 @@ ResultUI::~ResultUI()
 	DeleteGraph(m_emblemHandle);
 	DeleteGraph(m_buttonAHandle);
 	DeleteGraph(m_buttonYHandle);
+	DeleteGraph(m_iconTechHandle);
+	DeleteGraph(m_iconKillHandle);
+	DeleteGraph(m_iconTimeHandle);
+	DeleteGraph(m_iconItemHandle);
+	DeleteGraph(m_iconDeathHandle);
 	DeleteFontToHandle(m_headerFont);
 	DeleteFontToHandle(m_valueFont);
 	DeleteFontToHandle(m_pointFont);
 	DeleteFontToHandle(m_labelFont);
 	DeleteFontToHandle(m_smallFont);
 	DeleteFontToHandle(m_scoreFont);
-	DeleteFontToHandle(m_iconFont);
 }
 
 void ResultUI::Init(const ResultData& data, const std::string& stageName, bool isNewRecord)
@@ -123,6 +133,11 @@ void ResultUI::Init(const ResultData& data, const std::string& stageName, bool i
 	m_emblemHandle = LoadEmblem(m_rank);
 	m_buttonAHandle = LoadGraph(kButtonAPath);
 	m_buttonYHandle = LoadGraph(kButtonYPath);
+	m_iconTechHandle = LoadGraph(kIconTechPath);
+	m_iconKillHandle = LoadGraph(kIconKillPath);
+	m_iconTimeHandle = LoadGraph(kIconTimePath);
+	m_iconItemHandle = LoadGraph(kIconItemPath);
+	m_iconDeathHandle = LoadGraph(kIconDeathPath);
 
 	const float scale = Game::GetScale();
 	auto create = [scale](int size, int space)
@@ -137,7 +152,6 @@ void ResultUI::Init(const ResultData& data, const std::string& stageName, bool i
 	m_labelFont = create(20, 2);
 	m_smallFont = create(18, 1);
 	m_scoreFont = create(60, 2);
-	m_iconFont = create(24, 0);
 }
 
 int ResultUI::LoadEmblem(int rank)
@@ -251,28 +265,28 @@ void ResultUI::DrawAddRows()
 	DrawSelectBand(kRailLX + 4.0f, kTechY - 6.0f, kRailRX - 14.0f, kTechY + 70.0f, kGuideStart);
 
 	const float textX = kRailLX + kTextOffsetX;
-	DrawIcon(kRailLX, kTechY + kIconOffsetY, "技", kTechStart);
+	DrawIcon(kRailLX, kTechY + kIconOffsetY, m_iconTechHandle, kTechStart);
 	DrawRowText(textX, kTechY, FormatNumber(CountUp(m_data.CalcTechniqueTotal(), kTechStart, kCountLen)), "", "【テクニック】", "", kTechStart, false);
 
 	const int kill = (std::min)(m_data.killCount, m_data.enemyNum);
 	const int killPercent = m_data.enemyNum > 0 ? kill * 100 / m_data.enemyNum : 100;
-	DrawIcon(kRailLX, kKillY + kIconOffsetY, "切", kKillStart);
+	DrawIcon(kRailLX, kKillY + kIconOffsetY, m_iconKillHandle, kKillStart);
 	DrawRowText(textX, kKillY, FormatNumber(CountUp(m_data.CalcKillScore(), kKillStart, kCountLen)), " / " + FormatNumber(ResultData::GetKillScoreMax()),
-		"【切る数】", std::to_string(kill) + " / " + std::to_string(m_data.enemyNum) + "体　" + std::to_string(killPercent) + "%", kKillStart, false);
+		"【キル数】", std::to_string(kill) + " / " + std::to_string(m_data.enemyNum) + "体　" + std::to_string(killPercent) + "%", kKillStart, false);
 
-	DrawIcon(kRailLX, kTimeY + kIconOffsetY, "時", kTimeStart);
+	DrawIcon(kRailLX, kTimeY + kIconOffsetY, m_iconTimeHandle, kTimeStart);
 	DrawRowText(textX, kTimeY, FormatNumber(CountUp(m_data.CalcTimeScore(), kTimeStart, kCountLen)), " / " + FormatNumber(ResultData::GetTimeScoreMax()),
 		"【クリアタイム】", FormatTime(m_data.clearFrame), kTimeStart, false);
 
-	DrawLabel(textX, kFormulaY, "( 技 + 切 + 時 ) × 道 × 死", kDim, m_smallFont, FadeAlpha(kTotalStart));
+	DrawLabel(textX, kFormulaY, "( 技 + 殺 + 時 ) × 道 × 死", kDim, m_smallFont, FadeAlpha(kTotalStart));
 }
 
 void ResultUI::DrawRateRows()
 {
 	const float textX = kRailRX + kTextOffsetX;
-	DrawIcon(kRailRX, kItemY + kIconOffsetY, "道", kItemStart);
+	DrawIcon(kRailRX, kItemY + kIconOffsetY, m_iconItemHandle, kItemStart);
 	DrawRowText(textX, kItemY, FormatRate(m_data.CalcItemRate()), "", "【アイテム】", "使用 " + std::to_string(m_data.itemUseCount), kItemStart, true);
-	DrawIcon(kRailRX, kDeathY + kIconOffsetY, "死", kDeathStart);
+	DrawIcon(kRailRX, kDeathY + kIconOffsetY, m_iconDeathHandle, kDeathStart);
 	DrawRowText(textX, kDeathY, FormatRate(m_data.CalcDeathRate()), "", "【死亡】", "死亡 " + std::to_string(m_data.deathCount), kDeathStart, true);
 }
 
@@ -410,21 +424,17 @@ void ResultUI::DrawGuide()
 	DrawLabel(yX + kGuideIconSize + 8.0f, iconY + 2.0f, "リトライ", kRed, m_smallFont, alpha);
 }
 
-void ResultUI::DrawIcon(float cx, float cy, const char* kanji, int start)
+void ResultUI::DrawIcon(float cx, float cy, int handle, int start)
 {
 	if (m_frame < start) return;
 	const float scale = PopScale(start);
 	const int alpha = (std::min)(255, (m_frame - start) * 255 / 4 + 1);
-	const float r = kIconRadius * scale * Game::GetScale();
-	const float sx = ToScreenX(cx);
-	const float sy = ToScreenY(cy);
+	int w = 0, h = 0;
+	GetGraphSize(handle, &w, &h);
+	if (w <= 0) return;
+	const double drawScale = kIconSize / w * scale * Game::GetScale();
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-	DrawCircleAA(sx, sy, r, 32, GetColor(kBgR, kBgG, kBgB), TRUE);
-	DrawCircleAA(sx, sy, r, 32, kWhite, FALSE, 1.5f);
-	const int len = static_cast<int>(strlen(kanji));
-	const int w = GetDrawStringWidthToHandle(kanji, len, m_iconFont);
-	const int h = GetFontSizeToHandle(m_iconFont);
-	DrawRotaStringToHandle(static_cast<int>(sx), static_cast<int>(sy), scale, scale, w * 0.5, h * 0.5, 0.0, kWhite, m_iconFont, 0, FALSE, kanji);
+	DrawRotaGraphF(ToScreenX(cx), ToScreenY(cy), drawScale, 0.0, handle, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 }
 

@@ -32,6 +32,7 @@
 #include "Stage/WallZone/WallZoneEditor.h"
 #include "Stage/Phase/PhaseAreaEditor.h"
 #include "UI/UIManager.h"
+#include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieCutCamera.h"
 #include "imgui.h"
 
 namespace
@@ -184,6 +185,7 @@ void SceneMain::Init()
 
 	//プレイヤー追従カメラ
 	m_cameraManager->Init(m_player, m_stage);
+	if (m_stageType == StageType::Cyber) StartPlayerStartMovie();
 
 	//インゲーム用のUIを生成する(プレイヤーなどを参照するUIがあるので最後に行う)
 	m_uiManager = std::make_unique<UIManager>();
@@ -388,6 +390,18 @@ void SceneMain::StartEnding()
 	m_ending = std::make_unique<TunnelEnding>(m_stage, m_player, m_cameraManager);
 }
 
+void SceneMain::StartPlayerStartMovie()
+{
+	PlayerStartMovieFrame frame;
+	frame.origin = m_player->GetRigidBody().GetPos();
+	Vector3 front = m_player->GetTargetVec();
+	front.y = 0.0f;
+	if (front.Magnitude() > 0.0f) frame.front = front.Normalize();
+
+	m_player->StartStartMovie(frame);
+	m_cameraManager->ChangeState(std::make_shared<PlayerStartMovieCutCamera>(m_cameraManager, frame));
+}
+
 void SceneMain::FadeOutUpdate()
 {
 	m_fadeFrame++;
@@ -446,7 +460,7 @@ void SceneMain::NormalDraw()
 	//[TEMP_TRAIL] 確認用
 	{
 		extern int g_trailCapture;
-		if (g_trailCapture > 0 && g_trailCapture <= 30)
+		if (g_trailCapture > 0 && g_trailCapture <= 70)
 		{
 			char path[64];
 			sprintf_s(path, "Log/trail_%03d.png", g_trailCapture++);

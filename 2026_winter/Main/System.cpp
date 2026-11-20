@@ -66,6 +66,9 @@ namespace
 	const std::string kSkillHitEffectPath = "data/Effect/Hit/SkillHit.efk";
 	//地上からのジャンプ
 	const std::string kJumpKickEffectPath = "data/Effect/Move/JumpKick.efk";
+	//ダッシュ
+	const std::string kDashStartEffectPath = "data/Effect/Move/DashStart.efk";
+	const std::string kDashSparkleEffectPath = "data/Effect/Move/DashSparkle.efk";
 
 	//Kingmechのミサイルの雨
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
@@ -108,6 +111,8 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::HitWindEffect] = LoadEffekseerEffect(kHitWindEffectPath.c_str());
 	m_asyncHandles[AsyncData::SkillHitEffect] = LoadEffekseerEffect(kSkillHitEffectPath.c_str());
 	m_asyncHandles[AsyncData::JumpKickEffect] = LoadEffekseerEffect(kJumpKickEffectPath.c_str());
+	m_asyncHandles[AsyncData::DashStartEffect] = LoadEffekseerEffect(kDashStartEffectPath.c_str());
+	m_asyncHandles[AsyncData::DashSparkleEffect] = LoadEffekseerEffect(kDashSparkleEffectPath.c_str());
 }
 
 void System::LoadStage(StageType type)
@@ -288,6 +293,8 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::HitWindEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::SkillHitEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::JumpKickEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DashStartEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DashSparkleEffect]);
 
 }
 

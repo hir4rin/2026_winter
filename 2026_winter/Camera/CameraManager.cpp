@@ -21,6 +21,7 @@
 #include "CameraState/BossPartThrowCamera.h"
 #include "CameraState/BossFinisherCamera.h"
 #include "CameraState/EndingCamera.h"
+#include "CameraState/TitleCamera.h"
 #include "Collision/CollisionManager.h"
 #include "Stage/Stage.h"
 #include "Main/System.h"
@@ -168,6 +169,13 @@ bool CameraManager::IsStageCollisionCamera() const
 	//ここはよう悩み//一旦全部の判定をする
 	//エンディングは後ろのコンテナに当たって前へ飛ぶので判定しない
 	if (m_currentState && m_currentState->GetCameraType() == CameraStateBase::Type::EndingCamera) return false;
+	//登場演出は置いた位置のまま(C8は通常のカメラへつなぐので判定する)
+	if (m_currentState)
+	{
+		const auto type = m_currentState->GetCameraType();
+		if (type == CameraStateBase::Type::PlayerStartMovieCutCamera ||
+			type == CameraStateBase::Type::PlayerStartMovieLandCamera) return false;
+	}
 	return true;
 
 
@@ -249,6 +257,10 @@ const char* CameraManager::GetCameraTypeName(int type)
 	case CameraStateBase::Type::BossPartThrowCamera: return "BossPartThrowCamera";
 	case CameraStateBase::Type::BossFinisherCamera: return "BossFinisherCamera";
 	case CameraStateBase::Type::EndingCamera: return "EndingCamera";
+	case CameraStateBase::Type::TitleCamera: return "TitleCamera";
+	case CameraStateBase::Type::PlayerStartMovieCutCamera: return "PlayerStartMovieCutCamera";
+	case CameraStateBase::Type::PlayerStartMovieLandCamera: return "PlayerStartMovieLandCamera";
+	case CameraStateBase::Type::PlayerStartMovieTurnCamera: return "PlayerStartMovieTurnCamera";
 	default: return "Other";
 	}
 }
@@ -683,6 +695,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::EndingCamera:
 		newState = std::make_shared<EndingCamera>(shared_from_this());
+		break;
+	case CameraStateName::TitleCamera:
+		newState = std::make_shared<TitleCamera>(shared_from_this());
 		break;
 	default:
 		return;

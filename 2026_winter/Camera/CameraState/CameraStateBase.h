@@ -82,6 +82,10 @@ public:
 		BossPartThrowCamera = 23,
 		BossFinisherCamera = 24,
 		EndingCamera = 25,
+		TitleCamera = 26,
+		PlayerStartMovieCutCamera = 27,
+		PlayerStartMovieLandCamera = 28,
+		PlayerStartMovieTurnCamera = 30,
 
 		
 

@@ -8,17 +8,16 @@
 #include "PartBrokenKillUI.h"
 #include "GuardBreakChanceUI.h"
 #include "ScreenBloodUI.h"
+#include "TitleBackUI.h"
 
 void UIManager::TitleInit()
 {
 	//前の場面のUIが残らないようにする
 	Clear();
 
-	//タイトルで使うUIをここで生成して登録する
-	//例: Add(std::make_shared<TitleLogo>());
-
-	//登録したUIのハンドルを生成する
-	InitAll();
+	//背景(3Dより先)
+	//シーンが合図を出すUIはシーンで作って Add し、最後に InitAll を呼ぶ
+	Add(std::make_shared<TitleBackUI>());
 }
 
 void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak_ptr<Player> player)

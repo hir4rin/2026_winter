@@ -53,6 +53,9 @@ private:
 	//エンディングを始める(トンネルが無いステージはすぐリザルトへ)
 	void StartEnding();
 
+	//プレイヤーの登場演出を始める(今の位置に着地する)
+	void StartPlayerStartMovie();
+
 private:
 	int m_frameCount;
 	int m_fadeFrame;//フェードの経過フレーム

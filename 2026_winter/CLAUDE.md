@@ -1571,7 +1571,81 @@
 - 画像: `data/UI/ScreenBlood/`(splat_0〜3・spray_0〜2、1024px。白で形はアルファだけ、乗算済みアルファで読む)。作り直しは `../tools/BloodDecalGen/MakeScreenBlood.ps1`。画像の根元の位置(splat は中心から -0.45×0.49、spray は -0.82×0.49)を変えたら .cpp の `kSplatRootRate` / `kSprayRootRate` も直す。
 - 確認: Release・Debug(x64)のビルドは通った。一時コードでステージ1に2回出して画面を撮った(一時コードは消した)。**実際に暗殺・確殺しての確認はまだ**(演出のカメラ・スローと重なったときの見え方、量)。
 
+### 2026-11-20 リザルトの項目アイコンを画像にした(技・殺・時・道・死)
+- `ResultUI::DrawIcon(cx, cy, handle, start)`: 円と文字をコードで描くのをやめ、`data/UI/Result/icon_tech/kill/time/item/death.png` を `kIconSize`(80、設計解像度)で描く。出るときの拡大(PopScale)とフェードは前と同じ。`m_iconFont` は消した。
+- 画像は Illustrator で作る(`../tools/ResultIconGen/MakeResultIcon.ps1`)。KSO黒龍爽の字＋赤い筆の円相、下から墨が垂れる(型 F)。
+- 真ん中の項目と計算式の字を「切」→「殺」にした。見出しは【切る数】→【キル数】。
+- Debug(x64)でビルドは通った。`-result` で起動して画面を撮り、5つとも出るのを確認した。
+
+### 2026-11-20 タイトルの背景にステージ1の夜の街(TitleCity)
+- イメージ画像 `../進捗/タイトル背景案_夜の街.png`(プレイヤー・ロゴはゲームの画、背景は手描き)で決めた「屋上から夜の街を見下ろす・ぼかす」をステージ1で作った。
+- **`Stage/TitleCity`**: `Stage` クラスは使わない(当たり判定の登録・ステージ1の敵の読み込みまで走るため)。`CyberStage.mv1` を直接読み、床の高さは当たり判定のモデルで `Stage::GameInit` と同じく合わせる。空 `SkyBox`(CyberStage/Sky)、明かり `StageLights`(5番)、夜のもや。
+  - 描き方: 画面の 1/2 の `MakeScreen` に背景用のカメラ(ステージの座標 (-6000,2500,22000) から (3000,0,29000) を見る、画角45°)で描く → 明るい所を `DX_GRAPH_FILTER_BRIGHT_CLIP` で 1/4 の画面に取り出してぼかす(にじみ) → 全体を `GAUSS` でぼかす → 画面いっぱいに貼り、にじみを加算。カメラ・ライトは描く前に覚えて戻す(`SetDrawScreen` でカメラが戻るため)。
+  - **ステージの明かりは周りを照らすだけで、遠くからは光って見えない**(明かりは通りの低い所にあってビルに隠れる)。なので光の玉を足した: 明かりの CSV の位置に玉 + **ビルの壁(横向きの面・高さ150以上)に面積に比例してランダムに 2500 個の窓の明かり**(暖色が多め・時々赤・青白、大きさ 220〜560)。深さは見るが書かない加算のビルボード、ゆっくり瞬く。
+  - もやは本編より暗く (22,12,32)。明かりは描いた後に空のリストを渡して、タイトルのキャラに残さない。
+- `TitleBackUI` は塗りつぶしをやめて周辺減光だけ(街の後に掛ける)。シーンの描画順: 街 → 周辺減光 → プレイヤー → UI。
+- 確認: Debug x64 でビルドして撮影。ぼけた夜の街に窓の光の玉が並ぶ。画面の左端(y=350 付近)に細い黒い線が少し見える(背景用カメラの近くの何か)。背景は揺れ(カメラシェイク)では動かない。読み込みの時間は測っていない。
+
+### 2026-11-20 タイトルのプレイヤーを IdaFaber の Mv1LikeUnity(Unity と同じ描き方)で描く
+- 髪がまばら(地肌が見える)だった。調べたこと: 風を切っても同じ → 描き方の問題。髪の板の裏面が消えていた(裏面も描くとかなり直った)。CSV の髪の切り抜きを 0.31→0.08 に下げると半透明が白く浮いて悪化。髪を減らす前のモデル(`data/Player03_TitleHair.mv1`、git の 7312d9d の版)も試した。
+- ユーザーから `Downloads/LooksLikeUnity_IdaFaber_Dxlib`(IdaFaber の SK_VEX を Unity HDRP と同じ見た目で描くヘッダ `Mv1LikeUnity.h` と専用シェーダー)を渡されたので、**タイトルのプレイヤーはそれで描く**。
+  - `Render/Mv1LikeUnity.h`(そのまま写した。関数は全部 inline)。シェーダーの場所は `Application::Init` で `Mv1LikeUnity::ShaderDir()` に入れてから `InitLoadShaders()`(起動時に1回)。
+  - データ `data/Title/IdaFaber/`: `SK_VEX_01/`(mv1・`_Materials.txt`・画像。**4096 の画像は 2048 に縮めた**、全部で約 66MB)、`shaders/bin/`、`Ninja_Idle_LookingAround.mv1`(ポーズ)。元は Runtime/ の下。
+  - `TitlePlayer`: `MV1LoadModel(SK_VEX_01)` → `LoadMaterials` → `Mv1LikeUnity::Draw`(髪の両面・切り抜きも中でする)。消すときは `ReleaseMaterials` → `MV1DeleteModel`。
+  - モーションは別ファイルで骨の数も違う(166本)ので、**`Animation::SetAnimSourceModel(handle, true)` で骨の名前で当てる**(引数を足した。既定は今までどおり番号で当てる。ボスの腕はそのまま)。
+  - 光は DxLib の標準ライトを使うので、描く間だけ `SetLightDirection`/`SetLightDifColor` と `Env().sky`(0.12)を変えて戻す。斬った瞬間はライトの色を赤くして 25% 残す(前のふちの光の代わり)。
+  - 骨の名前(髪・布・背骨・肩)は Player03 と同じなので、風・息の処理はそのまま。
+- **その後「頭はいいが体は前のがいい」となり、2つのモデルを重ねる形にした**:
+  - 体 = ゲームのモデル(`PlayerModel` の複製)を CharacterLook で描く。髪のメッシュ(`MAT_HAIR`)は `MV1SetMeshVisible` で隠す。
+  - 髪 = SK_VEX_01 の髪のメッシュだけ見せて `Mv1LikeUnity::Draw`。大きさは「`spine_05`→`head` の長さ」で体のモデルにそろえ、どちらも頭の骨を同じ所に置く。
+  - 2つは同じポーズ(どちらも `TitlePose` の 116.8077F)・同じ息・同じ風(`PoseModel` ごとに骨の番号を持ち、同じ m_frame の式で動かす)。
+  - `CharacterLook::Draw` に「`MV1GetMeshVisible` が FALSE のメッシュは描かない」を足した(本編の見え方は変わらないはず)。Mv1LikeUnity の Draw も隠したメッシュを描かないのを画面で確認。
+  - 体の光は前の CharacterLook の設定(ふちの光)、髪の光は DxLib の標準ライト。斬った瞬間はどちらも赤くして 30% 残す。
+- 確認: Debug x64 でビルドして撮影。髪が頭にずれずに乗り、地肌のまだらは無く、体は前の見た目。`data/Player03_TitleHair.mv1` は使わなくなったので消した(git の 7312d9d にある)。
+
+### 2026-11-20 タイトルのプレイヤーを後ろ姿＋強い風に変えた(下の顔のアップの欄の置き換え)
+- **ポーズ**: アニメCSVに `TitlePose,Ninja_Idle_LookingAround` を足し、`m_anim.Init(…, "TitlePose", false, 再生速度0, -1, 116.8077)` で止める(Update でアニメは進めない)。
+- **後ろ向き**: Y に 160°(少しロゴの方)、大きさ 15 倍、頭の骨を (380, -60, 150)。顔が見えないので目線・首をカメラへ回すのはやめた。息(背骨・肩)は残した。
+- **風** `UpdateWind`: 髪(前 6段×2・後ろ 7段×3・ポニーテール3)と布(`cng_cloth_01〜04`・`cng_cloth_back_01〜04`、強さ 0.6)を、親から順に「今の骨の向き(子へ)を風の向きへ 38% 寄せる」→ 先ほど風にそろう。その上にばたつき(2つの sin、先ほど大きく根元から遅れる)と突風の強弱。風は画面の右から左・少し上・少し手前 (-1, 0.35, -0.35)。斬った瞬間 `OnImpact` で突風を足して減衰。
+  - 回す向きは、回した後に風に近づく方を選んでいる(DxLib の回転の向きに頼らない)。
+- 確認: Debug x64 でビルドして撮影。後ろ姿で髪が左へ横に流れ、0.1秒違いで毛先が動く。PRESS の右端が肩と重なって少し見にくい。
+
+### 2026-11-20 タイトルに顔のアップ(TitlePlayer)・髪の揺れ・目線・息
+- ※ 上の欄で後ろ姿に変えた(目線・首を回す処理は消した)。
+- **`Character/Player/TitlePlayer`**: `PlayerModel` を複製し、Player と同じく `Animation m_anim` ＋ `m_animNames`(アニメCSV)で `GetAnimName("Idle")` をループ。アニメCSVはタイトルでも使うので、起動時に `DataManager::LoadPlayerAnimData()`(public にした)で読む。大きさ 18 倍・頭の骨を (330, -40, 150)・Y に 35° 回して画面右に斜めの顔(ロゴの方を向く)。`CharacterLook` で描く。シーンの `NormalDraw` で `DrawBack` と `Draw` の間。
+- **骨はコードで動かす**(モデルにまぶたの骨・シェイプは無いのでまばたきは無し。目玉 `cng_eye_l/r`・あご `cng_jaw`・髪 33本＋ポニーテール3本はある)。
+  - 毎フレーム `MV1ResetFrameUserLocalMatrix` でアニメの姿勢に戻し、`RotateFrame`(骨の位置を中心にワールドの回転を足す)を親から順に掛ける。
+  - 息: `spine_03`/`spine_05` を 270F 周期で前後、吸うと `clavicle` が上がる、`neck_01` は打ち消し＋ゆっくりさまよう。
+  - 髪: 房ごとにずらした sin(根元から先へ遅れる)。斬った瞬間 `OnImpact` で 7° あおって減衰。
+  - 目: 置いた時の顔の前を目の骨のローカルの前として覚え、`MGetRotVec2` で見る点へ回す(最大 22°)。斬る前はロゴ、斬った後はカメラ。80〜200F ごとに少しずらす。斬った後は首も 12° カメラへ回す。
+  - ふちの光: タイトルの間だけ `CharacterLook::Settings()` を差し替えて描き、戻す。ふだんは青く弱く、斬った瞬間に赤く光って 35% 残る。
+- **タイトルカメラの画角を 22° に**(顔がゆがまないように望遠)。1単位=1ピクセルは z=0 の面のままなのでロゴは変わらない。ニア/ファーはシーンで 100/8000。ロゴは x=-110、PRESS は 530 へ左に寄せた。
+- 確認: Debug x64 でビルドして撮影(`PrintWindow` で前に出さずに撮る)。斬る前はロゴを見て、斬った後は首と目がカメラへ向く・髪が動くのを確認。**近くで見ると髪の板(髪を減らしたモデル)のギザギザが少し見える**。A で飛ばす・ステージセレクトへ進むはまだ試していない。
+
+### 2026-11-20 タイトルシーンの組み直し(タイトルカメラ・UIManager::TitleInit)
+- **TitleScene はカメラと UI を持って、決まったフレームで合図を出すだけ**。85F `TitleLogoUI::Slash()` / 89F `CameraManager::StartCameraShake(9, 20)`(既存の揺れ)と `TitleFlashUI::Start()` / 140F `TitlePressUI::Show()`。途中の A は `SkipDirection`(カメラの寄り・ロゴの出・斬り終わりまで飛ばす)。フェードはシーンのまま。
+- **`Camera/CameraState/TitleCamera`**(Type 26・`CameraStateName::TitleCamera`)。z=0 の面で 1単位=設計解像度の1ピクセルになる距離から写す。出始めは 1.06 倍寄った所から 45F で引く(前はロゴの拡大でやっていた)。**注視点はずっと奥(z=100000)**: 既存のシェイクは位置だけ動かすので、注視点が近いとロゴが画面の真ん中に残って揺れない。
+  - シーンで `CameraManager` を作って `InitState(TitleCamera)`(プレイヤー・ステージ無し)。`ApplyCameraSettings` は BattleManager が無いと assert するので呼んでいない(Update で設定したカメラのまま描く)。
+- **UI は `UIManager::TitleInit` で登録**: `TitleBackUI`(Back レイヤー。暗い色と周辺減光) / `TitleLogoUI`(忍・斬り口の光・閃光の Effekseer 2D。シェーダーの処理は前のまま) / `TitleFlashUI` / `TitlePressUI`。シーンは `UIManager::Get<T>()`(登録した UI を型で取り出す、新しく足した)で持つ。
+  - ロゴは 3D の (0, 40, 0) を `ConvWorldPosToScreenPos` で画面に写し、1単位の画面の長さで大きさを決める → カメラの揺れ・寄り引きがそのままロゴに効く。斬ってからの時間はロゴが自分で数える。
+  - `NormalDraw` は `DrawBack` → (3D の背景・キャラはここに入れる) → `Draw`。
+- Debug x64 でビルドが通り、起動して撮影: 出る・斬る・染まる・垂れる・PRESS が前と同じ位置に出る。斬った直後の連写でロゴが ±3px ほど揺れて止まるのを確認。**A で飛ばす・ステージセレクトへ進むはまだ試していない**。
+
+### 2026-11-20 プレイヤーの登場演出(ステージ1のみ、約5.4秒・全部自動)
+- (追記)**C7(StandCamera)は消した**(ユーザーの指示)。C6 → C8 で、C8 は C6 の位置からそのまま右回りで背中へ回り込む。Type 29 は欠番。下の記述の C7 は無い。
+- 流れ: スタートの後ろのビルの縁(高さ1816)に立つ → 踏み切って着地点の真上へ → **空中強攻撃**(ComboChain の13番のアニメ・速さ・止めるフレーム)で真下へ突き下ろす → 着地(シェイク・FOVパンチ) → `HeavyAttackLanding` を0.4倍でしゃがみを長く → Idle → 操作へ。
+- 着地点・正面は `SceneMain::StartPlayerStartMovie` でプレイヤーの今の位置・向き(`m_stageType == Cyber` のときだけ。カメラの Init の後)。屋上の位置は `PlayerStartMovieFrame::kRoofSide/Height/Front`(着地点からの 横・高さ・前。ビルの高さはDxLibで線を引いて調べた)。
+- **カメラ** `Camera/CameraState/PlayerStartMovieCamera/`(Type 27〜30):
+  - `PlayerStartMovieCutCamera`: C1〜C5(カットで切り替える部分)を1つで持つ。カットの表は `BuildCuts`。位置は着地点からの(横・高さ・前)、C4 は位置・注視点ともプレイヤーから、C5 は注視点だけプレイヤー。
+  - ブレンドする部分はそれぞれ別のステートで、ブレンドの設定を自分で持つ: `LandCamera`(C6、着地点のまわりを回る。C5からはカット) → `TurnCamera`(C8、プレイヤー中心の Slerp・右回りで背中へ。PlayerFollowCamera の初期位置に合わせて切り替える)。
+  - 長さ・着地のフレームは `PlayerStartMovieFrame.h` の定数(カメラとプレイヤーで共通)。C1〜C6 はステージとの当たり判定をしない(`IsStageCollisionCamera`)。
+- **プレイヤー** `PlayerStateStartMovie`(前からあったファイルを作り替えた。落下のループは使わなくなった): Phase = Roof / Leap / Plunge / Land / Stand。無敵、`SetIsEventPlaying(true)` で入力・HUD を止める(`PlayerHUD` にイベント中は出さない条件を足した)。
+  - 屋上は当たり判定のモデルに無く、通りの見えない壁(高さ3000)も通るので、**着地までプレイヤーのコライダーを `SetIsActive(false)`** にして、位置とモデルはステートで直接動かす(`UpdateAngleAndPos`)。`Player::StartStartMovie(frame)` で入る。
+- 確認: Debug(x64)でビルドは通った。`-bench -stage=3` でカメラが 0→229→279→325F で切り替わって(C7を消した後)通常のカメラに戻ること、一時コードで各カットの画面を撮って流れを確認した(一時コードは消した)。**カット割りの見え方は仮**(C1 でプレイヤーが小さい等)。ImGui での調整はユーザーがする。
+- 未: 土煙のエフェクト、専用の着地アニメ(ヒーロー着地)、スキップ。
+
 ### 2026-11-12 タイトル画面(TitleScene)と、ロゴを斬って垂らす演出(シェーダー)
+- ※ 11/20 に組み直した(上の欄)。演出の流れ・シェーダーはそのまま、置き場所が `UI/Title〜UI` と `TitleCamera` に移った。
 - `Scene/TitleScene.h/.cpp`(vcxproj/filters に登録)。**起動して最初のシーン**(`Application::Run` の `ResetScene<TitleScene>`。前は StageSelectScene)。Pause / Result から戻る先はステージセレクトのまま。
 - 流れ(フレームはシーンの始まりから。値は .cpp 先頭): フェードイン30F → 鋼の「忍」と後ろの帯が 1.06 倍から 45F で縮みながら出る → 85F 斬り口の光が左から5Fで走る → 89F 白い閃光(加算10F)・揺れ(20F)・上半分が線に沿って18pxずれてすき間7px → 95F から45Fで斬り口から下へ赤く染まる → 107F から300Fかけて垂れが伸びる → 140F から「PRESS  A  BUTTON」(游明朝)が明滅。
   - 演出の途中で A を押すと 140F まで飛ばす。その後の A でフェードアウトしてステージセレクト。
@@ -1643,6 +1717,34 @@
 - **起動の引数 `-result`** でリザルトだけを仮の結果で開く(`ResultScene::MakeDebugData`。自己ベストは保存しない)。
 - 確認: Debug・Release のビルドは通った。`-result` で画面を撮り、出る順番・ハンコ・揺れを確認した。一時コードでステージ1を150Fで終わらせて、実際の記録(0 / 34体・2.50秒)が出ることも確認した(一時コードは消した)。
 - (追記)最初はゲームの最後の画面をぼかして背景にしていたが、ステージセレクトと同じ背景にした(見た目をそろえる・PNG に差し替えやすくするため)。画面の取り込み(`m_resultBgHandle`)と引数の bgHandle は削除。ドットは `m_bgFrame` で流すので、スキップしても飛ばない。あとでステージごとの背景 PNG にする案あり。**実際に遊んでクリアしての確認はまだ**(技の数え方が合っているか、リトライ)。
+
+### 2026-11-20 ポーズ・リザルトへのトランジション案(会話で検討・まだ作っていない)
+- 今: ポーズは黒の半透明(`PauseScene.cpp` の `kDarkenAlpha` 164)をフェードで重ねるだけ。クリアは `SceneMain` で30F(`kFadeFrame`)黒にフェード → `ResetScene<ResultScene>`。
+- 参考: プラチナゲームズの NG4 開発ブログ「UIのデザインについて」(https://www.platinumgames.co.jp/magazine/detail/?id=21_99)。記事から使える手法:
+  - 出るときは少し長め・消えるときは短め。イーズアウト(速く動き出してゆっくり止まる)が基本
+  - 「忍が独自に作った端末」の設定から、遷移の瞬間にドット模様・歪み・画面の湾曲で画面を不安定にする。色は赤と黒(単色モニター風)
+  - メインメニューを開くときに自作の四字熟語(忍邪断滅)を一瞬出してテンポを作る。上下の格子を前後に動かして奥行き
+  - リザルトは直前の画面に上下から帯がかぶさり、「データベースにアクセス」している演出で章の終わりをはっきりさせる
+  - 選んでいるボタンだけを揺らす(動くもの・止まっているもののルールを分ける)。上下に流れる装飾で雨
+  - 記事の動画は見ていない(文章から再現した案)
+- **原作(NG4)に寄せる方針**。ただし寄せるのは手法まで。四字熟語・家紋・エンブレム・ヤクモの目元の絵などは使わず、自作の言葉・紋にする(例: ポーズで「残心」を一瞬出す)。
+- 動くモックアップ: `../tools/TransitionMock/transition_mock_ng4.html`(ブラウザで開く。ポーズ6案・リザルト6案、1/4の速さで再生もできる)
+  - ポーズ(何度も開くので0.2秒前後、閉じるのは0.1秒):
+    1 端末の電源(横一本の線につぶれてから開く 0.24秒) / 2 文字の雨(漢字の列が流れ落ちて覆う 0.4秒) / 3 お札(中央に叩きつけ→扉のように左右に開く 0.42秒、長いので0.3秒に詰めるか初回だけ) /
+    4 格子が重なる(上下から三層の格子がずれて入る 0.28秒) / 5 走査線(赤い線が上から下へ、通った所から赤黒に 0.25秒) / 6 ドット化(粗いドットに崩れて赤黒に 0.2秒)
+  - リザルト(一度きりなので1秒くらいかけてよい):
+    A 縦のシャッター(細い縦帯が上下交互に落ちて閉じ、反対へ抜けて開く。閉じた所に「任務完遂」) / B 刃の帯(スローで寄る→刀の通る細い帯が横切る→帯が広がって覆う) /
+    C 記録を転送(画面が四角いドットに分かれて上の行から吸い上げられる。裏で照合のログ) / D 記録映像になる(クリアの画面が縮んで「記録映像」の窓に収まり、横一本の線に消えてリザルト) /
+    E 流れる文字の柱(文字の柱が一本おきに上下から流れ込んで覆い、反対へ流れ去る。記事の「煉獄」画面から) / F 紋を押す(自作の紋を叩きつけて揺れ、紋から円が広がってリザルト)
+  - その前に出した案(モックアップには入れていない): ポーズの「墨色化」「筆の帯」「端末ノイズ」、リザルトの「スロー→画面を斬る(タイトルのロゴを斬る演出とそろう)」「上下の帯と一文字」「墨のにじみ」「最後の画面をリザルトの背景に残す」「血振り・納刀のカメラ演出の「チン」で遷移」。原作風の基本形は「ポーズ: 赤黒＋ドット・横ずれ・湾曲0.12秒→漢字を一瞬→上下の格子のメニュー」「リザルト: 赤黒に湾曲→上下の帯で閉じる→照合のゲージと流れる文字列→帯が開く。数字は回ってから止まり、ランクは最後に押す」
+- 組み合わせの目安: ポーズは軽い 1・5・6 のどれか、リザルトは C か D(記事のデータベースに近い)、とどめの気持ちよさを残すなら B か F。ポーズ5＋リザルトCのように「端末がデータを読む」でそろえると統一感が出る。
+  - 気になる点: タイトル・リザルトのアイコンや紋章は筆・墨の和風。赤黒サイバーに寄せるなら「ゲーム中の端末UIは赤黒サイバー、タイトルとリザルトの紋章は筆」のように使い分けを決める。
+- DxLib での作り方の目安:
+  - 赤黒の単色: `GetDrawScreenGraph` で画面を撮る → `GraphFilter` の MONO → 赤を `DX_BLENDMODE_MULA` で重ねる(またはシェーダー)
+  - 湾曲・横ずれ・走査線の境目: 画面を横に細く切って `DrawRectExtendGraph` で行ごとに幅・位置を変える
+  - ドット化: 撮った画面を小さく縮めて `SetDrawMode(DX_DRAWMODE_NEAREST)` で引き伸ばす
+  - シャッター・文字の柱・転送: 四角を並べて時間をずらして動かすだけ(シェーダー不要)
+  - リザルトで画面を撮る場合、前に消した `m_resultBgHandle` のような取り込みを `SceneMain` のフェードアウト前に戻す必要がある
 
 ### 2026-11-12 チュートリアルの設計(会話で決めた・まだ作っていない。ユーザーが自分で書く)
 - 方針: **遷移表(`PhaseStage〜.csv`)をチュートリアルの台本にする**。「いつ出すか」は PhaseManager、「何をどう見せるか」は TutorialScene。`TutorialManager` は作らない(待ちの列・「もう見た」の印・出してよいかの判定を別に持つと、遷移表と二重になるため)。
@@ -1818,6 +1920,7 @@
 ---
 
 ## TODO / 次にやること
+- [ ] ポーズ・リザルトへのトランジション(11/20 の案)からどれにするか決めて作る。モックアップは `../tools/TransitionMock/transition_mock_ng4.html`
 - [ ] チュートリアル(11/12 の設計)を作る: PhaseFlowData に Tutorial と列2つ → DataManager で読む → PhaseManager の頼み → SceneMain で Push → TutorialScene(まず画像1枚、そのあと動画・ページ送り)
 - [ ] リザルト画面(11/12)を実際にクリアして確認: 技の回数が合っているか(スキル技が1回の技で何回も数えられないか)、リトライ、点数とランクの境目の調整、ステージごとの目標タイム、アイテム・死亡の仕組みができたら `ResultData` の itemUseCount / deathCount に入れる、音
 - [ ] 床の血の跡(11/08)をゲームで確認: 色・量・残る長さ、カメラが動いたときのちらつき、斜面と床の端、空中での出方- [ ] **ステージ1の曲がり角(11/07)をゲームで確認**: 7か所の角を走って通れるか、カメラが回りきるか、角の直後の壁走り(特に角1の先・角3の先・角5の先)の向き、角の外から建物の裏や空が見えないか、角4・角6の見張りを背中から暗殺できるか、スタートから角1までの約170mが長くないか
@@ -2023,8 +2126,32 @@
 - 確認: Debug・Release(x64)のビルドは通った。一時コードでステージ1のスタート地点で自動でジャンプさせて2Fおきに撮り、宙返りの間に両足の弧が出て消えることを確認した(一時コードは消した。画像は `../EffectTools/MoveWind/FootTrail/game_v1_crop.png`(最初の値)・`game_v2_crop.png`(今の値))。**実際に操作しての確認はまだ**(走りながらのジャンプ・壁走りの蹴り・落下(Fall)で出さなくてよいか)。
 - 同じ日に Effekseer でダッシュの入り・ダッシュ中の膜・踏み切り・着地を作った(`../EffectTools/MoveWind/MoveWind_v1・v2`)。**まだゲームには入れていない**。v2 の踏み切り(足元から飛ぶ帯)は「足に追従していない」ので不採用。
 - (追記)**壁キック(`PlayerStateWallKick`)・壁走りからの蹴り(`PlayerStateWallRunKick`)の間も足の軌跡を出す**(どちらも Update の最初で `SetFootTrailEmitting(true)`)。
-- (追記)**踏み切りのもや**(録画の 35.15〜35.3 秒: 踏み切った地面の点から上がっていく足へ、太い白いもやの帯が伸びて約0.15秒で消える。`../EffectTools/MoveWind/FootTrail/ref_takeoff_3495.png`)。
-  - これも `PlayerSwordTrail`(`Player::m_takeoffTrail`)。`PlayerStateJump::Enter` で `Player::StartTakeoffMist()`。`kTakeoffMistFrame`(10F)の間だけ伸ばす(`Player::Update` で減らす)。
-  - 帯は両足首の真ん中を通り、カメラの右向き(水平)に `kTakeoffMistHalfWidth`(38)ずつ広げる(`GetTakeoffMistPos`)。最初の1回だけ、先に踏み切った地面の位置(`m_takeoffGroundPos`)の点を足すので、帯の下の端は地面に付く。
-  - 値は `Player.cpp` 先頭の `kTakeoffMist〜`(長さ12F、もや255・線の束100・加算25)。地面からのジャンプだけ(壁キックでは出さない)。
-  - 確認: Debug・Release(x64)のビルドは通った。一時コードでステージ1で自動でジャンプさせて1Fずつ撮った(一時コードは消した。`game_takeoff_v1〜v3_crop.png`、v3 が今の値)。**実際に操作しての確認はまだ**(走りながらのジャンプで帯が斜めに伸びるか、カメラが横から見たとき)。
+- (追記)踏み切りのもや(地面から足へ伸びる帯、`m_takeoffTrail`)も作ったが、ユーザーの判断で**コードは全部消した**(画像 `game_takeoff_v1〜v3_crop.png` だけ残っている)。
+
+### 2026-11-19〜20 地上ジャンプのエフェクト(JumpKick)とダッシュのエフェクト
+- **地上ジャンプ** `data/Effect/Move/JumpKick.efk`(`AsyncData::JumpKickEffect`、1/20で作成・20倍で再生)。原作に無いので9案の絵からユーザーが選んだ「2 風の三日月」＋「6 踏み跡の残光」。
+  - 中身: 床に平たい白い弧5本(回りながら広がる)＋遅れて大きく薄い弧3本＋両足の位置に青白い光＋足元から細い煙7本。作業ファイルは `../EffectTools/MoveWind/JumpKick_v2/`(v1 の輪・丸い砂ぼこり・小石は「安っぽい」でやめた。`JumpKick_v1/` に残っている)。
+  - `PlayerStateJump::Enter` で `IsFloor()` のとき(コヨーテタイムのジャンプは出さない)、足元・プレイヤーの向き(`m_targetVec`)で再生。
+  - 気になっている所: 足跡の光が丸い2つの点(ライトのよう)に見える、煙がほとんど見えない。まだ直していない。
+- **ダッシュ** `DashStart.efk`(入り、約18F)・`DashFilm.efk`(体にまとう膜、ループ)。作業ファイルは `../EffectTools/MoveWind/MoveWind_v1/`。膜のモデル `Model/MW_Cocoon_a.efkmodel` とテクスチャ `MW_Film_a.png` は `../EffectTools/MoveWind/gen_movewind.ps1` で作った。
+  - (11/20)「もっと控えめに」で膜を薄くした: 作業ファイル `DashFilm_v2.efkefc`(今の DashFilm.efk はこれ)。Film の濃さ 200→100、はがれる弧(Peel)は 6〜10F → 16〜24F おき・濃さ 255→140。前の版は `DashFilm.efkefc`。比べた画像 `../EffectTools/MoveWind/DashGame/compare_film_v1_v2.png`。
+  - (11/20)**膜はやめた**(「膜もはがれる弧も変」)。`DashFilm.efk` は消した(入りの `DashStart.efk` は膜のモデル・テクスチャを使うので残している)。9案の絵から「2 体の横の速度線」と「4 肩から光の帯」を両方作った:
+    - 速度線 `data/Effect/Move/DashLines.efk`(`AsyncData::DashLinesEffect`、ループ)。体の左右(x ±1.3〜2.3、高さ1〜8.5)の前に細い線を出して後ろへ速く流す。移動方向ビルボード(**画像の縦が進む向きになる**ので、線の画像は縦向き `MW_SpeedLineV_a.png`。`gen_movewind.ps1 出力先 a line` の横向きを90°回したもの)。作業ファイル `../EffectTools/MoveWind/DashRun_v1/DashLines.efkefc`。`PlayerStateFastRun` の `m_linesHandle`・`UpdateLines`(前の膜と同じく毎フレーム位置と向きを合わせ、Exit で止める)。
+    - 肩の光の帯: 足の軌跡と同じ `PlayerSwordTrail` を `Player::m_shoulderTrail[2]`。`upperarm_l/r` から背中側12・外側10・下4、外側へ左右になびかせ(`m_shoulderSwayFrame`)、帯の面は外側45°に傾ける(真後ろのカメラだと帯が奥へまっすぐ伸びて見えないため)。値は `Player.cpp` 先頭の `kShoulderTrail〜`。`PlayerStateFastRun::Update` の最後で `SetShoulderTrailEmitting(true)`。
+    - どちらを出すかは `PlayerStateFastRun.cpp` 先頭の `kRunEffect`。比べた画像 `../EffectTools/MoveWind/DashGame/compare_lines_ribbon_v2.png`。
+  - (11/20)**肩の光の帯に決定**(`kRunEffect` = ShoulderRibbons)。「もう少し豪華に」で:
+    - 帯専用の画像 `data/Effect/Move/Texture/MW_Ribbon_a.png`(やわらかい面＋芯の線＋ふちの線＋細い筋)と `MW_RibbonGlow_a.png`(まわりのぼんやりした光)。作り直しは `../EffectTools/MoveWind/gen_movewind.ps1 出力先 a ribbon`。`PlayerSwordTrail::SetTextures(線の束, ふち, もや)` で差し替えている。
+    - 各肩に主と細い副の2本(`m_shoulderTrail[4]`、[左右*2 + 主/副])。副はさらに外へ8・上へ7・なびきの位相を1.6ずらす。長さ 主13F・副10F。
+    - 光の粒 `data/Effect/Move/DashSparkle.efk`(`AsyncData::DashSparkleEffect`、ループ、作業ファイル `../EffectTools/MoveWind/DashRun_v1/DashSparkle.efkefc`)。肩の高さのまわりに小さな光の粒を出し、出た場所に残る(LocationEffectType=WhenCreating)ので、走ると後ろへこぼれて見える。`PlayerStateFastRun` は速度線と同じハンドル(`m_runEffectHandle` / `UpdateRunEffect`)で再生・追従・停止。
+    - 比べた画像 `../EffectTools/MoveWind/DashGame/compare_ribbon_v2_v3.png`・`ribbon_v3_zoom.png`。
+  - (11/20)「布っぽい」ので**細い風の筋に分けた**(上の2本の帯・`m_shoulderTrail` はやめた)。
+    - 各肩に5本(`Player::m_shoulderStrand[2][kShoulderStrandNum]`、`ShoulderStrand` に軌跡・ずらし・位相・残りフレーム)。`UpdateShoulderStrands` で 出る8〜16F / 消える2〜7F をくり返し、出直すたびに場所(外 -4〜14・上 -6〜10・後ろ 0〜10)と位相を選び直す。軌跡は区切りが変わるので前の筋とはつながらない。
+    - 描くときに `SetEmitting(ダッシュ中 && 出ている)`。幅の半分2・長さ12F。値は `Player.cpp` 先頭の `kShoulderTrail〜` / `kShoulderStrand〜`。
+    - 画像 `MW_WindStrand_a.png`(途中でかすれて切れる細い線。作り直しは `gen_movewind.ps1 出力先 a strand`)、もやは `MW_RibbonGlow_a.png` を薄く(45)。
+    - 比べた画像 `../EffectTools/MoveWind/DashGame/compare_ribbon_strand_zoom.png`(上=前の帯、中=4本・細め、下=今の値)。
+    - 撮影のとき VS からゲームを起動中だと二重起動で弾かれるので、`-dashtest` のときだけ `SetDoubleStartValidFlag(TRUE)`(`Application.cpp`、[TEMP_TRAIL])。
+    - (11/20 色の比較)`PlayerSwordTrail::Style` に `tintR/G/B`(もや・加算の線・ふちに掛ける。芯の線は白のまま、初期値255)。4案(今の白 / 淡い水色 / 白のまま0.75倍 / 水色＋薄く)を撮って比べ、**水色＋薄く** に決めた。色 `kShoulderTrailTint〜`(150,215,255)、濃さは0.75倍(もや34・筋173・加算120)。比べた画像 `../EffectTools/MoveWind/DashGame/compare_strand_color_zoom.png`。比べるのに使った一時コード(`-strandcolor`)は消した。x64/Release を作り直した。
+  - (11/20)**速度線(SpeedLines)のコードを消した**: `PlayerStateFastRun::RunEffect` / `GetRunEffect` / `kRunEffect`、`AsyncData::DashLinesEffect` とその読み込み・解放。ダッシュ中はいつも光の粒(`DashSparkle`)と肩の風の筋を出す。ファイル(`DashLines.efk`・`DashLines.efkefc`・`MW_SpeedLineV_a.png`・`MW_SpeedLine_a.png`)もごみ箱へ消した。`gen_movewind.ps1` の `line` で線の画像は作り直せる。上の記録の `kRunEffect` の話は今は無い。
+  - `PlayerStateFastRun::Enter` で両方再生(タイトルでは出さない)。膜のハンドルは `m_filmHandle`、`UpdateFilm` で毎フレーム位置(今の位置＋このフレームの速度)と向きを合わせ、`Exit` で止める(すぐ消える)。
+- 確認: Release(x64)のビルドは通った。**一時コード([TEMP_TRAIL])が `Player.cpp`(Update の最初)・`SceneMain.cpp`(DrawEffekseer3D の後)・`Application.cpp`(二重起動)に残っている**。`-trailtest`(ジャンプ)・`-dashtest`(L3 でダッシュに入れる)で70フレーム撮る。ダッシュはデモステージ(`-stage=1`)で撮った(ステージ1は登場演出があるため)。画像は `../EffectTools/MoveWind/JumpKick_v2/game_jumpkick_v2*.png`・`../EffectTools/MoveWind/DashGame/game_dash_v1.png`。**実際に操作しての確認はまだ**。
+- 歩き(Move)からダッシュ(FastRun)に入るのは300F歩き続けるか L3。
