@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>トランジション案</title>
+<style>
+body{margin:0;padding:24px;background:#1a1a1c;color:#ddd;font-family:"Yu Gothic UI","Hiragino Sans",sans-serif;max-width:900px}
+button{background:transparent;color:#ddd;border:1px solid #666;border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer}
+button:hover{background:#2a2a2e}
+.lb{font-size:13px;color:#999;margin-top:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+</style></head><body>
+<canvas id="cv" width="640" height="360" style="width:100%;display:block;border-radius:6px;background:#0d1018"></canvas>
+<div id="cap" style="font-size:14px;color:#aaa;margin-top:8px;min-height:40px">ボタンを押すと再生します</div>
+<div class="lb">ポーズ</div><div id="bp" class="row"></div>
+<div class="lb">クリア→リザルト</div><div id="br" class="row"></div>
+<label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:#999"><input type="checkbox" id="slow"> 1/4の速さで再生</label>
+<script>
+const W=640,H=360,SERIF='"Yu Mincho","Hiragino Mincho ProN","Noto Serif JP",serif',MONO='"BIZ UDGothic","Yu Gothic","Hiragino Sans",monospace';
+const RED='#d0243a',DRK='#4a0c14',INK='#080406',PAPER='#e6dcc4';
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),cap=document.getElementById('cap');
+let seed=5;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+const cl=t=>Math.min(Math.max(t,0),1),ease=t=>1-Math.pow(1-cl(t),3),lerp=(a,b,k)=>a+(b-a)*k;
+const sc=document.createElement('canvas');sc.width=W;sc.height=H;const s=sc.getContext('2d');
+s.fillStyle='#0d1018';s.fillRect(0,0,W,H);s.fillStyle='#d9d4c4';s.beginPath();s.arc(520,70,26,0,7);s.fill();
+for(let i=0;i<14;i++){const bw=40+rnd()*50,bh=80+rnd()*150,bx=i*48-20;s.fillStyle='#161b26';s.fillRect(bx,290-bh,bw,bh);s.fillStyle='#2a3550';for(let y=290-bh+10;y<280;y+=14)for(let x=bx+6;x<bx+bw-6;x+=10)if(rnd()<0.35)s.fillRect(x,y,4,6)}
+s.fillStyle='#c0263a';s.fillRect(0,286,W,3);s.fillStyle='#0a0c12';s.fillRect(0,289,W,71);
+s.fillStyle='#05060a';s.beginPath();s.arc(300,196,11,0,7);s.fill();s.fillRect(290,207,20,46);s.fillRect(282,250,10,38);s.fillRect(306,250,10,38);
+s.strokeStyle='#05060a';s.lineWidth=7;s.beginPath();s.moveTo(306,215);s.lineTo(330,232);s.stroke();s.strokeStyle='#cfd6e0';s.lineWidth=2;s.beginPath();s.moveTo(330,232);s.lineTo(392,262);s.stroke();
+s.strokeStyle='#c0263a';s.lineWidth=5;s.beginPath();s.arc(330,230,70,-0.5,0.9);s.stroke();s.fillStyle='#05060a';s.fillRect(404,272,46,10);
+const rs=document.createElement('canvas');rs.width=W;rs.height=H;const r2=rs.getContext('2d');r2.filter='grayscale(1) contrast(1.3) brightness(0.8)';r2.drawImage(sc,0,0);r2.filter='none';r2.globalCompositeOperation='multiply';r2.fillStyle=RED;r2.fillRect(0,0,W,H);
+const pc=document.createElement('canvas');pc.width=W;pc.height=H;const pcx=pc.getContext('2d');
+const GL='忍影刃斬殺隠遁術式起動接続照合記録完了任務血雨夜鴉隼龍零壱弐参肆伍封印';
+const hex=()=>Math.floor(Math.random()*0xffffff).toString(16).toUpperCase().padStart(6,'0');
+const rain=[];for(let i=0;i<26;i++)rain.push({x:rnd()*W,y:rnd()*H,v:120+rnd()*200,l:20+rnd()*60});
+const colD=[],colV=[];for(let i=0;i<32;i++){colD.push(rnd()*0.12);colV.push(H/(0.16+rnd()*0.08))}
+const cells=[];for(let y=0;y<H;y+=20)for(let x=0;x<W;x+=20)cells.push({x,y,d:(y/H)*0.3+rnd()*0.15});
+function curved(src,k,jit){for(let y=0;y<H;y+=4){const dy=(y-H/2)/(H/2),sx=1+k*(1-dy*dy),w=W*sx,off=jit?(Math.random()-0.5)*jit:0;ctx.drawImage(src,0,y,W,4,(W-w)/2+off,y,w,4)}}
+function dots(a){if(a<=0)return;ctx.fillStyle=`rgba(208,36,58,${a})`;for(let y=0;y<H;y+=5)for(let x=(y/5%2)*2.5;x<W;x+=5)ctx.fillRect(x,y,2,2)}
+function scan(a){ctx.fillStyle=`rgba(0,0,0,${a})`;for(let y=0;y<H;y+=3)ctx.fillRect(0,y,W,1)}
+function grid(y0,h,ph,a){ctx.save();ctx.globalAlpha=a;ctx.strokeStyle=DRK;ctx.lineWidth=1;ctx.beginPath();for(let x=-40+(((ph%20)+20)%20);x<W+40;x+=20){ctx.moveTo(x,y0);ctx.lineTo(x+(y0<H/2?-10:10),y0+h)}for(let y=y0;y<=y0+h;y+=8){ctx.moveTo(0,y);ctx.lineTo(W,y)}ctx.stroke();ctx.restore()}
+function rainFx(dt,a){ctx.save();ctx.globalAlpha=a;ctx.strokeStyle=DRK;ctx.lineWidth=1;rain.forEach(r=>{r.y+=r.v*dt;if(r.y>H+r.l){r.y=-r.l;r.x=Math.random()*W}ctx.beginPath();ctx.moveTo(r.x,r.y);ctx.lineTo(r.x,r.y+r.l);ctx.stroke()});ctx.restore()}
+function word(w,a,size,x,y,col){if(a<=0)return;ctx.save();ctx.globalAlpha=a;ctx.fillStyle=col||RED;ctx.font=`500 ${size}px ${SERIF}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(w,x??W/2,y??H/2);ctx.restore()}
+function pauseMenu(a,rt){if(a<=0)return;ctx.save();ctx.globalAlpha=a;ctx.fillStyle='rgba(8,4,6,0.82)';ctx.fillRect(0,0,W,H);grid(0,60,rt*30,1);grid(H-60,60,-rt*30,1);
+ctx.strokeStyle=RED;ctx.lineWidth=1;ctx.strokeRect(200,110,240,150);ctx.fillStyle=RED;ctx.fillRect(200,110,60,3);ctx.fillRect(380,257,60,3);
+ctx.font='500 20px '+SERIF;ctx.textAlign='left';ctx.textBaseline='alphabetic';['再開','やり直す','任務一覧','タイトルへ'].forEach((t,i)=>{const y=148+i*30,sel=i==0,bob=sel?Math.sin(rt*5)*3:0;ctx.fillStyle=sel?'#f0e6e0':'#8a5a60';ctx.fillText(t,250+bob,y);if(sel){ctx.fillStyle=RED;ctx.beginPath();ctx.moveTo(228+bob,y-12);ctx.lineTo(238+bob,y-6);ctx.lineTo(228+bob,y);ctx.fill()}});ctx.restore()}
+function emblem(x,y,sz,a){ctx.save();ctx.globalAlpha=a;ctx.translate(x,y);ctx.scale(sz,sz);ctx.strokeStyle=RED;ctx.lineWidth=4;ctx.beginPath();for(let i=0;i<6;i++){const an=i/6*Math.PI*2;ctx[i?'lineTo':'moveTo'](Math.cos(an)*70,Math.sin(an)*70)}ctx.closePath();ctx.stroke();
+ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-48);ctx.lineTo(42,26);ctx.lineTo(-42,26);ctx.closePath();ctx.stroke();ctx.fillStyle=RED;ctx.font='500 34px '+SERIF;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('影',0,6);ctx.restore()}
+function resultPanel(rt){ctx.fillStyle=INK;ctx.fillRect(0,0,W,H);ctx.save();ctx.globalAlpha=0.35;ctx.drawImage(rs,0,0);ctx.restore();grid(0,40,rt*20,1);grid(H-40,40,-rt*20,1);
+const k=ease(rt/0.35);ctx.fillStyle=RED;ctx.fillRect(40,62,560*k,2);ctx.font='500 26px '+SERIF;ctx.fillStyle='#f0e6e0';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('任務記録',40,52);
+ctx.font='12px '+MONO;ctx.fillStyle=DRK;ctx.textAlign='right';ctx.fillText('CHAPTER 01 / REC.'+(rt<0.8?hex():'7C21A0'),600,52);
+[['戦技','A'],['所要時間','02:41.36'],['撃破','24'],['死亡','0']].forEach((r,i)=>{const kk=ease((rt-0.2-i*0.1)/0.3);if(kk<=0)return;const y=110+i*42;ctx.globalAlpha=kk;ctx.textAlign='left';ctx.font='18px '+SERIF;ctx.fillStyle='#b07078';ctx.fillText(r[0],60+20*(1-kk),y);
+ctx.textAlign='right';ctx.font='500 22px '+MONO;ctx.fillStyle='#f0e6e0';ctx.fillText(rt>0.45+i*0.1?r[1]:r[1].replace(/[0-9A-Z]/g,()=>Math.floor(Math.random()*10)),360,y);ctx.fillStyle=DRK;ctx.fillRect(60,y+10,300,1);ctx.globalAlpha=1});
+const ek=cl((rt-0.9)/0.12);if(ek>0){ctx.save();const sz=1+1.5*(1-ek);ctx.translate(480,190);ctx.scale(sz,sz);ctx.globalAlpha=ek;ctx.strokeStyle=RED;ctx.lineWidth=3;ctx.beginPath();for(let i=0;i<6;i++){const a=i/6*Math.PI*2+Math.PI/6;ctx[i?'lineTo':'moveTo'](Math.cos(a)*80,Math.sin(a)*80)}ctx.closePath();ctx.stroke();
+ctx.fillStyle='#f0e6e0';ctx.font='500 92px '+SERIF;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('S',0,4);ctx.restore()}}
+function strip(cx,cy,sz){ctx.save();ctx.translate(cx,cy);ctx.scale(sz,sz);ctx.fillStyle=PAPER;ctx.fillRect(-32,-150,64,300);ctx.strokeStyle=RED;ctx.lineWidth=2;ctx.strokeRect(-26,-144,52,288);
+ctx.fillStyle=RED;ctx.font='500 30px '+SERIF;ctx.textAlign='center';ctx.textBaseline='middle';['一','時','封','印'].forEach((c,i)=>ctx.fillText(c,0,-96+i*62));ctx.restore()}
+function logBox(x,y,n,a){ctx.save();ctx.globalAlpha=a;ctx.font='12px '+MONO;ctx.textAlign='left';for(let i=0;i<n;i++){ctx.fillStyle=i==n-1?RED:DRK;ctx.fillText('> '+hex()+'  '+GL[Math.floor(Math.random()*GL.length)]+GL[Math.floor(Math.random()*GL.length)]+'  照合',x,y+i*18)}ctx.restore()}
+const P=[
+{n:'1 端末の電源',T:0.24,fade:false,c:'古いモニターの電源を入れるように、画面が横一本の線につぶれてから開く。「忍の端末」という設定をいちばん直接見せる案。0.24秒',
+f(t){const p=t/0.24;ctx.fillStyle=INK;ctx.fillRect(0,0,W,H);if(p<0.45){const e=ease(p/0.45),h=Math.max(2,H*(1-e));ctx.drawImage(sc,0,(H-h)/2,W,h);ctx.fillStyle=`rgba(255,210,210,${e})`;ctx.fillRect(0,H/2-1,W,2)}else{const e=ease((p-0.45)/0.55),h=Math.max(2,H*e);ctx.save();ctx.beginPath();ctx.rect(0,(H-h)/2,W,h);ctx.clip();ctx.drawImage(rs,0,0);pauseMenu(1,0);ctx.restore();dots(0.4*(1-e))}}},
+{n:'2 文字の雨',T:0.4,fade:true,c:'漢字の列が縦に流れ落ちて、画面を覆う。記事の「日本語でプログラムされた」装飾と、雨の表現の組み合わせ。0.4秒',
+f(t){ctx.drawImage(sc,0,0);ctx.font='14px '+MONO;ctx.textAlign='center';ctx.textBaseline='alphabetic';for(let i=0;i<32;i++){const x=i*20,head=(t-colD[i])*colV[i];if(head<=0)continue;ctx.fillStyle=INK;ctx.fillRect(x,0,20,head);for(let r=0;r*18<head;r++){const y=head-r*18;ctx.fillStyle=r==0?'#ffd0d6':r<3?RED:DRK;ctx.fillText(GL[(i*7+r*3+Math.floor(t*30))%GL.length],x+10,y)}}}},
+{n:'3 お札',T:0.42,fade:true,c:'中央にお札が叩きつけられ、扉のように左右に開いてメニューが出る。記事の「忍具やお札の装飾」から。0.42秒（ポーズにしては少し長いので、0.3秒まで詰める）',
+f(t){if(t<0.2){const sh=t>0.08&&t<0.16?(Math.random()-0.5)*8:0;ctx.save();ctx.translate(sh,0);ctx.drawImage(t<0.08?sc:rs,0,0);if(t>=0.08)dots(0.3*(1-(t-0.08)/0.12));strip(W/2,H/2,1.8-0.8*ease(t/0.08));ctx.restore();return}
+const o=ease((t-0.2)/0.22);ctx.drawImage(rs,0,0);pauseMenu(o,0);[-1,1].forEach(sg=>{const off=sg*o*W/2;ctx.save();ctx.translate(off,0);ctx.beginPath();ctx.rect(sg<0?0:W/2,0,W/2,H);ctx.clip();ctx.fillStyle=INK;ctx.fillRect(0,0,W,H);grid(0,H,sg*30,0.8);strip(W/2,H/2,1);ctx.restore()})}},
+{n:'4 格子が重なる',T:0.28,fade:true,c:'上下から格子が三層、速さを変えてずれながら入ってくる。メインメニューの「格子を前後に動かして奥行き」をそのまま遷移に使う案。0.28秒',
+f(t){ctx.drawImage(sc,0,0);ctx.globalAlpha=ease(t/0.2);ctx.drawImage(rs,0,0);ctx.globalAlpha=1;[0,1,2].forEach(i=>{const p=ease((t-i*0.04)/0.18),a=[0.35,0.65,1][i];grid(-60+60*p-i*6,60,t*(60+i*40),a);grid(H-60*p+i*6,60,-t*(60+i*40),a)})}},
+{n:'5 走査線',T:0.25,fade:true,c:'赤い走査線が上から下へ走り、通ったところから赤黒の端末画面に変わる。境目だけ画面が横にずれる。0.25秒',
+f(t){const y=ease(t/0.25)*H;ctx.drawImage(sc,0,0);ctx.save();ctx.beginPath();ctx.rect(0,0,W,y);ctx.clip();ctx.drawImage(rs,0,0);dots(0.2);ctx.restore();for(let k=0;k<20;k+=4)ctx.drawImage(sc,0,y+k,W,4,(Math.random()-0.5)*30,y+k,W,4);ctx.fillStyle=RED;ctx.fillRect(0,y-2,W,3);ctx.fillStyle='rgba(208,36,58,0.4)';ctx.fillRect(0,y-10,W,2);ctx.fillRect(0,y-18,W,1)}},
+{n:'6 ドット化',T:0.2,fade:true,c:'画面が粗いドットに崩れながら赤黒に変わり、ドット模様になって消える。記事のドットパターンを主役にする案。0.2秒',
+f(t){const e=ease(t/0.14),sz=Math.max(1,Math.round(1+23*e)),w=Math.ceil(W/sz),h=Math.ceil(H/sz);pcx.clearRect(0,0,W,H);pcx.drawImage(sc,0,0,w,h);pcx.globalAlpha=e;pcx.drawImage(rs,0,0,w,h);pcx.globalAlpha=1;ctx.imageSmoothingEnabled=false;ctx.drawImage(pc,0,0,w,h,0,0,W,H);ctx.imageSmoothingEnabled=true;if(t>0.14){ctx.globalAlpha=ease((t-0.14)/0.06);ctx.drawImage(rs,0,0);ctx.globalAlpha=1;dots(0.6*(1-ease((t-0.14)/0.06)))}}}
+];
+const R=[
+{n:'A 縦のシャッター',T:1.05,b:0.65,c:'細い縦帯が上と下から交互に落ちて画面を閉じ、そのまま反対側へ抜けてリザルトを見せる。記事の「上下から帯」を縦に細かく割った案',
+f(t){if(t<0.65){ctx.drawImage(sc,0,0);ctx.globalAlpha=ease(t/0.3);ctx.drawImage(rs,0,0);ctx.globalAlpha=1}else resultPanel(t-0.65);
+for(let i=0;i<16;i++){const top=i%2==0,c=ease((t-i*0.015)/0.2),o=ease((t-0.65-i*0.015)/0.2);let y=top?-H+H*c:H-H*c;if(t>=0.65)y=top?H*o:-H*o;const x=i*40;ctx.fillStyle=INK;ctx.fillRect(x,y,40,H);ctx.fillStyle=RED;ctx.fillRect(x,top?y+H-2:y,40,2);ctx.fillStyle=DRK;ctx.font='12px '+MONO;ctx.textAlign='center';for(let r=0;r<18;r++)ctx.fillText(GL[(i*5+r)%GL.length],x+20,y+20+r*19)}
+word('任 務 完 遂',ease((t-0.4)/0.08)*(1-cl((t-0.6)/0.06)),40,W/2,H/2,'#f0e6e0')}},
+{n:'B 刃の帯',T:1.0,b:0.75,c:'スローで寄った後、刀の刃が通る細い帯が右から横切り、その帯が上下に広がって画面を覆う。カットインの帯をリザルトの入口に使う（目元の絵は使わず、自分の刀で）',
+f(t){if(t<0.75){const e=ease(t/0.4);ctx.save();ctx.translate(320,230);ctx.scale(1+0.06*e,1+0.06*e);ctx.translate(-320,-230);ctx.drawImage(sc,0,0);ctx.globalAlpha=e;ctx.drawImage(rs,0,0);ctx.restore()}else resultPanel(t-0.75);
+if(t>=0.4){let bh=64;if(t>0.6)bh=lerp(64,H,ease((t-0.6)/0.15));if(t>0.75)bh=H*(1-ease((t-0.75)/0.25));const bx=t<0.55?W*(1-ease((t-0.4)/0.15)):0;
+ctx.fillStyle=INK;ctx.fillRect(bx,H/2-bh/2,W,bh);ctx.fillStyle=RED;ctx.fillRect(bx,H/2-bh/2,W,2);ctx.fillRect(bx,H/2+bh/2-2,W,2);
+if(t<0.75){const k=cl((t-0.42)/0.25),lx=lerp(W+200,-300,k);ctx.strokeStyle='#e8eef5';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(lx,H/2);ctx.lineTo(lx+260,H/2);ctx.stroke();ctx.fillStyle='#e8eef5';ctx.beginPath();ctx.moveTo(lx,H/2);ctx.lineTo(lx+24,H/2-5);ctx.lineTo(lx+24,H/2+4);ctx.fill();word('斬',cl((t-0.45)/0.05),46,W-70,H/2)}}}},
+{n:'C 記録を転送',T:1.0,b:0.7,c:'画面が四角いドットに分かれ、上の行から順に吸い上げられて消える。裏では照合のログが流れる。記事の「データベースにアクセス」をいちばん直接見せる案',
+f(t){ctx.fillStyle=INK;ctx.fillRect(0,0,W,H);logBox(40,80,12,ease((t-0.15)/0.1));const src=t<0.12?sc:rs;
+cells.forEach(c=>{const p=ease((t-c.d)/0.25);if(p<=0){ctx.drawImage(src,c.x,c.y,20,20,c.x,c.y,20,20);return}if(p>=1)return;const s2=20*(1-p)+2;ctx.fillStyle=`rgba(208,36,58,${1-p})`;ctx.fillRect(c.x+10-s2/2,c.y-p*220,s2,s2)});
+if(t>0.7){ctx.globalAlpha=ease((t-0.7)/0.3);resultPanel(t-0.7);ctx.globalAlpha=1}}},
+{n:'D 記録映像になる',T:1.2,b:0.9,c:'クリアの瞬間の画面が小さくなり、端末の中の「記録映像」の窓に収まる。その窓が横一本の線に消えてリザルトへ。プレイと記録が地続きになる',
+f(t){ctx.fillStyle=INK;ctx.fillRect(0,0,W,H);grid(0,40,t*20,1);grid(H-40,40,-t*20,1);const e=ease(t/0.45),x=lerp(0,300,e),y=lerp(0,80,e),w=lerp(W,300,e),h=lerp(H,169,e);
+let hh=h;if(t>0.7)hh=Math.max(2,h*(1-ease((t-0.7)/0.15)));if(t<0.88){ctx.drawImage(t<0.15?sc:rs,x,y+(h-hh)/2,w,hh);ctx.strokeStyle=RED;ctx.lineWidth=1;ctx.strokeRect(x-4,y-4+(h-hh)/2,w+8,hh+8)}
+if(t>0.35&&t<0.88){const a=ease((t-0.35)/0.1);ctx.save();ctx.globalAlpha=a;ctx.font='500 18px '+SERIF;ctx.fillStyle='#f0e6e0';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('記録映像',300,66);ctx.fillStyle=Math.floor(t*6)%2?RED:DRK;ctx.beginPath();ctx.arc(590,60,5,0,7);ctx.fill();ctx.restore();logBox(40,100,8,a)}
+if(t>0.9){ctx.globalAlpha=ease((t-0.9)/0.3);resultPanel(t-0.9);ctx.globalAlpha=1}}},
+{n:'E 流れる文字の柱',T:1.1,b:0.6,c:'文字の柱が一本おきに上と下から流れ込んで画面を覆い、反対へ流れ去るとリザルトが出る。記事の「煉獄」画面の、上下に文字が流れるSF映画風の演出から',
+f(t){if(t<0.6){ctx.drawImage(sc,0,0);ctx.globalAlpha=ease(t/0.3);ctx.drawImage(rs,0,0);ctx.globalAlpha=1}else resultPanel(t-0.6);const cw=W/22;
+for(let i=0;i<22;i++){const dir=i%2?1:-1;let off=dir*H*(1-ease((t-i*0.01)/0.3));if(t>=0.6)off=-dir*H*ease((t-0.6-i*0.01)/0.3);const x=i*cw;ctx.fillStyle=INK;ctx.fillRect(x,off,cw+1,H);
+ctx.font='13px '+MONO;ctx.textAlign='center';const sc2=Math.floor(t*14)*dir;for(let r=0;r<20;r++){ctx.fillStyle=(r+i)%7==0?RED:DRK;ctx.fillText(GL[((r+sc2+i*5)%GL.length+GL.length)%GL.length],x+cw/2,off+14+r*18)}}}},
+{n:'F 紋を押す',T:1.0,b:0.55,c:'画面が赤黒に湾曲したところに、自分のゲームの紋が大きく叩きつけられて揺れる。紋から円が広がってリザルトへ。記事の家紋の考え方を遷移に使う案（紋は自作）',
+f(t){const k=ease(t/0.3);ctx.fillStyle=INK;ctx.fillRect(0,0,W,H);const sh=t>0.42&&t<0.52?(Math.random()-0.5)*10:0;ctx.save();ctx.translate(sh,sh*0.6);
+if(t<0.3){ctx.drawImage(sc,0,0);ctx.globalAlpha=k;curved(rs,0.05*k,0);ctx.globalAlpha=1}else curved(rs,0.05,0);if(t>0.42)dots(0.5*(1-cl((t-0.42)/0.2)));
+if(t>=0.3)emblem(W/2,H/2,lerp(3,1,ease((t-0.3)/0.12)),cl((t-0.3)/0.06));ctx.restore();
+if(t>=0.55){const r=ease((t-0.55)/0.4)*760;ctx.save();ctx.beginPath();ctx.arc(W/2,H/2,r,0,7);ctx.clip();resultPanel(t-0.55);ctx.restore();ctx.strokeStyle=RED;ctx.lineWidth=2;ctx.beginPath();ctx.arc(W/2,H/2,r,0,7);ctx.stroke()}}}
+];
+let cur=null,st=0,prev=0;
+function frame(now){const sp=document.getElementById('slow').checked?0.25:1,dt=(now-prev)/1000*sp;prev=now;ctx.globalAlpha=1;ctx.filter='none';
+if(!cur){ctx.drawImage(sc,0,0);requestAnimationFrame(frame);return}const t=(now-st)/1000*sp,p=cur.p;
+if(cur.k=='p'){if(t<p.T)p.f(t);else if(t<1.9){const rt=t-p.T;ctx.drawImage(rs,0,0);pauseMenu(p.fade?ease(rt/0.12):1,rt);rainFx(dt,0.5)}
+else if(t<2.0){const g=1-(t-1.9)/0.1;ctx.fillStyle=INK;ctx.fillRect(0,0,W,H);curved(sc,0.05*g,40*g);dots(0.4*g)}else{ctx.drawImage(sc,0,0);if(t>2.3)cur=null}}
+else{if(t<p.T)p.f(t);else resultPanel(t-p.b);rainFx(dt,0.3);if(t>p.T+2.5)cur=null}
+scan(0.18);requestAnimationFrame(frame)}
+function mk(list,k,el){list.forEach(p=>{const b=document.createElement('button');b.textContent=p.n;b.onclick=()=>{cur={k,p};st=performance.now();cap.textContent=p.c};document.getElementById(el).appendChild(b)})}
+mk(P,'p','bp');mk(R,'r','br');
+requestAnimationFrame(t=>{prev=t;frame(t)});
+</script>
+</body></html>
