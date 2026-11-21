@@ -108,6 +108,9 @@
     <ClCompile Include="Stage\TrainSparks.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Stage\TrainOutside.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Stage\Gate\Gate.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -705,6 +708,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\TrainSparks.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage\TrainOutside.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\Gate\Gate.h">

@@ -321,6 +321,7 @@
     <ClCompile Include="Stage\StageLights.cpp" />
     <ClCompile Include="Stage\TrainLighting.cpp" />
     <ClCompile Include="Stage\TrainSparks.cpp" />
+    <ClCompile Include="Stage\TrainOutside.cpp" />
     <ClCompile Include="Stage\Gate\Gate.cpp" />
     <ClCompile Include="Render\CharacterLook.cpp" />
     <ClCompile Include="Main\FrameProfiler.cpp" />
@@ -527,6 +528,7 @@
     <ClInclude Include="Stage\StageLights.h" />
     <ClInclude Include="Stage\TrainLighting.h" />
     <ClInclude Include="Stage\TrainSparks.h" />
+    <ClInclude Include="Stage\TrainOutside.h" />
     <ClInclude Include="Stage\Gate\Gate.h" />
     <ClInclude Include="Stage\Gate\GateData.h" />
     <ClInclude Include="Stage\WallZone\WallZone.h" />

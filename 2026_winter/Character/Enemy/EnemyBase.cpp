@@ -463,7 +463,7 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 			//空中・打ち上げ中は死なない(空中コンボを続けられるように、体力を1残す)
 			m_hp = 1;
 			//もし、スキル技以上なら着地したとき死亡
-			m_isDieOut = true;
+			//m_isDieOut = true;
 		}
 	}
 

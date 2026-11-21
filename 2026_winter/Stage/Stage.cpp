@@ -36,6 +36,7 @@ namespace
 	constexpr int kTunnelExitArchDiv = 24;//出口の丸い所の分け方
 	constexpr float kTunnelExitHaloRate = 1.15f;//出口のまわりの光のにじみの大きさ
 	constexpr int kTunnelExitHaloAlpha = 90;
+	constexpr float kTrackLampLightRange = 2500.0f;//プレイヤーからこの距離までの線路脇の灯りを明かりにする(TrainLighting の kActiveDistance)
 
 	//列車ステージの明るさ(戦う場所を明るく、トンネルと遠くを暗くする)
 	constexpr float kTunnelColorScale = 0.45f;//トンネルの明るさ
@@ -156,6 +157,8 @@ void Stage::GameInit(const StageInfo& info)
 		m_trainLighting->Init(m_tunnelHandle, m_pos_graphic, kTunnelOffsetY);
 		m_trainSparks = std::make_unique<TrainSparks>();
 		m_trainSparks->Init(m_pos_graphic);
+		m_outside = std::make_unique<TrainOutside>();
+		m_outside->Init(m_pos_graphic, kTunnelOffsetY, GetTrainForwardZ());
 	}
 
 	//扉(無いステージは何もしない)
@@ -166,6 +169,7 @@ Stage::~Stage()
 {
 	m_trainLighting.reset();//キャラの光・空気感を戻す
 	m_trainSparks.reset();//再生中の火花を止めてエフェクトを消す
+	m_outside.reset();
 	MV1DeleteModel(m_stageModelHandle);
 	MV1DeleteModel(m_stageViewHandle);
 	if (m_tunnelHandle != -1)
@@ -229,6 +233,13 @@ float Stage::GetTunnelExitDistance(float z) const
 void Stage::UpdateLights(const Vector3& playerPos)
 {
 	m_lights.Update(playerPos);
+	if (m_trainLighting && m_hasTunnelExit && m_outside)
+	{
+		//出口より先のトンネルの明かりを消し、線路脇の灯りを流す
+		m_trainLighting->SetTunnelExit(m_tunnelExitZ, GetTrainForwardZ());
+		m_outside->GetLampLights(m_tunnelExitZ, playerPos.z, kTrackLampLightRange, m_trackLampBuffer);
+		m_trainLighting->SetTrackLamps(m_trackLampBuffer);
+	}
 	if (m_trainLighting) m_trainLighting->Update(playerPos, m_tunnelScroll, kTunnelLength);
 	if (m_trainSparks) m_trainSparks->Update(playerPos);
 }
@@ -262,7 +273,8 @@ void Stage::Draw() const
 		SetFogStartEnd(kNightFogStart, kNightFogEnd);
 	}
 
-	//出口の光は背景として先に描く(出口より先の列車も上に重なって見える)
+	//抜けた後の夜の空と、出口の光は背景として先に描く(出口より先の列車も上に重なって見える)
+	if (m_outside) m_outside->DrawSky();
 	DrawTunnelExitLight();
 
 	//いつもの光＋明かりを1回で描く(明かりの無いステージはいつもの描画)
@@ -273,6 +285,7 @@ void Stage::Draw() const
 		gate->Draw();
 	}
 	DrawTunnel();
+	if (m_outside && m_hasTunnelExit) m_outside->DrawLamps(m_tunnelExitZ);
 
 	//キャラやエフェクトにはかけない
 	if (useTrainFog || useNightFog)
@@ -281,6 +294,13 @@ void Stage::Draw() const
 		SetFogStartEnd(kFogOffStart, kFogOffEnd);
 		SetFogEnable(FALSE);
 	}
+	if (m_outside && m_hasTunnelExit) m_outside->DrawGlows(m_tunnelExitZ);
+}
+
+void Stage::SetOutsideRate(float rate)
+{
+	if (m_outside) m_outside->SetRate(rate);
+	if (m_trainLighting) m_trainLighting->SetOutsideRate(rate);
 }
 
 void Stage::DrawTunnel() const

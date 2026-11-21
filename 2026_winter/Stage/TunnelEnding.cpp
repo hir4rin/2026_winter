@@ -36,16 +36,16 @@ namespace
 	constexpr float kWhiteFogStart = 0.0f;
 	constexpr float kWhiteFogEnd = 700.0f;
 
-	//霧が晴れた後の空
+	//霧が晴れた後の空(ステージ1の夜の空。色は空の絵の地平線の色)
 	constexpr int kClearFrame = 240;
-	constexpr int kSkyFogR = 30;
-	constexpr int kSkyFogG = 55;
-	constexpr int kSkyFogB = 80;
-	constexpr float kSkyFogStart = 1200.0f;
-	constexpr float kSkyFogEnd = 6500.0f;
-	constexpr int kSkyR = 50;
-	constexpr int kSkyG = 85;
-	constexpr int kSkyB = 115;
+	constexpr int kSkyFogR = 48;
+	constexpr int kSkyFogG = 21;
+	constexpr int kSkyFogB = 54;
+	constexpr float kSkyFogStart = 1500.0f;
+	constexpr float kSkyFogEnd = 4950.0f;//カメラのファー5000より手前で消しきる
+	constexpr int kSkyR = 48;
+	constexpr int kSkyG = 21;
+	constexpr int kSkyB = 54;
 
 	constexpr int kGazeFrame = 200;//見上げたままの長さ
 
@@ -207,9 +207,11 @@ void TunnelEnding::UpdateFog()
 		m_bgR = static_cast<int>(std::lerp(static_cast<float>(kWhiteR), static_cast<float>(kSkyR), t));
 		m_bgG = static_cast<int>(std::lerp(static_cast<float>(kWhiteG), static_cast<float>(kSkyG), t));
 		m_bgB = static_cast<int>(std::lerp(static_cast<float>(kWhiteB), static_cast<float>(kSkyB), t));
+		stage->SetOutsideRate(t);//霧が晴れるのに合わせて夜の空と遠くの街を出す
 		break;
 	}
 	default:
+		stage->SetOutsideRate(1.0f);
 		break;
 	}
 	stage->SetFogOverride(m_fog);

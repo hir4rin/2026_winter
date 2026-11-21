@@ -37,6 +37,17 @@ namespace
 	constexpr float kCarLightStart = 500.0f;//車両の始まりから最初の明かりまで
 	constexpr float kCarLightInterval = 1000.0f;
 
+	//トンネルを抜けた後の線路脇の灯り(橙がかった白)
+	const COLOR_F kTrackColor = GetColorF(1.0f, 0.68f, 0.4f, 1.0f);
+	constexpr float kTrackStrength = 1.8f;
+	constexpr float kTrackRange = 1500.0f;
+
+	//外の空気感(ステージ1の夜の空に合わせて紫に寄せる)
+	const COLOR_F kOutsideSky = GetColorF(0.26f, 0.17f, 0.36f, 1.0f);
+	const COLOR_F kOutsideGround = GetColorF(0.08f, 0.06f, 0.11f, 1.0f);
+	const COLOR_F kOutsideKey = GetColorF(0.16f, 0.11f, 0.26f, 1.0f);
+	const COLOR_F kOutsideLookSky = GetColorF(0.2f, 0.13f, 0.3f, 1.0f);
+
 	//明かりを選ぶ距離
 	constexpr float kActiveDistance = 2500.0f;//プレイヤーからこの距離までの明かりを使う(遠くはフォグで暗い)
 	constexpr float kFadeDistance = 800.0f;//遠い端のこの幅でだんだん暗くする
@@ -152,8 +163,14 @@ void TrainLighting::Update(const Vector3& playerPos, float tunnelScroll, float t
 			{
 				Light light = local;
 				light.pos = tunnelPos + local.pos;
+				//出口より先はトンネルが無い
+				if (m_hasExit && (light.pos.z - m_exitZ) * m_forwardZ > 0.0f) continue;
 				AddCandidate(light, playerPos);
 			}
+		}
+		for (const Vector3& head : m_trackLamps)
+		{
+			AddCandidate({ Kind::Track, head, kTrackColor, kTrackRange, ModelShaderManager::LightArea::OutdoorOnly }, playerPos);
 		}
 		for (const Light& light : m_carLights)
 		{
@@ -183,6 +200,7 @@ void TrainLighting::AddCandidate(const Light& light, const Vector3& playerPos)
 	float strength = kCarStrength * m_carIntensity;
 	if (light.kind == Kind::Lamp) strength = kLampStrength * m_lampIntensity;
 	if (light.kind == Kind::Ring) strength = kRingStrength * m_ringIntensity;
+	if (light.kind == Kind::Track) strength = kTrackStrength * m_trackIntensity;
 	Candidate c = { dist, light };
 	c.light.color = GetColorF(light.color.r * strength, light.color.g * strength, light.color.b * strength, 1.0f);
 	m_candidates.push_back(c);
@@ -198,23 +216,36 @@ bool TrainLighting::IsIndoor(const Vector3& pos)const
 	return false;
 }
 
+COLOR_F TrainLighting::LerpColor(const COLOR_F& a, const COLOR_F& b, float t)
+{
+	return GetColorF(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1.0f);
+}
+
+void TrainLighting::SetOutsideRate(float rate)
+{
+	if (m_outsideRate == rate) return;
+	m_outsideRate = rate;
+	ApplyAtmosphere();
+}
+
 void TrainLighting::ApplyAtmosphere()
 {
-	ModelShaderManager::GetInstance().SetAtmosphere(m_atmosphere);
+	//外に出たら紫の夜に寄せる
+	auto atmosphere = m_atmosphere;
+	atmosphere.sky = LerpColor(m_atmosphere.sky, kOutsideSky, m_outsideRate);
+	atmosphere.ground = LerpColor(m_atmosphere.ground, kOutsideGround, m_outsideRate);
+	atmosphere.keyColor = LerpColor(m_atmosphere.keyColor, kOutsideKey, m_outsideRate);
+	ModelShaderManager::GetInstance().SetAtmosphere(atmosphere);
 }
 
 void TrainLighting::ApplyCharacterLook()
 {
-	auto lerpColor = [](const COLOR_F& a, const COLOR_F& b, float t)
-		{
-			return GetColorF(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1.0f);
-		};
 	auto& look = CharacterLook::Settings();
 	look.keyDir = kLookKeyDir;
-	look.keyColor = lerpColor(kLookKey, kLookIndoorKey, m_indoorRate);
-	look.skyColor = lerpColor(kLookSky, kLookIndoorSky, m_indoorRate);
-	look.groundColor = lerpColor(kLookGround, kLookIndoorGround, m_indoorRate);
-	look.rimColor = lerpColor(kLookRim, kLookIndoorRim, m_indoorRate);
+	look.keyColor = LerpColor(kLookKey, kLookIndoorKey, m_indoorRate);
+	look.skyColor = LerpColor(LerpColor(kLookSky, kOutsideLookSky, m_outsideRate), kLookIndoorSky, m_indoorRate);
+	look.groundColor = LerpColor(kLookGround, kLookIndoorGround, m_indoorRate);
+	look.rimColor = LerpColor(kLookRim, kLookIndoorRim, m_indoorRate);
 }
 
 void TrainLighting::DrawDebugWindow()
@@ -225,6 +256,7 @@ void TrainLighting::DrawDebugWindow()
 	ImGui::SliderFloat("Lamp", &m_lampIntensity, 0.0f, 4.0f);
 	ImGui::SliderFloat("Ring", &m_ringIntensity, 0.0f, 4.0f);
 	ImGui::SliderFloat("Car", &m_carIntensity, 0.0f, 4.0f);
+	ImGui::SliderFloat("Track", &m_trackIntensity, 0.0f, 4.0f);
 	bool changed = false;
 	changed |= ImGui::ColorEdit3("Sky", &m_atmosphere.sky.r, ImGuiColorEditFlags_Float);
 	changed |= ImGui::ColorEdit3("Ground", &m_atmosphere.ground.r, ImGuiColorEditFlags_Float);

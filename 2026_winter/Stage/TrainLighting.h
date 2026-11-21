@@ -24,8 +24,16 @@ public:
 	/// <summary>調整用の ImGui ウィンドウ</summary>
 	void DrawDebugWindow();
 
+	//エンディング(トンネルを抜ける)
+	/// <summary>出口より先のトンネルの明かりは使わない</summary>
+	void SetTunnelExit(float exitZ, float forwardZ) { m_hasExit = true; m_exitZ = exitZ; m_forwardZ = forwardZ; }
+	/// <summary>線路脇の灯りの位置(次の Update から使う)</summary>
+	void SetTrackLamps(const std::vector<Vector3>& heads) { m_trackLamps = heads; }
+	/// <summary>外の空気感にする割合(0:トンネル〜1:外の夜)</summary>
+	void SetOutsideRate(float rate);
+
 private:
-	enum class Kind { Lamp, Ring, Car };
+	enum class Kind { Lamp, Ring, Car, Track };
 	struct Light
 	{
 		Kind kind;
@@ -43,6 +51,7 @@ private:
 
 	void ApplyAtmosphere();
 	void ApplyCharacterLook();
+	static COLOR_F LerpColor(const COLOR_F& a, const COLOR_F& b, float t);
 	bool IsIndoor(const Vector3& pos)const;
 	void AddCandidate(const Light& light, const Vector3& playerPos);
 
@@ -56,11 +65,17 @@ private:
 	CharacterLook::LookSettings m_savedLook;//戻す用
 	float m_indoorRate = 0.0f;//プレイヤーが車内にいる割合(キャラの光を切り替える)
 	int m_activeNum = 0;
+	bool m_hasExit = false;//トンネルの出口があるか(エンディング)
+	float m_exitZ = 0.0f;
+	float m_forwardZ = 1.0f;
+	std::vector<Vector3> m_trackLamps;//線路脇の灯りの頭(ワールド座標)
+	float m_outsideRate = 0.0f;
 
 	//調整できる値(ImGui)
 	bool m_isEnable = true;
 	float m_lampIntensity = 1.0f;
 	float m_ringIntensity = 1.0f;
 	float m_carIntensity = 1.0f;
+	float m_trackIntensity = 1.0f;
 	ModelShaderManager::StageAtmosphere m_atmosphere = {};
 };

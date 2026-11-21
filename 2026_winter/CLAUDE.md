@@ -1602,6 +1602,7 @@
   - `CharacterLook::Draw` に「`MV1GetMeshVisible` が FALSE のメッシュは描かない」を足した(本編の見え方は変わらないはず)。Mv1LikeUnity の Draw も隠したメッシュを描かないのを画面で確認。
   - 体の光は前の CharacterLook の設定(ふちの光)、髪の光は DxLib の標準ライト。斬った瞬間はどちらも赤くして 30% 残す。
 - 確認: Debug x64 でビルドして撮影。髪が頭にずれずに乗り、地肌のまだらは無く、体は前の見た目。`data/Player03_TitleHair.mv1` は使わなくなったので消した(git の 7312d9d にある)。
+- (11/21)**別のPCで髪が白くなった**: `.gitignore` の `[Bb]in/` で `data/Title/IdaFaber/shaders/bin/` が git に入っておらず、シェーダーが無いと Mv1LikeUnity は DxLib の標準描画に戻る(髪が白い)。テクスチャのパスは mv1 の中で既にファイル名だけ(相対)だった。zip の `Runtime/shaders/bin` を戻し、`.gitignore` に `!data/Title/IdaFaber/shaders/bin/` を足した。
 
 ### 2026-11-20 タイトルのプレイヤーを後ろ姿＋強い風に変えた(下の顔のアップの欄の置き換え)
 - **ポーズ**: アニメCSVに `TitlePose,Ninja_Idle_LookingAround` を足し、`m_anim.Init(…, "TitlePose", false, 再生速度0, -1, 116.8077)` で止める(Update でアニメは進めない)。
@@ -1920,6 +1921,8 @@
 ---
 
 ## TODO / 次にやること
+- [ ] **列車とステージ1の間のステージ**(11/21 の決定: 高架下・操車場 → 地下鉄の駅 → 通り → ビルの屋上 → 飛び降り)。まず Unity のアセットで素材探し
+- [ ] 列車のエンディングの抜けた後の景色(11/21)を、最後のフェーズを倒して・プレイヤーを動かして確認(柱の根元・列車の下の見え方)
 - [ ] ポーズ・リザルトへのトランジション(11/20 の案)からどれにするか決めて作る。モックアップは `../tools/TransitionMock/transition_mock_ng4.html`
 - [ ] チュートリアル(11/12 の設計)を作る: PhaseFlowData に Tutorial と列2つ → DataManager で読む → PhaseManager の頼み → SceneMain で Push → TutorialScene(まず画像1枚、そのあと動画・ページ送り)
 - [ ] リザルト画面(11/12)を実際にクリアして確認: 技の回数が合っているか(スキル技が1回の技で何回も数えられないか)、リトライ、点数とランクの境目の調整、ステージごとの目標タイム、アイテム・死亡の仕組みができたら `ResultData` の itemUseCount / deathCount に入れる、音
@@ -2079,7 +2082,7 @@
   - 一時コードで、スタート地点ではゾーンの外、板の中(落下死の高さ +200)に移すと落下死になることを両方で確認した。ステージを作り直して範囲が変わったら直すこと。
 
 ### 2026-11-19 列車ステージのエンディング(トンネルを抜ける → クレジット → ロゴ。NG4 の Ch0 8:30〜を参考に)
-- 参考: YouTube の NG4 のプレイ動画(vz9_ruDj4JI)の 8:30〜9:18。歩いて出口を抜ける → 青い霧 → カメラが低く寄って見上げる → 霧が晴れる → 引いて歩ける → 赤いクレジット3枚 → タイトルロゴ。抜けた先に見せる景色は**まだ無い**(ユーザーが後回しにした)。
+- 参考: YouTube の NG4 のプレイ動画(vz9_ruDj4JI)の 8:30〜9:18。歩いて出口を抜ける → 青い霧 → カメラが低く寄って見上げる → 霧が晴れる → 引いて歩ける → 赤いクレジット3枚 → タイトルロゴ。抜けた先に見せる景色は 11/21 に足した(下の欄)。
 - きっかけ: 遷移表の最後の行の event を `Ending` にする(`PhaseStage004.csv` の `6,AllDead,F,-1,Ending`)。`PhaseEvent::Ending` のときは `SetIsBattleEnd` を立てず `PhaseManager::TakeEndingRequest()` を出す。SceneMain が `TunnelEnding` を作り、ロゴが終わったら `SetIsBattleEnd` → いつもの暗転でリザルト。トンネルの無いステージで Ending を使うとすぐリザルト。
 - **確認用: F7 か起動の引数 `-ending`**(敵を消し、`PhaseManager::DebugFinish()` でフェーズを止めてすぐ始める)。例 `2026_winter.exe -bench=2400 -stage=2 -ending`。スキップは無い。全体で約36秒。
 - `Stage/TunnelEnding.h/.cpp`(進行役。値は .cpp 先頭): Wait(90F、血殺・演出中は数えない)→ Approach → WhiteOut(100F)→ Clear(240F)→ Gaze(200F)→ Credit → Logo → Done。時間は実フレーム。
@@ -2095,6 +2098,28 @@
   - まだらに出す・消すのは `SetBlendGraphParam(..., DX_BLENDGRAPHTYPE_WIPE, ...)`。ブレンド画像(まだら・左からのワイプ)は Init で SoftImage に作る。`DrawRotaGraphF` でも効く。
 - 気づいたこと: `SetUseBackCulling(true)` が全体で入っているので、`DrawTriangle3D` などは向きによって描かれない。トンネルのモデルの範囲は z ±約6700(置いた位置が真ん中)。
 - 確認: Debug・Release のビルドは通った。Release の `-ending` で15Fごとに画面を撮って(一時コード・消した)、出口の光が近づく・白い霧・見上げ・霧が晴れる・クレジット・ロゴ・リザルトまで流れることを見た。**実際に最後のフェーズを倒しての確認はまだ**。プレイヤーを動かしたときのカメラ・抜けた後のトンネルの明かり(TrainLighting)の見え方もまだ見ていない。
+
+### 2026-11-21 列車ステージのエンディング: トンネルを抜けた後の景色(ステージ1の夜の街＋線路脇の灯り)
+- 決定(会話で): 抜けた先は**ステージ1の夜の街へ向かう**景色。細かい物は**線路脇を流れる柱・灯り**だけ(坑口・雨・月は入れていない)。
+- `Stage/TrainOutside.h/.cpp`(vcxproj/filters に登録。値は .cpp 先頭)。`Stage` がトンネルのあるときだけ作る。
+  - 空: ステージ1の `SkyBox`(`data/Stage/CyberStage/Sky`、紫の夜空と遠くのビル)。`Stage::Draw` の最初(出口の光の前)に、割合(`SetRate`)のアルファで描く。
+  - 遠くの街の光の粒: 空の絵(front/back/right/left)の行 220〜640 から「3ピクセル離れた4点より 50 明るい点」(窓)を拾い、1面140点をカメラから 4300 の向きに置く。色は窓の色を明るくしたもの、瞬きつき。空と同じ割合で出す。
+  - 線路脇の灯り: `data/Stage/TrainTrackside/TrackLamp.mv1`(Cyberpunk Megapolis の `CP_Street_Lamp_03`、2倍)を出口から 600 先から 1300 おきに左右交互、x ±1500、根元はレールの高さ(-150)、腕を線路の方へ。出口と一緒に流れる(`m_tunnelExitZ` から測る)。頭に橙の光の粒。
+- 書き出し: Unity の `ninja_motion/Assets/Editor/TrackPropTool.cs`(新規)。`-batchmode -executeMethod TrackPropTool.Export` で LOD0 を焼いて `CyberStageTool.WriteX` → `convert.exe flat`(列車ステージと同じ)。テクスチャは `CP_Traffic_Light_A_lit.png`(頭の光が焼いてある)。`TrackPropTool.Survey` は候補(街灯3種・ポール・電柱)を `Library/TrackPropShots/` に撮る。
+- `TrainLighting`: `SetTunnelExit` で**出口より先のトンネルの明かりを使わない**(前は抜けた後も水色の明かりが流れていた)。`SetTrackLamps` で灯りの頭を明かり(`Kind::Track`、橙がかった白・強さ1.8・届く距離1500、外だけ)にする。通ると床・コンテナ・キャラが橙に照らされる。ImGui に「Track」。`SetOutsideRate` で空気感(上・下・平行光)とキャラの空の色を紫の夜に寄せる。
+- `TunnelEnding`: Clear(霧が晴れる)の間 `Stage::SetOutsideRate(t)`、その後は1。晴れた後の背景・フォグはステージ1の空の地平線の色 (48,21,54)、フォグ 1500〜4950(前は暗い青・6500 で、ファー5000で切れていた)。
+- 確認: Release の `-ending` で20Fごとに撮って(一時コード・消した)、出口から柱が見える → 白い霧の中に灯り → 霧が晴れて紫の街 → 灯りが左右を流れる → クレジット・ロゴの後ろにも街、を見た。Release・Debug のビルドは通った。**実際に最後のフェーズを倒しての確認・プレイヤーを動かして横を見たときの見え方(柱の根元が浮いて見えないか・下が暗い空のままでよいか)はまだ**。
+- 気づいたこと(前から・未対応): Release で画面の真ん中に緑の縦線が出ている(エンディングの前から。空を描くと隠れる)。何の線かは調べていない。
+
+### 2026-11-21 列車とステージ1の間にもう1ステージ挟む(決定・まだ作らない)
+- 原作は列車から落ちてそのまま Ch1 だが、ここでは**列車のエンディングの後に、操作させるステージを1つ挟んで街(ステージ1)へ向かわせる**。原作から外れてよい(ユーザー)。
+- 決定した形(会話で出した8案のうち「1. 高架下・操車場から地上へ」):
+  - 流れ: 列車が止まる → 降りて高架下の操車場 → 地下鉄の駅 → 階段を上がって通り → ビルを登って屋上 → 縁から飛び降り → ステージ1の登場演出(ビルの縁 → 跳ぶ → 突き下ろし → 着地。11/20)へつなぐ。
+  - 遊び: 戦闘を少しと、登る・進む。地下 → 地上 → 屋上とだんだん上がって街が見えていく構成。
+  - 使い回し候補: ステージ1で使った Metro のアセット(柱・照明・案内板・ベンチ・車両・線路・トンネル)、列車の車両、今日の夜の空(`TrainOutside` のスカイボックス)。
+- **次はまず素材探し**(ninja_motion の Cyberpunk_Megapolis・TrainStage/Props などで、操車場・高架下・駅・通り・非常階段/登る所に使える物を撮って並べる。`GateAssetTool.Survey` / `TrackPropTool.Survey` と同じやり方)。
+- 未決: 置き場所(ロゴ → リザルト → この面 → ステージ1 を案として出した)、敵の量、台詞を入れるか、`StageType` の番号。
+- ほかに出した案(採らなかった): 塔を登る / 屋根を走って追手から逃げる / 列車の上でもう1面 / 潜入(暗殺で進む) / 落ちながら遊ぶ / 線路を歩くだけの小休止 / 屋上のハブ。
 
 ### 2026-11-19 攻撃CSVにヒットストップのフレーム数(hitStopFrame)
 - 敵の攻撃CSV 6つ: `hitStopTime` の後に `hitStopFrame`(空欄なら0)。`EnemyAttackNode::hitStopFrame` / `EnemyAttackNodeType::HitStopFrame`、Enemy Debug の詳細に「HitStop Frame」。

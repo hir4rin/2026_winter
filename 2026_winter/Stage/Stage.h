@@ -6,6 +6,7 @@
 #include "StageLights.h"
 #include "TrainLighting.h"
 #include "TrainSparks.h"
+#include "TrainOutside.h"
 #include "Gate/Gate.h"
 #include <memory>
 #include <vector>
@@ -62,6 +63,8 @@ public:
 	float GetTunnelExitDistance(float z)const;
 	void SetFogOverride(const FogSetting& fog) { m_fogOverride = fog; m_hasFogOverride = true; }
 	void SetTunnelExitLight(int r, int g, int b) { m_exitLightR = r; m_exitLightG = g; m_exitLightB = b; }//出口の穴の色
+	/// <summary>抜けた後の夜の空・遠くの街を出す割合(0〜1)。空気感も外の夜に寄せる</summary>
+	void SetOutsideRate(float rate);
 	//------------------------------------------------------------------------------
 
 	//壁ゾーン(WallKickZone/WallRunZone)----------------------------------------------
@@ -125,6 +128,8 @@ private:
 	StageLights m_lights;
 	std::unique_ptr<TrainLighting> m_trainLighting;//列車ステージのライティング(トンネルがあるときだけ)
 	std::unique_ptr<TrainSparks> m_trainSparks;//列車ステージの車輪の火花(トンネルがあるときだけ)
+	std::unique_ptr<TrainOutside> m_outside;//トンネルを抜けた後の景色(トンネルがあるときだけ)
+	std::vector<Vector3> m_trackLampBuffer;
 	void DrawTunnel()const;
 
 	//画面に映らないメッシュは描かない(MV1DrawModel は画面の外のメッシュも全部描くため)
