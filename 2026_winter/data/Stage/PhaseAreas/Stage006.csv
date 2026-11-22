@@ -1,0 +1,4 @@
+#name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg
+Area_Assassin,3150,650,3700,150,150,100,0
+Area_Battle,-1350,250,4550,100,150,800,0
+Area_Goal,-1850,3250,1550,800,150,200,0

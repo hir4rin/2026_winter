@@ -1,0 +1,6 @@
+#type,name,posX,posY,posZ,halfExtentX,halfExtentY,halfExtentZ,rotYDeg,isActive
+WallKickZone,Kick_Tutorial,0,350,1200,125,350,300,0,1
+WallRunZone,Run_Dock,1900,700,2355,1100,400,75,0,1
+WallRunZone,Run_Neon1,1150,700,4705,1000,400,75,0,1
+WallRunZone,Run_Neon2,-50,700,4395,1000,400,75,0,1
+WallKickZone,Kick_Long,-1850,1700,3350,125,1600,400,0,1

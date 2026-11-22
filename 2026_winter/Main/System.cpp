@@ -40,8 +40,11 @@ namespace
 	const std::string kTrainStageModelPath = "data/Stage/TrainStage/TrainStage.mv1";
 	const std::string kTrainStageColModelPath = "data/Stage/TrainStage/TrainStageCol.mv1";
 	const std::string kTrainTunnelModelPath = "data/Stage/TrainTunnel/TrainTunnel.mv1";
+	const std::string kTrainTrackModelPath = "data/Stage/TrainTunnel/TrainTrack.mv1";
 	const std::string kCyberStageModelPath = "data/Stage/CyberStage/CyberStage.mv1";
 	const std::string kCyberStageColModelPath = "data/Stage/CyberStage/CyberStageCol.mv1";
+	const std::string kTutorialStageModelPath = "data/Stage/TutorialStage/TutorialStage.mv1";
+	const std::string kTutorialStageColModelPath = "data/Stage/TutorialStage/TutorialStageCol.mv1";
 
 	//スキルエフェクト確認用
 	const std::string kDebugGhostDashEffectPath = "data/Effect/Skill/GhostDash.efk";
@@ -49,6 +52,7 @@ namespace
 	const std::string kGhostSkill3FallEffectPath = "data/Effect/Skill/GhostSkill3_Fall.efk";
 	const std::string kGhostSkill3ImpactEffectPath = "data/Effect/Skill/GhostSkill3_Impact.efk";
 	const std::string kBloodWingEffectPath = "data/Effect/Skill/BloodWing.efk";//
+	const std::string kBloodWingActivateEffectPath = "data/Effect/Skill/BloodWingActivate.efk";
 
 	//敵が斬られたときの血しぶき
 	const std::string kBloodHitEffectPath = "data/Effect/Blood/BloodHit.efk";//通常ヒット
@@ -58,6 +62,7 @@ namespace
 	const std::string kBloodKillEffectPath = "data/Effect/Blood/BloodKill.efk";
 	const std::string kBloodPartBreakEffectPath = "data/Effect/Blood/BloodPartBreak.efk";
 	const std::string kBloodUltEffectPath = "data/Effect/Blood/BloodUlt.efk";
+	const std::string kUltBloodAbsorbEffectPath = "data/Effect/Blood/UltBloodAbsorb.efk";
 	//ガードブレイク
 	const std::string kGuardBreakFlashEffectPath = "data/Effect/GuardBreak/GuardBreakFlash.efk";
 	const std::string kGuardBreakShardsEffectPath = "data/Effect/GuardBreak/GuardBreakShards.efk";
@@ -99,6 +104,7 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::GhostSkill3FallEffect] = LoadEffekseerEffect(kGhostSkill3FallEffectPath.c_str());
 	m_asyncHandles[AsyncData::GhostSkill3ImpactEffect] = LoadEffekseerEffect(kGhostSkill3ImpactEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodWingEffect] = LoadEffekseerEffect(kBloodWingEffectPath.c_str());
+	m_asyncHandles[AsyncData::BloodWingActivateEffect] = LoadEffekseerEffect(kBloodWingActivateEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodHitEffect] = LoadEffekseerEffect(kBloodHitEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodHitEffectC] = LoadEffekseerEffect(kBloodHitCEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodHitEffectD] = LoadEffekseerEffect(kBloodHitDEffectPath.c_str());
@@ -106,6 +112,7 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::BloodKillEffect] = LoadEffekseerEffect(kBloodKillEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodPartBreakEffect] = LoadEffekseerEffect(kBloodPartBreakEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodUltEffect] = LoadEffekseerEffect(kBloodUltEffectPath.c_str());
+	m_asyncHandles[AsyncData::UltBloodAbsorbEffect] = LoadEffekseerEffect(kUltBloodAbsorbEffectPath.c_str());
 	m_asyncHandles[AsyncData::GuardBreakFlashEffect] = LoadEffekseerEffect(kGuardBreakFlashEffectPath.c_str());
 	m_asyncHandles[AsyncData::GuardBreakShardsEffect] = LoadEffekseerEffect(kGuardBreakShardsEffectPath.c_str());
 	m_asyncHandles[AsyncData::HitWindEffect] = LoadEffekseerEffect(kHitWindEffectPath.c_str());
@@ -134,10 +141,15 @@ void System::LoadStage(StageType type)
 		LoadStageModel(AsyncData::TrainStageModel, kTrainStageModelPath);
 		LoadStageModel(AsyncData::TrainStageColModel, kTrainStageColModelPath);
 		LoadStageModel(AsyncData::TrainTunnelModel, kTrainTunnelModelPath);
+		LoadStageModel(AsyncData::TrainTrackModel, kTrainTrackModelPath);
 		break;
 	case StageType::Cyber:
 		LoadStageModel(AsyncData::CyberStageModel, kCyberStageModelPath);
 		LoadStageModel(AsyncData::CyberStageColModel, kCyberStageColModelPath);
+		break;
+	case StageType::Tutorial:
+		LoadStageModel(AsyncData::TutorialStageModel, kTutorialStageModelPath);
+		LoadStageModel(AsyncData::TutorialStageColModel, kTutorialStageColModelPath);
 		break;
 	default:
 		break;
@@ -186,6 +198,9 @@ void System::LoadEnemy(EnemyType type)
 		LoadStageModel(AsyncData::EnemyBazookaWeaponModel, kEnemyBazookaWeaponModelPath);
 		LoadStageModel(AsyncData::EnemyGunnerPartLeftArmModel, kEnemyGunnerPartLeftArmModelPath);
 		LoadStageModel(AsyncData::EnemyPartHeadModel, kEnemyPartHeadModelPath);
+		//ミサイルの予告と爆発はKingmechのものを使う
+		LoadStageEffect(AsyncData::KingmechMissileWarningEffect, kKingmechMissileWarningEffectPath);
+		LoadStageEffect(AsyncData::KingmechMissileExplodeEffect, kKingmechMissileExplodeEffectPath);
 		break;
 	case EnemyType::BossEnemyPirateR1:
 		//第二ラウンドは背中の腕も使う
@@ -270,8 +285,11 @@ void System::Terminate()
 	MV1DeleteModel(m_asyncHandles[AsyncData::TrainStageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::TrainStageColModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::TrainTunnelModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TrainTrackModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::CyberStageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::CyberStageColModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TutorialStageModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TutorialStageColModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModelCollider]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::AreaWallEffect]);
@@ -281,6 +299,7 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3FallEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3ImpactEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodWingEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodWingActivateEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodHitEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodHitEffectC]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodHitEffectD]);
@@ -288,6 +307,7 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodKillEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodPartBreakEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodUltEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::UltBloodAbsorbEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GuardBreakFlashEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GuardBreakShardsEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::HitWindEffect]);

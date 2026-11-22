@@ -616,7 +616,9 @@ void EnemyBase::CautionMove(Vector3 target, float distance)
 	float dist = toEnemy.Magnitude();
 	if (dist < distance)
 	{
-		Vector3 backVec = toEnemy.Normalize() * (distance - dist) * kCautionBackVecRate;//半径を維持するためのベクトル//
+		//半径を維持するためのベクトル//足りない距離が大きくても下がる速さで止める
+		const float backLength = (std::min)((distance - dist) * kCautionBackVecRate, m_status.backSpeed);
+		Vector3 backVec = toEnemy.Normalize() * backLength;
 		m_rb.m_vel += backVec;
 	}
 }

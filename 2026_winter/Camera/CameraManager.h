@@ -42,7 +42,8 @@ public:
 		BossPartThrowCamera,
 		BossFinisherCamera,
 		EndingCamera,
-		TitleCamera
+		TitleCamera,
+		UltChargeCamera
 
 	};
 

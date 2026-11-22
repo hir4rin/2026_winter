@@ -25,6 +25,7 @@ private:
 
     std::shared_ptr<AttackCol> m_attackCol;//攻撃の当たり判定
     bool m_isChain = false;//連撃の2撃目以降か
+    bool m_isFired = false;//判定の開始を知らせたか//撃つ敵が1回だけ撃つため
     Vector3 m_moveDir;//踏み込む向き//Enterで決めて固定する(毎フレーム目標へ向け直すと、通り過ぎたときに前後に揺れるため)
 
 };

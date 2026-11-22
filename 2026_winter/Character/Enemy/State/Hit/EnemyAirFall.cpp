@@ -3,6 +3,11 @@
 #include "Main/System.h"
 #include "Main/Game.h"
 
+namespace
+{
+	constexpr float kAnimBlendFrame = 15.0f;//落下のアニメへのブレンド
+}
+
 EnemyAirFall::EnemyAirFall(std::weak_ptr<EnemyBase> owner) :EnemyStateBase(owner)
 {
 }
@@ -15,7 +20,11 @@ void EnemyAirFall::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	//落下用のアニメーションが用意できたらここで再生する
+	//落下のアニメ(無い敵は今のアニメのまま)
+	if (owner->HasAnim("AirFall"))
+	{
+		owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("AirFall"), true, owner->GetAnimSpeed("AirFall"), -1.0f, 0.0f, kAnimBlendFrame);
+	}
 	//静止状態から落ち始める
 	m_gravity = 0.0f;
 }

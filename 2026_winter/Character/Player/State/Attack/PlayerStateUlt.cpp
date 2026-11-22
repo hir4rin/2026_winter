@@ -8,6 +8,10 @@
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
 #include "EffekseerForDXLib.h"
+#include "Camera/CameraManager.h"
+#include "Camera/CameraState/UltChargeCamera.h"
+#include "Render/EffectManager.h"
+#include <algorithm>
 
 namespace
 {
@@ -32,6 +36,13 @@ namespace
 	const std::string kUltStartAnim = "Power_Attack_Start";//構え始め
 	const std::string kUltLoopAnim = "Power_Attack_Loop";//構えたまま溜める
 	constexpr int kUltLoopFrame = 60;//Loopを流し続けるフレーム数
+
+	//溜めの間に刀を伸ばす(Loopの段階のフレーム)//その前は血を吸い込む
+	constexpr float kBladeGrowStart = 22.0f;
+	constexpr float kBladeGrowEnd = 58.0f;
+	constexpr float kBladeGrowShakePower = 2.0f;//伸び始めの揺れ
+	constexpr float kBladeGrowShakeTime = 36.0f;
+	constexpr float kAbsorbEffectScale = 20.0f;//血を吸い込むエフェクトの大きさ(1/20で作っている)
 }
 
 PlayerStateUlt::PlayerStateUlt(std::weak_ptr<Player> player):
@@ -52,7 +63,22 @@ void PlayerStateUlt::Enter()
 
 	//必殺技の間だけ刀身の長い刀に持ち替える
 	player->m_weapon->SetUltWeapon(true);
+	//溜めの間に伸ばすので、最初は通常の刀の長さ
+	player->m_weapon->SetUltBladeRate(0.0f);
 	//System::GetInstance().GetSoundManager().PlaySE("UltAttackSE");
+
+	//周りの血を刀の根元へ吸い込む
+	{
+		Vector3 base, tip;
+		player->m_weapon->GetBladePos(base, tip);
+		m_absorbHandle = EffectManager::GetInstance().Play(AsyncData::UltBloodAbsorbEffect, base, 0.0f, kAbsorbEffectScale);
+	}
+
+	//前から見上げるカメラへ
+	if (auto cameraManager = player->GetCameraManager().lock())
+	{
+		cameraManager->ChangeStateFromScene(CameraManager::CameraStateName::UltChargeCamera);
+	}
 
 	//攻撃の当たり判定を生成する//最初は無効
 	CreateUltAttackCol();
@@ -78,6 +104,9 @@ void PlayerStateUlt::ChangePhase(Phase phase)
 		break;
 	case Phase::Attack:
 		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("UltAttack"), false, 0.5f,50.0f);
+		player->m_weapon->SetUltBladeRate(1.0f);
+		//溜めのカメラからいつものカメラへ戻す//当たったらUltCameraに切り替わる
+		ReturnChargeCamera();
 		//必殺技本体からスローにする
 		System::GetInstance().SetTimeScale(0.2f);
 		break;
@@ -88,6 +117,21 @@ void PlayerStateUlt::Update()
 {
 	auto player = m_owner.lock();
 	if (!player) return;
+
+	//吸い込みの中心を刀の根元に合わせる
+	if (m_absorbHandle != -1)
+	{
+		if (IsEffekseer3DEffectPlaying(m_absorbHandle) == 0)
+		{
+			Vector3 base, tip;
+			player->m_weapon->GetBladePos(base, tip);
+			SetPosPlayingEffekseer3DEffect(m_absorbHandle, base.x, base.y, base.z);
+		}
+		else
+		{
+			m_absorbHandle = -1;
+		}
+	}
 
 	switch (m_phase)
 	{
@@ -107,6 +151,7 @@ void PlayerStateUlt::Update()
 			ChangePhase(Phase::Attack);
 			return;
 		}
+		UpdateBladeGrow();
 		player->m_anim.Update();
 		break;
 	case Phase::Attack:
@@ -167,10 +212,42 @@ void PlayerStateUlt::Exit()
 	player->m_isUltimating = false;
 	//通常の刀に戻す
 	player->m_weapon->SetUltWeapon(false);
+	//溜めのカメラのまま抜けたときも戻す
+	ReturnChargeCamera();
 
 	//攻撃の当たり判定を削除する
 	ReleaseAttackCol();
 	//エフェクトは止めずに最後まで流す
+}
+
+void PlayerStateUlt::UpdateBladeGrow()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+
+	const float frame = static_cast<float>(m_loopFrame);
+	//伸び始めに少し揺らす
+	if (frame >= kBladeGrowStart && !m_isBladeGrowStarted)
+	{
+		m_isBladeGrowStarted = true;
+		if (auto cameraManager = player->GetCameraManager().lock())
+		{
+			cameraManager->StartCameraShake(kBladeGrowShakePower, kBladeGrowShakeTime);
+		}
+	}
+	float t = std::clamp((frame - kBladeGrowStart) / (kBladeGrowEnd - kBladeGrowStart), 0.0f, 1.0f);
+	t = t * t * (3.0f - 2.0f * t);
+	player->m_weapon->SetUltBladeRate(t);
+}
+
+void PlayerStateUlt::ReturnChargeCamera()
+{
+	auto player = m_owner.lock();
+	if (!player) return;
+	auto cameraManager = player->GetCameraManager().lock();
+	if (!cameraManager) return;
+	auto chargeCamera = std::dynamic_pointer_cast<UltChargeCamera>(cameraManager->GetActiveCamera());
+	if (chargeCamera) chargeCamera->StartReturn();
 }
 
 void PlayerStateUlt::DebugDraw()

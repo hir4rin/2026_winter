@@ -15,9 +15,11 @@
 #include "Render/EffectManager.h"
 #include "Render/BloodDecalManager.h"
 #include "Render/ModelShaderManager.h"
+#include "Render/SwordLook.h"
 #include "Stage/Stage.h"
 #include "Stage/SkyBox.h"
 #include "Stage/TunnelEnding.h"
+#include "Stage/TutorialFinale.h"
 #include "Main/Input.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
@@ -33,6 +35,7 @@
 #include "Stage/Phase/PhaseAreaEditor.h"
 #include "UI/UIManager.h"
 #include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieCutCamera.h"
+#include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieLandCamera.h"
 #include "imgui.h"
 
 namespace
@@ -185,11 +188,16 @@ void SceneMain::Init()
 
 	//プレイヤー追従カメラ
 	m_cameraManager->Init(m_player, m_stage);
-	if (m_stageType == StageType::Cyber) StartPlayerStartMovie();
+	if (m_stageType == StageType::Cyber) StartPlayerStartMovie(PlayerStartMovieFrame::Kind::Roof);
+	if (m_stageType == StageType::Tutorial)
+	{
+		StartPlayerStartMovie(PlayerStartMovieFrame::Kind::Fall);
+		m_tutorialFinale = std::make_unique<TutorialFinale>(m_stage, m_player, m_cameraManager);
+	}
 
 	//インゲーム用のUIを生成する(プレイヤーなどを参照するUIがあるので最後に行う)
 	m_uiManager = std::make_unique<UIManager>();
-	m_uiManager->InGameInit(m_cameraManager, m_player);
+	m_uiManager->InGameInit(m_cameraManager, m_player, m_enemyManager);
 }
 
 void SceneMain::Update()
@@ -305,6 +313,7 @@ void SceneMain::NormalUpdate()
 	}
 	if ((m_phaseManager->TakeEndingRequest() || isDebugEnding) && !m_ending) StartEnding();
 	if (m_ending) m_ending->Update();
+	if (m_tutorialFinale) m_tutorialFinale->Update();
 	//押し戻しの後のプレイヤーの位置で、近い明かりを点ける
 	m_stage->UpdateLights(m_player->GetRigidBody().GetPos());
 
@@ -390,9 +399,10 @@ void SceneMain::StartEnding()
 	m_ending = std::make_unique<TunnelEnding>(m_stage, m_player, m_cameraManager);
 }
 
-void SceneMain::StartPlayerStartMovie()
+void SceneMain::StartPlayerStartMovie(PlayerStartMovieFrame::Kind kind)
 {
 	PlayerStartMovieFrame frame;
+	frame.kind = kind;
 	frame.origin = m_player->GetRigidBody().GetPos();
 	Vector3 front = m_player->GetTargetVec();
 	front.y = 0.0f;
@@ -485,6 +495,8 @@ void SceneMain::NormalDraw()
 	if (imguiApp::GetInstance().IsDebugUIVisible())m_stage->DrawLightDebugWindow();
 	//キャラの見た目(光の色・ふちの光など)の調整
 	if (imguiApp::GetInstance().IsDebugUIVisible())CharacterLook::DrawDebugWindow();
+	//プレイヤーの刀の見た目(映り込み・刃文・刃先の光)
+	if (imguiApp::GetInstance().IsDebugUIVisible())SwordLook::DrawDebugWindow();
 	m_phaseManager->DebugDraw();
 	m_player->GetLockOnManager()->DebugDraw();
 	//ステージ編集中はエディタ側で(選択中を白にして)描く

@@ -25,6 +25,9 @@ public:
 		int creditIndex = -1;//出しているクレジット(-1なら無し)
 		int creditFrame = 0;//そのクレジットが出てからのフレーム
 		int logoFrame = -1;//ロゴが出てからのフレーム(-1なら無し)
+		int radioIndex = -1;//無線の字幕(-1なら無し)
+		int radioFrame = 0;//その字幕が出てからのフレーム
+		float blackRate = 0.0f;//画面を黒くする
 	};
 
 	BattleManager();

@@ -60,6 +60,7 @@ namespace
 	constexpr float kBloodWingDownOffset = 0.0f;//翼の付け根をボーンから下にずらす距離
 	constexpr float kBloodWingTiltFollowRate = 0.5f;//体の傾きに翼を追従させる割合(0で向きだけ、1でボーンと同じだけ傾く)
 	constexpr float kBloodWingBackLean = -15.0f * DX_PI_F / 180.0f;//翼を背中側(カメラ側)に倒す角度//マイナスで後ろに倒れる
+	constexpr float kBloodWingActivateDelay = 40.0f;//発動の演出から翼を出すまで//演出の血が弾けるフレームに合わせる
 
 	constexpr float kRotationLerpFactor = 0.1f;//モデルの向きを目標角度に近づける割合(ほぼlerp)
 
@@ -205,6 +206,7 @@ Player::~Player()
 		m_currentState->Exit();//状態を抜ける
 	}
 	if (m_bloodWingPlayingHandle != -1)StopEffekseer3DEffect(m_bloodWingPlayingHandle);
+	if (m_bloodWingActivateHandle != -1)StopEffekseer3DEffect(m_bloodWingActivateHandle);
 	MV1DeleteModel(m_modelHandle);
 	DeleteGraph(m_whiteHandle);
 }
@@ -346,6 +348,7 @@ void Player::Update(Camera& camera)
 		else
 		{
 			m_isUltimating = true;
+			StartBloodWingActivate();
 		}
 	}
 
@@ -384,6 +387,9 @@ void Player::Update(Camera& camera)
 	UpdatePlayerHeadLook();
 
 
+	//演出で血を吸い込んでいる間は翼を出さない//BloodWingUpdate は1フレームに2回呼ばれるのでここで減らす
+	if (m_bloodWingDelay > 0.0f)m_bloodWingDelay -= System::GetInstance().GetTimeScale();
+
 	//これらは押し戻しの時に呼ばれないのでずれる→そこでも呼ぶ必要あり
 	BloodWingUpdate();
 	m_weapon->Update();//武器の更新
@@ -413,14 +419,14 @@ void Player::Update(Camera& camera)
 }
 void Player::Draw()
 {
-	//スキル攻撃中はモデルを描画しない(代わりにスキルのエフェクトが出ている)
-	if (!m_isSkillInvisible)
+	//スキル攻撃中はモデルを描画しない(代わりにスキルのエフェクトが出ている)//演出で隠しているときも描かない
+	if (!m_isSkillInvisible && !m_isHidden)
 	{
 		//モデルの描画
 		//ステージの明かりの光も足す
 		m_look.Draw(m_modelHandle);//読めていなければ今まで通りの描き方になる
 
-		m_weapon->Draw();//武器
+		m_weapon->Draw(m_swordTrail.IsEmitting());//武器//軌跡を出している間は刀身を光らせる
 	}
 	//刀の軌跡//画面の刀と同じ位置になるよう、描く直前の刀の位置を足す
 	if (m_isTrailSamplePending)
@@ -572,6 +578,7 @@ bool Player::CheckFallDeath()
 {
 	//HPで死んでいる最中は見ない
 	if (m_deathCause != DeathCause::None)return false;
+	if (IsEndingJumping())return false;//列車から飛び降りて落ちている間は死なない
 	auto stage = m_stage.lock();
 	if (!stage)return false;
 
@@ -1089,10 +1096,21 @@ void Player::BloodWingUpdate()
 			StopEffekseer3DEffect(m_bloodWingPlayingHandle);
 			m_bloodWingPlayingHandle = -1;
 		}
+		if (m_bloodWingActivateHandle != -1)
+		{
+			StopEffekseer3DEffect(m_bloodWingActivateHandle);
+			m_bloodWingActivateHandle = -1;
+		}
+		m_bloodWingDelay = 0.0f;
 		return;
 	}
+	//発動の演出が終わったらハンドルを捨てる
+	if (m_bloodWingActivateHandle != -1 && IsEffekseer3DEffectPlaying(m_bloodWingActivateHandle) != 0)
+	{
+		m_bloodWingActivateHandle = -1;
+	}
 	//出始めは翼が広がるアニメーションから再生する//エフェクト側で消えずにループし続ける
-	if (m_bloodWingPlayingHandle == -1)
+	if (m_bloodWingPlayingHandle == -1 && m_bloodWingDelay <= 0.0f)
 	{
 		m_bloodWingPlayingHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(AsyncData::BloodWingEffect));
 		SetScalePlayingEffekseer3DEffect(m_bloodWingPlayingHandle, kBloodWingScale, kBloodWingScale, kBloodWingScale);
@@ -1124,7 +1142,6 @@ void Player::BloodWingUpdate()
 	//付け根をボーンから背中側・下にずらす//体の傾きに合わせてずらす向きも回す
 	Vector3 offset = VTransformSR(VGet(0.0f, -kBloodWingDownOffset, -kBloodWingBackOffset), effectRot);
 	Vector3 pos = rootPos + offset;
-	SetPosPlayingEffekseer3DEffect(m_bloodWingPlayingHandle, pos.x, pos.y, pos.z);
 
 	//翼を背中側(カメラ側)に倒す//エフェクトのローカルのX軸回り
 	effectRot = MMult(MGetRotX(kBloodWingBackLean), effectRot);
@@ -1133,7 +1150,35 @@ void Player::BloodWingUpdate()
 	float rotX = asinf(std::clamp(-effectRot.m[2][1], -1.0f, 1.0f));
 	float rotY = atan2f(effectRot.m[2][0], effectRot.m[2][2]);
 	float rotZ = atan2f(effectRot.m[0][1], effectRot.m[1][1]);
-	SetRotationPlayingEffekseer3DEffect(m_bloodWingPlayingHandle, rotX, rotY, rotZ);
+
+	//翼と発動の演出は同じ付け根・向きにする
+	for (int handle : { m_bloodWingPlayingHandle, m_bloodWingActivateHandle })
+	{
+		if (handle == -1)continue;
+		SetPosPlayingEffekseer3DEffect(handle, pos.x, pos.y, pos.z);
+		SetRotationPlayingEffekseer3DEffect(handle, rotX, rotY, rotZ);
+	}
+}
+
+float Player::GetUltBladeRate() const
+{
+	if (!m_weapon)return 1.0f;
+	return m_weapon->GetUltBladeRate();
+}
+
+void Player::StartBloodWingActivate()
+{
+	//前の演出・翼が残っていたら消して出し直す
+	if (m_bloodWingActivateHandle != -1)StopEffekseer3DEffect(m_bloodWingActivateHandle);
+	if (m_bloodWingPlayingHandle != -1)
+	{
+		StopEffekseer3DEffect(m_bloodWingPlayingHandle);
+		m_bloodWingPlayingHandle = -1;
+	}
+	m_bloodWingActivateHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(AsyncData::BloodWingActivateEffect));
+	SetScalePlayingEffekseer3DEffect(m_bloodWingActivateHandle, kBloodWingScale, kBloodWingScale, kBloodWingScale);
+	m_bloodWingDelay = kBloodWingActivateDelay;
+	BloodWingUpdate();//出た瞬間から背中に合わせる
 }
 
 //回転行列の回転量だけを割合で弱める(回転軸はそのまま)

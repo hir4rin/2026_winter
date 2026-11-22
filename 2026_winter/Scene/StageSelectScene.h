@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "Scene.h"
-#include "UI/MenuUI.h"
+#include "UI/Menu/MenuUI.h"
 
 /// <summary>
 /// ステージセレクトシーン

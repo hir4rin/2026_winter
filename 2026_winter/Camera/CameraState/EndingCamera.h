@@ -27,6 +27,13 @@ public:
 	void SetForward(const Vector3& forward) { m_forward = forward; m_angleH = atan2f(forward.x, forward.z); }
 	//今の置き方から frame かけて shot へ動かす
 	void MoveTo(const Shot& shot, float frame);
+	//飛び降りるとき//今の位置から frame かけて pos へ動いて止まり、プレイヤーを目で追う
+	void HoldAt(const Vector3& pos, float frame);
+	//飛び降りるとき//今の位置から frame かけて、プレイヤーの足元から offset の所へ寄ってついていく
+	void FollowAt(const Vector3& offset, float frame);
+	//縦穴を登るとき//center(縦の線)の backDir 側から見る。横の位置は動かさず、高さだけプレイヤーについていく
+	//距離は startDist → endDist、プレイヤーより上の高さは startUp → endUp へ frame かけて変える(だんだん遠ざかる)
+	void RiseAlong(const Vector3& center, const Vector3& backDir, float startDist, float endDist, float startUp, float endUp, float frame);
 
 	Type GetCameraType()const override { return Type::EndingCamera; }
 	virtual BlendSetting GetBlendSetting()const override;
@@ -40,4 +47,26 @@ private:
 	Shot m_toShot;
 	float m_shotFrame = 0.0f;
 	float m_shotLength = 1.0f;
+	enum class Mode
+	{
+		Shot,//MoveToの置き方
+		Hold,//止まって目で追う
+		Follow,//ついていく
+		Rise,//縦穴の後ろから、高さだけついていく
+	};
+	Mode m_mode = Mode::Shot;
+	//Rise
+	Vector3 m_riseCenter;
+	Vector3 m_riseBack;
+	float m_riseStartDist = 0.0f;
+	float m_riseEndDist = 0.0f;
+	float m_riseStartUp = 0.0f;
+	float m_riseEndUp = 0.0f;
+	float m_riseY = 0.0f;//なめらかにしたプレイヤーの高さ
+	Vector3 m_holdPos;
+	Vector3 m_followOffset;
+	Vector3 m_modeFromPos;//動き始めた位置
+	Vector3 m_modeFromTarget;//動き始めた注視点
+	float m_modeFrame = 0.0f;
+	float m_modeLength = 0.0f;
 };

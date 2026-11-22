@@ -20,6 +20,7 @@
 #include "Character/Player/State/Defence/PlayerStateJustDodge.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateResultMove.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateStartMovie.h"
+#include "Character/Player/State/Locomotion/PlayerStateEndingJump.h"
 #include "Character/Player/State/Locomotion/PlayerStateWallRun.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateWallKick.h"//以下同文
 #include "Character/Player/State/Locomotion/PlayerStateWallStay.h"//以下同文
@@ -284,6 +285,8 @@ public:
 	bool CanInputPartBrokenState()const;//Yで確殺に入れるステートのときtrue
 	//プレイヤーの向いている方向
 	Vector3 GetTargetVec()const { return m_targetVec; }
+	//必殺技の長い刀の伸び具合(0〜1)
+	float GetUltBladeRate()const;
 	//確殺演出中かどうか//演出中は確殺対象を固定する
 	void SetIsPartBrokenKilling(bool value) { m_isPartBrokenKilling = value; }
 	bool GetIsPartBrokenKilling()const { return m_isPartBrokenKilling; }
@@ -303,6 +306,15 @@ public:
 	std::shared_ptr<PlayerStateBossFinisher> GetBossFinisherState()const { return std::dynamic_pointer_cast<PlayerStateBossFinisher>(m_currentState); }
 	//登場演出を始める
 	void StartStartMovie(const PlayerStartMovieFrame& frame) { ChangeState(std::make_shared<PlayerStateStartMovie>(GetWeakPtr(), frame)); }
+	//列車から飛び降りる(エンディング)
+	void StartEndingJump(const Vector3& outDir, const Vector3& backDir) { ChangeState(std::make_shared<PlayerStateEndingJump>(GetWeakPtr(), outDir, backDir)); }
+	bool IsEndingJumping()const { return std::dynamic_pointer_cast<PlayerStateEndingJump>(m_currentState) != nullptr; }
+	//演出の間だけ姿を消す(列車のエンディングで爆風に包まれている間)
+	void SetHidden(bool isHidden) { m_isHidden = isHidden; }
+	//壁に張り付いたら自動で蹴る(チュートリアルの最後の縦穴)
+	void SetAutoWallKick(bool isAuto) { m_isAutoWallKick = isAuto; }
+	bool IsAutoWallKick()const { return m_isAutoWallKick; }
+	bool IsWallKicking()const { return std::dynamic_pointer_cast<PlayerStateWallKick>(m_currentState) != nullptr; }
 	//必殺技状態中かどうか
 	bool GetIsUltimating() { return m_isUltimating; }
 
@@ -345,6 +357,7 @@ private:
 	void InitializeComboChain();//CSVからコンボデータの読み込みをする
 	void UpdateAngle();//回転処理
 	void BloodWingUpdate();//必殺技状態の翼エフェクトの再生・停止と、背中への追従
+	void StartBloodWingActivate();//必殺技状態に入るときの演出を出す//翼は演出の途中から出す
 	void GetFootTrailPos(int side, Vector3& base, Vector3& tip)const;//足の軌跡の帯の根元(すね)と先(つま先)
 	void UpdateShoulderStrands();//風の筋を出したり消したりする
 	void GetShoulderTrailPos(int side, int index, Vector3& base, Vector3& tip)const;//肩の風の筋の端
@@ -393,6 +406,8 @@ private:
 
 	bool m_isUltimating = false;//必殺技状態かどうか
 	bool m_isSkillInvisible = false;//スキル攻撃中にモデル(本体・羽・武器)を描画しないか//代わりにエフェクトを出す
+	bool m_isHidden = false;//演出で姿を消しているか(本体・武器)
+	bool m_isAutoWallKick = false;//壁に張り付いたら自動で蹴る
 	bool m_isKessatsuReserved = false;//スキルの終わりに血殺する
 	Vector3 m_kessatsuPos = {};//血殺の位置
 	bool m_isCameraFocusOverride = false;//カメラの注視点のYを敵の高さで上書きするか//打ち上げ(スキル0)が当たってからスキル1の間だけtrue
@@ -401,6 +416,8 @@ private:
 	const int kPlayerNeckBoneIndex = 25;//首のボーンのインデックス
 	int m_headFrame = -1;//頭のボーンのフレーム番号(通常のモデル)//見つからなければ-1で頭を向けない
 	int m_bloodWingPlayingHandle = -1;//必殺技状態の翼エフェクト(再生中)のハンドル//再生していなければ-1
+	int m_bloodWingActivateHandle = -1;//必殺技状態に入るときの演出のハンドル//再生していなければ-1
+	float m_bloodWingDelay = 0.0f;//翼を出すまでの残りフレーム//演出で血を吸い込み終わってから翼を出す
 	int m_bloodWingFrame = -1;//翼の付け根にする背中(肩甲骨の高さ)のボーン//通常のモデル用
 	std::shared_ptr<PlayerWeapon> m_weapon;//武器
 
@@ -492,6 +509,7 @@ private:
 	friend class PlayerStateJustDodge;
 	friend class PlayerStateResultMove;
 	friend class PlayerStateStartMovie;
+	friend class PlayerStateEndingJump;
 	friend class PlayerStateWallRun;
 	friend class PlayerStateWallKick;
 	friend class PlayerStateWallStay;

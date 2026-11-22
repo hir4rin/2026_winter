@@ -2,7 +2,9 @@
 #include "Character/Enemy/EnemyBase.h"
 #include "Character/Enemy/EnemyPart.h"
 #include <memory>
+#include <vector>
 class EnemyBazookaWeapon;
+class EnemyBazookaMissile;
 class EnemyBazooka :
     public EnemyBase
 {
@@ -21,6 +23,10 @@ public:
     void OnHeadBreak()override;
     void OnPartBreak()override;//攻撃で部位破壊したら左腕を落とす
     void SetOpacity(float rate)override;//本体に加えて、RPG7と切り離したパーツの不透明度も設定する
+
+    bool UseAttackCol()const override;//ミサイルの攻撃のときは近接の判定を出さない
+    void OnAttackFire()override;//ミサイルの攻撃のときだけ撃つ
+    std::vector<std::shared_ptr<EnemyBazookaMissile>> TakeFiredMissiles()override;
 private:
     void SetUpBreakLeftArm();
     void SetUpBreakHead();
@@ -37,6 +43,7 @@ private:
     std::shared_ptr<EnemyBazookaWeapon> m_weapon;//武器
     std::shared_ptr<EnemyPart> m_leftArmPart;//切り離された左腕(当たり判定・落下・回転を持つ)
     std::shared_ptr<EnemyPart> m_headPart;//切り離された頭(当たり判定・落下・回転を持つ)
+    std::vector<std::shared_ptr<EnemyBazookaMissile>> m_firedMissiles;//撃ってまだEnemyManagerに渡していない弾
 
     friend class EnemyBazookaWeapon;
 };

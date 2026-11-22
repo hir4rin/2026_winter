@@ -19,6 +19,7 @@
 #include "CameraState/PartBroken/PartBrokenBCameraStart.h"
 #include "CameraState/BattleSmoothCamera.h"
 #include "CameraState/BossPartThrowCamera.h"
+#include "CameraState/UltChargeCamera.h"
 #include "CameraState/BossFinisherCamera.h"
 #include "CameraState/EndingCamera.h"
 #include "CameraState/TitleCamera.h"
@@ -261,6 +262,7 @@ const char* CameraManager::GetCameraTypeName(int type)
 	case CameraStateBase::Type::PlayerStartMovieCutCamera: return "PlayerStartMovieCutCamera";
 	case CameraStateBase::Type::PlayerStartMovieLandCamera: return "PlayerStartMovieLandCamera";
 	case CameraStateBase::Type::PlayerStartMovieTurnCamera: return "PlayerStartMovieTurnCamera";
+	case CameraStateBase::Type::UltChargeCamera: return "UltChargeCamera";
 	default: return "Other";
 	}
 }
@@ -698,6 +700,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 		break;
 	case CameraStateName::TitleCamera:
 		newState = std::make_shared<TitleCamera>(shared_from_this());
+		break;
+	case CameraStateName::UltChargeCamera:
+		newState = std::make_shared<UltChargeCamera>(shared_from_this());
 		break;
 	default:
 		return;

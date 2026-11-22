@@ -1,0 +1,48 @@
+#key,animName,animSpeed
+Idle,Rifle Idle,1
+Walk,Rifle Walk,1
+Run,Rifle Run,1
+StrafeRight,Strafe Right,1
+StrafeLeft,Strafe Left,1
+Back,Standing Dodge Backward,1
+Attack,Rifle Punch,1
+Hit,Medium Hit To Head,1
+Kirimomi,Getting Hit Backwards,1
+Death,Rifle Death,1
+BlockEnd,Block_End,1
+BlockHit,Block_Hit,1
+BlockBreak,Block_Hit_Break,1
+BlockLoop,Block_Loop,1
+BlockStart,Block_Start,1
+KnockDownStart,Knock_Down_Start,1
+KnockDownLoop,Knock_Down_Loop,1
+KnockDownEnd,Knock_Down_End,1
+HitB,Hit_Combat_B,1
+HitF,Hit_Combat_F,1
+HitL,Hit_Combat_L,1
+HitR,Hit_Combat_R,1
+HitDeath,Hit_Combat_Death,1
+GetUp,Get_Up_Combat,1
+HitLargeB,Hit_Large_Combat_B,1
+HitLargeF,Hit_Large_Combat_F,1
+HitLargeL,Hit_Large_Combat_L,1
+HitLargeR,Hit_Large_Combat_R,1
+Execute01Victim,Execution_Target_01,1
+Execute02Victim,Execution_Target_02,1
+Execute03Victim,Execution_Target_03,1
+FootPlantVictim,Ninja_Chudan_Attack_FootPlantJumpSlash_Victim,1
+RunSlashFinisher,Ninja_Chudan_Attack_RunSlashFinisher_Victim,1
+StabBehindVictim,Ninja_Chudan_Attack_StabBehind_Victim,1
+StabChestVictim,Ninja_Chudan_Attack_StabChest_Victim,1
+fromAvobeVictim,Ninja_fromAbove_Attack_StabDown_Victim,1
+fromAvobeForwardVictim,Ninja_fromAbove_Attack_StabDown_ForwardFacing_Victim,1
+SneakStabBehindVictim,Ninja_Sneak_Attack_StabBehind_Victim,1
+AttackMain,Rifle Punch,1
+AttackShot1,Gunplay,1
+AttackShot2,Gunplay (1),1
+RunMain,Rifle Run,1
+CautionLMain,Strafe Left,1
+CautionRRMain,Strafe Right,1
+WalkMain,Rifle Walk,1
+Launch,Enemy_Launch,1.0
+AirFall,Jump_Combat_Loop_0,1.0

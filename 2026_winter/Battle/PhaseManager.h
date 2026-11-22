@@ -30,6 +30,8 @@ public:
 	//デバッグ用//ボスの一つ手前のフェーズにして、敵を消し、プレイヤーをボスのエリアの手前に移す
 	//ボスのフェーズ中なら次のフェーズへ飛ぶ
 	void DebugSkipToBossPrevPhase();
+	//デバッグ用//最後のフェーズ(終わりへ進む行の from)へ飛ぶ//ボスのいないステージ用
+	void DebugSkipToLastPhase();
 	//デバッグ用//フェーズを終わったことにする(敵を出さない・リザルトの合図も出さない)
 	void DebugFinish() { m_currentPhase = -1; }
 

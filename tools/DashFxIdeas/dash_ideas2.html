@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>ダッシュのエフェクト案2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;padding:16px;background:#0e1118;color:#e8ecf4;font-family:"Yu Gothic UI",sans-serif}
+#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+canvas{width:100%;border-radius:8px;display:block;cursor:pointer}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.name{font-size:15px;font-weight:bold}.desc{font-size:13px;color:#9aa6bb;margin-top:2px}
+button{background:#1f2738;color:#e8ecf4;border:1px solid #3a465e;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
+button:hover{background:#2a3449}
+.top{display:flex;gap:12px;align-items:center;margin-bottom:12px;font-size:13px}
+</style></head><body>
+<div class="top"><button id="all">全部を最初から</button><label><input type="checkbox" id="auto" checked> 4秒ごとにくり返す</label></div>
+<div id="grid"></div>
+<script>
+const ideas=[
+['1 煙の尾','背中から黒い煙が尾を引く(煙玉の忍者)'],
+['2 木の葉','巻き上げた木の葉がうずを巻いて後ろへ散る'],
+['3 稲妻','体のまわりを細い電光がパチパチ走る'],
+['4 青い炎','体が青い炎をまとい、炎が後ろへなびく'],
+['5 墨の飛沫','筆で払ったような墨のしぶきが後ろに飛ぶ'],
+['6 陽炎','通った後ろの空気がゆらゆら歪む'],
+['7 分身','左右に影の分身が並んで走り、ちらつく'],
+['8 影が伸びる','足元の影が後ろへ長く引き伸ばされる'],
+['9 足の火花','踏むたびに足元から火花が後ろへ散る'],
+['10 お札','背中からお札が舞って後ろへ流れる'],
+['11 色ずれ','体が赤と青にずれて、速さでぶれて見える'],
+['12 ふちの光と破片','体のふちが光り、光の破片がはがれて飛ぶ']];
+const W=300,H=200,F=260,HY=70,CH=2.2,RZ=6,SP=0.2,CYCLE=240,ACC=30;
+function P(x,y,z){return[W/2+x*F/z,HY+(CH-y)*F/z]}
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function runner(c,x,z,ph,col,al,sc,dx){sc=sc||1;dx=dx||0;c.save();c.globalAlpha=al;c.fillStyle=col;c.strokeStyle=col;const s=F/z*sc;let [bx,by]=P(x,0,z);bx+=dx;
+const bob=Math.abs(Math.sin(ph))*0.06;const hip=[bx,by-(0.95+bob)*s],sh=[bx,by-(1.5+bob)*s];
+c.lineCap='round';c.lineWidth=0.22*s;c.beginPath();c.moveTo(hip[0],hip[1]);c.lineTo(sh[0],sh[1]);c.stroke();
+c.beginPath();c.arc(bx,by-(1.72+bob)*s,0.13*s,0,7);c.fill();
+c.lineWidth=0.13*s;for(const k of[-1,1]){const sw=Math.sin(ph)*k;c.beginPath();c.moveTo(hip[0]+k*0.1*s,hip[1]);c.lineTo(bx+k*0.14*s,by-(0.45+Math.max(0,sw)*0.35)*s);c.lineTo(bx+k*0.14*s,by-Math.max(0,sw)*0.3*s);c.stroke();
+c.beginPath();c.moveTo(sh[0]+k*0.17*s,sh[1]+0.05*s);c.lineTo(sh[0]+k*0.33*s,sh[1]+(0.35-sw*0.15)*s);c.stroke();}
+c.restore()}
+function reset(S){S.t=0;S.dist=0;S.ph=0;S.p=[];S.l=null;S.step=0;S.v=0}
+function bg(c,S){c.fillStyle='#1c2333';c.fillRect(0,0,W,H);c.fillStyle='#262f42';c.fillRect(0,HY,W,H-HY);
+c.strokeStyle='rgba(170,190,230,0.2)';c.lineWidth=1;
+for(let i=0;i<12;i++){const z=((i*1.2-S.dist)%14.4+14.4)%14.4+1.2;const a=P(-30,0,z),b=P(30,0,z);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+for(const x of[-3,-1.5,1.5,3]){const a=P(x,0,1.2),b=P(x,0,60);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}}
+function life(S,dz){S.p=S.p.filter(p=>p.a<1&&p.z>1.3);for(const p of S.p){p.a+=p.da;p.z-=dz===undefined?S.v:dz;p.x+=p.vx||0;p.y+=p.vy||0;if(p.g)p.vy-=p.g}}
+const DARK='#05070c';
+// back:描くのが体より前(奥) / front:体より後(手前)
+const fx=[
+{front(c,S,k){if(k>0.05)for(let i=0;i<3;i++)S.p.push({x:rnd(-0.15,0.15),y:rnd(0.9,1.5),z:RZ-0.15,a:0,da:rnd(0.04,0.06),vx:rnd(-0.01,0.01),vy:0.004,r:rnd(0.07,0.12)});
+life(S,S.v*0.55);for(const p of S.p){const[a,b]=P(p.x,p.y,p.z),s=F/p.z,al=(1-p.a)*0.5*Math.min(1,p.a*6);c.fillStyle='rgba(10,10,16,'+al+')';c.beginPath();c.arc(a,b,(p.r+p.a*0.2)*s,0,7);c.fill();}}},
+{front(c,S,k){if(k>0.2&&S.t%2==0)S.p.push({ang:rnd(0,6.28),rr:rnd(0.4,0.9),y:rnd(0.1,0.6),z:RZ,a:0,da:0.018,vy:0.012,rot:rnd(0,6),col:Math.random()<0.5?'#6fa04a':'#c79a3c'});
+S.p=S.p.filter(p=>p.a<1&&p.z>1.3);for(const p of S.p){p.a+=p.da;p.z-=S.v*0.6;p.y+=p.vy;p.ang+=0.18;p.rot+=0.25;const x=Math.cos(p.ang)*p.rr;const[a,b]=P(x,p.y,p.z+Math.sin(p.ang)*0.3),s=F/p.z;
+c.save();c.translate(a,b);c.rotate(p.rot);c.globalAlpha=(1-p.a);c.fillStyle=p.col;c.beginPath();c.ellipse(0,0,0.09*s,0.04*s*Math.abs(Math.cos(p.rot*1.3))+1,0,0,7);c.fill();c.restore();}}},
+{front(c,S,k){if(k<0.2)return;if(S.t%3==0){S.l=[];const n=Math.random()<0.5?1:2;for(let j=0;j<n;j++){let x=rnd(-0.3,0.3),y=rnd(0.3,1.7),z=RZ;const pts=[[x,y,z]];for(let i=0;i<7;i++){x+=rnd(-0.18,0.18)+(x>0?0.05:-0.05);y+=rnd(-0.2,0.2);z-=rnd(0.1,0.25);pts.push([x,y,z])}S.l.push(pts)}}
+if(!S.l)return;c.save();c.globalCompositeOperation='lighter';for(const pts of S.l){for(const[w,col]of[[4,'rgba(80,150,255,0.35)'],[1.4,'rgba(230,245,255,0.95)']]){c.lineWidth=w;c.strokeStyle=col;c.beginPath();pts.forEach((q,i)=>{const[a,b]=P(q[0],q[1],q[2]);i?c.lineTo(a,b):c.moveTo(a,b)});c.stroke()}}c.restore();}},
+{back(c,S,k){c.save();c.globalCompositeOperation='lighter';if(k>0.05)for(let i=0;i<6;i++){const y=rnd(0.1,1.8);S.p.push({x:rnd(-0.28,0.28)*(y>1.6?0.5:1),y:y,z:RZ+rnd(-0.05,0.05),a:0,da:rnd(0.05,0.08),vy:0.02,r:rnd(0.08,0.14)})}
+life(S,S.v*0.35);for(const p of S.p){const[a,b]=P(p.x,p.y,p.z),s=F/p.z,al=(1-p.a)*0.35;c.fillStyle='rgba(70,150,255,'+al+')';c.beginPath();c.arc(a,b,p.r*(1-p.a*0.5)*s,0,7);c.fill();c.fillStyle='rgba(200,235,255,'+al*0.6+')';c.beginPath();c.arc(a,b,p.r*0.35*s,0,7);c.fill()}c.restore();}},
+{front(c,S,k){if(k>0.3&&S.t%5==0){const side=Math.random()<0.5?-1:1;const y=rnd(0.6,1.5);for(let i=0;i<7;i++)S.p.push({x:side*rnd(0.1,0.3),y:y+rnd(-0.1,0.1),z:RZ-0.1,a:0,da:rnd(0.025,0.04),vx:side*rnd(0.01,0.04),vy:rnd(-0.01,0.02),g:0.002,r:rnd(0.03,0.09),st:i==0})}
+life(S,S.v*1.1);for(const p of S.p){const[a,b]=P(p.x,p.y,p.z),s=F/p.z,al=Math.min(1,(1-p.a)*1.5);c.fillStyle='rgba(8,8,10,'+al+')';
+if(p.st){const[a2,b2]=P(p.x-p.vx*8,p.y-p.vy*8,p.z+0.6);c.strokeStyle=c.fillStyle;c.lineCap='round';c.lineWidth=p.r*1.6*s*(1-p.a);c.beginPath();c.moveTo(a,b);c.quadraticCurveTo((a+a2)/2,(b+b2)/2-6,a2,b2);c.stroke()}
+else{c.beginPath();c.ellipse(a,b,p.r*s,p.r*s*0.8,0,0,7);c.fill()}}}},
+{after(c,S,k){if(k<0.05)return;const [cx,cy]=P(0,1,RZ);const top=Math.floor(cy-70),h=H-top;for(let y=top;y<H;y+=2){const off=Math.sin(y*0.25+S.t*0.5)*3*k*((y-top)/h+0.3);c.drawImage(c.canvas,cx-60,y,120,2,cx-60+off,y,120,2)}
+c.strokeStyle='rgba(220,230,255,'+0.07*k+')';for(let i=0;i<5;i++){const y=top+20+i*22+Math.sin(S.t*0.2+i)*4;c.beginPath();c.moveTo(cx-55,y);c.bezierCurveTo(cx-20,y-6,cx+20,y+6,cx+55,y);c.stroke()}}},
+{back(c,S,k){if(k<0.1)return;for(const side of[-1,1]){const fl=Math.sin(S.t*0.9+side)*0.5+0.5;const on=(Math.floor(S.t/7+side*3)%5)!=0;if(!on)continue;runner(c,side*0.85,RZ-0.25,S.ph+side*1.2,'#2a3c66',(0.3+fl*0.25)*k,1,side*rnd(0,2))}}},
+{back(c,S,k){const [fx_,fy]=P(0,0,RZ);const L=0.4+k*3.2;c.fillStyle='rgba(5,6,12,0.7)';c.beginPath();const pts=[];for(let i=0;i<=10;i++){const u=i/10,z=RZ-u*L,w=0.22*(1-u*0.6)+Math.sin(u*9+S.t*0.4)*0.03*k;pts.push([P(-w,0,z),P(w,0,z)])}
+c.moveTo(pts[0][0][0],pts[0][0][1]);pts.forEach(q=>c.lineTo(q[0][0],q[0][1]));for(let i=pts.length-1;i>=0;i--)c.lineTo(pts[i][1][0],pts[i][1][1]);c.closePath();c.fill();
+c.fillStyle='rgba(120,60,200,'+0.15*k+')';c.fill();}},
+{front(c,S,k,step){if(step&&k>0.3){const fx2=S.step%2?0.15:-0.15;for(let i=0;i<14;i++)S.p.push({x:fx2,y:0.02,z:RZ,a:0,da:rnd(0.04,0.07),vx:rnd(-0.03,0.03),vy:rnd(0.02,0.06),g:0.005,dz:rnd(0.25,0.45)})}
+S.p=S.p.filter(p=>p.a<1&&p.z>1.3);c.save();c.globalCompositeOperation='lighter';c.lineCap='round';for(const p of S.p){p.a+=p.da;p.z-=p.dz;p.x+=p.vx;p.y=Math.max(0,p.y+p.vy);p.vy-=p.g;
+const a=P(p.x,p.y,p.z),b=P(p.x-p.vx*2,p.y-p.vy*2,p.z+p.dz*1.5);c.strokeStyle='rgba(255,'+Math.floor(200-p.a*120)+',80,'+(1-p.a)+')';c.lineWidth=Math.max(1,0.025*F/p.z);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke()}c.restore();}},
+{front(c,S,k){if(k>0.3&&S.t%6==0)S.p.push({x:rnd(-0.2,0.2),y:rnd(1.1,1.5),z:RZ-0.15,a:0,da:0.012,vx:rnd(-0.015,0.015),vy:rnd(0,0.012),rot:rnd(0,6),sp:rnd(-0.15,0.15)});
+S.p=S.p.filter(p=>p.a<1&&p.z>1.3);for(const p of S.p){p.a+=p.da;p.z-=S.v*0.75;p.x+=p.vx+Math.sin(p.a*20)*0.01;p.y+=p.vy-0.003;p.rot+=p.sp;const[a,b]=P(p.x,p.y,p.z),s=F/p.z;
+c.save();c.translate(a,b);c.rotate(p.rot);c.scale(1,Math.cos(p.a*18));c.globalAlpha=Math.min(1,(1-p.a)*2);c.fillStyle='#e9dfc4';c.fillRect(-0.06*s,-0.16*s,0.12*s,0.32*s);c.fillStyle='#b8312f';c.fillRect(-0.015*s,-0.12*s,0.03*s,0.24*s);c.restore();}}},
+{body(c,S,k){const j=k*(3+Math.sin(S.t*0.7)*2+rnd(-1,1));c.save();c.globalCompositeOperation='lighter';runner(c,0,RZ,S.ph,'#c0203a',0.8*k,1,-j);runner(c,0,RZ,S.ph,'#1e70e0',0.8*k,1,j);c.restore();runner(c,0,RZ,S.ph,DARK,1)}},
+{body(c,S,k){c.save();c.globalCompositeOperation='lighter';runner(c,0,RZ,S.ph,'#5fd0ff',(0.5+Math.sin(S.t*0.5)*0.15)*k,1.07);c.restore();runner(c,0,RZ,S.ph,DARK,1);
+if(k>0.2&&S.t%2==0)S.p.push({x:rnd(-0.25,0.25),y:rnd(0.3,1.75),z:RZ,a:0,da:rnd(0.03,0.05),vx:rnd(-0.02,0.02),vy:rnd(-0.005,0.015),rot:rnd(0,6),sz:rnd(0.04,0.08)});
+S.p=S.p.filter(p=>p.a<1&&p.z>1.3);c.save();c.globalCompositeOperation='lighter';for(const p of S.p){p.a+=p.da;p.z-=S.v*0.6;p.x+=p.vx;p.y+=p.vy;p.rot+=0.3;const[a,b]=P(p.x,p.y,p.z),s=F/p.z*p.sz;
+c.fillStyle='rgba(150,225,255,'+(1-p.a)+')';c.beginPath();c.moveTo(a+Math.cos(p.rot)*s*1.6,b+Math.sin(p.rot)*s*1.6);c.lineTo(a+Math.cos(p.rot+2.4)*s,b+Math.sin(p.rot+2.4)*s);c.lineTo(a+Math.cos(p.rot+3.9)*s,b+Math.sin(p.rot+3.9)*s);c.fill()}c.restore();}}];
+const grid=document.getElementById('grid');
+const scenes=ideas.map((d,i)=>{const w=document.createElement('div');
+w.innerHTML='<canvas width="'+W+'" height="'+H+'"></canvas><div class="row"><span class="name">'+d[0]+'</span><button>▶ 最初から</button></div><div class="desc">'+d[1]+'</div>';
+grid.appendChild(w);const S={i:i,c:w.querySelector('canvas').getContext('2d')};reset(S);
+w.querySelector('button').addEventListener('click',()=>reset(S));w.querySelector('canvas').addEventListener('click',()=>reset(S));return S});
+document.getElementById('all').addEventListener('click',()=>scenes.forEach(reset));
+const autoBox=document.getElementById('auto');
+function frame(S){const c=S.c;S.t++;
+if(S.t>CYCLE){if(autoBox.checked){reset(S);S.t=1}else S.t=CYCLE+1}
+const tt=Math.min(S.t,CYCLE);const k=tt<20?0:tt>CYCLE-50?Math.max(0,(CYCLE-20-tt)/30):Math.min(1,(tt-20)/ACC);
+S.v=0.04+SP*k;S.dist+=S.v;const prev=Math.floor(S.ph/Math.PI);S.ph+=0.12+0.23*k;const step=Math.floor(S.ph/Math.PI)!==prev;if(step)S.step++;
+const f=fx[S.i];bg(c,S);if(f.back)f.back(c,S,k,step);if(f.body)f.body(c,S,k,step);else runner(c,0,RZ,S.ph,DARK,1);if(f.front)f.front(c,S,k,step);if(f.after)f.after(c,S,k,step);
+c.fillStyle='rgba(255,255,255,0.55)';c.font='12px sans-serif';c.fillText(tt<20?'歩き':tt>CYCLE-50?'止まる':'ダッシュ',8,16)}
+setInterval(()=>scenes.forEach(S=>{try{frame(S)}catch(e){console.error(S.i,e)}}),1000/60);
+</script></body></html>

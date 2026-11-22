@@ -86,6 +86,7 @@ public:
 		PlayerStartMovieCutCamera = 27,
 		PlayerStartMovieLandCamera = 28,
 		PlayerStartMovieTurnCamera = 30,
+		UltChargeCamera = 31,
 
 		
 

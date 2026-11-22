@@ -1,14 +1,15 @@
 ﻿#include "UIManager.h"
 #include "DxLib.h"
-#include "KessatsuUI.h"
-#include "PlayerHUD.h"
-#include "FinisherUI.h"
-#include "EndingUI.h"
-#include "AssasinTargetUI.h"
-#include "PartBrokenKillUI.h"
-#include "GuardBreakChanceUI.h"
-#include "ScreenBloodUI.h"
-#include "TitleBackUI.h"
+#include "UI/Effect/KessatsuUI.h"
+#include "UI/HUD/PlayerHUD.h"
+#include "UI/Effect/FinisherUI.h"
+#include "UI/Effect/EndingUI.h"
+#include "UI/Target/AssasinTargetUI.h"
+#include "UI/Target/PartBrokenKillUI.h"
+#include "UI/Target/GuardBreakChanceUI.h"
+#include "UI/Effect/ScreenBloodUI.h"
+#include "UI/Title/TitleBackUI.h"
+#include "UI/HUD/BossHpUI.h"
 
 void UIManager::TitleInit()
 {
@@ -20,7 +21,7 @@ void UIManager::TitleInit()
 	Add(std::make_shared<TitleBackUI>());
 }
 
-void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak_ptr<Player> player)
+void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak_ptr<Player> player, std::weak_ptr<EnemyManager> enemyManager)
 {
 	//前の場面のUIが残らないようにする
 	Clear();
@@ -40,6 +41,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	Add(std::make_shared<GuardBreakChanceUI>(player));
 	//トドメのムービーの黒帯・フラッシュ
 	Add(std::make_shared<FinisherUI>());
+	//ボスのHPバー(撃破の演出がトドメの黒帯の上に出るように後に描く)
+	Add(std::make_shared<BossHpUI>(enemyManager));
 	//エンディングのクレジット・ロゴ
 	Add(std::make_shared<EndingUI>());
 

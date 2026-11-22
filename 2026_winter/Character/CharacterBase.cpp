@@ -145,6 +145,11 @@ const std::string& CharacterBase::GetAnimName(const std::string& key) const
 	return it->second;
 }
 
+bool CharacterBase::HasAnim(const std::string& key) const
+{
+	return m_animNames.find(key) != m_animNames.end();
+}
+
 float CharacterBase::GetAnimSpeed(const std::string& key) const
 {
 	auto it = m_animSpeeds.find(key);

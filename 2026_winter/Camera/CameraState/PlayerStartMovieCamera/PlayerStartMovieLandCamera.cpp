@@ -19,9 +19,10 @@ namespace
 	constexpr float kEasingPower = 2.0f;
 }
 
-PlayerStartMovieLandCamera::PlayerStartMovieLandCamera(std::weak_ptr<CameraManager> owner, const PlayerStartMovieFrame& frame) :
+PlayerStartMovieLandCamera::PlayerStartMovieLandCamera(std::weak_ptr<CameraManager> owner, const PlayerStartMovieFrame& frame, float delayFrame) :
 	CameraStateBase(owner),
-	m_frame(frame)
+	m_frame(frame),
+	m_delayFrame(delayFrame)
 {
 }
 
@@ -33,10 +34,14 @@ void PlayerStartMovieLandCamera::Enter(CameraData data)
 {
 	m_angleH = data.angleH;
 	m_angleV = data.angleV;
-	m_frameCount = 0.0f;
-	m_goalFov = kFov * kDegToRad;
-	CalcGoal();
+	m_pos = data.pos;
+	m_target = data.target;
+	m_goalPos = data.pos;
+	m_goalTarget = data.target;
 	ResetBlend(data.pos, data.target);
+
+	m_frameCount = -m_delayFrame;
+	m_goalFov = kFov * kDegToRad;
 }
 
 void PlayerStartMovieLandCamera::Update()
@@ -51,7 +56,7 @@ void PlayerStartMovieLandCamera::Update()
 		return;
 	}
 
-	CalcGoal();
+	FixCameraPos();
 	if (IsBlending())
 	{
 		UpdateBlend(m_goalPos, m_goalTarget);
@@ -65,14 +70,23 @@ void PlayerStartMovieLandCamera::Update()
 
 void PlayerStartMovieLandCamera::Exit()
 {
+	//m_angleH/m_angleVを、カメラ→注視点のベクトルから計算し直す(次のStateに正しい向きを渡すため)
+	Vector3 toTarget = m_target - m_pos;
+	float horizontalDist = Vector3(toTarget.x, 0.0f, toTarget.z).Magnitude();
+	m_angleH = atan2f(toTarget.x, toTarget.z);
+	m_angleV = atan2f(toTarget.y, horizontalDist);
 }
 
-void PlayerStartMovieLandCamera::CalcGoal()
+void PlayerStartMovieLandCamera::FixCameraPos()
 {
 	float t = std::clamp(m_frameCount / PlayerStartMovieFrame::kLandPoseFrame, 0.0f, 1.0f);
 	t = Easing::Apply(EasingMode::EaseOut, t, kEasingPower);
 	m_goalPos = m_frame.Orbit(std::lerp(kStartAngle, kEndAngle, t), std::lerp(kStartDist, kEndDist, t), kHeight);
 	m_goalTarget = m_frame.Point(0.0f, kTargetHeight, 0.0f);
+}
+
+void PlayerStartMovieLandCamera::CameraSetting()
+{
 }
 
 using BlendSetting = CameraStateBase::BlendSetting;

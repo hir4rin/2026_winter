@@ -31,6 +31,8 @@ private:
 	};
 	void ChangePhase(Phase phase);//段階を切り替えてアニメーションを流す//モデルに無いアニメーションの段階は飛ばす
 	void UpdateAttack();//Attackの段階の更新
+	void UpdateBladeGrow();//溜めの間に刀を伸ばす
+	void ReturnChargeCamera();//溜めのカメラならいつものカメラへ戻す
 private:
 	Phase m_phase = Phase::Start;//今の段階
 	int m_loopFrame = 0;//Loopの段階に入ってからのフレーム数
@@ -38,4 +40,6 @@ private:
 	bool m_isTriggeredEffect = false;//エフェクトを出したかどうか
 
 	bool m_isTriggeredStopAnim = false;
+	bool m_isBladeGrowStarted = false;//刀が伸び始めたか
+	int m_absorbHandle = -1;//血を吸い込むエフェクト
 };

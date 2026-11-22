@@ -94,6 +94,10 @@ public:
 	void BindStageLights();
 	//法線マップ・遮蔽・光沢つきで描くピクセルシェーダー(CharacterLookPS.hlsl)。bump はノーマルマップのある頂点タイプ用
 	int GetLookPixelShader(bool bump)const { return bump ? m_lookBumpPixelShader : m_lookPixelShader; }
+	//プレイヤーの刀のピクセルシェーダー(SwordPS.hlsl)
+	int GetSwordPixelShader(bool bump)const { return bump ? m_swordBumpPixelShader : m_swordPixelShader; }
+	//必殺技の長い刀のピクセルシェーダー(UltSwordPS.hlsl)
+	int GetUltSwordPixelShader(bool bump)const { return bump ? m_ultSwordBumpPixelShader : m_ultSwordPixelShader; }
 
 	//頂点タイプに合った頂点シェーダーのハンドルを返す(対応していない頂点タイプは-1)
 	int GetVertexShader(int vertexType)const;
@@ -178,6 +182,10 @@ private:
 	std::vector<std::pair<VECTOR, VECTOR>> m_indoorBoxes;
 	int m_lookPixelShader = -1;
 	int m_lookBumpPixelShader = -1;
+	int m_swordPixelShader = -1;
+	int m_swordBumpPixelShader = -1;
+	int m_ultSwordPixelShader = -1;
+	int m_ultSwordBumpPixelShader = -1;
 	int m_stageLightNum = 0;
 	bool m_isInit = false;
 	bool m_isBlackMode = false;

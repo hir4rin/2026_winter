@@ -14,4 +14,5 @@ public:
 	void DebugDraw()override;
 
 private:
+	float m_frame = 0.0f;//張り付いてからのフレーム(自動で蹴るとき用)
 };

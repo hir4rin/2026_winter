@@ -1,0 +1,6 @@
+#type,posX,posY,posZ,rotYDeg,phase,initialState,groupId,route
+Swordman,3150,500,4350,0,1,Watch,T1,
+Swordman,-1550,100,4500,-90,2,Watch,T2,
+Swordman,-2250,100,4150,90,3,Idle,T3,
+Swordman,-2350,100,4850,90,3,Idle,T3,
+Swordman,-2550,100,4550,90,3,Idle,T3,

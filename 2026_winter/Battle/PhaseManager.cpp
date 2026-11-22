@@ -181,7 +181,12 @@ void PhaseManager::DebugSkipToBossPrevPhase()
 		toBoss = &t;
 		break;
 	}
-	if (!toBoss)return;
+	//ボスがいないステージ(列車など)は、最後のフェーズへ飛ぶ
+	if (!toBoss)
+	{
+		DebugSkipToLastPhase();
+		return;
+	}
 
 	//ボスのフェーズ中なら次のフェーズへ//プレイヤーはそのまま
 	if (m_currentPhase >= toBoss->to)
@@ -215,6 +220,28 @@ void PhaseManager::DebugSkipToBossPrevPhase()
 	float rad = area.rotYDeg * DX_PI_F / 180.0f;
 	player->SetPos(area.position + Vector3(-sinf(rad) * back, 0.0f, -cosf(rad) * back));
 	player->GetRigidBody().ResetVel();
+}
+
+void PhaseManager::DebugSkipToLastPhase()
+{
+	//終わり(-1)へ進む行の from が最後のフェーズ
+	const PhaseTransition* toEnd = nullptr;
+	for (const auto& t : m_transitions)
+	{
+		if (t.to != -1 || t.from <= 0)continue;
+		toEnd = &t;
+		break;
+	}
+	if (!toEnd)return;
+	//もう最後のフェーズなら何もしない
+	if (m_currentPhase >= toEnd->from)return;
+
+	//今いる敵を消す//プレイヤーはそのまま
+	if (auto enemyMgr = m_enemyManager.lock())
+	{
+		enemyMgr->DebugClearEnemies();
+	}
+	ChangePhase(toEnd->from, PhaseEvent::None);
 }
 
 bool PhaseManager::IsTutorialReady() const

@@ -117,6 +117,9 @@
     <ClCompile Include="Render\CharacterLook.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Render\SwordLook.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Main\FrameProfiler.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -213,6 +216,9 @@
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateStartMovie.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Player\State\Locomotion\PlayerStateEndingJump.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallRun.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -279,6 +285,9 @@
     <ClCompile Include="Camera\CameraState\BossPartThrowCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Camera\CameraState\UltChargeCamera.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieCutCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -297,10 +306,10 @@
     <ClCompile Include="Character\Player\State\Attack\PlayerStateBossFinisher.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\FinisherUI.cpp">
+    <ClCompile Include="UI\Effect\FinisherUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\EndingUI.cpp">
+    <ClCompile Include="UI\Effect\EndingUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\EndingCamera.cpp">
@@ -315,28 +324,31 @@
     <ClCompile Include="Stage\TitleCity.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\TitleBackUI.cpp">
+    <ClCompile Include="UI\Title\TitleBackUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\TitleLogoUI.cpp">
+    <ClCompile Include="UI\Title\TitleLogoUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\TitleFlashUI.cpp">
+    <ClCompile Include="UI\Title\TitleFlashUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\TitlePressUI.cpp">
+    <ClCompile Include="UI\Title\TitlePressUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Stage\TunnelEnding.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\AssasinTargetUI.cpp">
+    <ClCompile Include="Stage\TutorialFinale.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\PartBrokenKillUI.cpp">
+    <ClCompile Include="UI\Target\AssasinTargetUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\GuardBreakChanceUI.cpp">
+    <ClCompile Include="UI\Target\PartBrokenKillUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Target\GuardBreakChanceUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp">
@@ -357,16 +369,19 @@
     <ClCompile Include="UI\UIManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\KessatsuUI.cpp">
+    <ClCompile Include="UI\Effect\KessatsuUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\ScreenBloodUI.cpp">
+    <ClCompile Include="UI\Effect\ScreenBloodUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\PlayerHUD.cpp">
+    <ClCompile Include="UI\HUD\PlayerHUD.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\MenuUI.cpp">
+    <ClCompile Include="UI\HUD\BossHpUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Menu\MenuUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="DataLoader\DataManager.cpp">
@@ -417,7 +432,7 @@
     <ClCompile Include="Battle\ResultRecorder.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="UI\ResultUI.cpp">
+    <ClCompile Include="UI\Menu\ResultUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\UIFont.cpp">
@@ -606,6 +621,12 @@
     <ClCompile Include="Battle\PhaseManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Enemy\Bazooka\EnemyBazookaMissile.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Enemy\Bazooka\EnemyBazookaMissileCol.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Main\Game.h">
@@ -752,6 +773,9 @@
     <ClInclude Include="Render\CharacterLook.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Render\SwordLook.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Main\FrameProfiler.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -833,6 +857,9 @@
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateStartMovie.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\Player\State\Locomotion\PlayerStateEndingJump.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallRun.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -899,6 +926,9 @@
     <ClInclude Include="Camera\CameraState\BossPartThrowCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Camera\CameraState\UltChargeCamera.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieFrame.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -920,10 +950,10 @@
     <ClInclude Include="Character\Player\State\Attack\PlayerStateBossFinisher.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\FinisherUI.h">
+    <ClInclude Include="UI\Effect\FinisherUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\EndingUI.h">
+    <ClInclude Include="UI\Effect\EndingUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\EndingCamera.h">
@@ -941,28 +971,31 @@
     <ClInclude Include="Stage\TitleCity.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\TitleBackUI.h">
+    <ClInclude Include="UI\Title\TitleBackUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\TitleLogoUI.h">
+    <ClInclude Include="UI\Title\TitleLogoUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\TitleFlashUI.h">
+    <ClInclude Include="UI\Title\TitleFlashUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\TitlePressUI.h">
+    <ClInclude Include="UI\Title\TitlePressUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\TunnelEnding.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\AssasinTargetUI.h">
+    <ClInclude Include="Stage\TutorialFinale.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\PartBrokenKillUI.h">
+    <ClInclude Include="UI\Target\AssasinTargetUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\GuardBreakChanceUI.h">
+    <ClInclude Include="UI\Target\PartBrokenKillUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Target\GuardBreakChanceUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h">
@@ -983,16 +1016,19 @@
     <ClInclude Include="UI\UIManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\KessatsuUI.h">
+    <ClInclude Include="UI\Effect\KessatsuUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\ScreenBloodUI.h">
+    <ClInclude Include="UI\Effect\ScreenBloodUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\PlayerHUD.h">
+    <ClInclude Include="UI\HUD\PlayerHUD.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\MenuUI.h">
+    <ClInclude Include="UI\HUD\BossHpUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Menu\MenuUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="DataLoader\DataManager.h">
@@ -1043,7 +1079,7 @@
     <ClInclude Include="Battle\ResultRecorder.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="UI\ResultUI.h">
+    <ClInclude Include="UI\Menu\ResultUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="UI\UIFont.h">
@@ -1235,6 +1271,12 @@
     <ClInclude Include="DataLoader\TutorialPageData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\Enemy\Bazooka\EnemyBazookaMissile.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Enemy\Bazooka\EnemyBazookaMissileCol.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Render\Shader\MV1VertexShader.hlsl">
@@ -1253,6 +1295,12 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\CharacterLookPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\SwordPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\UltSwordPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\TitleLogoPS.hlsl">

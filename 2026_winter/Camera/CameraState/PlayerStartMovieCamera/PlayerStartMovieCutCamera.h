@@ -3,7 +3,10 @@
 #include "PlayerStartMovieFrame.h"
 #include <vector>
 
-//登場演出のC1〜C5//カットで切り替える部分をまとめて持つ
+/// <summary>
+/// 登場演出のC1〜C5(カットで切り替える部分をまとめて持つ)
+/// カットの表はBuildCuts。終わったらPlayerStartMovieLandCameraへ
+/// </summary>
 class PlayerStartMovieCutCamera :
     public CameraStateBase
 {
@@ -13,6 +16,8 @@ public:
 	virtual void Enter(CameraData data)override;
 	virtual void Update()override;
 	virtual void Exit()override;
+
+	void CameraSetting() override;
 
 	Type GetCameraType()const override { return Type::PlayerStartMovieCutCamera; }
 	virtual BlendSetting GetBlendSetting()const override { return {}; }

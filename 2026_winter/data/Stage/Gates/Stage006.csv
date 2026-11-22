@@ -1,0 +1,8 @@
+#name,model,posX,posY,posZ,rotYDeg,closePhase,openPhase,delayFrame,moveFrame,moveX,moveY,moveZ,scaleX,scaleY,scaleZ,colOffsetX,colOffsetY,colOffsetZ,colHalfX,colHalfY,colHalfZ
+#Unity の GateAssetTool.ExportTutorialGates で書き出し。_Shutter は上へ巻き上げる(原点=シャッターの上の真ん中)。_Static / _SideR は塀・壁(いつも通れない)
+TutRoomExit_Shutter,Tutorial/Gate_TutRoomExit_Shutter,2630.99,819.96,4550,-90,0,2,30,50,0,0,0,1,0.04,1,0,430.04,0,104.6,750,30
+TutRoomExit_Static,Tutorial/Gate_TutRoomExit_Static,2630,500,4550,-90,0,99999,0,1,0,0,0,1,1,1,-127.3,250,0,22.7,250,30
+TutRoomExit_SideR,,2630,500,4550,-90,0,99999,0,1,0,0,0,1,1,1,127.3,250,0,22.7,250,30
+TutShaft_Shutter,Tutorial/Gate_TutShaft_Shutter,-1850,419.96,3730.99,180,0,4,30,50,0,0,0,1,0.04,1,0,430.04,0,87.17,750,30
+TutShaft_Static,Tutorial/Gate_TutShaft_Static,-1850,100,3730,180,0,99999,0,1,0,0,0,1,1,1,-106.08,250,0,18.92,250,30
+TutShaft_SideR,,-1850,100,3730,180,0,99999,0,1,0,0,0,1,1,1,106.08,250,0,18.92,250,30

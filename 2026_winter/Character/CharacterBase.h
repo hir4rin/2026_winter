@@ -136,6 +136,7 @@ protected:
 	const std::string& GetAnimName(const std::string& key)const;//アニメーションの名前を取得する
 	std::unordered_map<std::string, float> m_animSpeeds;//アニメーションの再生速度(アニメCSVの3列目)//キーはGetAnimNameと同じ
 	float GetAnimSpeed(const std::string& key)const;//アニメーションの再生速度を取得する//無ければ1.0//ChangeAnimのtimescaleに渡す
+	bool HasAnim(const std::string& key)const;//アニメCSVにそのキーがあるか
 
 	std::shared_ptr<HitCol> m_hitCol;//やられ判定
 

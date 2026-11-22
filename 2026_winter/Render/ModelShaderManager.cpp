@@ -11,6 +11,8 @@ namespace
 	const std::wstring kLitPixelShaderPath = L"Render/Shader/LitModelPS.hlsl";
 	const std::wstring kCutPixelShaderPath = L"Render/Shader/EnemyCutPS.hlsl";
 	const std::wstring kLookPixelShaderPath = L"Render/Shader/CharacterLookPS.hlsl";
+	const std::wstring kSwordPixelShaderPath = L"Render/Shader/SwordPS.hlsl";
+	const std::wstring kUltSwordPixelShaderPath = L"Render/Shader/UltSwordPS.hlsl";
 	const char* const kShaderEntryPoint = "main";
 	const char* const kVertexShaderTarget = "vs_5_0";
 	const char* const kPixelShaderTarget = "ps_5_0";
@@ -55,6 +57,10 @@ void ModelShaderManager::Init()
 	m_cutConstantBuffer = CreateShaderConstantBuffer(sizeof(CutConstant));
 	m_lookPixelShader = LoadShaderWithMacro(kLookPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
 	m_lookBumpPixelShader = LoadShaderWithMacro(kLookPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
+	m_swordPixelShader = LoadShaderWithMacro(kSwordPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
+	m_swordBumpPixelShader = LoadShaderWithMacro(kSwordPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
+	m_ultSwordPixelShader = LoadShaderWithMacro(kUltSwordPixelShaderPath, kPixelShaderTarget, { {nullptr,nullptr} }, false);
+	m_ultSwordBumpPixelShader = LoadShaderWithMacro(kUltSwordPixelShaderPath, kPixelShaderTarget, { {"BUMPMAP",""}, {nullptr,nullptr} }, false);
 
 	m_isInit = true;
 	SetStageLights({}, 0.0f, 0.0f, 0.0f);//明かりの数を0で入れておく(明かりの無いステージでも CharacterLook が b4 を読むため)
@@ -98,6 +104,14 @@ void ModelShaderManager::Terminate()
 	m_lookPixelShader = -1;
 	if (m_lookBumpPixelShader != -1)DeleteShader(m_lookBumpPixelShader);
 	m_lookBumpPixelShader = -1;
+	if (m_swordPixelShader != -1)DeleteShader(m_swordPixelShader);
+	m_swordPixelShader = -1;
+	if (m_swordBumpPixelShader != -1)DeleteShader(m_swordBumpPixelShader);
+	m_swordBumpPixelShader = -1;
+	if (m_ultSwordPixelShader != -1)DeleteShader(m_ultSwordPixelShader);
+	m_ultSwordPixelShader = -1;
+	if (m_ultSwordBumpPixelShader != -1)DeleteShader(m_ultSwordBumpPixelShader);
+	m_ultSwordBumpPixelShader = -1;
 	m_stageLightNum = 0;
 
 	m_isBlackMode = false;
@@ -345,6 +359,7 @@ void ModelShaderManager::DrawModelWithShader(int modelHandle, int pixelShader, i
 		for (int mesh = 0; mesh < meshNum; ++mesh)
 		{
 			if (MV1GetMeshTListNum(modelHandle, mesh) <= 0)continue;
+			if (!MV1GetMeshVisible(modelHandle, mesh))continue;//隠したメッシュは描かない
 			const int tList = MV1GetMeshTList(modelHandle, mesh, 0);
 			const int type = MV1GetTriangleListVertexType(modelHandle, tList);
 			const int vs = GetVertexShader(type);

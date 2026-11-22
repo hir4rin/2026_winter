@@ -6,6 +6,7 @@
 
 class EnemyBase;
 class Player;
+class EnemyBazookaMissile;
 
 class EnemyManager
 {
@@ -37,6 +38,7 @@ public:
 private:
 	void SpawnEnemy();
 	void UpdateCorpses();//死体の数が上限を超えたら、古い順に消す
+	void UpdateMissiles();//敵が撃った弾を受け取って動かし、終わったものを消す
 
 	std::shared_ptr<EnemyBase> CreateEnemy(const EnemySpawnData& data);//配置データ1つ分の敵を作る
 
@@ -48,6 +50,7 @@ private:
 
 	std::vector<std::shared_ptr<EnemyBase>> m_enemies;
 	std::deque<std::shared_ptr<EnemyBase>> m_corpses;//死体を死んだ順に並べたもの
+	std::vector<std::shared_ptr<EnemyBazookaMissile>> m_missiles;//敵が撃った弾//撃った敵が倒されても飛び続ける
 
 	std::weak_ptr<Player> m_player;//プレイヤーの弱参照
 

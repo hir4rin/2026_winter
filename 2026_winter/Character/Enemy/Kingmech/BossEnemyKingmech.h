@@ -21,6 +21,8 @@ public:
     void Draw()override;
     bool IsChainAttackLookAtPlayer()const override { return true; }//連撃の2撃目でプレイヤーの方を向く
     bool HasDebugWindow()const override { return true; }//デバッグウィンドウを出す
+    bool IsBoss()const override { return true; }
+    const char* GetBossName()const override { return "キングメック"; }//仮の名前
     void DrawDebugWindowExtra()override;//ミサイルのターンに行くボタン
 
     void OnCollision(Collider& other)override;

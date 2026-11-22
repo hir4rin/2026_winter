@@ -3,6 +3,7 @@
 #include <memory>
 #include "Scene/Scene.h"
 #include "Stage/StageInfo.h"
+#include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieFrame.h"
 #include "Render/StageColorGrade.h"
 #include "Render/TempTopLight.h"//[TempTopLight]
 
@@ -19,6 +20,7 @@ class WallZoneEditor;
 class PhaseAreaEditor;
 class UIManager;
 class TunnelEnding;
+class TutorialFinale;
 
 class SceneMain : public Scene
 {
@@ -53,8 +55,8 @@ private:
 	//エンディングを始める(トンネルが無いステージはすぐリザルトへ)
 	void StartEnding();
 
-	//プレイヤーの登場演出を始める(今の位置に着地する)
-	void StartPlayerStartMovie();
+	//プレイヤーの登場演出を始める(今の位置に着地する)//Roof:ステージ1 Fall:チュートリアル
+	void StartPlayerStartMovie(PlayerStartMovieFrame::Kind kind);
 
 private:
 	int m_frameCount;
@@ -77,6 +79,7 @@ private:
 	StageColorGrade m_stageColorGrade;//血殺中に背景とステージの色を変える
 	TempTopLight m_tempTopLight;//[TempTopLight]暗くて見づらいので真上から照らす(一時的)
 	std::unique_ptr<TunnelEnding> m_ending;//列車ステージのエンディング(始まったら作る)
+	std::unique_ptr<TutorialFinale> m_tutorialFinale;//チュートリアルの最後(長い縦穴を自動で登ってリザルトへ)
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか
 	bool m_wasF4Pressed = false;//前フレームにF4キーが押されていたか(ボスの手前へ飛ぶ)

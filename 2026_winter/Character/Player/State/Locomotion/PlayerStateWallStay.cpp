@@ -7,6 +7,7 @@
 namespace
 {
 	constexpr float kWallStayGap = 0.1f;//壁とカプセルの間のすき間//食い込み防止
+	constexpr float kAutoKickDelay = 6.0f;//自動で蹴るまで張り付くフレーム
 }
 
 PlayerStateWallStay::PlayerStateWallStay(std::weak_ptr<Player> player) : PlayerState(player)
@@ -51,7 +52,10 @@ void PlayerStateWallStay::Update()
 	if (!player) return;
 	auto& input = Input::GetInstance();
 
-	if (input.IsTriggered("A"))
+	//自動で壁キックする演出(チュートリアルの最後の縦穴)では、少し張り付いてから蹴る
+	m_frame += 1.0f;
+	const bool isAutoKick = player->IsAutoWallKick() && m_frame >= kAutoKickDelay;
+	if (input.IsTriggered("A") || isAutoKick)
 	{
 		player->ChangeState(std::make_shared<PlayerStateWallKick>(m_owner));
 		return;

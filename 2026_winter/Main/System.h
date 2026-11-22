@@ -59,8 +59,11 @@ enum class AsyncData : int
 	TrainStageModel,//列車ステージの見た目(tools/TrainStage で生成)
 	TrainStageColModel,//列車ステージの当たり判定(箱だけの軽いモデル)
 	TrainTunnelModel,//列車ステージで流し続けるトンネル(Z方向に13200でループする)
+	TrainTrackModel,//トンネルの外の線路(トンネルと同じ位置・間隔で並べる。tools/TrainTunnel/build_track.py)
 	CyberStageModel,//ステージ1の見た目(UnityのCyberStageToolで生成)
 	CyberStageColModel,//ステージ1の当たり判定(箱だけの軽いモデル)
+	TutorialStageModel,//チュートリアルのステージの見た目(UnityのTutorialStageToolで生成)
+	TutorialStageColModel,//チュートリアルのステージの当たり判定
 	AreaWallEffect,
 	WallBreakEffect,
 	//デバッグ
@@ -69,6 +72,7 @@ enum class AsyncData : int
 	GhostSkill3FallEffect,//スキル3の落下中の分身と残像//プレイヤーに追従させる
 	GhostSkill3ImpactEffect,//スキル3の着地の分身と閃光
 	BloodWingEffect,//必殺技状態の黒い片翼//必殺技状態の間プレイヤーの背中に追従させる
+	BloodWingActivateEffect,//必殺技状態に入るときの演出//血を背中に吸い込んで翼として弾ける
 	PlayerUltWeaponModel,//必殺技(PlayerStateUlt)中だけ持たせる刀身の長い刀	//敵が斬られたときの血しぶき(3パターンからランダムで再生する)
 	BloodHitEffect,//通常ヒットの血(横へ飛んで弧を描く)
 	BloodHitEffectC,//低く左右に広がる扇形
@@ -77,6 +81,7 @@ enum class AsyncData : int
 	BloodKillEffect,//確殺の血(長く噴き続ける)
 	BloodPartBreakEffect,//部位破壊の血(肩から噴いて滴り続ける)
 	BloodUltEffect,//血殺・トドメの白い血
+	UltBloodAbsorbEffect,//必殺技(LT2回)の溜めで周りの血を刀へ吸い込む
 	GuardBreakFlashEffect,//ガードブレイクの紫の閃光
 	GuardBreakShardsEffect,//ガードブレイクで飛び散るガラス片
 	HitWindEffect,//斬ったときの風(敵を巻く白い弧)

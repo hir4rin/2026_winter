@@ -7,9 +7,9 @@
 #include "Camera/CameraManager.h"
 #include "Camera/CameraState/TitleCamera.h"
 #include "UI/UIManager.h"
-#include "UI/TitleLogoUI.h"
-#include "UI/TitleFlashUI.h"
-#include "UI/TitlePressUI.h"
+#include "UI/Title/TitleLogoUI.h"
+#include "UI/Title/TitleFlashUI.h"
+#include "UI/Title/TitlePressUI.h"
 #include "Character/Player/TitlePlayer.h"
 #include "Stage/TitleCity.h"
 

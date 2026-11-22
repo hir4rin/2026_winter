@@ -3,6 +3,11 @@
 #include "Main/System.h"
 #include "Main/Game.h"
 
+namespace
+{
+	constexpr float kAnimBlendFrame = 4.0f;//打ち上げのアニメへのブレンド(一瞬でのけぞる)
+}
+
 EnemyHitAir::EnemyHitAir(std::weak_ptr<EnemyBase> owner, const CharacterBase::HitInfo& info) :
 	EnemyStateBase(owner),
 	m_info(info)
@@ -17,7 +22,9 @@ void EnemyHitAir::Enter()
 {
 	auto owner = m_owner.lock();
 	if (!owner)return;
-	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName("Hit"), false, owner->GetAnimSpeed("Hit"));
+	//打ち上げ用のアニメ(無い敵はHit)
+	const std::string animKey = owner->HasAnim("Launch") ? "Launch" : "Hit";
+	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(animKey), false, owner->GetAnimSpeed(animKey), -1.0f, 0.0f, kAnimBlendFrame);
 	//縦の速度は初速(m_info.knockBackVel.y)と重力の累積(m_gravity)から作る
 	m_gravity = 0.0f;
 }

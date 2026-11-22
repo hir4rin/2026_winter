@@ -2,7 +2,7 @@
 #include "Scene.h"
 #include "Stage/StageInfo.h"
 #include "Battle/ResultRecorder.h"
-#include "UI/ResultUI.h"
+#include "UI/Menu/ResultUI.h"
 
 /// <summary>
 /// リザルトシーン

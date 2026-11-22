@@ -105,7 +105,10 @@ void ResultScene::FadeOutUpdate()
 	m_ui.Update();
 	m_fadeFrame++;
 	if (m_fadeFrame < kFadeFrame) return;
-	if (m_isRetry)
+	//次のステージがあれば、リトライでなければそこへ進む(列車 → チュートリアル → ステージ1)
+	const StageType next = StageData::GetInfo(m_stageType).nextStage;
+	if (!m_isRetry && next != StageType::Num) m_stageType = next;
+	if (m_isRetry || next != StageType::Num)
 	{
 		//真っ黒の「Now Loading」を1回出してから読む
 		m_updateFunc = static_cast<UpdateFunc_t>(&ResultScene::LoadingUpdate);

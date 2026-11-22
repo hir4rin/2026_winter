@@ -40,6 +40,7 @@ namespace
 
 	//列車ステージの明るさ(戦う場所を明るく、トンネルと遠くを暗くする)
 	constexpr float kTunnelColorScale = 0.45f;//トンネルの明るさ
+	constexpr float kTrackColorScale = 0.7f;//トンネルの外の線路の明るさ
 	constexpr float kTrainColorScale = 1.15f;//列車の明るさ
 	constexpr float kTrainFogStart = 1500.0f;//フォグがかかり始める距離
 	constexpr float kTrainFogEnd = 5000.0f;//真っ暗になる距離(SceneMainのファークリップ)
@@ -106,6 +107,14 @@ void Stage::GameInit(const StageInfo& info)
 		m_tunnelMinY = ref.MinPosition.y;
 		m_tunnelMaxY = ref.MaxPosition.y;
 		MV1TerminateReferenceMesh(m_tunnelHandle, -1, TRUE);
+		//トンネルの外の線路(トンネルと同じ位置に置けばレールがつながる)
+		m_trackHandle = MV1DuplicateModel(System::GetInstance().GetHandle(AsyncData::TrainTrackModel));
+		if (m_trackHandle != -1)
+		{
+			const COLOR_F trackScale = GetColorF(kTrackColorScale, kTrackColorScale, kTrackColorScale, 1.0f);
+			MV1SetAmbColorScale(m_trackHandle, trackScale);
+			MV1SetDifColorScale(m_trackHandle, trackScale);
+		}
 		//列車はマテリアルの環境光が明るさのほとんどなので、環境光だけ上げる
 		MV1SetAmbColorScale(m_stageViewHandle, GetColorF(kTrainColorScale, kTrainColorScale, kTrainColorScale, 1.0f));
 	}
@@ -175,6 +184,10 @@ Stage::~Stage()
 	if (m_tunnelHandle != -1)
 	{
 		MV1DeleteModel(m_tunnelHandle);
+	}
+	if (m_trackHandle != -1)
+	{
+		MV1DeleteModel(m_trackHandle);
 	}
 	ClearWallZones();
 	ClearGates();
@@ -316,10 +329,12 @@ void Stage::DrawTunnel() const
 	for (int i = first; i <= last; ++i)
 	{
 		const float z = m_pos_graphic.z + i * kTunnelLength + m_tunnelScroll;
-		//出口より先のトンネルは描かない
-		if (m_hasTunnelExit && GetTunnelExitDistance(z + m_tunnelFrontOffset) < -1.0f) continue;
-		MV1SetPosition(m_tunnelHandle, VGet(m_pos_graphic.x, m_pos_graphic.y + kTunnelOffsetY, z));
-		ModelShaderManager::GetInstance().DrawModel(m_tunnelHandle);
+		//出口より先はトンネルの代わりに線路だけ描く
+		const bool isOutside = m_hasTunnelExit && GetTunnelExitDistance(z + m_tunnelFrontOffset) < -1.0f;
+		const int handle = isOutside ? m_trackHandle : m_tunnelHandle;
+		if (handle == -1) continue;
+		MV1SetPosition(handle, VGet(m_pos_graphic.x, m_pos_graphic.y + kTunnelOffsetY, z));
+		ModelShaderManager::GetInstance().DrawModel(handle);
 	}
 }
 
@@ -460,6 +475,24 @@ bool Stage::IsInWallZone(Collider::ColRole role, const Collider& col) const
 const WallZoneData& Stage::GetWallZoneData(int index) const
 {
 	return m_wallZones.at(index)->GetData();
+}
+
+const WallZoneData* Stage::FindWallZoneData(const std::string& name) const
+{
+	for (const auto& zone : m_wallZones)
+	{
+		if (zone->GetData().name == name) return &zone->GetData();
+	}
+	return nullptr;
+}
+
+bool Stage::IsInWallZoneNamed(const std::string& name, const Collider& col) const
+{
+	for (const auto& zone : m_wallZones)
+	{
+		if (zone->GetData().name == name && zone->IsOverlap(col)) return true;
+	}
+	return false;
 }
 
 void Stage::SetWallZoneData(int index, const WallZoneData& data)

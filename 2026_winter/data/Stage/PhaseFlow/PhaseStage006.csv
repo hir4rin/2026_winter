@@ -1,0 +1,6 @@
+#from,condition,param,to,event,eventParam,eventDelay,condition:Start:AllDead:KillCount:Timer:EnterArea
+0,Start,,1,None,,
+1,AllDead,T1,2,None,,
+2,AllDead,T2,3,None,,
+3,AllDead,T3,4,None,,
+4,EnterArea,Area_Goal,-1,GameClear,,

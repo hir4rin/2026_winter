@@ -3,6 +3,7 @@
 #include "Camera/CameraManager.h"
 #include "Battle/BattleManager.h"
 #include "Main/System.h"
+#include "EffekseerForDXLib.h"
 #include <algorithm>
 #include <cmath>
 
@@ -10,12 +11,14 @@ namespace
 {
 	using F = PlayerStartMovieFrame;
 	constexpr float kLiftOffFrame = F::kJumpStartFrame + 8.0f;//JumpUpで体が浮くフレーム
-	constexpr float kApexFrame = F::kJumpStartFrame + F::kCut3Frame;//着地点の真上に着く
-	constexpr float kAttackStartFrame = kApexFrame - 10.0f;//空中強攻撃の振りかぶり
+	constexpr float kAttackBeforeApex = 10.0f;//真上に着く何フレーム前に空中強攻撃を振りかぶるか
 
-	constexpr float kApexHeight = 1966.0f;//着地点の上の高さ
 	constexpr float kLeapEasingPower = 2.0f;
 	constexpr float kPlungeEasingPower = 2.5f;
+
+	//落ちてくる間の煙の尾・火の粉・風の筋(列車から落ちるときと同じ)
+	const char* const kFallTrailEffectPath = "data/Effect/Train/TrainFallTrail.efk";
+	constexpr float kFallTrailScale = 20.0f;
 
 	constexpr float kBlendFrame = 5.0f;
 	constexpr float kLandAnimSpeed = 0.3f;//着地のポーズを長く見せる
@@ -47,17 +50,32 @@ void PlayerStateStartMovie::Enter()
 
 	System::GetInstance().GetBattleMgr()->SetIsEventPlaying(true);
 
-	//屋上は当たり判定が無く、通りの見えない壁も抜けるので着地まで切る
+	//屋上・空中は当たり判定が無く、通りの見えない壁も抜けるので着地まで切る
 	player->SetIsActive(false);
 	player->m_rb.m_vel = Vector3(0, 0, 0);
 	player->m_targetVec = m_frame.front;
 	player->SetRotY(atan2f(m_frame.front.x, m_frame.front.z) - DX_PI_F);
-	SetPos(*player, m_frame.RoofPos());
-
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Idle"), true, 1.0f, -1.0f, 0.0f, 0.0f);
-	m_phase = Phase::Roof;
 	m_frameCount = 0.0f;
 	m_isAttackAnim = false;
+
+	if (m_frame.IsFall())
+	{
+		//空から落ちてくる//最初から空中強攻撃の構え
+		SetPos(*player, m_frame.FallStartPos());
+		const ComboNode& node = player->GetComboNode(ComboIndex::AirHeavyAttack1);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, 0.0f);
+		m_isAttackAnim = true;
+		m_fallTrailEffect = LoadEffekseerEffect(kFallTrailEffectPath);
+		m_fallTrailPlaying = PlayEffekseer3DEffect(m_fallTrailEffect);
+		SetScalePlayingEffekseer3DEffect(m_fallTrailPlaying, kFallTrailScale, kFallTrailScale, kFallTrailScale);
+		UpdateFallTrail(*player);
+		m_phase = Phase::Fall;
+		return;
+	}
+
+	SetPos(*player, m_frame.RoofPos());
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("Idle"), true, 1.0f, -1.0f, 0.0f, 0.0f);
+	m_phase = Phase::Roof;
 }
 
 void PlayerStateStartMovie::Update()
@@ -81,6 +99,9 @@ void PlayerStateStartMovie::Update()
 	case Phase::Leap:
 		UpdateLeap(*player);
 		break;
+	case Phase::Fall:
+		UpdateFall(*player);
+		break;
 	case Phase::Plunge:
 		UpdatePlunge(*player);
 		break;
@@ -95,7 +116,9 @@ void PlayerStateStartMovie::Update()
 		break;
 	}
 
-	if (m_frameCount >= F::kTotalFrame)
+	UpdateFallTrail(*player);
+
+	if (m_frameCount >= m_frame.TotalFrame())
 	{
 		player->ChangeState(std::make_shared<PlayerStateIdle>(m_owner));
 		return;
@@ -110,6 +133,9 @@ void PlayerStateStartMovie::Exit()
 	if (!player) return;
 	player->SetIsActive(true);
 	System::GetInstance().GetBattleMgr()->SetIsEventPlaying(false);
+	StopFallTrail();
+	if (m_fallTrailEffect != -1) DeleteEffekseerEffect(m_fallTrailEffect);
+	m_fallTrailEffect = -1;
 }
 
 void PlayerStateStartMovie::DebugDraw()
@@ -118,33 +144,45 @@ void PlayerStateStartMovie::DebugDraw()
 
 void PlayerStateStartMovie::UpdateLeap(Player& player)
 {
-	//振りかぶり//空中強攻撃と同じアニメ・速さ・止めるフレーム
-	if (!m_isAttackAnim && m_frameCount >= kAttackStartFrame)
-	{
-		const ComboNode& node = player.GetComboNode(ComboIndex::AirHeavyAttack1);
-		player.m_anim.ChangeAnimWithModelHandle(player.m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, kBlendFrame);
-		m_isAttackAnim = true;
-	}
+	StartAttackAnim(player);
 
 	if (m_frameCount < kLiftOffFrame)return;
 
 	//着地点の真上へ、上がりながら速度を落とす
-	const float s = std::clamp((m_frameCount - kLiftOffFrame) / (kApexFrame - kLiftOffFrame), 0.0f, 1.0f);
+	const float s = std::clamp((m_frameCount - kLiftOffFrame) / (m_frame.ApexFrame() - kLiftOffFrame), 0.0f, 1.0f);
 	const float eased = Easing::Apply(EasingMode::EaseOut, s, kLeapEasingPower);
-	const Vector3 roof = m_frame.RoofPos();
-	const Vector3 apex = GetApexPos();
-	Vector3 pos = Vector3::Lerp(roof, apex, eased);
-	SetPos(player, pos);
+	SetPos(player, Vector3::Lerp(m_frame.RoofPos(), m_frame.ApexPos(), eased));
 
 	if (s >= 1.0f)m_phase = Phase::Plunge;
+}
+
+void PlayerStateStartMovie::UpdateFall(Player& player)
+{
+	StartAttackAnim(player);
+
+	//斜め上から着地点の真上へまっすぐ落ちる
+	const float s = std::clamp(m_frameCount / m_frame.ApexFrame(), 0.0f, 1.0f);
+	SetPos(player, Vector3::Lerp(m_frame.FallStartPos(), m_frame.ApexPos(), s));
+
+	if (s >= 1.0f)m_phase = Phase::Plunge;
+}
+
+void PlayerStateStartMovie::StartAttackAnim(Player& player)
+{
+	//振りかぶり//空中強攻撃と同じアニメ・速さ・止めるフレーム
+	if (m_isAttackAnim || m_frameCount < m_frame.ApexFrame() - kAttackBeforeApex)return;
+	const ComboNode& node = player.GetComboNode(ComboIndex::AirHeavyAttack1);
+	player.m_anim.ChangeAnimWithModelHandle(player.m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, kBlendFrame);
+	m_isAttackAnim = true;
 }
 
 void PlayerStateStartMovie::UpdatePlunge(Player& player)
 {
 	//真下へ加速しながら落ちる
-	const float s = std::clamp((m_frameCount - kApexFrame) / (F::kLandFrame - kApexFrame), 0.0f, 1.0f);
+	const float apexFrame = m_frame.ApexFrame();
+	const float s = std::clamp((m_frameCount - apexFrame) / (m_frame.LandFrame() - apexFrame), 0.0f, 1.0f);
 	const float eased = Easing::Apply(EasingMode::EaseIn, s, kPlungeEasingPower);
-	SetPos(player, Vector3::Lerp(GetApexPos(), m_frame.origin, eased));
+	SetPos(player, Vector3::Lerp(m_frame.ApexPos(), m_frame.origin, eased));
 
 	if (s >= 1.0f)Land(player);
 }
@@ -152,6 +190,7 @@ void PlayerStateStartMovie::UpdatePlunge(Player& player)
 void PlayerStateStartMovie::Land(Player& player)
 {
 	SetPos(player, m_frame.origin);
+	StopFallTrail();
 	player.SetIsActive(true);
 	player.SetIsFloor(true);
 	player.m_isGround = true;
@@ -173,7 +212,16 @@ void PlayerStateStartMovie::SetPos(Player& player, const Vector3& pos)
 	player.UpdateAngleAndPos();
 }
 
-Vector3 PlayerStateStartMovie::GetApexPos()const
+void PlayerStateStartMovie::UpdateFallTrail(Player& player)
 {
-	return m_frame.Point(0.0f, kApexHeight, 0.0f);
+	//足元についていく(煙と火の粉はその場に残って尾になる)
+	if (m_fallTrailPlaying == -1)return;
+	const Vector3 foot = player.GetRigidBody().GetPos();
+	SetPosPlayingEffekseer3DEffect(m_fallTrailPlaying, foot.x, foot.y, foot.z);
+}
+
+void PlayerStateStartMovie::StopFallTrail()
+{
+	if (m_fallTrailPlaying != -1) StopEffekseer3DEffect(m_fallTrailPlaying);
+	m_fallTrailPlaying = -1;
 }

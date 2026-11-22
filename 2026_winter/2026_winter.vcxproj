@@ -144,6 +144,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Character\Animation.cpp" />
+    <ClCompile Include="Character\Enemy\Bazooka\EnemyBazookaMissile.cpp" />
+    <ClCompile Include="Character\Enemy\Bazooka\EnemyBazookaMissileCol.cpp" />
     <ClCompile Include="Main\Application.cpp" />
     <ClCompile Include="Battle\AttackTokenManager.cpp" />
     <ClCompile Include="Battle\BattleManager.cpp" />
@@ -165,26 +167,28 @@
     <ClCompile Include="Camera\CameraState\UltCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\BattleSmoothCamera.cpp" />
     <ClCompile Include="Camera\CameraState\BossPartThrowCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\UltChargeCamera.cpp" />
     <ClCompile Include="Camera\CameraState\BossFinisherCamera.cpp" />
     <ClCompile Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieCutCamera.cpp" />
     <ClCompile Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieLandCamera.cpp" />
     <ClCompile Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieTurnCamera.cpp" />
     <ClCompile Include="Character\Enemy\Kingmech\State\KingmechFinisher.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateBossFinisher.cpp" />
-    <ClCompile Include="UI\FinisherUI.cpp" />
-    <ClCompile Include="UI\EndingUI.cpp" />
+    <ClCompile Include="UI\Effect\FinisherUI.cpp" />
+    <ClCompile Include="UI\Effect\EndingUI.cpp" />
     <ClCompile Include="Camera\CameraState\EndingCamera.cpp" />
     <ClCompile Include="Camera\CameraState\TitleCamera.cpp" />
     <ClCompile Include="Character\Player\TitlePlayer.cpp" />
     <ClCompile Include="Stage\TitleCity.cpp" />
-    <ClCompile Include="UI\TitleBackUI.cpp" />
-    <ClCompile Include="UI\TitleLogoUI.cpp" />
-    <ClCompile Include="UI\TitleFlashUI.cpp" />
-    <ClCompile Include="UI\TitlePressUI.cpp" />
+    <ClCompile Include="UI\Title\TitleBackUI.cpp" />
+    <ClCompile Include="UI\Title\TitleLogoUI.cpp" />
+    <ClCompile Include="UI\Title\TitleFlashUI.cpp" />
+    <ClCompile Include="UI\Title\TitlePressUI.cpp" />
     <ClCompile Include="Stage\TunnelEnding.cpp" />
-    <ClCompile Include="UI\AssasinTargetUI.cpp" />
-    <ClCompile Include="UI\PartBrokenKillUI.cpp" />
-    <ClCompile Include="UI\GuardBreakChanceUI.cpp" />
+    <ClCompile Include="Stage\TutorialFinale.cpp" />
+    <ClCompile Include="UI\Target\AssasinTargetUI.cpp" />
+    <ClCompile Include="UI\Target\PartBrokenKillUI.cpp" />
+    <ClCompile Include="UI\Target\GuardBreakChanceUI.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
@@ -215,6 +219,7 @@
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateFastRun.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateResultMove.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateStartMovie.cpp" />
+    <ClCompile Include="Character\Player\State\Locomotion\PlayerStateEndingJump.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallRun.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallKick.cpp" />
     <ClCompile Include="Character\Player\State\Locomotion\PlayerStateWallStay.cpp" />
@@ -324,6 +329,7 @@
     <ClCompile Include="Stage\TrainOutside.cpp" />
     <ClCompile Include="Stage\Gate\Gate.cpp" />
     <ClCompile Include="Render\CharacterLook.cpp" />
+    <ClCompile Include="Render\SwordLook.cpp" />
     <ClCompile Include="Main\FrameProfiler.cpp" />
     <ClCompile Include="Stage\WallZone\WallZone.cpp" />
     <ClCompile Include="Stage\WallZone\WallZoneEditor.cpp" />
@@ -332,16 +338,19 @@
     <ClCompile Include="UI\FontManager.cpp" />
     <ClCompile Include="UI\UIBase.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
-    <ClCompile Include="UI\KessatsuUI.cpp" />
-    <ClCompile Include="UI\ScreenBloodUI.cpp" />
-    <ClCompile Include="UI\PlayerHUD.cpp" />
-    <ClCompile Include="UI\MenuUI.cpp" />
-    <ClCompile Include="UI\ResultUI.cpp" />
+    <ClCompile Include="UI\Effect\KessatsuUI.cpp" />
+    <ClCompile Include="UI\Effect\ScreenBloodUI.cpp" />
+    <ClCompile Include="UI\HUD\PlayerHUD.cpp" />
+    <ClCompile Include="UI\HUD\BossHpUI.cpp" />
+    <ClCompile Include="UI\Menu\MenuUI.cpp" />
+    <ClCompile Include="UI\Menu\ResultUI.cpp" />
     <ClCompile Include="UI\UIFont.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Character\Animation.h" />
     <ClInclude Include="DataLoader\TutorialPageData.h" />
+    <ClInclude Include="Character\Enemy\Bazooka\EnemyBazookaMissile.h" />
+    <ClInclude Include="Character\Enemy\Bazooka\EnemyBazookaMissileCol.h" />
     <ClInclude Include="Main\Application.h" />
     <ClInclude Include="Battle\AttackTokenManager.h" />
     <ClInclude Include="Battle\BattleManager.h" />
@@ -363,6 +372,7 @@
     <ClInclude Include="Camera\CameraState\UltCameraState.h" />
     <ClInclude Include="Camera\CameraState\BattleSmoothCamera.h" />
     <ClInclude Include="Camera\CameraState\BossPartThrowCamera.h" />
+    <ClInclude Include="Camera\CameraState\UltChargeCamera.h" />
     <ClInclude Include="Camera\CameraState\BossFinisherCamera.h" />
     <ClInclude Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieFrame.h" />
     <ClInclude Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieCutCamera.h" />
@@ -370,21 +380,22 @@
     <ClInclude Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieTurnCamera.h" />
     <ClInclude Include="Character\Enemy\Kingmech\State\KingmechFinisher.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateBossFinisher.h" />
-    <ClInclude Include="UI\FinisherUI.h" />
-    <ClInclude Include="UI\EndingUI.h" />
+    <ClInclude Include="UI\Effect\FinisherUI.h" />
+    <ClInclude Include="UI\Effect\EndingUI.h" />
     <ClInclude Include="Camera\CameraState\EndingCamera.h" />
     <ClInclude Include="Camera\CameraState\TitleCamera.h" />
     <ClInclude Include="Character\Player\TitlePlayer.h" />
     <ClInclude Include="Render\Mv1LikeUnity.h" />
     <ClInclude Include="Stage\TitleCity.h" />
-    <ClInclude Include="UI\TitleBackUI.h" />
-    <ClInclude Include="UI\TitleLogoUI.h" />
-    <ClInclude Include="UI\TitleFlashUI.h" />
-    <ClInclude Include="UI\TitlePressUI.h" />
+    <ClInclude Include="UI\Title\TitleBackUI.h" />
+    <ClInclude Include="UI\Title\TitleLogoUI.h" />
+    <ClInclude Include="UI\Title\TitleFlashUI.h" />
+    <ClInclude Include="UI\Title\TitlePressUI.h" />
     <ClInclude Include="Stage\TunnelEnding.h" />
-    <ClInclude Include="UI\AssasinTargetUI.h" />
-    <ClInclude Include="UI\PartBrokenKillUI.h" />
-    <ClInclude Include="UI\GuardBreakChanceUI.h" />
+    <ClInclude Include="Stage\TutorialFinale.h" />
+    <ClInclude Include="UI\Target\AssasinTargetUI.h" />
+    <ClInclude Include="UI\Target\PartBrokenKillUI.h" />
+    <ClInclude Include="UI\Target\GuardBreakChanceUI.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />
@@ -417,6 +428,7 @@
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateFastRun.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateResultMove.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateStartMovie.h" />
+    <ClInclude Include="Character\Player\State\Locomotion\PlayerStateEndingJump.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallRun.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallKick.h" />
     <ClInclude Include="Character\Player\State\Locomotion\PlayerStateWallStay.h" />
@@ -522,6 +534,7 @@
     <ClInclude Include="Render\StageColorGrade.h" />
     <ClInclude Include="Render\TempTopLight.h" />
     <ClInclude Include="Render\CharacterLook.h" />
+    <ClInclude Include="Render\SwordLook.h" />
     <ClInclude Include="Main\FrameProfiler.h" />
     <ClInclude Include="Stage\SkyBox.h" />
     <ClInclude Include="Stage\Stage.h" />
@@ -543,11 +556,12 @@
     <ClInclude Include="UI\FontManager.h" />
     <ClInclude Include="UI\UIBase.h" />
     <ClInclude Include="UI\UIManager.h" />
-    <ClInclude Include="UI\KessatsuUI.h" />
-    <ClInclude Include="UI\ScreenBloodUI.h" />
-    <ClInclude Include="UI\PlayerHUD.h" />
-    <ClInclude Include="UI\MenuUI.h" />
-    <ClInclude Include="UI\ResultUI.h" />
+    <ClInclude Include="UI\Effect\KessatsuUI.h" />
+    <ClInclude Include="UI\Effect\ScreenBloodUI.h" />
+    <ClInclude Include="UI\HUD\PlayerHUD.h" />
+    <ClInclude Include="UI\HUD\BossHpUI.h" />
+    <ClInclude Include="UI\Menu\MenuUI.h" />
+    <ClInclude Include="UI\Menu\ResultUI.h" />
     <ClInclude Include="UI\UIFont.h" />
   </ItemGroup>
   <ItemGroup>
@@ -562,6 +576,8 @@
     <None Include="Render\Shader\DxShader_Common_D3D11.h" />
     <None Include="Render\Shader\DxShader_VS_D3D11.h" />
     <None Include="Render\Shader\CharacterLookPS.hlsl" />
+    <None Include="Render\Shader\SwordPS.hlsl" />
+    <None Include="Render\Shader\UltSwordPS.hlsl" />
     <None Include="Render\Shader\TitleLogoPS.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

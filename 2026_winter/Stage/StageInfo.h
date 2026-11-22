@@ -12,6 +12,7 @@ enum class StageType : int
 	Demo,//NINJA GAIDEN 4 Chapter0〜2を参考にしたデモステージ(UnityのDemoStageBuilderで生成)
 	Train,//NINJA GAIDEN 4 Chapter0 0-1 DDO列車(6両)の上で戦うステージ(tools/TrainStage で生成)
 	Cyber,//ステージ1。NINJA GAIDEN 4 Chapter1 を参考にしたサイバーパンクの街(UnityのCyberStageToolで生成)
+	Tutorial,//列車とステージ1の間。壁キック・壁走り・暗殺を教える(UnityのTutorialStageToolで生成)
 	Num
 };
 
@@ -31,6 +32,7 @@ struct StageInfo
 	bool useNightFog = false;//遠くを夜の色(暗い青)にするか(ステージ1)
 	const char* skyDir = nullptr;//空の画像のフォルダ(無ければ空を描かない)
 	int targetClearSec = 300;//リザルトのタイムが満点になる秒数(仮)
+	StageType nextStage = StageType::Num;//リザルトの「次へ」で進むステージ(Numならステージセレクトへ)
 };
 
 
@@ -41,8 +43,9 @@ namespace StageData
 	{ {
 		{ "テストステージ", "今までの動作確認用ステージ", AsyncData::TitleStageModel, AsyncData::TitleStageModel, false, 1, 1 },
 		{ "デモステージ", "屋上 → 通り → 高架道路 → ボス広場(壁走り・壁キックで進む)", AsyncData::DemoStageModel, AsyncData::DemoStageModel, false, 3, 3 },
-		{ "列車ステージ", "トンネルを走るDDO列車の上で戦う。平台車 → 車内 → スロープで屋根 → 車内 → 最後尾", AsyncData::TrainStageModel, AsyncData::TrainStageColModel, true, 4, 4 },
+		{ "列車ステージ", "トンネルを走るDDO列車の上で戦う。平台車 → 車内 → スロープで屋根 → 車内 → 最後尾", AsyncData::TrainStageModel, AsyncData::TrainStageColModel, true, 4, 4, false, nullptr, 300, StageType::Tutorial },
 		{ "ステージ1", "雨の街 → ピラミッド前の広場 → 壁走りで溝を越える → 閉じた部屋 → ボス広場", AsyncData::CyberStageModel, AsyncData::CyberStageColModel, false, 5, 5, true, "data/Stage/CyberStage/Sky" },
+		{ "チュートリアル", "操車場 → 壁キック → 壁走り → 倉庫で暗殺 → 街で連続壁走りと空中暗殺 → 戦闘 → 長い縦穴", AsyncData::TutorialStageModel, AsyncData::TutorialStageColModel, false, 6, 6, true, "data/Stage/CyberStage/Sky", 180, StageType::Cyber },
 	} };
 
 	inline const StageInfo& GetInfo(StageType type)

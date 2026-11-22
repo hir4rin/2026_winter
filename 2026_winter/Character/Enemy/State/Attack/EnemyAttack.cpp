@@ -67,6 +67,9 @@ void EnemyAttack::Enter()
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(node.animName), false,node.animTimeScale,node.animEndFrame,0.0f,node.blendFrame);
 	//向きはEnemyAttackPreで固定済みなので、ここではプレイヤーの方を向き直さない(向き直すと判定が避けた先に追いかけてくる)
 
+	//撃つ敵は近接の判定を出さない
+	if (!owner->UseAttackCol())return;
+
 	//攻撃の当たり判定を生成する
 	CharacterBase::AttackData attackData = {
 	.attackPower = node.attackPower,
@@ -168,6 +171,12 @@ void EnemyAttack::AttackMove()
 	{
 		owner->m_rb.m_vel = forward * (std::min)(node.moveSpeedDuringCol, remain);
 		if (m_attackCol) m_attackCol->SetIsActive(true);//攻撃の当たり判定を有効にする
+		//判定の開始を1回だけ知らせる//撃つ敵はここで撃つ
+		if (!m_isFired)
+		{
+			m_isFired = true;
+			owner->OnAttackFire();
+		}
 	}
 
 	else

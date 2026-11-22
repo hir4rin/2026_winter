@@ -15,24 +15,28 @@ namespace
 	//const std::string kPlayerComboChainPath = "data/Player_CSV/ComboChain.csv";
 	const std::string kPlayerComboChainPath = "data/Player_CSV/ComboChain01.csv";
 
-    const std::string kEnemySwordmanAnimPath = "data/Enemy/EnemySwordmanAnim.csv";
-    const std::string kEnemySwordmanAttackPath = "data/Enemy/EnemySwordmanAttack.csv";
-    const std::string kEnemyGunnerAnimPath = "data/Enemy/EnemyGunnerAnim.csv";
-    const std::string kEnemyGunnerAttackPath = "data/Enemy/EnemyGunnerAttack.csv";
-    const std::string kEnemyBazookaAnimPath = "data/Enemy/EnemyBazookaAnim.csv";
-    const std::string kEnemyBazookaAttackPath = "data/Enemy/EnemyBazookaAttack.csv";
-    const std::string kBossEnemyPirateAnimPath = "data/Enemy/BossEnemyPirateAnim.csv";
-    const std::string kBossEnemyPirateAttackPath = "data/Enemy/BossEnemyPirateAttack.csv";
-    const std::string kBossEnemyPirateR1AnimPath = "data/Enemy/BossEnemyPirateR1Anim.csv";//第二ラウンド
-    const std::string kBossEnemyPirateR1AttackPath = "data/Enemy/BossEnemyPirateR1Attack.csv";//第二ラウンド
-    const std::string kBossEnemyKingmechAnimPath = "data/Enemy/BossEnemyKingmechAnim.csv";//新しいボス(Kingmech)
-    const std::string kBossEnemyKingmechAttackPath = "data/Enemy/BossEnemyKingmechAttack.csv";
-    const std::string kBossArmAnimPath = "data/Enemy/BossArmAnim.csv";//ボスの背中の腕//アニメ名はボスのモデルのもの
-    const std::string kEnemyStatusPath = "data/Enemy/EnemyStatus.csv";
-
-    const std::string kBossAnimPath = "data/Enemy/Boss/BossAnim.csv";
-
-    const std::string kPatrolRoutePath = "data/Enemy/Patrol/PatrolRoute";//後ろにルート番号と".csv"をつける
+    //敵のCSVは data/Enemy/CSV/ にまとめる//種類ごとのフォルダ名は Character/Enemy/ のフォルダ名と同じ
+    //全種類共通
+    const std::string kEnemyStatusPath = "data/Enemy/CSV/EnemyStatus.csv";
+    const std::string kPatrolRoutePath = "data/Enemy/CSV/Patrol/PatrolRoute";//後ろにルート番号と".csv"をつける
+    //ソードマン
+    const std::string kEnemySwordmanAnimPath = "data/Enemy/CSV/Swordman/EnemySwordmanAnim.csv";
+    const std::string kEnemySwordmanAttackPath = "data/Enemy/CSV/Swordman/EnemySwordmanAttack.csv";
+    //ガンナー
+    const std::string kEnemyGunnerAnimPath = "data/Enemy/CSV/Gunner/EnemyGunnerAnim.csv";
+    const std::string kEnemyGunnerAttackPath = "data/Enemy/CSV/Gunner/EnemyGunnerAttack.csv";
+    //バズーカ
+    const std::string kEnemyBazookaAnimPath = "data/Enemy/CSV/Bazooka/EnemyBazookaAnim.csv";
+    const std::string kEnemyBazookaAttackPath = "data/Enemy/CSV/Bazooka/EnemyBazookaAttack.csv";
+    //海賊のボス
+    const std::string kBossEnemyPirateAnimPath = "data/Enemy/CSV/BossPirate/BossEnemyPirateAnim.csv";//第一ラウンド
+    const std::string kBossEnemyPirateAttackPath = "data/Enemy/CSV/BossPirate/BossEnemyPirateAttack.csv";
+    const std::string kBossEnemyPirateR1AnimPath = "data/Enemy/CSV/BossPirate/BossEnemyPirateR1Anim.csv";//第二ラウンド
+    const std::string kBossEnemyPirateR1AttackPath = "data/Enemy/CSV/BossPirate/BossEnemyPirateR1Attack.csv";
+    const std::string kBossArmAnimPath = "data/Enemy/CSV/BossPirate/BossArmAnim.csv";//背中の腕//アニメ名はボスのモデルのもの
+    //Kingmech
+    const std::string kBossEnemyKingmechAnimPath = "data/Enemy/CSV/Kingmech/BossEnemyKingmechAnim.csv";
+    const std::string kBossEnemyKingmechAttackPath = "data/Enemy/CSV/Kingmech/BossEnemyKingmechAttack.csv";
 
     //壁ゾーン
     const std::string kWallZoneDirectory = "data/Stage/WallZones/";//後ろに"Stage001.csv"のようにステージ番号をつける

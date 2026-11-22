@@ -26,18 +26,23 @@ PlayerStartMovieTurnCamera::~PlayerStartMovieTurnCamera()
 
 void PlayerStartMovieTurnCamera::Enter(CameraData data)
 {
+	//向きは前のカメラからではなく、着地点の正面(背中側から見る)
 	m_angleH = atan2f(m_frame.front.x, m_frame.front.z);
 	m_angleV = kAngleV;
+	m_pos = data.pos;
+	m_target = data.target;
+	m_goalPos = data.pos;
+	m_goalTarget = data.target;
+	ResetBlend(data.pos, data.target);
+
 	m_frameCount = 0.0f;
 	m_goalFov = kDefaultFov;
-	CalcGoal();
-	ResetBlend(data.pos, data.target);
 }
 
 void PlayerStartMovieTurnCamera::Update()
 {
 	m_frameCount += 1.0f;
-	CalcGoal();
+	FixCameraPos();
 	if (IsBlending())
 	{
 		UpdateBlend(m_goalPos, m_goalTarget);
@@ -57,9 +62,14 @@ void PlayerStartMovieTurnCamera::Update()
 
 void PlayerStartMovieTurnCamera::Exit()
 {
+	//m_angleH/m_angleVを、カメラ→注視点のベクトルから計算し直す(次のStateに正しい向きを渡すため)
+	Vector3 toTarget = m_target - m_pos;
+	float horizontalDist = Vector3(toTarget.x, 0.0f, toTarget.z).Magnitude();
+	m_angleH = atan2f(toTarget.x, toTarget.z);
+	m_angleV = atan2f(toTarget.y, horizontalDist);
 }
 
-void PlayerStartMovieTurnCamera::CalcGoal()
+void PlayerStartMovieTurnCamera::FixCameraPos()
 {
 	auto cameraManager = m_owner.lock();
 	auto player = cameraManager ? cameraManager->GetContext()->m_player.lock() : nullptr;
@@ -69,6 +79,10 @@ void PlayerStartMovieTurnCamera::CalcGoal()
 	m_goalTarget = focus + kCameraHeight;
 	const Vector3 toCamera = Vector3(-sinf(m_angleH) * cosf(m_angleV), sinf(m_angleV), -cosf(m_angleH) * cosf(m_angleV));
 	m_goalPos = m_goalTarget + toCamera * kToPlayerLength;
+}
+
+void PlayerStartMovieTurnCamera::CameraSetting()
+{
 }
 
 using BlendSetting = CameraStateBase::BlendSetting;

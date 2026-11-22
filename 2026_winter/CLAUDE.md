@@ -2111,6 +2111,95 @@
 - 確認: Release の `-ending` で20Fごとに撮って(一時コード・消した)、出口から柱が見える → 白い霧の中に灯り → 霧が晴れて紫の街 → 灯りが左右を流れる → クレジット・ロゴの後ろにも街、を見た。Release・Debug のビルドは通った。**実際に最後のフェーズを倒しての確認・プレイヤーを動かして横を見たときの見え方(柱の根元が浮いて見えないか・下が暗い空のままでよいか)はまだ**。
 - 気づいたこと(前から・未対応): Release で画面の真ん中に緑の縦線が出ている(エンディングの前から。空を描くと隠れる)。何の線かは調べていない。
 
+### 2026-11-22 チュートリアルのステージを作り直した(一本道 → ぐるっと回る形)
+- ユーザーの指摘: ところどころ隙間がある・最初の暗殺の場所が広すぎる・まっすぐ進みすぎ。教える順番(①壁キック → ②壁走り → ③暗殺 → ④連続壁走り・空中暗殺 → ⑤戦闘 → ⑥長い縦穴)はそのまま。
+- 原因: 全区画が x≈0 の上に z-6〜184 で一直線(倉庫から次の壁走りと最後の縦穴まで見えていた)。倉庫は 28×24m に見張り1体。囲いをプレハブ(`Factory2Wall`・屋根2枚)で作っていて継ぎ目・窓・屋根の真ん中から空が見えた。壁走りの壁(厚さ0.6m)の下に床が無く、下が抜けていた。
+- 形(m、+Z が北、約70m四方): ①操車場(原点、y0、14×16m、高さ10mの擁壁)→ 北の縦穴を壁キック → 荷揚げ場(y5)で**東へ** → ②溝を北の壁で壁走り → 踊り場から**北へ**物陰の通路 → ③倉庫の小部屋(10×12m・天井5.5m、通路を抜けると見張りの真後ろ5m)→ 西の壁のシャッター(T1 を倒すと開く)から**西へ**街 → ④連続壁走り → ⑤中庭(y1、16×16m)で空中暗殺・3体 → 南の塔のシャッター(T3 を倒すと開く)→ ⑥縦穴(y1〜31)→ 屋上。塔はループの真ん中寄りで、どこからでも見える目印。ループの内側は平屋の工場(`T91_Inner`)でふさいだ。
+- Unity `TutorialStageTool.cs`(作り直し。前の版は `ninja_motion/Backup/TutorialStageTool_before_1122.cs.txt`、シーンは `Backup/TutorialStageScene_before_1122.unity`、ゲームの前のデータは `Backup/tutorial_game_data_before_1122/`):
+  - 区画はまっすぐ(+Z へ進む・-X が左手)の座標で書き、`Frame`(入口の位置と向き)と `InFrame` で回して置く(作る前と後のシーンの Transform を比べ、新しくできた一番上の物だけを回す。区画の親は `Section` で先に作っておく)。壁走りの壁(`RunWall`)・溝の縁・斜面が Z 向きしか作れないため。90度ずつなので書き出しの箱(ゾーン・エリア)はそのまま正しい。
+  - `FWorld`(①・荷揚げ場)/ `FDockRun`(12,20, 東)/ `FWarehouse`(31.5,29, 北)/ `FNeon`(25.5,45.5, 西。街と中庭)/ `FShaft`(-18.5,37.5, 南。塔と屋上)。
+  - まわりの壁は全部 `Shell`(見た目と当たり判定の箱、`CP_Concrete_01` を区画ごとに工業の素材へ差し替え)。プレハブは飾りだけ。壁の上には高さ24mまで見えない壁。
+  - 遠景: 地面 ±500m(y-3.2)と超高層ビル18本の輪(半径110〜150m、`T92_Skyline`)。屋上・縦穴の上から何も無い所が見えたため。
+  - **隙間のチェック `Tools > Tutorial Stage > 4. Check Gaps`**(`BuildAndShots` でも流れる): 種・空中の位置から目の高さで8方向を撮り(空は背景色・フォグなし)、地平線より下に背景色が見えた向きを `Library/TutorialStageGaps/report.csv` と画像に出す。今は屋上と縦穴の一番上で、ビルの間の地平線ぎわ(地面の端)だけが残る。
+  - バッチ: `BuildAndShots`(作る・撮る・隙間)→ `OpenBakeExport`(見えない面を調べ直して書き出す)。`OpenShotsGaps` もある。
+  - 書き出し: 見た目 39759 三角形(見えない面を 19602 省いた)、当たり判定 1176、壁ゾーン5・エリア3・明かり17・敵5。
+- 扉: `GateAssetTool` の書き出しを `ExportGates(表, フォルダ, CSV名)` に分け、`ExportTutorialGates` を足した(`data/Stage/Gates/Stage006.csv`・`Gates/Tutorial/`)。区画の色は `TutorialStageTool.ZoneOf`(`SectionZoneOverride`)。
+  - `TutRoomExit`(2630,500,4550、向き-90、幅3m・高さ4m、フェーズ0〜1 で閉)、`TutShaft`(-1850,100,3730、向き180、幅2.5m、0〜3 で閉)。
+  - **シャッターの部品は表(向き0で -Z 側)からしか見えない**ので、プレイヤーが来る側に表を向ける(最初は 90 / 0 にして、部屋・中庭から見ると透けていた)。
+- ゲームのコードは変えていない(開始は原点で +Z 向きのまま、`Kick_Long`・`Area_*`・遷移表 `PhaseStage006.csv` の名前も同じ)。
+- (追記)**ドアの下の穴を埋めた**: 倉庫の裏口は壁の厚さ1m(x2550〜2650)の中にあり、部屋の床(x2650〜)と街の床(〜x2550)の間に床が無く、シャッターの前後に溝が見えていた。`TutorialStageTool.DoorwayFloor`(台と床)を足した。シーンへは建物の列を選び直さないよう `AddDoorwayFloorToScene`(バッチ、2回呼ばない。印は `DoorwayPlinth`)で足して書き出した。塔の縦穴の扉は床がつながっていて穴は無い。
+- (追記)**最後の自動壁キックのカメラが物に重ならないようにした**(`TutorialFinale`): 前は「登り始めたときにカメラがいる側」へ縦穴の端から最大 29.5m 引いていて、(1) 中庭は奥行き16mしかないので中庭の向こうの建物の中に入る、(2) カメラが屋上側にいると塔・屋上の中に入る、の2つが起きていた。
+  - `CalcPullLimit`: 縦穴の端から引きたい所まで、足元+5m〜縦穴の上+7mの高さで2mおきに横に線を当て(`Stage::CollCheckCameraLine`、当たり判定のモデル・扉)、一番手前の当たりの2m手前までにする。足元+5mから上だけ調べるのは中庭のコンテナに当てないため。
+  - 両側を測って、引ける距離が3m以上違えば広い側から見る(同じくらいなら今までどおりカメラがいる側)。今のステージでは中庭側、引く距離は約18.5m(中庭の右の見えない壁 z5400 の手前)。値は `TutorialFinale.cpp` の先頭(`kPullCheckLow` / `kPullCheckStep` / `kPullWallMargin` / `kPullSideDiff`)。
+  - 確認: 一時コードでわざとカメラを屋上側にして縦穴に入れ、壁キックの入力を流して20Fおきに撮った(一時コードは消した)。直す前は屋上の床が映って塔の中から見ていた。直した後は中庭側から、縦穴が真ん中のまま上へ遠ざかり、建物に入らない。扉の下も前後を撮って確かめた。**実際に操作しての確認はまだ**。
+- 確認: Release(x64、出力は一時フォルダ)でビルド。一時コードで `-bench=900 -stage=4` の各区画にプレイヤーを置いて撮った(一時コードは消した): 操車場から縦穴、荷揚げ場から東の壁走り、通路の先に背中を向けた見張り、部屋の裏口のシャッター(閉)、街の連続壁走り、中庭、塔の縦穴とシャッター(閉)。**実際に操作しての確認はまだ**(壁キック・壁走りで渡れるか、通路から見張りに気づかれずに近づけるか、空中暗殺の位置、扉が開くか、登場演出のカメラが擁壁に当たらないか、屋上からの見え方)。
+
+### 2026-11-22 チュートリアルの登場演出をステージ1と同じ形に(C1・屋上なし、約4.3秒)
+- 流れ: 空から斜めに落ちてくる(列車から落ちた続き。`TrainFallTrail` を足元に付ける) → 着地点の真上で空中強攻撃を振りかぶる → 突き下ろし → 着地 → 回り込んで背中へ。C4 以降はステージ1と同じ。
+- `PlayerStartMovieFrame` に `Kind`(Roof=ステージ1 / Fall=チュートリアル)。Fall の値は `kFallCut2Frame`(70、フェードインを含む)・`kFallCut3Frame`(30)・`kFallStartSide/Height`(-350, 2200)・`kFallApexHeight`(1400)。種類で変わるものは `ApexFrame()` / `LandFrame()` / `TotalFrame()` / `ApexPos()`。
+- カメラ: `PlayerStartMovieCutCamera::BuildCuts` で Fall のときは C2(落ちながら顔のアップ、Follow::All)→ C3(正面の少し下に固定)→ C4 → C5。C4・C5 は共通。
+- プレイヤー: `PlayerStateStartMovie` に `Phase::Fall`(FallStartPos → ApexPos へまっすぐ)。**モーションは最初から空中強攻撃**(ユーザーの指示。Enter で `AirHeavyAttack1` のアニメにして止めるフレームで構えたまま落ちる)。Leap の振りかぶりは `StartAttackAnim`(真上に着く10F前)。煙の尾は着地で止め、Exit でエフェクトを消す。
+- ニア: 標準は `SceneMain::Init` の 100 で、C2 の寄り(顔まで約150)で手前の腕・刀が切れていた。`PlayerStartMovieCutCamera` の Enter でニアを 10(ほかの演出カメラと同じ)、Exit で 100 / ファー 5000(SceneMain と同じ値)に戻す。ステージ1の C1〜C5 にも効く。
+- (追記)**登場演出のカメラ3つをユーザーの書き方に寄せた**: Land / Turn の `CalcGoal` → `FixCameraPos()` の override。Enter は「data を pos / target / goal に入れて `ResetBlend`」の形(Turn の角度は前と同じく着地点の正面から)。3つとも Exit でカメラ→注視点の向きから `m_angleH/V` を出し直す、空の `CameraSetting()`、ヘッダーは `/// <summary>`。動きは変えていない(`-stage=3`・`-stage=4` で撮って確かめた)。
+  寄せていない所: Cut の表持ち・`ApplyCut` の直接代入、実フレームで数える(プレイヤーの演出と合わせている)、着地点からの相対の位置、ニアを Exit で戻すこと。
+  - 気づいたこと: ユーザーの演出カメラ(暗殺・血殺・必殺技・部位破壊)は Enter でニアを 10 にして戻していないので、一度使うと以後ずっと 10 のままのはず(未確認)。
+- `SceneMain::StartPlayerStartMovie(kind)`(Cyber は Roof、Tutorial は Fall)。`PlayerStateDropIn`・`StartPlayerDropIn`・`Player::StartDropIn` は消した(vcxproj/filters からも)。`PlayerStartMovieLandCamera` の `delayFrame` は今は使っていない。
+- 確認: Release(x64)でビルドが通った。一時コードで `-bench=420 -stage=4` の画面を6Fおきに撮り、全部の流れがつながることを見た(一時コードは消した)。**カット割りは仮**: C2 は顔が右に寄って近すぎる、C3 はプレイヤーが小さい。ImGui での調整はユーザーがする。ステージ1の登場は値を変えていないが、通しで撮り直してはいない。
+
+### 2026-11-21 タイトルコールの後にミサイルに囲まれ、爆風から飛び出して落ちる → リザルト → チュートリアル
+- 原作(NG4 Ch0)は、東京が見えたところで D.D.O. の兵が来て列車から飛び降りるしかなくなる。ここでは**ロゴの後に少し歩ける → 飛び降りる場所に近づく(か8秒たつ)とミサイルに囲まれる → 最後の大きな爆発の中から列車の外へ飛び出して落ちる → 落ちている途中で暗転してリザルト**。全部ゲームの中の演出(動画ではない)。
+  - 最初は「A で自分から飛び降りる/待つとミサイル1発で自動」だったが、カメラのカットと突然来るのが微妙と言われて作り直した。
+- 流れ(`TunnelEnding`、値は .cpp 先頭。フレームは実フレーム):
+  - ~~`Escape`(ロゴの後に歩いて飛び降りる場所を探す)~~ → **11/22 に消した(下の欄)**。ロゴが消えたらすぐ `StartAmbush`。
+  - `StartAmbush`: 操作を止める、`FindJumpEdge` で跳ぶ向きを決める(足元から左右へ縦の線を引いて床が切れる所。胸の高さで物にぶつかる側は避け、そのうえで近いほう)、無線「ミサイル！ 囲まれてる！」、カメラは `EndingCamera::HoldAt`(真上寄り: 跳ぶ向きに450・前に300・上に1200)へ70Fでクレーンのように引き上がる。
+  - `Ambush`: まわりの楕円(横は床の端まで・最大230、前後650)に7発、15F から9Fおきに予告(Kingmech の MissileWarning/Fall/Explode を TunnelEnding が自分で読む。20倍)→ 30F で落ちる → 45F で爆発(小さく揺れる)。70F にプレイヤーの足元へ大きい1発(32倍＋前後に2つ)→ 115F で炎と煙に包む(大きく揺れる)。
+  - (11/21 更新)**爆発の後に一呼吸**: 115F の大きい爆発の4F後にプレイヤーを隠す(`Player::SetHidden`)→ 137F で列車の外からの引き(`HoldAt` の長さ0=カット。跳ぶ向きに1500・前に650・上に40、夜の街を背に)へ切り替え、爆発を2回重ねて燃え続けさせる → 155F で無線「……応答して！」→ 210F で爆風を上げて姿を戻し `StartJump`。
+  - `StartJump`: `PlayerStateEndingJump`(スキル血殺の分身と同じ `Dodge_Combat_F` の13Fの姿勢で止めて、横20・上30で大きく跳ぶ → 40F で落ちるアニメ。列車に置いていかれながら落ちる。当たり判定を切る・落下死しない・タイムスケールで進む)、`SetTimeScaleForFrames(0.3, 45)` でスロー。前は上へ15だったので床を通り抜けていた。
+  - `Jump`: 75F まで引きのまま見て、`FollowAt`(寄り: 跳ぶ向きに420・前に160・上に60 でついていく。45Fかけて移る)、130F から24Fで暗転(`EndingScreen::blackRate`)→ バトル終了 → いつものフェードでリザルト。
+  - **飛び出す・落ちるエフェクト(11/22)**: Effekseer MCP で作った(1/20、20倍で再生。作業ファイルは同じ名前の .efkefc、画像は `data/Effect/Train/Texture/TE_Smoke/TE_Spark/TE_Glow.png`=Kingmech のミサイルの画像のコピー)。
+    - `data/Effect/Train/TrainLeapBurst.efk`: 煙を突き抜ける。+Z(飛び出す向き)へ押し出される暗い煙の塊(Punch)、+Z に垂直な面に広がる煙の輪(Ring、Circle の軸Z+EffectsRotation)、+Z へ飛ぶ火の粉(Embers)、閃光(Flash)。`StartJump` で囲まれた場所に、Y回転=跳ぶ向きで再生。
+    - `data/Effect/Train/TrainFallTrail.efk`: 落ちる間。煙(Smoke)と火の粉(Embers)は WhenCreating でその場に残る=上へ尾を引く、風の筋(Wind)はついていく円の上から上へ流れる細長い光(移動方向ビルボードなので縦長に作る)。ずっと出続けるので、`Jump` の間は毎フレーム位置をプレイヤーの足元に合わせ、暗転し終わったら止める。
+    - `PlayerStateEndingJump` で足の白いもや・肩の風の筋(ダッシュと同じ)も出す。
+  - **トンネルの外の線路**: トンネルのモデルは壁と線路が同じメッシュなので、出口より先は線路だけのモデル `data/Stage/TrainTunnel/TrainTrack.mv1`(`AsyncData::TrainTrackModel`)を、トンネルと同じ位置・間隔で描く(`Stage::DrawTunnel`)。明るさ `kTrackColorScale`(0.7)。
+    作り方: `tools/TrainTunnel/build_track.py`(TrainTunnel.blend を開き、SubwaySection.fbx からレール・ボルト・配線・床下の配管だけを取り、下に高架のコンクリートの床を足して build_tunnel.py と同じ並べ方・大きさにする)→ `tools/FbxToMv1/export_x.py`(TrainTrack dif=1.0)→ `convert.exe flat`。Blender は `C:\Users\tsyts\tools\blender-5.3.0-windows-x64\blender.exe`。
+  - `EndingCamera` の `HoldAt` / `FollowAt` はカットせずなめらかに動く。車両の上の物を通り抜けないように、上がるときは先に上へ、下がるときは先に横へ動かす。
+  - 無線の字幕は `EndingUI`(`EndingScreen` の radioIndex)。字幕の文は EndingUI.cpp の `kRadioLines`。(飛び降りる場所の光は 11/22 に消した)
+- リザルトの「次へ」で次のステージへ: `StageInfo::nextStage`(Num ならステージセレクト)。列車 → チュートリアル → ステージ1。リトライは今まで通り同じステージ。
+- チュートリアルの始まり: ~~`PlayerStateDropIn`~~ → **11/22 にステージ1と同じ登場演出に作り替えた(下の欄)**。DropIn は消した。
+- 確認: Release で `-bench -stage=2 -ending` を流して撮った。確認用の `-ending` はコンテナの間から始まり、手前のコンテナで隠れるので、一時コードでプレイヤーを最後の敵のいる所(0,0,22400、最後尾の平台車)に置いて撮った(一時コードは消した): 真上から予告の円 → 着弾 → 大きな爆発 → 外からの引きで燃える列車と夜の街・無線 → 爆風から大きく飛び出して空へ → 寄りで落ちる。`-stage=4` で落ちてきて着地 → 背中へ回り込むのも撮った。**まだ**: 実際に倒してからの通し、飛び降りる場所に歩いて近づいて始まること、リザルトの「次へ」でチュートリアルに入ること(ボタンを押す確認をしていない)。
+- 気づいたこと: 別の作業の一時コード(`-dashtest`、`[TEMP_TRAIL]`、Application.cpp と Player.cpp)が入っている。ゲームを起動したままだと DxLib の二重起動の防止で確認用の exe が起動直後に終わる。
+
+### 2026-11-22 列車のエンディングの Escape(ロゴの後に歩いて飛び降りる場所を探す)を消した
+- ユーザー:「探す部分が冗長」。流れは Logo → **Ambush** → Jump → 暗転してリザルト(前は Logo → Escape → Ambush)。
+- 検討して採らなかった案(会話で): Escape の代わりにダッシュ・ジャンプを教える短い区間を足す(列車の上で追われる / 新しい短いステージ / チュートリアルステージの頭に足す / 列車がガタンと止まって横に区画が出てくる)。ダッシュは列車の頭の `Tutorial,Move` の2ページ目で教えている。**ジャンプはまだどこでも教えていない**。
+- `TunnelEnding`: `Phase::Escape`・`StartEscape`・`UpdateEscape`・`kRadioDelay`・`kStartRange/Height`・`kAutoStartFrame`・`kMarkerInset`・`m_jumpMarkerPos` を消した。Logo が `kLogoLength` たったら(イベント中でなければ)`StartAmbush`。
+  - `FindJumpEdge` は `StartAmbush` の中で呼ぶ(跳ぶ向き `m_jumpOutDir` と楕円の幅 `m_edgeDist` に使う)。
+  - ロゴの間はもう `EndingCamera` なので、`StartAmbush` は今のカメラが EndingCamera でないときだけ切り替える(そのまま続けてクレーンへ)。
+  - 無線の番号を詰めた: `kRadioAmbush` 0・`kRadioBeat` 1。EndingUI の `kRadioLines` から「この先の駅に検問がある…」を消した。
+- `EndingScreen` の `isJumpMarker` / `jumpMarkerPos`、`EndingUI::DrawJumpMarker`・`m_glowHandle`・`m_frameCount`・`kMarker〜` を消した。
+- 確認: Release(x64)でビルドは通った。`-bench=2900 -stage=2 -ending` を20Fおきに撮った(一時コード・消した): 2100F でロゴが消える → 2120F で無線「ミサイル！囲まれてる！」とクレーンで上がる → 予告の円・爆発 → 外からの引き・「……応答して！」→ 飛び出して落ちる → 暗転。**実際に最後のフェーズを倒しての通しはまだ**。
+- (追記)「やっぱり少しほしい・前より短く」で、**Logo の後に `Walk`(`kWalkFrame` 150F=2.5秒)**を足した。目印・無線・カメラの切り替えは無し(ロゴの間と同じ引きの EndingCamera のまま歩ける)。たったら(イベント中でなければ)`StartAmbush`。前の Escape は近づくか480F。撮って、ロゴが消えてから約150F 後に囲まれるのを確認した。
+- 注意: `-ending` を付けて起動すると、次のステージでもエンディングの開始が呼ばれてすぐリザルトになる(トンネルの無いステージは即終了)。確認用の引数のせい。
+
+### 2026-11-21 バズーカのミサイル(EnemyBazookaMissile)
+- 挙動(会話で決めた): 撃った瞬間のプレイヤーの位置を着弾点に固定。始点→着弾点を割合 `m_rate`(0〜1)で進み、横・縦を `sin(π × rate × 山の数)` でずらす(0と1でずれが0なので必ず着弾点に落ちる)。毎フレーム `kSpeed / 距離 × タイムスケール` を足す(どの距離でも同じ速さ)。
+  - 横の向き = 上 × 進む向き、縦 = 進む向き × 横(上が正)。幅は距離に比例(横0.2・縦0.15、上限400/300)、1発ごとに0.7〜1.0倍、左右はランダム。値は .cpp 先頭。
+- `Character/Enemy/Bazooka/EnemyBazookaMissile`: Phase = Fly / Explode / Finished。爆発するのは ①飛んでいる間の判定がプレイヤー(どの判定でも。ジャスト回避の判定は除く)か StaticObject に触れた ②前の位置→今の位置の線がステージのモデルに当たった ③着弾点に着いた。ほかの敵は無視。
+  爆発は Kingmech のミサイルと同じ `FixedAttackCol`(半径190・4F・攻撃力30・きりもみ)＋爆発のエフェクト。飛ぶ判定はダメージを持たない(2重に当たらない)。
+- `EnemyBazookaMissileCol`(新規、Collider 継承、トリガー): 触れたかを覚えるだけ。`SetPos` で `m_rb.m_pos` も入れる(ApplyPos は判定の後に呼ばれるため)。ステージは `m_stage` から取る。
+- 予告: Kingmech の `MissileWarning.efk` を着弾点に出し、再生の速さを `45 ÷ 着くまでのフレーム数` にして着弾と合わせる。爆発で止める。System の Bazooka の読み込みに予告・爆発のエフェクトを足した。
+- **見た目は仮**(`DrawCapsule3D` の橙のカプセル)。ユーザーが書きかけていた `AsyncData::EnemyBazookaMissileEffect` は AsyncData に無かったので外した。エフェクトを作ったら Draw を置き換える。
+- 撃つ流れ: `EnemyAttack` の判定が出るフレームで1回 `EnemyBase::OnAttackFire()`(仮想)。`EnemyBase::UseAttackCol()` が false の敵は近接の判定を作らない(バズーカ)。
+  撃つ位置は `EnemyBazookaWeapon::GetMuzzlePos()`(RPG7 の全メッシュの範囲で Z 最大・XY 真ん中を、モデルの行列でワールドへ)。
+- 持ち主: `EnemyBase::TakeFiredMissiles()` で `EnemyManager::m_missiles` に渡す(撃った敵が倒されても飛ぶ)。Update・Draw・`DebugClearEnemies` で回す。ただし判定の持ち主は撃った敵なので、**敵が消え終わった後の爆発はダメージが入らない**(AttackCol が持ち主を見るため)。
+- 確認: Debug(x64)でビルドは通った。一時コード(消した)でデモステージのバズーカ2体に90Fごとに撃たせ、約6300先のプレイヤーへ飛んで手前で触れて爆発することをログで見た(落ちない)。**画面での見え方・実際の攻撃からの発射はまだ**。
+- **`EnemyBazookaAttack.csv` の attackRange が 200(近接のまま)**なので、近づいてから撃つ。遠くから撃たせるなら大きくする。予告の円は近いと一瞬で終わる。
+- (追記)攻撃CSVにミサイルの行(index 1、AttackShot1、attackColStart 25 で撃つ、attackRange 1500)。撃つのは `kMissileAttackIndex`(1)の攻撃だけ(`EnemyBazooka::UseAttackCol` / `OnAttackFire`)。殴り(index 0)は近接の判定のまま。
+- (追記)警戒(`EnemyBase::CautionMove`)の後ろへ下がる速さに `backSpeed` の上限を付けた(半径1500で近くから警戒に入ると 240/F で吹っ飛んでいたため)。
+- (追記)**ユーザーが自分で書くことになり、ミサイルの処理の中身を消して TODO にした**(関数・定数・メンバーは残してある)。
+  TODO の番号順に進める(手順1〜10。一覧は `EnemyBazookaMissile.cpp` の先頭)。中身を消したのは `EnemyBazookaMissile.cpp`・`EnemyBazookaMissileCol.cpp`・`EnemyBazooka::OnAttackFire / TakeFiredMissiles`・`EnemyManager::UpdateMissiles` / Draw のミサイル / `DebugClearEnemies` の clear・`EnemyBazookaWeapon` の弾頭の先。
+  残してあるもの: 撃つタイミング(`EnemyAttack` の `OnAttackFire` 呼び出し・`UseAttackCol`)、System の予告・爆発のエフェクトの読み込み、警戒の上限。今は撃っても何も出ない。
+
 ### 2026-11-21 列車とステージ1の間にもう1ステージ挟む(決定・まだ作らない)
 - 原作は列車から落ちてそのまま Ch1 だが、ここでは**列車のエンディングの後に、操作させるステージを1つ挟んで街(ステージ1)へ向かわせる**。原作から外れてよい(ユーザー)。
 - 決定した形(会話で出した8案のうち「1. 高架下・操車場から地上へ」):
@@ -2120,6 +2209,59 @@
 - **次はまず素材探し**(ninja_motion の Cyberpunk_Megapolis・TrainStage/Props などで、操車場・高架下・駅・通り・非常階段/登る所に使える物を撮って並べる。`GateAssetTool.Survey` / `TrackPropTool.Survey` と同じやり方)。
 - 未決: 置き場所(ロゴ → リザルト → この面 → ステージ1 を案として出した)、敵の量、台詞を入れるか、`StageType` の番号。
 - ほかに出した案(採らなかった): 塔を登る / 屋根を走って追手から逃げる / 列車の上でもう1面 / 潜入(暗殺で進む) / 落ちながら遊ぶ / 線路を歩くだけの小休止 / 屋上のハブ。
+- (追記)**壁キック・壁走り・暗殺を教えるチュートリアル用の短いステージ**。前半は工業・錆・コンクリ(岩っぽさ)で、**途中(駅の階段を上がった所など)から一気にサイバーの街に変わる**。サイバー側は手持ちの Cyberpunk Megapolis・Metro で作る。
+- (追記)前半の素材の候補(Unity Asset Store の無料。ninja_motion は **Built-in**・Unity 2022.3.62f3。まだ「マイアセットに追加」していない):
+  - 本命(Built-in で使える・2022.3 で入る):
+    - RPG/FPS Game Assets (Industrial Set v2.0) / Dmitrii Kutsenko(id 86679、204MB、評価96件)… 工業のモジュール100点以上。高架下・操車場の壁・建物の主役。
+    - Abandoned Factory (Lite) / Tirgames(62597、509MB、2022.3.62 で作成)… モジュールの建物2つ・クレーン・ゲート・樽・配電盤。
+    - Modular Industrial Catwalk Kit [Free] / LineKotsi(287064、87MB)… 橙の足場・階段・梁。**Built-in の材質は入っていない**(URP の材質。`CyberStageTool.MainTexProp` は `_MainTex`/`_Base_Color` しか見ないので `_BaseMap` を足す)。
+    - Metal and Concrete Barriers / Abandoned World(231794、Built-in のみ)… 黄黒の柵・コンクリの塊(列車のハザードテープと続く)。
+    - Underground Industrial Models / Mario Haberle(69927、0.6MB)… 地下の柱・配管。
+    - 岩: HQ Rock Pack Free / DNK_DEV(83388)、Scanned Rocks with Moss and Snow(22070)。
+  - 注意: Industrial Zone Modular Pack(142157、運河・工事現場・格納庫など中身は良い)と Modular Sewer Props(277458)は **Unity 6 で作られている**ので 2022.3 に入らないかもしれない。Worn Sci-Fi Horror Tunnel(409446)・Mines and Cave Set(305701)・Frame Scaffold(357020)は **URP のみ**。
+  - 次: ユーザーがマイアセットに追加 → ninja_motion にインポート → `Survey` と同じやり方で撮って並べて決める。
+- (追記)本命の7件を**マイアセットに追加した**(ブラウザでユーザーがサインイン → Claude が追加。Industrial Set v2.0 は 8/12 から持っていた)。
+  - **Industrial Set v2.0 だけ ninja_motion に取り込んだ**(`Assets/RPG_FPS_game_assets_industrial/`、プレハブ134個。ProjectSettings は入っていない)。中身: 錆びた倉庫(Hangar_v1〜v4)・コンクリの塀(長さ 4〜18.7m、高さ3m)・門・コンテナ(8x3x3m)・配管・タンク・高低差のある床と道。操車場に合う。
+  - 残り6件(Abandoned Factory Lite 509MB・Catwalk 87MB・Barriers 75MB・Underground 0.6MB・HQ Rock 50MB・Scanned Rocks 83MB)は**まだダウンロードしていない**(Asset Store のダウンロードは Unity エディタの Package Manager からしかできない。HQ Rock Pack は Unity 6000.0.33 で作られていて 2022.3 では落とせないかもしれない)。
+  - (追記)**残り6件もダウンロードして取り込んだ**(Claude が Unity の Package Manager を画面操作でダウンロード → Unity を閉じてバッチモードで `-importPackage`)。フォルダ: `Assets/TirgamesAssets`(Abandoned Factory、プレハブ79)・`Assets/LineKotsi`(Catwalk 11)・`Assets/Abandoned World`(Barriers 9)・`Assets/Props`(Underground 6)・`Assets/Dnk_Dev`(HQ Rock 3)・`Assets/ScannedRocks`(27)。
+    - Abandoned Factory の中に「`com.unity.postprocessing` を依存に足す」指定(packagemanagermanifest)があったので、**それを抜いて作り直したパッケージで取り込んだ**(manifest は変えていない。manifest の差分は 11/13 の Unity MCP のときのもの)。デモのシーンのポストエフェクトは外れている。
+    - Catwalk と HQ Rock は URP の材質(Unity ではピンク)。Underground(`Assets/Props`)と Scanned Rocks は**100倍の大きさ**(cm のまま)。書き出すときに直す。
+    - 見た目: Abandoned Factory は窓の割れた高い壁(Factory1Wall 18x9.9m)・柱・屋根・階段・門・クレーン・配電盤。Underground は黄色の帯の柱・ダクト・金網。
+  - (追記)**教える順番(ユーザーが決めた)**: ①壁キック → ②壁走り → ③暗殺 → ④壁走りを連続させて空中暗殺 → ⑤少しだけ戦闘 → ⑥とても長い壁キックで登って終わり(屋上 → ステージ1の飛び降りへ)。
+    - Claude の案: サイバーの街に切り替わるのは③の後。①〜③は工業(今回の素材)、④〜⑥は Megapolis。⑥は高層ビルの間を登る。**切り替えの場所はまだ確認中**。
+    - 前に出した間取り(暗殺 → 空中暗殺 → 壁走り → 壁キック → 屋根で切り替え)は使わない。
+    - **切り替えは③の後に決定**(ユーザー)。
+  - (追記)**Unity で組んだ(1回目)**: `ninja_motion/Assets/Editor/TutorialStageTool.cs`(新規)→ `Assets/Scenes/TutorialStageScene.unity`。メニュー `Tools > Tutorial Stage`。バッチ `-executeMethod TutorialStageTool.BuildAndShots`(画像は `Library/TutorialStageShots/`)。
+    - CyberStageTool の部品(Floor・Block・RunWall・KickZone・Enemy・Area・StageLight・Prop・建物の列)をそのまま使う。まとまりの名前もステージ1と同じ(CyberStage / _Collision / _WallZones / _PhaseAreas / EnemySpawns)。工業の素材は自前の `Place`(Assets/Props は 1/100)。
+    - **(11/22 に間取りを作り直した。今の形は「2026-11-22 チュートリアルのステージを作り直した」の欄)**
+    - 寸法(m、+Z へ進む、スタートの床 y0): 操車場 z-6〜14 → ①縦穴 z14〜22(幅2.5m・高さ5m)→ 荷揚げ場 y5 → ②溝 z34〜48(14m)を左の壁(x-4)で壁走り → ③倉庫 x±14・z64〜88(見張り1体 z81、奥を向く)→ 裏口 z88 から街 → ④溝 z102〜130 の右(x+2、z98〜118)→ 左(x-2、z110〜130)で連続壁走り → 中庭 y1 の見張り(z135、奥を向く)へ空中暗殺 → ⑤中庭で3体(z150〜156)→ ⑥縦穴 z160〜168・y1〜31(30m)→ 屋上 z168〜184、縁 z184。
+    - 敵の phase/group は仮(1/T1・2/T2・3/T3)。エリア Area_Assassin・Area_Battle・Area_Goal。
+    - (1回目の時点の残り。下の「ゲームへの書き出し・登録」で書き出し・登録・遷移表・夜の空・色は済んだ)チュートリアルの画像、Catwalk・HQ Rock(URP の材質)は未使用。
+  - (追記)**ゲームへの書き出し・登録(11/21)**:
+    - Unity: `CyberStageTool.ExportAs(フォルダ, ファイル名, 番号, 区画→色)` を足した(書き出し先・番号を差し替えて `Export` を呼ぶ。見えない面のデータはステージ1用なので使わない)。`CyberStageTool` の `GameStageDir` / `StageNo` は const から static に、`SectionZoneOverride`、色 `Zones` に 11番(冷たい灰色、チュートリアルの工業)を追加。
+    - `TutorialStageTool`: メニュー `Tools > Tutorial Stage > 2. Export To Game (mv1)`。バッチは `OpenAndExport`(保存したシーンを開いて書き出す)/ `BuildShotsExport`(作り直し＋画像＋書き出し)。エディタを開いたままなら `Library/TutorialStageRun.txt` に関数名を書いてエディタを前に出すと1回実行する。
+    - 書き出し先: `data/Stage/TutorialStage/TutorialStage.mv1`・`TutorialStageCol.mv1`・`tex/`、番号 006 の `Enemies/Enemies006.csv`・`WallZones/Stage006.csv`・`PhaseAreas/Stage006.csv`・`Lights/Stage006.csv`。見た目 約14.6万三角形、当たり判定 888三角形。
+    - 区画の色: T01〜T04・T90 = 11(冷たい灰色)、T05/T06 = 4(赤紫)、T07 = 2(紺)、T08 = 9(赤)、T09 = 1(青紫)。
+    - **入りの区画の床・壁を工業の素材にした**(ユーザー:「ステージ1と似ている、特に床」)。`ApplyIndustrialSkins` で CP_ の材質を Tirgames の材質に差し替える: 操車場・縦穴の床 = しみのあるコンクリート板(CommonConcrete04)、縦穴の壁 = CommonConcreteWall01、荷揚げ場の床と斜面 = 縞鋼板(CommonMetalDiamond01)、溝の両側の壁 = 錆びた波板(CommonSteelRoof01)、溝の底・倉庫の床 = CommonConcrete05、台の側面 = CommonConcreteWall02。壁走りの看板(水色の枠)はステージ1と同じまま(壁走りできる目印のため)。
+    - 戦闘の3体(T3)は Idle(最初から発見済み)、屋上から見る街の列(z200)は地面を y1 にした。
+    - ゲーム: `StageType::Tutorial`(5番目「チュートリアル」、番号6、夜のフォグ・ステージ1の空、目標タイム180秒)、`AsyncData::TutorialStageModel / ColModel`(`System::LoadStage`・解放)。遷移表 `PhaseStage006.csv`: `0 Start→1`、`1 AllDead T1→2`、`2 AllDead T2→3`、`3 AllDead T3→4`、`4 EnterArea Area_Goal→-1 GameClear`。Area_Assassin・Area_Battle は遷移表では使っていない(チュートリアルの画像を出すときに使う予定)。
+    - 確認: Release でビルド、`-bench -stage=4` で読み込み・正常終了。一時コードでプレイヤーを各区画に置いて撮影(操車場・縦穴・荷揚げ場・倉庫・街・中庭・屋上)。**実際に通しで遊ぶ確認はまだ**(壁キック・壁走りで本当に渡れるか、見張りの暗殺・空中暗殺の位置、屋上で終わるか)。倉庫の壁の窓・扉の穴から紫の空が見える。
+    - 列車のエンディングからこのステージへつなぐ処理・チュートリアルの画像はまだ。
+  - (追記)**見えない面を省いた(11/21)**: 見た目 145765 → 71345 三角形(約半分)、頂点 約24万 → 約12万、mv1 1.35MB → 0.84MB、メッシュ 12 → 10。
+    - **シーンを直したら `Tools > Tutorial Stage > 3. Bake Hidden Faces And Export`**(調べ直して書き出す。約30秒)。`2. Export` は保存してあるデータで省く。データは `ninja_motion/Assets/TutorialStage/VisibilityBake.bytes`(物の形と置き場所で引くので、動かした物は全部の面が出る)。
+    - 調べ方はステージ1と同じ `CyberStageVisibility.Bake`(歩ける所から立方体の6面に描いて、映った三角形を残す)。ステージ1用の値は変えずに、`CyberStagePolish.SeedOverride`(種)・`CyberStageVisibility.BakePathOverride`(保存先)・`ExtraPoints`(追加の位置)で差し替えられるようにした。`CyberStageTool.ExportAs` の最後の引数が保存先(null なら省かない)。
+    - チュートリアルの種は区画ごとに11個(`TutorialStageTool.BakeSeeds`。壁キック・壁走りでしか行けない所はつながらないため)。追加の位置は壁走りの通り道・短い縦穴・長い縦穴を登る途中(`BakeAirPoints`)。調べた位置は2823。
+    - 確認: 省く前と後の mv1 を同じカメラで描いて比べる DxLib のツール(scratchpad の viscmp、明かりなし)で、通り道の210点 × 6方向 = 1260視点。違うピクセルは全体の 0.0041%、一番多い視点で 0.16%。Release の `-bench -stage=4` で読み込み・正常終了。
+    - ゲームの中で撮って比べる方法は、カメラの動きが毎回少しずつ違い、同じデータでも 1〜6% 差が出るので使えなかった。
+  - (追記)**最後の長い縦穴は自動で登ってリザルトへ(11/21)**: `Stage/TutorialFinale`(新規、vcxproj/filters に登録。SceneMain がチュートリアルのときだけ作り、`m_ending` の後で Update)。
+    - 縦穴のゾーン `Kick_Long` の中で壁キック(`Player::IsWallKicking`)したら始める: 操作を止める(`SetIsEventPlaying`。HUD も消える)、`Player::SetAutoWallKick(true)` → `PlayerStateWallStay` が張り付いて6F(`kAutoKickDelay`)で自動で蹴る。
+    - カメラは `EndingCamera::RiseAlong`(縦穴の後ろから見る): ゾーンの長いほうの横の軸(チュートリアルでは Z)の、今のカメラがいる側から見る。**横の位置(カメラも注視点も)は縦穴の中心の線に固定し、高さだけプレイヤーについていく**(左右に蹴っても横に揺れない。高さも `kRiseFollowRate` 0.06 でならす)。距離は縦穴の端+3.5m から +22m 遠ざかり、プレイヤーより上 1.5m → 7m へ、360Fかけて変える。最初の40Fで前のカメラからなめらかに移る。
+      (最初は `HoldAt` で後ろ上へ遠ざかる形だったが、蹴るたびに横に揺れると言われて変えた)
+    - ゾーンの上(位置+半分の高さ)の7m下まで登るか720Fたったら、40Fで暗転(`EndingScreen::blackRate`)→ バトル終了 → リザルト。「次へ」でステージ1。遷移表の Area_Goal(屋上)も残してある。
+    - `Stage::FindWallZoneData(name)` / `IsInWallZoneNamed(name, col)` を足した。ゾーンの名前は Unity の TutorialStageTool の `KickZone("Kick_Long", …)` と同じにすること。
+    - 確認: 一時コードで縦穴の底に置き、左を押しながら A を押す入力を流して撮った(一時コードは消した): 壁キックで始まる → 自動で左右に蹴って登る・カメラが上へ遠ざかる → 暗転 → リザルト → (入力の A で)次へ → ステージ1の読み込み、まで動いた。`RiseAlong` にした後も撮って、縦穴が画面の真ん中に固定されたまま上へ遠ざかるのを見た。**実際に操作しての確認はまだ**。
+    - 注意: 確かめている途中(11/21 23:55〜23:59)に、終わるときに異常終了(ntdll のヒープ破損・d3d11)が4回出たが、そのあと同じ条件で8回流して出なかった。別の作業が Player.h などを書き換えている最中にビルドしたため、食い違った exe になっていた可能性が高い(確定はしていない)。また出たら教えてもらう。
+  - 撮影用のツール `ninja_motion/Assets/Editor/AssetSurveyTool.cs`(新規。`ShootFolders -surveyFolders "Assets/a;Assets/b"` でまとめても撮れる): `-executeMethod AssetSurveyTool.ShootFolder -surveyFolder Assets/xxx -surveyName xxx` で、フォルダの中のプレハブを全部撮って `Library/AssetSurvey/<name>/`(プレハブ名.png と list.txt に大きさ・三角形の数・シェーダー)。
 
 ### 2026-11-19 攻撃CSVにヒットストップのフレーム数(hitStopFrame)
 - 敵の攻撃CSV 6つ: `hitStopTime` の後に `hitStopFrame`(空欄なら0)。`EnemyAttackNode::hitStopFrame` / `EnemyAttackNodeType::HitStopFrame`、Enemy Debug の詳細に「HitStop Frame」。
@@ -2180,3 +2322,125 @@
   - `PlayerStateFastRun::Enter` で両方再生(タイトルでは出さない)。膜のハンドルは `m_filmHandle`、`UpdateFilm` で毎フレーム位置(今の位置＋このフレームの速度)と向きを合わせ、`Exit` で止める(すぐ消える)。
 - 確認: Release(x64)のビルドは通った。**一時コード([TEMP_TRAIL])が `Player.cpp`(Update の最初)・`SceneMain.cpp`(DrawEffekseer3D の後)・`Application.cpp`(二重起動)に残っている**。`-trailtest`(ジャンプ)・`-dashtest`(L3 でダッシュに入れる)で70フレーム撮る。ダッシュはデモステージ(`-stage=1`)で撮った(ステージ1は登場演出があるため)。画像は `../EffectTools/MoveWind/JumpKick_v2/game_jumpkick_v2*.png`・`../EffectTools/MoveWind/DashGame/game_dash_v1.png`。**実際に操作しての確認はまだ**。
 - 歩き(Move)からダッシュ(FastRun)に入るのは300F歩き続けるか L3。
+- (11/21〜22)ダッシュ中のエフェクトの作り直しを試したが、**元のまま(光の粒 `DashSparkle` ＋肩の風の筋)に戻した**。
+  - 試したもの: 入りの白い弧をループにした `DashRunArc`(「疾走感がない」で不採用。作業ファイル `../EffectTools/MoveWind/MoveWind_v1/DashRunArc.efkefc` だけ残し、ゲームの efk は消した)。
+  - 案の動くモック30案: `../tools/DashFxIdeas/dash_ideas.html`(A〜F)・`dash_ideas2.html`(1〜12)・`dash_ideas3.html`(13〜24)。どれも採用せず。
+
+### 2026-11-21 敵のCSVのフォルダを整理した
+- **これより前のログに出てくる敵のCSVのパスは整理前のもの**(`data/Enemy/〜.csv` / `data/Enemy/Patrol/`)。モデル(mv1)と同じ所に混ざっていたので、`data/Enemy/CSV/` にまとめた。フォルダ名は `Character/Enemy/` のフォルダ名と同じ:
+  - `CSV/` 直下: `EnemyStatus.csv`(全種類共通)、`Patrol/PatrolRoute0〜4.csv`
+  - `CSV/Swordman/` EnemySwordmanAnim / Attack、`CSV/Gunner/` EnemyGunnerAnim / Attack、`CSV/Bazooka/` EnemyBazookaAnim / Attack
+  - `CSV/BossPirate/` BossEnemyPirateAnim / Attack(第一ラウンド)、BossEnemyPirateR1Anim / Attack(第二ラウンド)、BossArmAnim(背中の腕)
+  - `CSV/Kingmech/` BossEnemyKingmechAnim / Attack
+- ファイル名は変えていない(コメントに出てくる名前はそのまま)。`git mv` で移した。
+- パスは `DataManager.cpp` 先頭だけ(種類ごとに並べ直した)。使っていなかった `kBossAnimPath`(`data/Enemy/Boss/BossAnim.csv`、ファイルも無い)は消した。
+- **新しい敵を足すときは `data/Enemy/CSV/<種類>/` に置く**。ステージごとの敵配置(`data/Stage/Enemies/`)はステージのデータなのでそのまま。
+- MSBuild(Debug x64)でビルドは通り、`-bench=120 -stage=3` で正常終了した(CSVが読めないと assert で止まる)。
+
+### 2026-11-21 LT(必殺技状態に入る)の発動演出
+- 参考: NG4 のヤクモの鵺の型(YouTube のコマ送り)。発動は「白い閃光 → 赤いもやの玉 → 画面を横切る赤い斬撃 → 赤黒いとげ」で約1.5秒。会話のモックで「まわりの血を背中に吸い込んで、翼として弾ける」に決めた。
+- `data/Effect/Skill/BloodWingActivate.efk`(作業ファイルは同じ名前の .efkefc。DummyBody 入り、**書き出すときは DummyBody を消してから export して、保存はしない**)。BloodWing と同じ座標(原点=翼の付け根、+Z が前、翼は -X 側)・同じ倍率14で再生する。
+  - 0〜40F: AbsorbHead(空中の血 40本)・FloorAbsorb(床から浮く血 20本)が Easing(中間点でうねる、EaseIn)で付け根へ吸い込まれる。尾は Track(BloodHit の糸と同じ作り)。InMist(もや)も縮みながら寄る。ChargeCore(もやの玉)が大きくなり、28F〜 ChargePulse で脈打つ。
+  - 40F: FlashH / FlashV(白い十字の線、加算)・FlashGlow。42F: BurstChunk(血の塊)・BurstStrand(糸)・BurstMist・BurstFeather(赤黒い羽、PVA で落ちる)。45F〜: Slash(赤い横線4本、`BWA_SlashStreak.png` = 血殺の slash_streak のコピー)。
+  - テクスチャ: `Skill/Texture/` に Blood の `BH_Chunk_c / Core_d / Fine_c / Mist_e / Shred_c / Strand_c` をコピーした(Core_d・Fine_c・Shred_c は今は使っていない)。
+- 翼(`BloodWing`)が出たあとも細い血の筋を吸い込み続ける `IdleAbsorb` を一度足したが、ユーザーの希望で外した(BloodWing の .efk / .efkefc は git の版に戻した。翼はいままで通り)。
+- `BloodWing.efkefc` には DummyBody が入っているが、ゲームの `BloodWing.efk` は DummyBody を消して書き出したものと同じ(確認済み)。書き出し直すときは DummyBody を消してから。
+- コード: `AsyncData::BloodWingActivateEffect`(System の LoadCommon で読む)。`Player::StartBloodWingActivate()` を LT で必殺技状態に入るときに呼ぶ。演出を再生して `m_bloodWingDelay` = `kBloodWingActivateDelay`(40F、タイムスケールで減る)。翼はこれが0になってから出す(演出の血が弾けるのに合わせる)。
+  - 演出も翼と同じ位置・向きに毎フレーム合わせる(`BloodWingUpdate` の最後で両方のハンドルに設定)。必殺技状態が終わったら演出も止める。
+  - `BloodWingUpdate` は1フレームに2回呼ばれるので、`m_bloodWingDelay` は `Player::Update` の1回目の呼び出しの前で減らす。
+- 確認: Debug(x64)でビルドは通った。一時コードでデモステージに入って200F目に発動させ、画面を撮って流れ(吸い込み → 閃光 → 爆発・斬撃 → 翼)を確認した(一時コードは消した)。**実際に LT を押しての確認・暗いステージでの見え方・量の調整はまだ**。溜めの玉は体の後ろで少し隠れる。羽は小さく細い棒に見える。
+
+### 2026-11-21 LT2回(専用必殺技 PlayerStateUlt)の構え〜溜めのカメラ・刀が伸びる・血を吸い込む
+- **コードの詳しい解説(なぜそうしたか)は `../進捗/note_必殺技の溜め演出(LT2回).md`**。
+- 方針(会話で決めた): NG4 のヤクモの真血殺のように見せたいが、**当たった後のカメラ(UltCamera)は今のまま**。作ったのは構え〜溜めだけ。プレイヤーの前から見上げ、血を吸って刀が伸びるのを見せる(会話のモックの「案2」)。
+- 流れ(ゲームのフレーム): Start(構え、約19F) → Loop(60F。0〜22F は血を吸い込む、22〜58F で刀が伸びる) → Attack(振り。いつものカメラへ戻る → 当たれば今まで通り UltCamera)。
+- **カメラ** `Camera/CameraState/UltChargeCamera.h/.cpp`(`Type::UltChargeCamera` = 31、`CameraStateName::UltChargeCamera`。vcxproj/filters に登録)。値は .cpp 先頭。
+  - `PlayerStateUlt::Enter` で切り替え。Enter でプレイヤーの前(`GetTargetVec`)を決め、プレイヤー中心の Slerp 12F で前へ回り込む。
+  - 位置は `Player::GetUltBladeRate()`(刀の伸び具合 0〜1)で決める: 伸びる前は正面から右へ15°・距離230・高さ40・注視点の高さ115・画角45°(ローアングル)、伸びきると右へ40°・距離300・高さ75・注視点95(刀の側へ50ずらす)・画角55°。
+  - **刀は右後ろの斜め下へ伸びる**(Power_Attack_Loop は逆手で足の後ろへ構えるので、伸びきると刀の先は足元から右へ約160・後ろへ約130・下へ約50。床に少し埋まる)。真正面だと縦に縮んで足に隠れたので、右へ回って横から見ている。
+  - Attack に入ったら `StartReturn()`: 18F で PlayerFollowCamera の初期位置(プレイヤーの後ろ)へ、足元を中心に角度・距離・高さで回り込み(体を突き抜けない)、着いたら PlayerFollowCamera。Exit でプレイヤーの前の向きを渡す。振りの23Fで当たるので、当たる前に戻り終わる。
+  - 伸び始めに `StartCameraShake(2, 36)`(PlayerStateUlt.cpp 先頭)。小さな手持ちの揺れもある。
+- **刀が伸びる** `PlayerWeapon::SetUltBladeRate(0〜1)` / `GetUltBladeRate()`。`SetUltWeapon` は伸び具合を1に戻す。
+  - 長い刀(red_katana_ult.mv1)の刀身のメッシュ(2・4番)だけを、鍔を中心に刀の向きへ伸ばして描く(柄はそのまま。`DrawStretchedUlt` でメッシュの表示を切り替えて2回描く)。伸び具合0で通常の刀と同じ長さ(倍率0.265)。`GetBladePos` も伸ばした先を返す。
+  - 刀身・鍔の位置は `SetupUltBlade` で自動で調べる。**メッシュの範囲(MV1GetMeshMin/MaxPosition)はフレームの空間なので、フレームの行列(このモデルは回転と×100)を掛けてから比べること**(掛けないと刀身が見つからず、長い刀がそのまま出た)。
+  - `ModelShaderManager::DrawModelWithShader` のメッシュごとの描画で、隠したメッシュを飛ばすようにした。
+- **血を吸い込むエフェクト** `data/Effect/Blood/UltBloodAbsorb.efk`(作業ファイルは同じ名前の .efkefc。1/20 で作って20倍で再生。`AsyncData::UltBloodAbsorbEffect`、System の LoadCommon で読む)。
+  - Stream(None、64本、Easing で中間点を通って原点へ加速)＋ Body(Track。BloodHit の糸と同じ色の付け方)＋ Head(粒)、Core(加算の赤い光が大きくなる、`Texture/UBA_Glow.png`)。床の高さ(根元から下へ約100、半径約400)から出る。
+  - `PlayerStateUlt::Enter` で刀の根元(`GetBladePos` の base)に出し、毎フレーム根元に合わせる。約60Fで終わる。
+  - Track の幅も20倍になる。最初は太すぎて画面を覆った(今は中央0.22)。
+- 確認: Debug・Release(x64)ともビルドは通った。一時コードでデモステージで発動させ、Release で5Fごとに撮って、前から見上げる → 血が集まる → 刀が伸びて横から見える → 後ろへ戻る、を確認した(一時コードは消した)。**実際に LT を2回押しての確認・敵がいる所・暗いステージ・壁ぎわ(カメラが壁に入らないか)はまだ**。
+- まだ: 刀が伸びる間に刀身を光らせる(吸い込みが終わった後の後半は刀身が暗く地味)、床に埋まる刀の先、Attack の初めのスロー(0.2)が `stopAnimFrame` 1.58F ですぐ1.0に戻っていてほぼ効いていない件(前から)。
+- (追記)血殺の演出中にプレイヤーをカメラの方へ振り向かせる処理(振りの終わり際に `m_targetVec` を反対/カメラの方へ)を試したが、見た目が変だったので**元に戻した**(コードは残していない)。
+- (追記)刀が伸びる間に刀身を光らせる処理(刀身に沿った加算の帯＋刀の先の光)も試したが、取りやめて**元に戻した**(コードは残していない)。DrawPolygon3D の帯は背面カリングで片面が消えたので、作り直すなら両面を描くこと。
+
+### 2026-11-22 ボスのHPバー(BossHpUI)
+- 案は会話で決めた(A 画面下の横長バー + F 登場・残り少ない・撃破の演出)。イメージは会話のモックアップだけ。
+- `UI/BossHpUI.h/.cpp`(UIBase 継承、Front、vcxproj/filters に登録)。`UIManager::InGameInit` の引数に `EnemyManager` を足した(SceneMain から渡す)。**FinisherUI の後に登録**(撃破の演出がトドメの黒帯の上に出るように)。
+- ボスの見分け: `EnemyBase::IsBoss()` / `GetBossName()`(仮想、標準は false / "")。**今は `BossEnemyKingmech` だけ true**(名前は仮で「キングメック」)。海賊(R0/R1)は登場予定がないので触っていない。
+- 状態: Hidden → Intro(60F。名前がフェードイン、バーが左から伸びる。イベント中は進めない) → Active → Break(40F。HP0 か死亡で、白い斬撃の線が走ってバーが上下に割れて消える)。
+  - 赤はすぐ減り、白い所は最後に減ってから30F待ってから追いつく。残り25%以下は赤が点滅。
+  - イベント・トドメ・エンディング中は隠す。Break だけはトドメのムービー中も描く(Kingmech は HP0 ですぐトドメに入るため)。
+  - 最大HPは `GetStatus().hp`。HP0・死亡のボスは探さないので、倒した後にまた出ることはない。
+- 見た目は仮で DrawBoxAA の色の箱(設計解像度で x256・y652・幅768・高さ10、名前は UIFont の22)。値・色は .cpp 先頭。墨の縁の画像に差し替えるのは後で。
+- `std::min/max` は Windows のマクロとぶつかるので `(std::min)(...)` と書いている。
+- Debug(x64)でビルドは通った。`-bench=240 -stage=3` で起動・終了は正常(ボスまでは行かない)。**ゲームでボスと戦っての確認はまだ**(F4 でボスの手前へ、F2 の Enemy Debug の Finisher で撃破の演出)。
+
+### 2026-11-22 F4 をボスのいないステージ(列車)でも使えるようにした
+- `PhaseManager::DebugSkipToBossPrevPhase`: 遷移表に `BossAppear` の行が無ければ `DebugSkipToLastPhase()`(新規)へ。
+- `DebugSkipToLastPhase`: 終わり(to=-1)へ進む行の from(列車はフェーズ6 = 最後の敵の群れ F → エンディング)へ、敵を消して `ChangePhase`。プレイヤーは動かさない(最後の行は AllDead でエリアが無いため)。もう最後のフェーズなら何もしない。
+- 一時コードで確認(消した): 列車は 1 → 6(2回目は何もしない)、ステージ1は今まで通り 1 → 12(ボスの手前)。Debug(x64)でビルドは通った。
+
+### 2026-11-22 UI フォルダの整理
+- **これより前のログに出てくる UI のファイルのパスは整理前のもの**。今の構成:
+  - `UI/` 直下: UIBase, UIManager, UIFont, FontManager(全部の UI で使う土台)
+  - `UI/HUD/` PlayerHUD, BossHpUI(戦闘中ずっと出るゲージ)
+  - `UI/Target/` AssasinTargetUI, PartBrokenKillUI, GuardBreakChanceUI(敵の上に出る入力の合図)
+  - `UI/Effect/` KessatsuUI, ScreenBloodUI, FinisherUI, EndingUI(演出の画面効果)
+  - `UI/Title/` TitleBackUI, TitleLogoUI, TitleFlashUI, TitlePressUI
+  - `UI/Menu/` MenuUI, ResultUI
+- 中の include はプロジェクト基準(`"UI/UIBase.h"` `"UI/UIFont.h"`)、自分のヘッダはファイル名だけ。UIManager.cpp・Scene の include、vcxproj/filters のパスも変えた(filters のフィルタ名は今まで通り)。git mv で移したので履歴は追える。
+- **新しい UI を足すときもこのフォルダ分けに合わせる**。
+- Debug(x64)でビルドは通った。`-bench=120 -stage=3` で起動・終了は正常。
+
+### 2026-11-22 プレイヤーの刀を専用のシェーダーで描く(SwordLook)
+- 前は `LitModelPS` で描いていて、マテリアルの発光(0.57)で平らな灰色に見えていた。通常の刀(`katana_blend.mv1`)だけを専用のシェーダーにした。長い刀(red_katana_ult)は今まで通り。
+- `Render/Shader/SwordPS.hlsl`(vcxproj では None、b11)。`ModelShaderManager::Init` で BUMPMAP 有り/無しの2つを読む(`GetSwordPixelShader`)。
+  - 刀身: 作り物の景色(空・地平線の帯・縦の光の帯)の映り込み＋GGX の光沢＋フレネル。刃先の側に波打つ刃文(白くにごらせ、境目に細い光)。刃先の細い光、根元から先へ走る光(150F ごと)。ステージの明かり・フォグも足す。
+  - 柄・鍔: マスク画像(R 金属・G 遮蔽・A なめらかさ)で金属と布を分ける。映り込みは弱め(強いと鍔の金色が銀に見えた)。
+  - **刀身の見分け方は UV**: `T_SM_Katana_A` の左の帯(U 0.011〜0.156)が刀身で、**真ん中(U 0.0835)が刃先、両端が峰**(断面の頂点で確かめた。帯の中の細い2本の線は樋)。V は 0.995(根元)〜0.004(切っ先)。値は `SwordLook::LookSettings` の blade〜。
+- `Render/SwordLook.h/.cpp`: 法線マップ・マスクはモデルのマテリアルの画像(NrmTex / SpcTex = T_SM_Katana_N / Mask)をそのまま t1 / t2 に付ける(読み込みなし)。平行光・環境光は `CharacterLook::Settings()` と同じ(体と光をそろえる)。血殺中(黒モード)・読めないときは今まで通り `DrawModel`。
+  - **斬っている間は光る**: `Player::Draw` で `m_weapon->Draw(m_swordTrail.IsEmitting())`(軌跡を出している区間 = ComboChain の slashStart〜slashEnd)。光は 0.35/F で出て 0.06/F で消える(実フレーム)。刃先・刃文の側が水色に光り、映り込みと走る光が強く・速くなる。
+  - F2 の「Sword Look」で色・強さを変えられる(Enable を切ると前の描き方)。
+- 確認: Debug(x64)のビルドは通った。fxc で2通りのコンパイルも通った。プレイヤーに刀を持たせたプレビュー(ゲームの ModelShaderManager / SwordLook / CharacterLook をそのままビルド、scratchpad)で前後を比べた(`../EffectTools/SwordTrail/game_shots/sword_shader_before_after.png`)。ステージ1の `-bench` で起動して F2 の窓が出ることは確認。**実際に斬って、ゲームの画面での見え方(明るいステージ・暗いステージ・光の強さ)はまだ**。
+
+### 2026-11-22 敵の打ち上げのダメージアニメ・空中の落下アニメ(Swordman / Gunner / Bazooka)
+- **作り方・手順は `../tools/EnemyAnim/README.md`**。Unity の `ninja_motion/Assets/Editor/EnemyAnimTool.cs`(Humanoid の筋肉の値でクリップを作る → SampleScene の敵を書き出す)。
+- 足したアニメ: `Enemy_Launch`(key `Launch`。Mixamo の Female Dynamic Pose から。0Fで体が強く二つ折り → ポーズ → 40Fにかけて少しほどけて浮く、ループなし) / 落下(key `AirFall`。最初は自作の `Enemy_AirFall` だったが、下の追記でプレイヤーと同じ `Jump_Combat_Loop_0` に変えた)。
+- `data/Enemy/Enemy.mv1`(アニメ 45→47)・`EnemyGun.mv1`(56→58)。メッシュ・マテリアルは前のまま(`tools/EnemyAnim/animmerge`、圧縮なし)。今までのアニメは全部、骨の位置の差 0.08 未満。
+  - Swordman の mv1 は Mixamo の9本の名前を付け替えてある(`Falling Back Death`→`Die` など)ので、書き出しで同じ名前にしている(`SkinnedAnimFbxExporter` に `clipNameOverrides` を足した)。
+- アニメCSV(Swordman / Gunner / Bazooka)の最後に `Launch` / `AirFall` を足した。
+- コード: `CharacterBase::HasAnim(key)`(アニメCSVにその key があるか)。
+  - `EnemyHitAir::Enter`: `Launch` があればそれ(無い敵=ボスは今まで通り `Hit`)。ブレンド4F(`kAnimBlendFrame`)。空中コンボで当たるたびに最初から流れる。AirStay の間は最後の姿勢のまま。
+  - `EnemyAirFall::Enter`: `AirFall` があればループで流す(ブレンド15F)。無い敵は今まで通りアニメを変えない。歩いて床から落ちたとき(`EnemyBase::ApplyPos`)もこのアニメになる。
+- 確認: Debug(x64)でビルドは通った。DxLib で2体とも新しい2本を4方向から撮って形を見た。Debug の `-bench=300 -stage=3` は最後まで動いた。**ゲームで実際に打ち上げて見る確認はまだ**(打ち上げの強さ・落下へのつながり・着地でIdleへ戻るときの見え方)。
+- (追記・直した)「めっちゃ変、特に足元」と言われて直した:
+  - **足が壊れていた原因**: 筋肉の値だけで作ったクリップには足の目標(`LeftFootT` など)が無いのに、書き出しで足IKを掛けていたので、両足が1点に引っ張られ膝が腰より上に来ていた(Unity の撮影は IK を切っていたので気づかなかった)。
+    `SkinnedAnimFbxExporter.UseFootIK`: 目標の無い `.anim` だけ足IKを切る(FBX のクリップは今まで通り)。撮影も同じ決まりにした。
+  - 打ち上げ: 元のポーズの足首が強く伸びていた(左0.59・右0.97)のを力の抜けた角度(0.25)にそろえ、膝を少し曲げ、後半に脚が後ろへ流れすぎないようにした。
+  - 落下: 自作の `Enemy_AirFall` はやめて、**プレイヤーの JumpDown と同じ `Jump_Combat_Loop_0`**(SwordAnimationPack の Humanoid 版 .anim)。アニメCSVは `AirFall,Jump_Combat_Loop_0`。mv1 の名前も `Jump_Combat_Loop_0`。プレイヤーはループなしで流すが、敵はループ。
+  - **DxLibModelViewer の変換は同じ FBX でもときどき壊れる**(骨が 10の13乗 のような値・指先が数cmずれる)。`tools/EnemyAnim/run_all.sh` で毎回前のアニメと比べて、だめなら変換し直す。今回は今までのアニメが全部差 0.08 以下のものを入れた。
+  - 最後の確認は DxLib の絵(4方向)とアニメ名の照合だけ。直した後のゲームのビルド・ベンチは回していない(コードは変えていない)。
+
+### 2026-11-22 必殺技の長い刀(red_katana_ult)も専用のシェーダーで描く
+- 前は刀身が「平らな黒(峰側、メッシュ4)」と「平らな真っ赤(刃側、メッシュ2。マテリアルの発光 4.7)」で、陰影が全く無かった。
+- `Render/Shader/UltSwordPS.hlsl`(vcxproj では None、b12)。`ModelShaderManager` で2通り読む(`GetUltSwordPixelShader`)。
+  - 峰側(黒): 赤黒い作り物の景色の映り込み＋光沢の黒い鋼に、切っ先へ流れる赤い血管(ノイズ)。赤い側からのにじみ、ふちの赤い光。
+  - 刃側(赤): 流れる血の光(ノイズの筋)、根元から切っ先へ走る脈、心臓の鼓動のような明るさの揺れ。刃先は白く熱く光る。濡れたようなつや。
+  - 柄・鍔: テクスチャの色 × 平行光＋環境光(ふつうの光)。
+  - **この刀は UV が使えないので、ワールドの位置を刀のフレームの空間に戻して形を求める**(`SwordLook::SetUltConstant` で `MInverse(MV1GetFrameLocalWorldMatrix(モデル, 0))` を渡す)。フレームの空間では z が長さ(根元 -0.29 → 切っ先 -5.26)、y が幅(峰 -0.0208、黒と赤の境目 0.017、刃先 0.058)。値は `SwordLook::UltLookSettings`。
+  - 伸ばして描くとき(`DrawStretchedUlt`)は伸ばす前の空間に戻るので、模様も刀と一緒に伸びる。
+- `SwordLook`: `LoadUlt(モデル, 刀身のメッシュか)` を追加。刀身のメッシュのうちマテリアルの発光(赤)が1より強いものを刃側、それ以外を峰側とし、メッシュごとに部品の番号を定数バッファで渡す。
+  - **`Draw(モデル, isSlashing)` を `Update(isSlashing)`(1フレームに1回)と `Draw(モデル)` に分けた**(伸ばして描くときは2回描くため)。
+- `PlayerWeapon`: `m_ultLook` を持ち、長い刀も `m_ultLook.Draw`。**斬っている間と刀身が伸びている間(`m_ultBladeRate < 1`)**に強く光る(血の流れ・脈が速くなり、刃先の熱い所が広がる)。
+- F2 の「Sword Look」の下に「Ult Sword」の欄(色・血管・流れる速さ・脈の間隔など)。
+- 確認: Debug(x64)のビルドは通った。fxc で2通りのコンパイルも通った。プレビュー(scratchpad)で前後を比べた(`../EffectTools/SwordTrail/game_shots/ult_sword_shader_before_after.png`)。`-bench=300 -stage=3` で起動・終了は正常(長い刀はベンチでは出ない)。**実際に LT2回で出しての見え方(溜めのカメラで伸びるところ・振り)はまだ**。

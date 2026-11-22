@@ -32,6 +32,7 @@ public:
 
 	//このフレームに軌跡を伸ばすか//毎フレーム呼ぶ(呼ばなければ伸ばさない)
 	void SetEmitting(bool isEmitting) { m_isEmitting = isEmitting; }
+	bool IsEmitting() const { return m_isEmitting; }
 	//ゲームのフレームが進んだときに1回呼ぶ//timeScaleで点を古くする
 	void Sample(const Vector3& base, const Vector3& tip, float timeScale);
 	void Draw();

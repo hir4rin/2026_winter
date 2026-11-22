@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>ダッシュのエフェクト案</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;padding:16px;background:#0e1118;color:#e8ecf4;font-family:"Yu Gothic UI",sans-serif}
+#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+canvas{width:100%;border-radius:8px;display:block;cursor:pointer}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.name{font-size:15px;font-weight:bold}.desc{font-size:13px;color:#9aa6bb;margin-top:2px}
+button{background:#1f2738;color:#e8ecf4;border:1px solid #3a465e;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
+button:hover{background:#2a3449}
+.top{display:flex;gap:12px;align-items:center;margin-bottom:12px;font-size:13px}
+</style></head><body>
+<div class="top"><button id="all">全部を最初から</button><label><input type="checkbox" id="auto" checked> 4秒ごとにくり返す</label></div>
+<div id="grid"></div>
+<script>
+const ideas=[
+['A 残像','青白い残像が数体、後ろに残って消える'],
+['B 画面の集中線','画面のふちに細い線が流れる(2D)'],
+['C 地を這う風','足元から低い風の線と砂ぼこりが後ろへ'],
+['D 前で空気を割る','体の前で割れた空気がV字に後ろへ流れる'],
+['E 足跡の残光','踏んだ所に青い光が残って流れていく'],
+['F 踏み込みの衝撃','一歩ごとに足元から横長の波が広がる']];
+const W=300,H=200,F=260,HY=70,CH=2.2,RZ=6,SP=0.2,CYCLE=240,ACC=30;
+function P(x,y,z){return[W/2+x*F/z,HY+(CH-y)*F/z]}
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function runner(c,x,z,ph,col,al){c.save();c.globalAlpha=al;c.fillStyle=col;c.strokeStyle=col;const s=F/z;const [bx,by]=P(x,0,z);
+const bob=Math.abs(Math.sin(ph))*0.06;const hip=[bx,by-(0.95+bob)*s],sh=[bx,by-(1.5+bob)*s];
+c.lineCap='round';c.lineWidth=0.22*s;c.beginPath();c.moveTo(hip[0],hip[1]);c.lineTo(sh[0],sh[1]);c.stroke();
+c.beginPath();c.arc(bx,by-(1.72+bob)*s,0.13*s,0,7);c.fill();
+c.lineWidth=0.13*s;for(const k of[-1,1]){const sw=Math.sin(ph)*k;c.beginPath();c.moveTo(hip[0]+k*0.1*s,hip[1]);c.lineTo(bx+k*0.14*s,by-(0.45+Math.max(0,sw)*0.35)*s);c.lineTo(bx+k*0.14*s,by-Math.max(0,sw)*0.3*s);c.stroke();
+c.beginPath();c.moveTo(sh[0]+k*0.17*s,sh[1]+0.05*s);c.lineTo(sh[0]+k*0.33*s,sh[1]+(0.35-sw*0.15)*s);c.stroke();}
+c.restore()}
+function reset(S){S.t=0;S.dist=0;S.ph=0;S.p=[];S.l=null;S.step=0;S.v=0}
+function bg(c,S){c.fillStyle='#141a26';c.fillRect(0,0,W,H);c.fillStyle='#1b2333';c.fillRect(0,HY,W,H-HY);
+c.strokeStyle='rgba(150,170,210,0.18)';c.lineWidth=1;
+for(let i=0;i<12;i++){const z=((i*1.2-S.dist)%14.4+14.4)%14.4+1.2;const a=P(-30,0,z),b=P(30,0,z);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+for(const x of[-3,-1.5,1.5,3]){const a=P(x,0,1.2),b=P(x,0,60);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}}
+const fx=[
+(c,S,k)=>{for(let j=4;j>=1;j--)runner(c,0,RZ-j*0.55,S.ph-j*1.0,'#7fd3ff',Math.max(0,(0.32-j*0.06)*k))},
+(c,S,k)=>{if(!S.l||S.t%2==0){S.l=[];for(let i=0;i<26;i++)S.l.push([rnd(0,6.283),rnd(0.62,0.8),rnd(0.3,0.8)])}
+c.lineWidth=1.2;const cx=W/2,cy=HY+10,R=Math.hypot(W,H)/2;for(const[a,r,al]of S.l){c.strokeStyle='rgba(235,245,255,'+al*k+')';c.beginPath();c.moveTo(cx+Math.cos(a)*R*r,cy+Math.sin(a)*R*r);c.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);c.stroke();}},
+(c,S,k)=>{if(k>0.05)for(let i=0;i<2;i++)S.p.push({x:rnd(-0.7,0.7),y:rnd(0.02,0.35),z:RZ+rnd(-0.1,0.3),v:rnd(0.25,0.4)*k+0.05,l:rnd(0.6,1.4)*k,dust:Math.random()<0.25,a:0});
+c.lineCap='round';S.p=S.p.filter(p=>p.z>1.3&&p.a<1);for(const p of S.p){p.z-=p.v;p.a+=0.05;p.x*=1.02;const al=(1-p.a)*0.7;
+if(p.dust){const[a,b]=P(p.x,p.y*0.5,p.z);c.fillStyle='rgba(190,175,150,'+al*0.5+')';c.beginPath();c.arc(a,b,(0.12+p.a*0.3)*F/p.z,0,7);c.fill()}
+else{const a=P(p.x,p.y,p.z),b=P(p.x,p.y,p.z+p.l);c.strokeStyle='rgba(230,240,255,'+al+')';c.lineWidth=Math.max(1,0.03*F/p.z);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke()}}},
+(c,S,k)=>{c.lineCap='round';for(const side of[-1,1])for(let j=0;j<5;j++){const h=0.5+j*0.3;for(let i=0;i<9;i++){const u=((i/9+S.dist*0.3+j*0.13)%1);const z=RZ+0.5-u*2.2,x=side*(0.25+u*1.3);
+const a=P(x,h,z),b=P(x-side*0.18,h,z+0.25);c.strokeStyle='rgba(225,238,255,'+(0.55*Math.sin(u*3.14)*k)+')';c.lineWidth=Math.max(1,0.03*F/z);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke()}}},
+(c,S,k,step)=>{if(step&&k>0.3)S.p.push({x:(S.step%2?0.15:-0.15),z:RZ,a:0});S.p=S.p.filter(p=>p.a<1&&p.z>1.3);
+for(const p of S.p){p.z-=S.v;p.a+=1/45;const[a,b]=P(p.x,0,p.z),s=F/p.z,al=(1-p.a);c.fillStyle='rgba(110,200,255,'+al*0.25+')';c.beginPath();c.ellipse(a,b,0.32*s,0.12*s,0,0,7);c.fill();
+c.fillStyle='rgba(200,240,255,'+al*0.8+')';c.beginPath();c.ellipse(a,b,0.1*s,0.035*s,0,0,7);c.fill()}},
+(c,S,k,step)=>{if(step&&k>0.3)S.p.push({x:(S.step%2?0.15:-0.15),z:RZ,a:0});S.p=S.p.filter(p=>p.a<1&&p.z>1.3);
+for(const p of S.p){p.z-=S.v*0.7;p.a+=1/22;const[a,b]=P(p.x,0,p.z),s=F/p.z,r=0.2+p.a*1.6;c.strokeStyle='rgba(230,240,255,'+(1-p.a)*0.8+')';c.lineWidth=Math.max(1,(1-p.a)*0.08*s);
+c.beginPath();c.ellipse(a,b,r*s,r*0.28*s,0,3.4,6.0);c.stroke()}}];
+const grid=document.getElementById('grid');
+const scenes=ideas.map((d,i)=>{const w=document.createElement('div');
+w.innerHTML='<canvas width="'+W+'" height="'+H+'"></canvas><div class="row"><span class="name">'+d[0]+'</span><button>▶ 最初から</button></div><div class="desc">'+d[1]+'</div>';
+grid.appendChild(w);const S={i:i,c:w.querySelector('canvas').getContext('2d')};reset(S);
+w.querySelector('button').addEventListener('click',()=>reset(S));w.querySelector('canvas').addEventListener('click',()=>reset(S));return S});
+document.getElementById('all').addEventListener('click',()=>scenes.forEach(reset));
+const autoBox=document.getElementById('auto');
+function frame(S){const c=S.c;S.t++;
+if(S.t>CYCLE){if(autoBox.checked){reset(S);S.t=1}else S.t=CYCLE+1}
+const tt=Math.min(S.t,CYCLE);const k=tt<20?0:tt>CYCLE-50?Math.max(0,(CYCLE-20-tt)/30):Math.min(1,(tt-20)/ACC);
+S.v=0.04+SP*k;S.dist+=S.v;const prev=Math.floor(S.ph/Math.PI);S.ph+=0.12+0.23*k;const step=Math.floor(S.ph/Math.PI)!==prev;if(step)S.step++;
+bg(c,S);const back=S.i==0||S.i==4||S.i==5;if(back)fx[S.i](c,S,k,step);runner(c,0,RZ,S.ph,'#05070c',1);if(!back)fx[S.i](c,S,k,step);
+c.fillStyle='rgba(255,255,255,0.55)';c.font='12px sans-serif';c.fillText(tt<20?'歩き':tt>CYCLE-50?'止まる':'ダッシュ',8,16)}
+setInterval(()=>scenes.forEach(frame),1000/60);
+</script></body></html>

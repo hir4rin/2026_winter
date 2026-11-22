@@ -2,6 +2,7 @@
 #include "Character/CharacterBase.h"
 enum class AsyncData : int;
 enum class BloodAmount : int;
+class EnemyBazookaMissile;
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
 #include "Character/Enemy/State/Locomotion/EnemyChase.h"
 #include "Character/Enemy/State/Defence/EnemyGuard.h"
@@ -317,10 +318,22 @@ public:
 
 	//ロックオン・攻撃の吸い寄せの対象にするか
 	virtual bool IsTargetable()const { return true; }
+	//ボスか(ボスのHPバーを出す)
+	virtual bool IsBoss()const { return false; }
+	//ボスのHPバーに出す名前
+	virtual const char* GetBossName()const { return ""; }
 	//連撃の2撃目以降で、プレイヤーの方を向き直すか(EnemyAttack::Enter)//falseなら向きはそのまま
 	virtual bool IsChainAttackLookAtPlayer()const { return false; }
 	//一緒に出す敵(ボスの腕など)を作る//Initの後にEnemyManagerが呼んで登録する
 	virtual std::vector<std::shared_ptr<EnemyBase>> CreateChildEnemies() { return {}; }
+
+	//撃つ敵-----------------------------------------------------------------
+	//falseなら攻撃で近接の判定を出さない
+	virtual bool UseAttackCol()const { return true; }
+	//攻撃の判定が出るフレームで1回呼ぶ//撃つ敵はここで弾を出す
+	virtual void OnAttackFire() {}
+	//撃った弾を渡す//EnemyManagerが毎フレーム受け取って持つ(撃った敵が倒されても飛び続けるように)
+	virtual std::vector<std::shared_ptr<EnemyBazookaMissile>> TakeFiredMissiles() { return {}; }
 
 	//巡回ルートの設定//routeIdはPatrolRouteX.csvのXの番号
 	void SetPatrolRoute(int routeId);

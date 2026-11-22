@@ -85,6 +85,10 @@ public:
 	//編集画面用
 	int GetWallZoneNum()const { return static_cast<int>(m_wallZones.size()); }
 	const WallZoneData& GetWallZoneData(int index)const;
+	//名前でゾーンを探す(無ければnullptr)
+	const WallZoneData* FindWallZoneData(const std::string& name)const;
+	//名前のゾーンの中にいるか
+	bool IsInWallZoneNamed(const std::string& name, const Collider& col)const;
 	void SetWallZoneData(int index, const WallZoneData& data);
 	/// <returns>追加したゾーンのindex</returns>
 	int AddWallZone(const WallZoneData& data);
@@ -108,6 +112,7 @@ private:
 
 	//列車ステージのトンネル(見た目だけ。列車の進む向きと逆に流し続ける)
 	int m_tunnelHandle = -1;
+	int m_trackHandle = -1;//出口より先に並べる線路
 	float m_tunnelScroll = 0.0f;//流した距離(トンネル1本の長さで折り返す)
 	float m_tunnelSpeedScale = 1.0f;
 	float m_tunnelFrontOffset = 0.0f;//置いた位置から進む向きの端まで

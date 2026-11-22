@@ -2,7 +2,10 @@
 #include "Camera/CameraState/CameraStateBase.h"
 #include "PlayerStartMovieFrame.h"
 
-//登場演出のC8//背中側へ回り込んでPlayerFollowCameraの初期位置へ
+/// <summary>
+/// 登場演出のC8(プレイヤーを中心にSlerpで背中側へ回り込む)
+/// 着いたらPlayerFollowCameraへ(PlayerFollowCameraの初期位置に合わせてある)
+/// </summary>
 class PlayerStartMovieTurnCamera :
     public CameraStateBase
 {
@@ -13,11 +16,11 @@ public:
 	virtual void Update()override;
 	virtual void Exit()override;
 
+	void FixCameraPos() override;
+	void CameraSetting() override;
+
 	Type GetCameraType()const override { return Type::PlayerStartMovieTurnCamera; }
 	virtual BlendSetting GetBlendSetting()const override;
-
-private:
-	void CalcGoal();
 
 private:
 	PlayerStartMovieFrame m_frame;
