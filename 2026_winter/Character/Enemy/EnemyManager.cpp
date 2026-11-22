@@ -117,12 +117,27 @@ void EnemyManager::UpdateMissiles()
 	//   - 呼ぶ場所は Update の敵を回すループの「後」。そのフレームに撃った弾をすぐ受け取れる。
 
 	// TODO(手順4) 全部のミサイルの Update を呼ぶ
+	for (auto& enemy : m_enemies)
+	{
+		for (auto& missile : enemy->TakeFiredMissiles())
+		{
+			m_missiles.push_back(missile);
+		}
+	}
+	for(auto& missile : m_missiles)
+	{
+		missile->Update();
+	}
 
 	// TODO(手順4) 終わったミサイル(IsFinished() が true)を m_missiles から消す
 	//   書き方: std::erase_if(m_missiles, [](const std::shared_ptr<EnemyBazookaMissile>& missile) { return missile->IsFinished(); });
 	//   - Update を回している for の中で消すと、ループが壊れる(要素がずれる)。回し終わってからまとめて消す。
 	//     UpdateCorpses の死体の消し方と同じ。
 	//   - shared_ptr を一覧から外すとミサイルのデストラクタが呼ばれ、持っていた判定も一緒に消える。
+	std::erase_if(
+		m_missiles, [](const std::shared_ptr<EnemyBazookaMissile>& missile) 
+		{ return missile->IsFinished(); }
+	);
 }
 
 void EnemyManager::Draw()
@@ -137,6 +152,10 @@ void EnemyManager::Draw()
 
 	// TODO(手順4) 全部のミサイルの Draw を呼ぶ(手順3の仮の見た目)
 	//   敵の後に描く。エフェクトにしたら、Draw は要らなくなるかもしれない。
+	for (auto& missile : m_missiles)
+	{
+		missile->Draw();
+	}
 }
 
 void EnemyManager::DebugDraw()

@@ -260,6 +260,16 @@ void EnemyBazooka::OnAttackFire()
 	//       missile->Init();   // 予告・判定を作る(手順7・9)。make_shared の後でないと判定を登録できない
 	//       m_firedMissiles.push_back(missile);
 	//   - なぜ自分で持ち続けずに「いったん入れて渡す」か → TakeFiredMissiles の TODO
+
+	auto player = m_player.lock();
+	if (!player || !m_weapon) return;
+
+	Vector3 startPos = m_weapon->GetMuzzlePos();
+	Vector3 targetPos = player->GetRigidBody().GetPos();
+
+	auto missile = std::make_shared<EnemyBazookaMissile>(GetWeakPtr(), startPos, targetPos);
+	missile->Init();
+	m_firedMissiles.push_back(missile);
 }
 
 std::vector<std::shared_ptr<EnemyBazookaMissile>> EnemyBazooka::TakeFiredMissiles()
@@ -276,7 +286,9 @@ std::vector<std::shared_ptr<EnemyBazookaMissile>> EnemyBazooka::TakeFiredMissile
 	//     そこで「撃った弾をここに置いておく → EnemyManager が毎フレーム取りに来る」形にした。
 	//     ボスの腕を出す CreateChildEnemies と同じ考え方。
 	//   - 空にしないと、次のフレームにまた同じミサイルを渡して2重に登録されてしまう。
-	return {};//仮
+	std::vector<std::shared_ptr<EnemyBazookaMissile>> missiles;
+	missiles.swap(m_firedMissiles);//swapで中身を入れ替えると、m_firedMissilesは空になる
+	return missiles;
 }
 
 void EnemyBazooka::SetUpBreakLeftArm()

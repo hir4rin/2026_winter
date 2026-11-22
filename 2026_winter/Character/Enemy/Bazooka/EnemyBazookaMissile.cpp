@@ -175,7 +175,15 @@ void EnemyBazookaMissile::Draw()
 	if(m_phase == Phase::Fly)
 	{
 		Vector3 dir = m_pos - m_prevPos;
-		
+		//dirの長さがほぼ0なら、最初の向きを使う
+		if(dir.Magnitude() < 0.001f)
+		{
+			dir = m_targetPos - m_startPos;
+		}
+		//尾を求める
+		Vector3 tail = m_pos - dir.Normalize() * kDrawLength;
+		DrawCapsule3D(tail.ToDxLibVector(), m_pos.ToDxLibVector(), kDrawRadius, 8,
+			GetColor(255, 120, 40), GetColor(255, 255, 255), TRUE);
 	}
 
 }

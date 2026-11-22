@@ -1,0 +1,10 @@
+[old] meshes=2 mats=1 frames=2 polys=1232 min=(-5.788 -11.523 -76.988) max=(5.788 13.783 49.863)
+  frame[0] Rocket parent=-2 meshes=1 pos=(0.000 0.000 0.000)
+  frame[1] Launcher parent=-2 meshes=1 pos=(0.000 0.000 0.000)
+  mat[0] Mat0 tex=0 dif=(1.000 1.000 1.000 1.000) amb=(0.000 0.000 0.000) spc=(0.000 0.000 0.000) emi=(0.000 0.000 0.000) pow=10.000
+save C:\Users\tsyts\GitHub\2026_winter\2026_winter\data\Enemy\EnemyBazooka\RPG7_new.mv1 ret=0
+[new] meshes=2 mats=1 frames=3 polys=1232 min=(-5.788 -11.523 -76.988) max=(5.788 13.783 49.863)
+  frame[0] Rocket parent=-2 meshes=1 pos=(0.000 0.000 0.000)
+  frame[1] Muzzle parent=-2 meshes=0 pos=(0.000 3.828 49.864)
+  frame[2] Launcher parent=-2 meshes=1 pos=(0.000 0.000 0.000)
+  mat[0] Mat0 tex=0 dif=(1.000 1.000 1.000 1.000) amb=(0.000 0.000 0.000) spc=(0.000 0.000 0.000) emi=(0.000 0.000 0.000) pow=10.000

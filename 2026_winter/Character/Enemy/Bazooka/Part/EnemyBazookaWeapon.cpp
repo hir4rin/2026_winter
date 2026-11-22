@@ -52,6 +52,8 @@ EnemyBazookaWeapon::EnemyBazookaWeapon(std::weak_ptr<EnemyBazooka> owner)
 	//       m_muzzleLocalPos = Vector3((min.x + max.x) / 2, (min.y + max.y) / 2, max.z)
 	//       X・Y は真ん中、Z は一番前。
 	//   - 数字を手で決めて定数にしてもよい(画面で見てずれていたら、定数のほうが直しやすい)。
+
+	m_muzzleFrame = MV1SearchFrame(m_modelHandle, "Muzzle");   // 見つからないと -1
 }
 
 EnemyBazookaWeapon::~EnemyBazookaWeapon()
@@ -102,5 +104,7 @@ Vector3 EnemyBazookaWeapon::GetMuzzlePos() const
 	//   - MV1GetMatrix は Update で MV1SetMatrix した行列(右手のボーン × ずらし × 大きさ)。
 	//     VTransform でモデルの空間の点にこの行列を掛けると、ワールドでの位置になる。
 	//   - m_modelHandle が -1 のときは Vector3() を返す。
-	return Vector3();//仮
+
+	if (m_modelHandle < 0 || m_muzzleFrame < 0)return Vector3();
+	return Vector3::FromDxLibVector(MV1GetFramePosition(m_modelHandle, m_muzzleFrame));
 }

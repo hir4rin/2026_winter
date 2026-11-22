@@ -17,8 +17,10 @@
 - `tools/EnemyAnim/`: 敵(Enemy.mv1 / EnemyGun.mv1)にアニメを足す手順とツール(Unity の `ninja_motion/Assets/Editor/EnemyAnimTool.cs` でクリップを作って書き出し → ビューアで mv1 → `animmerge` でメッシュはそのままアニメだけ入れ替え。比べる `animcmp`・撮る `shot`)
 - `tools/SwordSlashProbe/`: 攻撃のアニメで刀の先の動きを測るDxLibツール(`probe.exe プレイヤー.mv1 刀.mv1 ComboChain01.csv ログ`。刀の軌跡を出す区間の目安)
 - `EffectTools/SwordTrail/`: 刀の軌跡(風切り)の調査・制作の記録と画像の素材のスクリプト
+- `EffectTools/StartLand/`: 登場演出の着地エフェクト(`data/Effect/StartMovie/StartLand.efk`)の地面のひびの画像を作るスクリプト(`gen_crack.ps1`)とゲームで撮った確認の画像
 - `tools/FrameCheck/`: 画面に実際に出た更新を測るツール(`dupmon.exe`。同じ絵が2回出た=カクついた回数が分かる。ゲームの中の記録は CPU 側の時間なので見えない)
 - `.claude/skills/sakurai/`: 「桜井政博のゲーム作るには」の原則をまとめたスキル(kociden/sakurai-skill から取り込み)。「桜井さんならどうする」「手応えをレビューして」などで読み込まれる
+- ステージ・敵配置の Unity(`ninja_motion`、家PCは `Desktop\programm\ninja_motion`)は別の非公開リポジトリ `hir4rin/WinterGame2026_ForStageAndModel`。買ったアセットは入れていない(このリポジトリは公開なので入れない)。別のPCでの開き方・アセットの一覧はそのリポジトリの `README_アセット.md`
 - Blender は `C:\Users\tsyts\tools\blender-5.3.0-windows-x64\blender.exe`(公式の zip 版。Steam の Blender は exe が無くなっていた)
 
 ## 運用ルール

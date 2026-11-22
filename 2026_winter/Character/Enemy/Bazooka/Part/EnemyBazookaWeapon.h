@@ -25,6 +25,8 @@ private:
 	int m_modelHandle = -1;//RPG7のモデルのハンドル
 	int m_slotIndex = -1;//装備しているボーン(右手)のフレーム番号
 
+	int m_muzzleFrame = -1;//弾頭の先のフレーム番号
+
 	//手元からのずれ
 	float m_offsetX = 0.0f;//右手のボーンから見たX軸方向のオフセット
 	float m_offsetY = 0.0f;//右手のボーンから見たY軸方向のオフセット

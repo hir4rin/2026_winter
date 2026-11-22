@@ -2199,6 +2199,9 @@
 - (追記)**ユーザーが自分で書くことになり、ミサイルの処理の中身を消して TODO にした**(関数・定数・メンバーは残してある)。
   TODO の番号順に進める(手順1〜10。一覧は `EnemyBazookaMissile.cpp` の先頭)。中身を消したのは `EnemyBazookaMissile.cpp`・`EnemyBazookaMissileCol.cpp`・`EnemyBazooka::OnAttackFire / TakeFiredMissiles`・`EnemyManager::UpdateMissiles` / Draw のミサイル / `DebugClearEnemies` の clear・`EnemyBazookaWeapon` の弾頭の先。
   残してあるもの: 撃つタイミング(`EnemyAttack` の `OnAttackFire` 呼び出し・`UseAttackCol`)、System の予告・爆発のエフェクトの読み込み、警戒の上限。今は撃っても何も出ない。
+- (11/23)ユーザーは手順4まで書いた。**RPG7 に弾頭の先の空のフレーム `Muzzle` を足した**(撃つ位置をメッシュの範囲から求めるのをやめるため。ユーザーが選んだ)。
+  - `RPG7.x` に `Frame Muzzle`(メッシュ無し、位置 (0, 3.828, 49.864) = `Rocket` の先端の面の中心)を `Rocket` と `Launcher` の間に足し、`tools/FbxToMv1/keepmat.exe`(新規。.x を mv1 にし、マテリアルの色は元の mv1 からコピー。ログは `keepmat_log.txt`)で `RPG7.mv1` を作り直した。形・色は元と同じ。フレームの番号は Rocket=0 / Muzzle=1 / Launcher=2 に変わった(番号で使っている所は無い)。
+  - 手順5の `EnemyBazookaWeapon` の TODO(①メッシュの範囲・②VTransform)は古い書き方のまま。`MV1SearchFrame(m_modelHandle, "Muzzle")` を覚えて、`MV1GetFramePosition` で取ればよい(ユーザーが書く)。**ゲームでの確認はまだ**。
 
 ### 2026-11-21 列車とステージ1の間にもう1ステージ挟む(決定・まだ作らない)
 - 原作は列車から落ちてそのまま Ch1 だが、ここでは**列車のエンディングの後に、操作させるステージを1つ挟んで街(ステージ1)へ向かわせる**。原作から外れてよい(ユーザー)。
@@ -2444,3 +2447,17 @@
 - `PlayerWeapon`: `m_ultLook` を持ち、長い刀も `m_ultLook.Draw`。**斬っている間と刀身が伸びている間(`m_ultBladeRate < 1`)**に強く光る(血の流れ・脈が速くなり、刃先の熱い所が広がる)。
 - F2 の「Sword Look」の下に「Ult Sword」の欄(色・血管・流れる速さ・脈の間隔など)。
 - 確認: Debug(x64)のビルドは通った。fxc で2通りのコンパイルも通った。プレビュー(scratchpad)で前後を比べた(`../EffectTools/SwordTrail/game_shots/ult_sword_shader_before_after.png`)。`-bench=300 -stage=3` で起動・終了は正常(長い刀はベンチでは出ない)。**実際に LT2回で出しての見え方(溜めのカメラで伸びるところ・振り)はまだ**。
+
+### 2026-11-23 プレイヤーの登場演出の着地エフェクト(StartLand)
+- 会話で5案(衝撃の輪＋土煙 / 閃光＋ひび / 風圧 / ネオンの波紋 / 墨)を動くイメージで比べて、**衝撃の輪＋土煙＋閃光とひび＋煙の尾が広がる**にした。
+- `data/Effect/StartMovie/StartLand.efk`(作業ファイルは同じ名前の .efkefc)。Effekseer MCP で作成。**1/20 で作り、ゲームでは20倍で再生**。いちばん長いノードが96F(登場演出のステートは着地から117Fで終わるので、Exit でエフェクトを消しても切れない)。
+  - ノード: Scorch(足元の焦げ) / CrackDark(地面のひび、4Fで広がって96F残る) / CrackGlow(ひびが28Fだけオレンジに光る) / Flash(閃光10F) / FlashGround(地面の光) / Ring(細い衝撃の輪、15F) / Sparks(火花22個) / DustDir+Dust(地面を這って外へ広がる土煙28個) / SmokeDir+Smoke(上の煙が押し下げられて広がる12個) / DebrisDir+Debris(破片12個)。
+  - 外へ広げるものは「None の親を Y にランダムに回す → 子が +Z へ Easing で動く」形。
+  - 画像は `data/Effect/StartMovie/Texture/`。SL_Crack は自作(`../EffectTools/StartLand/gen_crack.ps1 出力.png 7`。BOM 付きで保存)、SL_RingThin は texture_generate、ほかはコピー(SL_Smoke=TE_Smoke、SL_Spark=TE_Spark、SL_Glow=TE_Glow、SL_Scorch=Kingmech の Scorch、SL_Debris=GB_Shard、SL_ShockRing=Kingmech の ShockRing で今は未使用)。Kingmech の ShockRing は内側までぼけていて皿のように見えたので使っていない。
+- `PlayerStateStartMovie`: Enter で読み、`Land` で着地点に20倍で再生(`PlayLandEffect`、値は .cpp 先頭の `kLandEffect〜`)、Exit で消す。
+  チュートリアルの煙の尾は、着地で `StopEffekseer3DEffect` せず `GetEffekseer3DManager()->StopRoot` にした(出た煙はその場に残って消える)。止め切るのは今まで通り Exit。
+- 確認: Release・Debug(x64)のビルドは通った。一時コードで `-bench -stage=3`(ステージ1)と `-stage=4`(チュートリアル)の着地から70Fを撮った(`../EffectTools/StartLand/game_v2.png` / `game_v2_tutorial.png`。一時コードは消した)。
+- 気づいたこと(未対応):
+  - **着地の瞬間から約7Fは、プレイヤーがまだ浮いて見える**。`HeavyAttackLanding` を0.3倍で流していて、出だしの体が高い所が長く見えるため(本編の空中強攻撃の着地もブレンドは同じ5F)。エフェクトとシェイクは着地のフレームで出る。直すなら着地のアニメを途中のフレームから始める・ブレンドを短くする。
+  - チュートリアルの C5(下からのカット)は、着地の瞬間に手前の物で画面がふさがっている(C1〜C6 はステージとの当たり判定をしない)。
+  - `[TEMP_TRAIL]` の一時コード(Player.cpp・SceneMain.cpp・Application.cpp)はまだ残っている(今回の撮影にも使った)。

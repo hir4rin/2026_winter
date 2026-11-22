@@ -20,6 +20,10 @@ namespace
 	const char* const kFallTrailEffectPath = "data/Effect/Train/TrainFallTrail.efk";
 	constexpr float kFallTrailScale = 20.0f;
 
+	//着地の衝撃(閃光・火花・ひび・衝撃の輪・土煙・破片)//1/20で作ったエフェクト
+	const char* const kLandEffectPath = "data/Effect/StartMovie/StartLand.efk";
+	constexpr float kLandEffectScale = 20.0f;
+
 	constexpr float kBlendFrame = 5.0f;
 	constexpr float kLandAnimSpeed = 0.3f;//着地のポーズを長く見せる
 	constexpr float kLandAnimEndFrame = 19.0f;//PlayerStateAttackLandingと同じ
@@ -57,6 +61,7 @@ void PlayerStateStartMovie::Enter()
 	player->SetRotY(atan2f(m_frame.front.x, m_frame.front.z) - DX_PI_F);
 	m_frameCount = 0.0f;
 	m_isAttackAnim = false;
+	m_landEffect = LoadEffekseerEffect(kLandEffectPath);
 
 	if (m_frame.IsFall())
 	{
@@ -136,6 +141,8 @@ void PlayerStateStartMovie::Exit()
 	StopFallTrail();
 	if (m_fallTrailEffect != -1) DeleteEffekseerEffect(m_fallTrailEffect);
 	m_fallTrailEffect = -1;
+	if (m_landEffect != -1) DeleteEffekseerEffect(m_landEffect);
+	m_landEffect = -1;
 }
 
 void PlayerStateStartMovie::DebugDraw()
@@ -190,7 +197,9 @@ void PlayerStateStartMovie::UpdatePlunge(Player& player)
 void PlayerStateStartMovie::Land(Player& player)
 {
 	SetPos(player, m_frame.origin);
-	StopFallTrail();
+	//煙の尾は新しく出すのだけ止める(出た煙は残って、着地の煙と一緒に消える)
+	if (m_fallTrailPlaying != -1) GetEffekseer3DManager()->StopRoot(m_fallTrailPlaying);
+	PlayLandEffect();
 	player.SetIsActive(true);
 	player.SetIsFloor(true);
 	player.m_isGround = true;
@@ -224,4 +233,12 @@ void PlayerStateStartMovie::StopFallTrail()
 {
 	if (m_fallTrailPlaying != -1) StopEffekseer3DEffect(m_fallTrailPlaying);
 	m_fallTrailPlaying = -1;
+}
+
+void PlayerStateStartMovie::PlayLandEffect()
+{
+	if (m_landEffect == -1)return;
+	const int playing = PlayEffekseer3DEffect(m_landEffect);
+	SetScalePlayingEffekseer3DEffect(playing, kLandEffectScale, kLandEffectScale, kLandEffectScale);
+	SetPosPlayingEffekseer3DEffect(playing, m_frame.origin.x, m_frame.origin.y, m_frame.origin.z);
 }

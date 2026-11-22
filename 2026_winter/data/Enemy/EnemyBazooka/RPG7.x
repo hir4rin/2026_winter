@@ -4395,6 +4395,9 @@ Frame Rocket {
   }
  }
 }
+Frame Muzzle {
+ FrameTransformMatrix { 1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,3.827941,49.864052,1.0;; }
+}
 Frame Launcher {
  FrameTransformMatrix { 1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0;; }
  Mesh {

@@ -36,6 +36,7 @@ private:
     void SetPos(Player& player, const Vector3& pos);
     void UpdateFallTrail(Player& player);
     void StopFallTrail();
+    void PlayLandEffect();
 
 private:
     PlayerStartMovieFrame m_frame;
@@ -44,4 +45,5 @@ private:
     bool m_isAttackAnim = false;
     int m_fallTrailEffect = -1;
     int m_fallTrailPlaying = -1;
+    int m_landEffect = -1;
 };
