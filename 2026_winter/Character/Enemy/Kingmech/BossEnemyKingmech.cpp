@@ -18,6 +18,8 @@
 #include "Character/Enemy/Kingmech/State/KingmechMissileTurn.h"
 #include "Character/Enemy/Kingmech/State/KingmechGatlingSupply.h"
 #include "Character/Enemy/Kingmech/State/KingmechFinisher.h"
+#include "Render/EffectManager.h"
+#include "EffekseerForDXLib.h"
 
 
 
@@ -55,6 +57,12 @@ namespace
 	constexpr int kGatlingExplodeDamage = 300;//投げ返したガトリングの爆発のダメージ
 	constexpr float kFinisherRimWidth = 14.0f;//切り口の光の幅
 
+	//攻撃のエフェクト//フレームは攻撃のアニメのフレーム
+	constexpr float kAttackEffectScale = 20.0f;//1/20で作っている
+	constexpr float kSweepEffectFrame = 44.5f;//横なぎ//腕を振り始める(47で前、50で右)
+	constexpr float kGroundPunchEffectFrame = 29.0f;//地面パンチ//左手が地面に着く
+	constexpr float kDashImpactFrame = 22.0f;//ダッシュアタック//ぶつかる(判定の始まり)
+	const char* kPunchHandFrameName = "hand_l";//地面パンチの手
 }
 
 
@@ -137,6 +145,7 @@ void BossEnemyKingmech::Update()
 {
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(HitAir,HitDrop,AirFall)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
+
 
 	//デバッグ用//F8を押した瞬間だけBossEnemyKingmechAttack.csvを読み込み直して攻撃データを更新する
 	bool isReloadPressed = CheckHitKey(KEY_INPUT_F8) != 0;
@@ -226,6 +235,87 @@ void BossEnemyKingmech::Update()
 
 	//ガトリング//腕の位置を使うのでアニメーションの更新の後
 	m_gatling->Update();
+
+	//攻撃のエフェクト//手の位置を使うのでアニメーションの更新の後
+	UpdateAttackEffect();
+}
+
+void BossEnemyKingmech::UpdateAttackEffect()
+{
+	auto attack = std::dynamic_pointer_cast<EnemyAttack>(m_currentState);
+	if (!attack)
+	{
+		m_effectAttackState.reset();
+		//中断されたら土煙を止める//出た分はその場に残って消える
+		if (m_dashTrailHandle != -1)GetEffekseer3DManager()->StopRoot(m_dashTrailHandle);
+		m_dashTrailHandle = -1;
+		return;
+	}
+
+	auto& effect = EffectManager::GetInstance();
+	const float rotY = GetModelFacingRotY();
+
+	//新しい攻撃に入った
+	if (m_effectAttackState.lock() != attack)
+	{
+		m_effectAttackState = attack;
+		m_isAttackEffectPlayed = false;
+		if (m_dashTrailHandle != -1)GetEffekseer3DManager()->StopRoot(m_dashTrailHandle);
+		m_dashTrailHandle = -1;
+		//ダッシュアタックは走り出しから土煙
+		if (m_currentAttackIndex == kDashAttackIndex)
+		{
+			m_dashTrailHandle = effect.Play(AsyncData::KingmechDashTrailEffect, m_rb.m_pos, rotY, kAttackEffectScale);
+		}
+	}
+
+	const float frame = m_anim.GetNowAnimFrame();
+	switch (m_currentAttackIndex)
+	{
+	case kSlashAttackIndex:
+		//横なぎ//体を中心に、腕の通り道に風圧の弧
+		if (!m_isAttackEffectPlayed && frame >= kSweepEffectFrame)
+		{
+			effect.Play(AsyncData::KingmechSweepWindEffect, m_rb.m_pos, rotY, kAttackEffectScale);
+			m_isAttackEffectPlayed = true;
+		}
+		break;
+	case kLandAttackIndex:
+		//地面パンチ//左手の真下の地面
+		if (!m_isAttackEffectPlayed && frame >= kGroundPunchEffectFrame)
+		{
+			const Vector3 hand(MV1GetFramePosition(m_modelHandle, MV1SearchFrame(m_modelHandle, kPunchHandFrameName)));
+			const Vector3 pos(hand.x, m_rb.m_pos.y, hand.z);
+			effect.Play(AsyncData::KingmechGroundPunchEffect, pos, rotY, kAttackEffectScale);
+			m_isAttackEffectPlayed = true;
+		}
+		break;
+	case kDashAttackIndex:
+		//突進中は土煙をボスの足元についていかせる
+		if (m_dashTrailHandle != -1)
+		{
+			SetPosPlayingEffekseer3DEffect(m_dashTrailHandle, m_rb.m_pos.x, m_rb.m_pos.y, m_rb.m_pos.z);
+		}
+		//ぶつかった衝撃
+		if (!m_isAttackEffectPlayed && frame >= kDashImpactFrame)
+		{
+			effect.Play(AsyncData::KingmechDashImpactEffect, m_rb.m_pos, rotY, kAttackEffectScale);
+			m_isAttackEffectPlayed = true;
+			//突進が終わったので土煙を止める
+			if (m_dashTrailHandle != -1)GetEffekseer3DManager()->StopRoot(m_dashTrailHandle);
+			m_dashTrailHandle = -1;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+float BossEnemyKingmech::GetModelFacingRotY()const
+{
+	//モデルの前は-Z
+	const VECTOR front = VTransformSR(VGet(0.0f, 0.0f, -1.0f), MV1GetMatrix(m_modelHandle));
+	return atan2f(front.x, front.z);
 }
 
 void BossEnemyKingmech::Draw()

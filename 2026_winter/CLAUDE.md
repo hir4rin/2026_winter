@@ -2202,6 +2202,14 @@
 - (11/23)ユーザーは手順4まで書いた。**RPG7 に弾頭の先の空のフレーム `Muzzle` を足した**(撃つ位置をメッシュの範囲から求めるのをやめるため。ユーザーが選んだ)。
   - `RPG7.x` に `Frame Muzzle`(メッシュ無し、位置 (0, 3.828, 49.864) = `Rocket` の先端の面の中心)を `Rocket` と `Launcher` の間に足し、`tools/FbxToMv1/keepmat.exe`(新規。.x を mv1 にし、マテリアルの色は元の mv1 からコピー。ログは `keepmat_log.txt`)で `RPG7.mv1` を作り直した。形・色は元と同じ。フレームの番号は Rocket=0 / Muzzle=1 / Launcher=2 に変わった(番号で使っている所は無い)。
   - 手順5の `EnemyBazookaWeapon` の TODO(①メッシュの範囲・②VTransform)は古い書き方のまま。`MV1SearchFrame(m_modelHandle, "Muzzle")` を覚えて、`MV1GetFramePosition` で取ればよい(ユーザーが書く)。**ゲームでの確認はまだ**。
+- (11/23)**ユーザーが手順1〜10を書き終えた**。勉強用の TODO コメントは全部消して一言のコメントにした(`EnemyBazookaWeapon.h` の使わない `m_muzzleLocalPos`、`EnemyBazookaMissileCol.h` の `m_pos` も消した)。
+  - まだのこと: `DebugClearEnemies` の `m_missiles.clear()`(`//TODO` の1行で残してある)、`Init` の予告の速さが距離0で0割り、`UpdateFly` でステージのハンドルが -1 でも `MV1CollCheck_Line` を呼ぶ(落ちはしない)。
+- (11/23)**ミサイル弾のエフェクト** `data/Effect/Bazooka/BazookaMissile.efk`(.efkefc も同じ所。Effekseer MCP で作成)。Kingmech の `MissileFall` と同じ作り(本体のモデル・炎・噴射の光・光の尾(Track)・残る煙)を半分の大きさ・横向きにしたもの。1/20 で作って20倍で再生(長さ約60)。
+  - 先端が原点で **-Z が前**(ゲームでは +Z が後ろになるため)。`Rocket`(None、X 90°で尾を +Z へ)の下に Body / Flame / Exhaust / Trail / Smoke。煙と尾は「生成時のみ」なので、コードで位置を動かすと後ろに残る。
+  - `Rocket`・Body・Flame・Exhaust は「親が消えたら消す」。爆発で `StopRoot` すると本体と炎はすぐ消え、煙と尾は消えるまで残る(Rocket に付けないと本体が着弾点に残った)。
+  - 素材は Kingmech のコピー(`Model/Missile.efkmodel`、`Texture/MissileGlow / MissileSmoke / MissileFire / SparkStreak.png`)。
+  - コード: AsyncData `EnemyBazookaMissileEffect`(System の Bazooka で読む)。`EnemyBazookaMissile::Init` で再生、`UpdateFlyEffect` で毎フレーム位置と向き(yaw = atan2(x, z)、pitch = -asin(y)。X が pitch、Y が yaw)、`Explode` とデストラクタで `StopRoot`。仮のカプセル(`Draw`)と EnemyManager の Draw のミサイルは消した。
+  - 確認: デモステージ(`-bench -stage=1`)で一時コードでバズーカに撃たせて横から追って撮った(消した)。銃口から出て先端が前、上がるときは上・下がるときは下を向く、煙が後ろに残る、爆発で本体が消える。**実際の攻撃からの発射・近い距離での見え方はまだ**。
 
 ### 2026-11-21 列車とステージ1の間にもう1ステージ挟む(決定・まだ作らない)
 - 原作は列車から落ちてそのまま Ch1 だが、ここでは**列車のエンディングの後に、操作させるステージを1つ挟んで街(ステージ1)へ向かわせる**。原作から外れてよい(ユーザー)。
@@ -2461,3 +2469,23 @@
   - **着地の瞬間から約7Fは、プレイヤーがまだ浮いて見える**。`HeavyAttackLanding` を0.3倍で流していて、出だしの体が高い所が長く見えるため(本編の空中強攻撃の着地もブレンドは同じ5F)。エフェクトとシェイクは着地のフレームで出る。直すなら着地のアニメを途中のフレームから始める・ブレンドを短くする。
   - チュートリアルの C5(下からのカット)は、着地の瞬間に手前の物で画面がふさがっている(C1〜C6 はステージとの当たり判定をしない)。
   - `[TEMP_TRAIL]` の一時コード(Player.cpp・SceneMain.cpp・Application.cpp)はまだ残っている(今回の撮影にも使った)。
+
+### 2026-11-23 Kingmech の攻撃のエフェクト(ガトリングの爆発・横なぎ・地面パンチ・ダッシュアタック)
+- 決めたこと(会話): 地面パンチは叩いた所だけ(前へ走る Wave は作らない)、横なぎは重い風圧の白い弧、ガトリングの爆発は大爆発＋弾の誘爆。
+- エフェクト(`data/Effect/Kingmech/`、作業ファイルは同じ名前の .efkefc。**1/20 で作り、ゲームでは20倍**。Effekseer MCP で作成):
+  - `GatlingExplode`: MissileExplode のコピーを空中用に(地面のノードを消した)。火球・閃光・衝撃の輪・火花＋`CookOff`(7F後から3〜6Fおきに10回、周り±10の所で小さな爆発)＋`Debris`(金属片24個、`Texture/MetalShard.png` = GB_Shard のコピー)。
+  - `GroundPunch`: StartLand のコピーを `Scale`(None、2.2倍)の下に入れたもの。ひびを大きく、破片・土煙を多めに。画像は `Texture/GP_*.png`(StartMovie の SL_*.png のコピー。別フォルダの画像を参照しないように写した)。
+  - `SweepWind`: Ring の三日月を走らせる。`Tilt`(None、高さ15、右へ15°上がる)の下に `Arc`(平らな帯)と `Curtain`(縦の幕。横から見ても見える)、地面に `GroundDust`。画像は自作の `Texture/WindStreak.png`(風の筋。scratchpad の gen_wind.ps1 で作った)。
+  - `DashTrail`: 土煙と風の筋を37F出し続ける(`WhenCreating` なので、ボスについていかせると後ろに残る)。
+  - `DashImpact`: 前への衝撃の輪2枚・閃光・火花・土煙・地面の輪。
+- **Effekseer の +Z はゲームでは後ろになる**(Z が反転する。X はそのまま)。上から撮って確かめた。前のある Kingmech のエフェクト(SweepWind・DashTrail・DashImpact)は **-Z を前**にして作ってある。三日月の角度は 0°=+Z、増えると -X 側。
+  - 前に作ったエフェクトで「+Z を前」にしているもの(血など)は、ゲームでは向きが逆かもしれない(見ていない)。
+- ゲーム:
+  - `AsyncData::KingmechGatlingExplodeEffect / SweepWindEffect / GroundPunchEffect / DashTrailEffect / DashImpactEffect`。Kingmech と一緒に読む(`System::LoadEnemy`)。
+  - `KingmechGatling::Explode`: 仮のスキル3の閃光をやめて `GatlingExplode` を20倍(`kExplodeEffectScale` 45 → 20)。
+  - `BossEnemyKingmech::UpdateAttackEffect()`(Update の最後): 今のステートが `EnemyAttack` のとき、攻撃のアニメのフレームで出す。値は .cpp 先頭の `kSweepEffectFrame` などで、向きはモデルの前(`GetModelFacingRotY`)。
+    - 横なぎ(0): 44.5F で足元に `SweepWind`。ゲームで測った腕の動きは 44.5F で振り始め → 47F で前 → 50F で右 → 52F から後ろへ上がる。
+    - 地面パンチ(3): 29F で左手(`hand_l`)の真下の地面に `GroundPunch`。
+    - ダッシュアタック(4): 攻撃に入ったら `DashTrail` を出して足元についていかせる。22F(判定の始まり)で `DashImpact` を出し、土煙は `StopRoot` で止める(出た分は残る)。中断されたときも止める。
+- 確認: Debug・Release(x64)のビルドは通った。一時コードでステージ1のボス戦に飛んで技を出させ、撮影した(一時コードは消した)。爆発・地面パンチの位置、横なぎの風が腕の後を追うこと、ダッシュの土煙が後ろに残り衝撃が前に出ることを見た。**実際に操作しての確認はまだ**(プレイヤーのカメラからの見え方・重さ)。
+- 気づいたこと(未対応): **横なぎの攻撃判定(CSV の 48〜56F)は、腕が前を通る(47F)より後**。判定を腕に合わせるなら attackColStart を 45〜46 くらいにする。

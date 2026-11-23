@@ -19,8 +19,6 @@ public:
 	Vector3 GetMuzzlePos()const;//弾頭の先のワールド座標//ミサイルの発射位置
 
 private:
-	Vector3 m_muzzleLocalPos;//モデルの空間での弾頭の先//メッシュの範囲から求める
-
 	std::weak_ptr<EnemyBazooka> m_owner;//持ち主のバズーカ兵
 	int m_modelHandle = -1;//RPG7のモデルのハンドル
 	int m_slotIndex = -1;//装備しているボーン(右手)のフレーム番号

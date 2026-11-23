@@ -71,6 +71,8 @@ private:
     };
 
     void DrawFinisherCut();
+    void UpdateAttackEffect();//攻撃のアニメに合わせてエフェクトを出す
+    float GetModelFacingRotY()const;//モデルが向いている向き(Y軸回転)//エフェクトの+Zを前に合わせる
     void CutGatling(Collider& other, AttackData& data);//切り上げでガトリングを切り落とす
     void OnGatlingExploded();//投げ返されたガトリングが爆発した//ガトリングから呼ばれる
 
@@ -84,6 +86,11 @@ private:
     bool m_isFinisher = false;//トドメのムービー中
     bool m_isFinisherHidden = false;//爆発で消えた
     FinisherCut m_finisherCut;
+
+    //攻撃のエフェクト
+    std::weak_ptr<EnemyStateBase> m_effectAttackState;//エフェクトを見ている攻撃のステート//変わったら出し直す
+    bool m_isAttackEffectPlayed = false;//この攻撃のエフェクトを出したか
+    int m_dashTrailHandle = -1;//ボスについていくダッシュの土煙//ぶつかったら離す
 
     bool m_wasReloadPressed = false;//前のフレームにF8を押していたか//デバッグ用の攻撃データ読み込み直しを押した瞬間だけ行うため
     bool m_wasIPressed = false;//前のフレームにIを押していたか//デバッグ用のアニメCSV読み込み直し

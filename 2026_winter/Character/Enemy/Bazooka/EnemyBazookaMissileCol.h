@@ -17,6 +17,5 @@ public:
 	int GetStageHandle()const;//ステージのモデル//無ければ-1
 
 private:
-	Vector3 m_pos;//ミサイルの位置
 	bool m_isTouched = false;//プレイヤーか物に触れたか
 };

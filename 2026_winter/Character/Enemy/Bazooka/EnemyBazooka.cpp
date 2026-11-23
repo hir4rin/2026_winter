@@ -247,45 +247,19 @@ void EnemyBazooka::OnAttackFire()
 	//近接の攻撃では撃たない
 	if (m_currentAttackIndex != kMissileAttackIndex)return;
 
-	// TODO(手順5) ミサイルを作って m_firedMissiles に入れる
-	//   呼ばれるタイミング: EnemyAttack::AttackMove で、攻撃CSVの attackColStart のフレームに1回だけ。
-	//   考え方:
-	//   - プレイヤー(m_player.lock())と武器(m_weapon)が無ければ何もしない。
-	//   - 始点 = m_weapon->GetMuzzlePos()(RPG7 の弾頭の先)
-	//   - 着弾点 = player->GetRigidBody().GetPos()(撃った「瞬間」のプレイヤーの足元)
-	//       この後プレイヤーが動いても着弾点は変えない。だから走れば避けられる(追尾しない)。
-	//   - 持ち主 = GetWeakPtr()。爆発の判定の持ち主になる(手順8)。
-	//   - 書き方:
-	//       auto missile = std::make_shared<EnemyBazookaMissile>(GetWeakPtr(), 始点, 着弾点);
-	//       missile->Init();   // 予告・判定を作る(手順7・9)。make_shared の後でないと判定を登録できない
-	//       m_firedMissiles.push_back(missile);
-	//   - なぜ自分で持ち続けずに「いったん入れて渡す」か → TakeFiredMissiles の TODO
-
 	auto player = m_player.lock();
 	if (!player || !m_weapon) return;
 
 	Vector3 startPos = m_weapon->GetMuzzlePos();
-	Vector3 targetPos = player->GetRigidBody().GetPos();
+	Vector3 targetPos = player->GetRigidBody().GetPos();//撃った瞬間の足元//追尾しない
 
 	auto missile = std::make_shared<EnemyBazookaMissile>(GetWeakPtr(), startPos, targetPos);
 	missile->Init();
-	m_firedMissiles.push_back(missile);
+	m_firedMissiles.push_back(missile);//EnemyManagerが取りに来る
 }
 
 std::vector<std::shared_ptr<EnemyBazookaMissile>> EnemyBazooka::TakeFiredMissiles()
 {
-	// TODO(手順5) m_firedMissiles を中身ごと返して、自分の方は空にする
-	//   書き方:
-	//     std::vector<std::shared_ptr<EnemyBazookaMissile>> missiles;
-	//     missiles.swap(m_firedMissiles);   // 中身を入れ替える = m_firedMissiles は空になる
-	//     return missiles;
-	//   考え方:
-	//   - ミサイルを動かし続けるのは EnemyManager。バズーカが持ったままだと、
-	//     撃った直後にバズーカが倒されて消えたとき、飛んでいるミサイルも一緒に消えてしまう。
-	//   - でもバズーカは EnemyManager を知らない(ポインタを持っていない)。
-	//     そこで「撃った弾をここに置いておく → EnemyManager が毎フレーム取りに来る」形にした。
-	//     ボスの腕を出す CreateChildEnemies と同じ考え方。
-	//   - 空にしないと、次のフレームにまた同じミサイルを渡して2重に登録されてしまう。
 	std::vector<std::shared_ptr<EnemyBazookaMissile>> missiles;
 	missiles.swap(m_firedMissiles);//swapで中身を入れ替えると、m_firedMissilesは空になる
 	return missiles;

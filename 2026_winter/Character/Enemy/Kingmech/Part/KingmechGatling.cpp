@@ -35,7 +35,7 @@ namespace
 	constexpr float kStickDistance = 130.0f;//この距離まで近づいたら刺さる
 	constexpr float kThrowMaxFrame = 90.0f;//これだけ飛んでも届かなければ爆発
 
-	constexpr float kExplodeEffectScale = 45.0f;//爆発のエフェクトの大きさ
+	constexpr float kExplodeEffectScale = 20.0f;//爆発のエフェクトの大きさ//1/20で作っている
 
 	//補給
 	constexpr float kSupplyFrame = 30.0f;//落ちてくる長さ
@@ -239,10 +239,8 @@ void KingmechGatling::UpdateThrown()
 
 void KingmechGatling::Explode()
 {
-	//TODO: 専用の爆発エフェクト//今は仮でスキル3の着地の閃光
-	int handle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(AsyncData::GhostSkill3ImpactEffect));
-	SetPosPlayingEffekseer3DEffect(handle, m_pos.x, m_pos.y, m_pos.z);
-	SetScalePlayingEffekseer3DEffect(handle, kExplodeEffectScale, kExplodeEffectScale, kExplodeEffectScale);
+	//大爆発＋弾の誘爆
+	EffectManager::GetInstance().Play(AsyncData::KingmechGatlingExplodeEffect, m_pos, 0.0f, kExplodeEffectScale);
 
 	m_phase = Phase::Gone;
 

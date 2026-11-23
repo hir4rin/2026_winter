@@ -79,6 +79,13 @@ namespace
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
 	const std::string kKingmechMissileFallEffectPath = "data/Effect/Kingmech/MissileFall.efk";
 	const std::string kKingmechMissileExplodeEffectPath = "data/Effect/Kingmech/MissileExplode.efk";
+	//Kingmechの攻撃
+	const std::string kKingmechGatlingExplodeEffectPath = "data/Effect/Kingmech/GatlingExplode.efk";
+	const std::string kKingmechSweepWindEffectPath = "data/Effect/Kingmech/SweepWind.efk";
+	const std::string kKingmechGroundPunchEffectPath = "data/Effect/Kingmech/GroundPunch.efk";
+	const std::string kKingmechDashTrailEffectPath = "data/Effect/Kingmech/DashTrail.efk";
+	const std::string kKingmechDashImpactEffectPath = "data/Effect/Kingmech/DashImpact.efk";
+	const std::string kEnemyBazookaMissileEffectPath = "data/Effect/Bazooka/BazookaMissile.efk";
 }
 
 void System::LoadCommon()
@@ -201,6 +208,7 @@ void System::LoadEnemy(EnemyType type)
 		//ミサイルの予告と爆発はKingmechのものを使う
 		LoadStageEffect(AsyncData::KingmechMissileWarningEffect, kKingmechMissileWarningEffectPath);
 		LoadStageEffect(AsyncData::KingmechMissileExplodeEffect, kKingmechMissileExplodeEffectPath);
+		LoadStageEffect(AsyncData::EnemyBazookaMissileEffect, kEnemyBazookaMissileEffectPath);
 		break;
 	case EnemyType::BossEnemyPirateR1:
 		//第二ラウンドは背中の腕も使う
@@ -219,6 +227,11 @@ void System::LoadEnemy(EnemyType type)
 		LoadStageEffect(AsyncData::KingmechMissileWarningEffect, kKingmechMissileWarningEffectPath);
 		LoadStageEffect(AsyncData::KingmechMissileFallEffect, kKingmechMissileFallEffectPath);
 		LoadStageEffect(AsyncData::KingmechMissileExplodeEffect, kKingmechMissileExplodeEffectPath);
+		LoadStageEffect(AsyncData::KingmechGatlingExplodeEffect, kKingmechGatlingExplodeEffectPath);
+		LoadStageEffect(AsyncData::KingmechSweepWindEffect, kKingmechSweepWindEffectPath);
+		LoadStageEffect(AsyncData::KingmechGroundPunchEffect, kKingmechGroundPunchEffectPath);
+		LoadStageEffect(AsyncData::KingmechDashTrailEffect, kKingmechDashTrailEffectPath);
+		LoadStageEffect(AsyncData::KingmechDashImpactEffect, kKingmechDashImpactEffectPath);
 		break;
 	default:
 		break;
@@ -276,6 +289,12 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechMissileWarningEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechMissileFallEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechMissileExplodeEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechGatlingExplodeEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechSweepWindEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechGroundPunchEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechDashTrailEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::KingmechDashImpactEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::EnemyBazookaMissileEffect]);
 	//mascot
 	MV1DeleteModel(m_asyncHandles[AsyncData::MascotModel]);
 

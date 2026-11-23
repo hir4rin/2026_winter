@@ -105,18 +105,7 @@ void EnemyManager::UpdateCorpses()
 
 void EnemyManager::UpdateMissiles()
 {
-	// TODO(手順4) 敵が撃ったミサイルを受け取って m_missiles に足す
-	//   書き方:
-	//     for (auto& enemy : m_enemies)
-	//         for (auto& missile : enemy->TakeFiredMissiles())
-	//             m_missiles.push_back(missile);
-	//   考え方:
-	//   - ミサイルを EnemyManager が持つのは、撃った敵が倒されて消えても飛び続けるようにするため。
-	//   - TakeFiredMissiles は EnemyBase の仮想関数で、標準は空を返す。撃つ敵(バズーカ)だけ上書きしている。
-	//     なので全部の敵に聞いてよい(撃たない敵は何も返さない)。
-	//   - 呼ぶ場所は Update の敵を回すループの「後」。そのフレームに撃った弾をすぐ受け取れる。
-
-	// TODO(手順4) 全部のミサイルの Update を呼ぶ
+	//敵が撃ったミサイルを受け取る//撃った敵が倒されても飛び続けるようにここで持つ
 	for (auto& enemy : m_enemies)
 	{
 		for (auto& missile : enemy->TakeFiredMissiles())
@@ -129,11 +118,7 @@ void EnemyManager::UpdateMissiles()
 		missile->Update();
 	}
 
-	// TODO(手順4) 終わったミサイル(IsFinished() が true)を m_missiles から消す
-	//   書き方: std::erase_if(m_missiles, [](const std::shared_ptr<EnemyBazookaMissile>& missile) { return missile->IsFinished(); });
-	//   - Update を回している for の中で消すと、ループが壊れる(要素がずれる)。回し終わってからまとめて消す。
-	//     UpdateCorpses の死体の消し方と同じ。
-	//   - shared_ptr を一覧から外すとミサイルのデストラクタが呼ばれ、持っていた判定も一緒に消える。
+	//終わったミサイルを消す
 	std::erase_if(
 		m_missiles, [](const std::shared_ptr<EnemyBazookaMissile>& missile) 
 		{ return missile->IsFinished(); }
@@ -148,13 +133,6 @@ void EnemyManager::Draw()
 		enemy->BeginGuardRim();
 		enemy->Draw();
 		enemy->EndGuardRim();
-	}
-
-	// TODO(手順4) 全部のミサイルの Draw を呼ぶ(手順3の仮の見た目)
-	//   敵の後に描く。エフェクトにしたら、Draw は要らなくなるかもしれない。
-	for (auto& missile : m_missiles)
-	{
-		missile->Draw();
 	}
 }
 
@@ -219,8 +197,7 @@ void EnemyManager::DebugClearEnemies()
 	m_enemies.clear();
 	m_corpses.clear();
 	m_phaseEnemies.clear();
-	// TODO(手順4) m_missiles.clear();
-	//   F4 などのデバッグで敵を全部消したとき、飛んでいるミサイルも消す(残ると、いない敵の弾が飛び続ける)。
+	//TODO 飛んでいるミサイルも消す(m_missiles.clear())
 }
 
 bool EnemyManager::IsPhaseEnemiesAllDead() const

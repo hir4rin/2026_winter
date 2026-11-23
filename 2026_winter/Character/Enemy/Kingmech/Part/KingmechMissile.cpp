@@ -78,6 +78,7 @@ void KingmechMissile::CreateExplodeCol()
 		.knockBackPower = Vector3(20.0f, 20.0f, 0.0f),
 		.knockBackFrame = 0.0f,
 		.hitStopTime = 0.1f,
+		.hitStopFrame = 3.0f,
 		.kAttackColOffset = 0.0f,
 		.isKirimomi = true
 	};

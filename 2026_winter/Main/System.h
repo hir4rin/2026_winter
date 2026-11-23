@@ -49,6 +49,12 @@ enum class AsyncData : int
 	KingmechMissileWarningEffect,//ミサイルの雨の予告の円(45F)
 	KingmechMissileFallEffect,//上から落ちてくるミサイル(15Fで着弾)
 	KingmechMissileExplodeEffect,//ミサイルの爆発
+	KingmechGatlingExplodeEffect,//投げ返したガトリングの爆発
+	KingmechSweepWindEffect,//横なぎの風圧
+	KingmechGroundPunchEffect,//地面パンチの衝撃
+	KingmechDashTrailEffect,//ダッシュアタックの突進中の土煙
+	KingmechDashImpactEffect,//ダッシュアタックのぶつかった衝撃
+	EnemyBazookaMissileEffect,//バズーカ兵のミサイル弾(本体・炎・煙)
 	//マスコット
 	MascotModel,
 	//ステージ

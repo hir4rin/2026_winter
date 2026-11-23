@@ -23,11 +23,11 @@ public:
 
 	void Init();
 	void Update();
-	void Draw();//仮の見た目
 	bool IsFinished()const { return m_phase == Phase::Finished; }
 
 private:
 	void UpdateFly();
+	void UpdateFlyEffect();//弾のエフェクトを位置と進む向きに合わせる
 	Vector3 CalcFlyPos(float rate)const;//割合のときの位置
 	void Explode(const Vector3& pos);//その場で爆発
 	void CreateExplodeCol();//爆発の攻撃判定を出す
@@ -52,4 +52,5 @@ private:
 	float m_upWidth = 0.0f;//縦の揺れの幅
 
 	int m_warningEffect = -1;//着弾点の予告
+	int m_flyEffect = -1;//弾(本体・炎・煙)
 };

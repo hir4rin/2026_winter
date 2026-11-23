@@ -41,18 +41,6 @@ EnemyBazookaWeapon::EnemyBazookaWeapon(std::weak_ptr<EnemyBazooka> owner)
 	m_slotIndex = MV1SearchFrame(bazooka->m_modelHandle, kHandFrameName);
 	if (m_slotIndex < 0)m_slotIndex = kDefaultSlotIndex;
 
-	// TODO(手順5) 弾頭の先の位置(モデルの空間)を m_muzzleLocalPos に入れる
-	//   考え方:
-	//   - RPG7.mv1 は原点が引き金、+Z が前(弾頭)、+Y が上にしてある(作業メモの 10/18)。
-	//     なので「一番前(Zが一番大きい所)」が弾頭の先。
-	//   - モデルの空間で1回だけ求めておき、撃つたびに今の行列でワールドに直す(GetMuzzlePos)。
-	//     手に持って動くので、ワールドの位置は毎フレーム変わるが、モデルの中での位置は変わらない。
-	//   - 求め方: 全部のメッシュの範囲を MV1GetMeshMinPosition / MV1GetMeshMaxPosition で取って合わせる
-	//       (MV1GetMeshNum でメッシュの数。min・max は x・y・z ごとに (std::min) / (std::max))。
-	//       m_muzzleLocalPos = Vector3((min.x + max.x) / 2, (min.y + max.y) / 2, max.z)
-	//       X・Y は真ん中、Z は一番前。
-	//   - 数字を手で決めて定数にしてもよい(画面で見てずれていたら、定数のほうが直しやすい)。
-
 	m_muzzleFrame = MV1SearchFrame(m_modelHandle, "Muzzle");   // 見つからないと -1
 }
 
@@ -99,12 +87,6 @@ void EnemyBazookaWeapon::SetOpacity(float rate)
 
 Vector3 EnemyBazookaWeapon::GetMuzzlePos() const
 {
-	// TODO(手順5) m_muzzleLocalPos をワールドの座標に直して返す
-	//   書き方: Vector3::FromDxLibVector(VTransform(m_muzzleLocalPos.ToDxLibVector(), MV1GetMatrix(m_modelHandle)))
-	//   - MV1GetMatrix は Update で MV1SetMatrix した行列(右手のボーン × ずらし × 大きさ)。
-	//     VTransform でモデルの空間の点にこの行列を掛けると、ワールドでの位置になる。
-	//   - m_modelHandle が -1 のときは Vector3() を返す。
-
 	if (m_modelHandle < 0 || m_muzzleFrame < 0)return Vector3();
 	return Vector3::FromDxLibVector(MV1GetFramePosition(m_modelHandle, m_muzzleFrame));
 }
