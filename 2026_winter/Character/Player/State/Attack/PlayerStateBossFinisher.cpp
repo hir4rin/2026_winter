@@ -1,5 +1,6 @@
 ﻿#include "PlayerStateBossFinisher.h"
 #include "Character/Player/Player.h"
+#include "Character/Player/PlayerWeapon.h"
 #include "Character/Enemy/EnemyBase.h"
 #include <algorithm>
 #include <cmath>
@@ -55,6 +56,7 @@ void PlayerStateBossFinisher::Exit()
 	if (!player)return;
 	player->SetIsGhost(false);
 	player->m_anim.SetRootMotionEnable(RootMotionCancel::None);
+	player->m_weapon->SetUltWeapon(false);
 }
 
 void PlayerStateBossFinisher::DebugDraw()
@@ -71,6 +73,21 @@ void PlayerStateBossFinisher::Warp(const Vector3& pos, const Vector3& front)
 	player->SetRotY(atan2f(front.x, front.z) - DX_PI_F);
 }
 
+void PlayerStateBossFinisher::SetFront(const Vector3& front)
+{
+	auto player = m_owner.lock();
+	if (!player)return;
+	player->m_targetVec = front;
+	player->SetRotY(atan2f(front.x, front.z) - DX_PI_F);
+}
+
+Vector3 PlayerStateBossFinisher::GetPos()const
+{
+	auto player = m_owner.lock();
+	if (!player)return Vector3();
+	return player->m_rb.m_pos;
+}
+
 void PlayerStateBossFinisher::MoveTo(const Vector3& goal, float frame, EasingMode easing, float power)
 {
 	auto player = m_owner.lock();
@@ -84,12 +101,26 @@ void PlayerStateBossFinisher::MoveTo(const Vector3& goal, float frame, EasingMod
 	m_isMoving = true;
 }
 
-void PlayerStateBossFinisher::PlayAnim(const std::string& animName, bool isLoop, float speed, float endFrame, float blendFrame,
-	RootMotionCancel cancel)
+void PlayerStateBossFinisher::SetUltSword(bool isUlt)
 {
 	auto player = m_owner.lock();
 	if (!player)return;
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, animName, isLoop, speed, endFrame, 0.0f, blendFrame);
+	player->m_weapon->SetUltWeapon(isUlt);
+}
+
+void PlayerStateBossFinisher::SetUltBladeRate(float rate)
+{
+	auto player = m_owner.lock();
+	if (!player)return;
+	player->m_weapon->SetUltBladeRate(rate);
+}
+
+void PlayerStateBossFinisher::PlayAnim(const std::string& animName, bool isLoop, float speed, float endFrame, float blendFrame,
+	RootMotionCancel cancel, float startFrame)
+{
+	auto player = m_owner.lock();
+	if (!player)return;
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, animName, isLoop, speed, endFrame, startFrame, blendFrame);
 	player->m_anim.SetRootMotionEnable(cancel);
 }
 

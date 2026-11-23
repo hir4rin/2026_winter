@@ -18,7 +18,6 @@ public:
 		Thrown,//ボスへ飛んでいく
 		Gone,//爆発して無くなった
 		Supply,//補給で上から落ちてくる
-		Stuck,//ボスの胸に刺さっている(トドメのムービー)
 	};
 
 public:
@@ -36,9 +35,7 @@ public:
 
 	//トドメのムービー
 	void ResetForFinisher();//どの状態でも無くなった状態にする
-	void ThrowAndStick();//爆発せず胸に刺さる
 	void Vanish();
-	Vector3 GetAttachedPos()const;//腕に付いているときの位置
 	const Vector3& GetPos()const { return m_pos; }
 
 	Phase GetPhase()const { return m_phase; }
@@ -49,8 +46,6 @@ private:
 	void UpdateThrown();
 	void Explode();
 	void UpdateSupply();
-	void UpdateStuck();
-	void StickToBoss();//銃口から胸に刺さる向きにする
 	void FinishSupply();
 	MATRIX CalcSupplyMatrix()const;//落ちてくる途中の行列
 
@@ -71,6 +66,4 @@ private:
 	float m_spinAngle = 0.0f;//回転角度
 	float m_frame = 0.0f;//今のフェーズの経過時間
 	Vector3 m_cutPos;//手へ寄せ始めたときの位置(Cut)
-	bool m_isStickThrow = false;//爆発せず刺さる
-	Vector3 m_stuckOffset;//投げる先の骨からのずれ
 };

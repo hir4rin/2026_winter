@@ -15,7 +15,6 @@ public:
 	{
 		bool isPlaying = false;
 		float whiteRate = 0.0f;//白いフラッシュ
-		float slashRate = 0.0f;//斬撃の線
 	};
 
 	//エンディングの画面(クレジット・ロゴ)

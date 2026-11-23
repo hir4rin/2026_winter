@@ -7,6 +7,7 @@
 #include "UI/Target/AssasinTargetUI.h"
 #include "UI/Target/PartBrokenKillUI.h"
 #include "UI/Target/GuardBreakChanceUI.h"
+#include "UI/Target/LockOnReticleUI.h"
 #include "UI/Effect/ScreenBloodUI.h"
 #include "UI/Title/TitleBackUI.h"
 #include "UI/HUD/BossHpUI.h"
@@ -33,6 +34,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	Add(std::make_shared<ScreenBloodUI>());
 	//HP・スキル・必殺技ゲージ
 	Add(std::make_shared<PlayerHUD>(player));
+	//ロックオンのレティクル
+	Add(std::make_shared<LockOnReticleUI>(player));
 	//暗殺対象の頭の上のUI
 	Add(std::make_shared<AssasinTargetUI>(player));
 	//確殺対象の体の中心のUI

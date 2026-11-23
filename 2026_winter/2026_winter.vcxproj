@@ -189,6 +189,7 @@
     <ClCompile Include="UI\Target\AssasinTargetUI.cpp" />
     <ClCompile Include="UI\Target\PartBrokenKillUI.cpp" />
     <ClCompile Include="UI\Target\GuardBreakChanceUI.cpp" />
+    <ClCompile Include="UI\Target\LockOnReticleUI.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
@@ -396,6 +397,7 @@
     <ClInclude Include="UI\Target\AssasinTargetUI.h" />
     <ClInclude Include="UI\Target\PartBrokenKillUI.h" />
     <ClInclude Include="UI\Target\GuardBreakChanceUI.h" />
+    <ClInclude Include="UI\Target\LockOnReticleUI.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />

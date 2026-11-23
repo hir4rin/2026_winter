@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ロックオン レティクル案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0a10; --panel:#15131c; --line:#2a2633; --text:#e8e2d4; --muted:#9a93a6;
+  --red:#d8203a; --blood:#80020c; --paper:#ece6d6; --steel1:#f2f4f7; --steel2:#8a93a0;
+  --brush:"KSO黒龍爽","KSO Kokuryuso","Yuji Syuku",serif;
+  --mincho:"游明朝","Yu Mincho","Shippori Mincho",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--mincho);line-height:1.7}
+header{padding:28px 20px 8px;max-width:1280px;margin:0 auto}
+h1{font-family:var(--brush);font-weight:400;font-size:40px;margin:0;letter-spacing:.08em}
+h1 span{color:var(--red)}
+.lead{color:var(--muted);margin:6px 0 0;font-size:14px}
+.ctrl{position:sticky;top:0;z-index:5;background:rgba(11,10,16,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.ctrl .in{max-width:1280px;margin:0 auto;padding:10px 20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:13px}
+.seg{display:flex;border:1px solid var(--line)}
+.seg button{background:none;border:0;color:var(--muted);padding:6px 12px;font:inherit;cursor:pointer}
+.seg button.on{background:var(--red);color:#fff}
+.btn{background:#221e2b;border:1px solid var(--line);color:var(--text);padding:6px 12px;font:inherit;cursor:pointer}
+.btn:hover{border-color:var(--red)}
+main{max-width:1280px;margin:0 auto;padding:16px 20px 60px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column}
+.stage{position:relative;aspect-ratio:16/10;overflow:hidden;background:
+  radial-gradient(circle at 18% 30%,rgba(80,200,255,.35),transparent 9%),
+  radial-gradient(circle at 82% 22%,rgba(255,60,140,.32),transparent 10%),
+  radial-gradient(circle at 70% 70%,rgba(255,170,60,.25),transparent 8%),
+  radial-gradient(circle at 28% 78%,rgba(120,90,255,.25),transparent 11%),
+  linear-gradient(180deg,#0d1424 0%,#0a0b14 60%,#07070b 100%)}
+body.ult .stage{background:
+  radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 40%,rgba(0,0,0,.75) 100%),
+  linear-gradient(180deg,#6b0006 0%,#a3000e 55%,#3a0003 100%)}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+.tag{position:absolute;left:10px;top:8px;font-family:var(--brush);font-size:26px;color:var(--paper);text-shadow:0 0 6px #000}
+.tag small{font-family:var(--mincho);font-size:12px;color:var(--muted);margin-left:6px;text-shadow:none}
+.acts{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
+.acts .btn{font-size:12px;padding:4px 10px;background:rgba(20,18,26,.8)}
+.desc{padding:12px 14px 14px;font-size:13px}
+.desc h3{margin:0 0 4px;font-size:16px}
+.desc dl{margin:0;display:grid;grid-template-columns:4.5em 1fr;gap:2px 10px}
+.desc dt{color:var(--red);font-weight:700}
+.desc dd{margin:0;color:#cfc8bb}
+.note{margin-top:28px;background:var(--panel);border:1px solid var(--line);padding:14px 18px;font-size:14px}
+.note h2{font-family:var(--brush);font-weight:400;margin:0 0 6px;font-size:26px}
+.note li{margin:2px 0}
+.enemy{fill:#d9dde3;stroke:#3b4150;stroke-width:1.2}
+body.ult .enemy{fill:#050505;stroke:#000}
+
+/* ---- 共通 ---- */
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 14s linear infinite}
+.spinR{transform-box:fill-box;transform-origin:center;animation:spin 20s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.breath{transform-box:fill-box;transform-origin:center;animation:breath 2.4s ease-in-out infinite}
+@keyframes breath{50%{transform:scale(1.035)}}
+
+/* 1 円相 */
+.enso-main{stroke-dasharray:100;stroke-dashoffset:0}
+.lock .enso-main{animation:draw .32s cubic-bezier(.3,.7,.2,1) both}
+.lock .enso-dry{animation:draw .42s .05s cubic-bezier(.3,.7,.2,1) both}
+@keyframes draw{from{stroke-dashoffset:100}}
+.drip{transform-box:fill-box;transform-origin:top center}
+.lock .drip{animation:drip 1.1s .3s cubic-bezier(.2,.8,.3,1) both}
+.lock .drip:nth-child(2){animation-delay:.42s;animation-duration:1.6s}
+.lock .drip:nth-child(3){animation-delay:.36s;animation-duration:1.3s}
+@keyframes drip{from{transform:scaleY(0)}}
+.lock .dot{animation:pop .25s .25s both}
+@keyframes pop{from{transform:scale(0);opacity:0}}
+.dot{transform-box:fill-box;transform-origin:center}
+.lock .splat{animation:pop .2s .3s both}
+.splat{transform-box:fill-box;transform-origin:center}
+
+/* 2 クナイ */
+.kunai{transform:translateY(0)}
+.lock .kunai{animation:kunai .28s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes kunai{from{transform:translateY(-34px);opacity:0}}
+.lock .kspin{animation:kspin .34s cubic-bezier(.2,.9,.3,1) both}
+.kspin{transform-box:fill-box;transform-origin:center}
+@keyframes kspin{from{transform:rotate(-45deg)}}
+.lock .kring{animation:ring .4s .2s both}
+@keyframes ring{from{opacity:0;transform:scale(1.5)}}
+.kring{transform-box:fill-box;transform-origin:center}
+
+/* 3 紋 */
+.lock .mon{animation:mon .35s cubic-bezier(.2,.9,.3,1) both}
+@keyframes mon{from{transform:scale(1.6) rotate(-30deg);opacity:0}}
+.mon{transform-box:fill-box;transform-origin:center}
+
+/* 4 鉤括弧 */
+.br{transition:none}
+.lock .br{animation:br .22s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes br{from{transform:translate(var(--dx),var(--dy));opacity:0}}
+.lock .band{animation:band .3s .12s cubic-bezier(.2,.9,.3,1) both}
+.band{transform-box:fill-box;transform-origin:top center}
+@keyframes band{from{transform:scaleY(0)}}
+.lock .bandtxt{animation:fade .2s .32s both}
+@keyframes fade{from{opacity:0}}
+
+/* 5 斬られた輪 */
+.lock .cutline{animation:draw .14s .18s ease-out both}
+.cutline{stroke-dasharray:100}
+.upper{transform:translate(4px,-3.5px)}
+.lock .upper{animation:shift .3s .3s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes shift{from{transform:translate(0,0)}}
+.lock .cutring{animation:ring .25s both}
+.cutring{transform-box:fill-box;transform-origin:center}
+.lock .flash{animation:flash .35s .3s both}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+.flash{opacity:0}
+
+/* 6 結界 */
+.lock .seal{animation:seal .4s cubic-bezier(.2,.9,.3,1) both}
+.seal{transform-box:fill-box;transform-origin:center}
+@keyframes seal{from{transform:scale(.3) rotate(90deg);opacity:0}}
+.flick{animation:flick 3.2s steps(1) infinite}
+@keyframes flick{0%,100%{opacity:1}47%{opacity:.4}49%{opacity:1}51%{opacity:.6}53%{opacity:1}}
+
+/* 7 妖眼 */
+.eye{transform-box:fill-box;transform-origin:center}
+.lock .eye{animation:eyeopen .32s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes eyeopen{from{transform:scaleY(0)}}
+.pupil{transform-box:fill-box;transform-origin:center}
+.lock .pupil{animation:pupil .5s .22s cubic-bezier(.2,.9,.3,1) both}
+@keyframes pupil{from{transform:scaleX(4);opacity:.3}}
+
+/* 8 手裏剣 */
+.shuri{transform-box:fill-box;transform-origin:center}
+.lock .shuri{animation:shuri .7s cubic-bezier(.1,.8,.25,1) both}
+@keyframes shuri{from{transform:rotate(-630deg) scale(1.5);opacity:0}}
+.slow{transform-box:fill-box;transform-origin:center;animation:spin 9s linear infinite}
+
+/* 9 白墨の四画 */
+.fude{transform-box:fill-box}
+.lock .fude{animation:br .16s cubic-bezier(.3,1.4,.4,1) both}
+
+/* 10 鍔 */
+.tsuba{transform-box:fill-box;transform-origin:center}
+.lock .tsuba{animation:tsuba .42s cubic-bezier(.2,.9,.3,1) both}
+@keyframes tsuba{0%{transform:rotate(90deg) scale(1.35);opacity:0}70%{transform:rotate(-5deg) scale(.96);opacity:1}100%{transform:none}}
+
+/* 11 落款 */
+.stamp{transform-box:fill-box;transform-origin:center}
+.lock .stamp{animation:stamp .3s .12s cubic-bezier(.2,.9,.3,1) both}
+@keyframes stamp{0%{transform:scale(2.4) rotate(-12deg);opacity:0}60%{transform:scale(.9);opacity:1}100%{transform:none}}
+.lock .thin{animation:draw .3s both}
+
+/* 12 ツクモの走査 */
+.scan{animation:scan 1.6s ease-in-out infinite alternate}
+@keyframes scan{from{transform:translateY(-52px)}to{transform:translateY(52px)}}
+.glitch{animation:glitch 2.6s steps(1) infinite}
+@keyframes glitch{0%,100%{transform:none}31%{transform:translate(3px,0)}33%{transform:translate(-2px,1px)}35%{transform:none}72%{transform:translate(-3px,0)}73%{transform:none}}
+.lock .lockbox{animation:mon .25s .15s cubic-bezier(.2,1.3,.4,1) both}
+.lockbox{transform-box:fill-box;transform-origin:center}
+
+/* 13〜22 */
+.pop{transform-box:fill-box;transform-origin:center}
+.lock .pop{animation:mon .35s cubic-bezier(.2,.9,.3,1) both}
+.lock .moon{animation:moon .5s cubic-bezier(.2,.9,.3,1) both}
+.moon{transform-box:fill-box;transform-origin:center}
+@keyframes moon{from{transform:rotate(-200deg);opacity:0}}
+.bob{animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}
+.lock .drop{animation:drop .28s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes drop{from{transform:translateY(-40px);opacity:0}}
+.lock .bloom{animation:bloom .5s cubic-bezier(.2,.9,.3,1) both}
+.bloom{transform-box:fill-box;transform-origin:center}
+@keyframes bloom{from{transform:scale(0) rotate(-60deg);opacity:0}}
+.sway{transform-box:fill-box;transform-origin:top center;animation:sway 2.2s ease-in-out infinite}
+@keyframes sway{50%{transform:rotate(3deg)}}
+.slide{transform-box:fill-box}
+.lock .slide{animation:br .3s cubic-bezier(.2,1,.3,1) both}
+.ripple{transform-box:fill-box;transform-origin:center;animation:ripple 1.8s ease-out infinite}
+@keyframes ripple{from{transform:scale(.35);opacity:1}to{transform:scale(1.25);opacity:0}}
+.lock .shot{animation:ripple .5s ease-out both}
+.shot{transform-box:fill-box;transform-origin:center;opacity:0}
+
+/* スマート */
+.sec{margin:6px 0 14px}
+.sec h2{font-family:var(--brush);font-weight:400;font-size:28px;margin:18px 0 2px}
+.sec p{margin:0;color:var(--muted);font-size:13px}
+.pop2{transform-box:fill-box;transform-origin:center}
+.lock .pop2{animation:pop2 .18s cubic-bezier(.2,.9,.3,1) both}
+@keyframes pop2{from{transform:scale(1.3);opacity:0}}
+.notch{transform-box:fill-box;transform-origin:center}
+.lock .notch{animation:notch .38s cubic-bezier(.2,.9,.3,1) both}
+@keyframes notch{from{transform:rotate(-140deg);opacity:0}}
+.rot{transform-box:fill-box;transform-origin:center}
+.lock .rot{animation:rot .24s cubic-bezier(.2,.9,.3,1) both}
+@keyframes rot{from{transform:rotate(-90deg);opacity:0}}
+.growL{transform-box:fill-box;transform-origin:right center}
+.growR{transform-box:fill-box;transform-origin:left center}
+.lock .growL,.lock .growR{animation:grow .2s cubic-bezier(.2,.9,.3,1) both}
+@keyframes grow{from{transform:scaleX(0)}}
+.lock .tip{animation:tip .2s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes tip{from{transform:translateY(-18px);opacity:0}}
+.lock .ringdraw{animation:draw .35s ease-out both}
+
+/* 切り替え */
+.sw{animation:sw .18s ease-out}
+@keyframes sw{0%{transform:scale(1)}40%{transform:scale(.8)}100%{transform:scale(1)}}
+.swwrap{transform-box:fill-box;transform-origin:center}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="brush" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4"/>
+    </filter>
+    <filter id="dry" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6 0.25" numOctaves="2" seed="9" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2.2 -0.9" result="m"/>
+      <feComposite in="SourceGraphic" in2="m" operator="in"/>
+    </filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowBig" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-color="#000" flood-opacity=".9"/>
+    </filter>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f8fb"/><stop offset=".45" stop-color="#c3c9d2"/>
+      <stop offset=".55" stop-color="#7c8592"/><stop offset="1" stop-color="#dfe3e8"/>
+    </linearGradient>
+    <linearGradient id="redband" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8212f"/><stop offset=".7" stop-color="#a8101c"/><stop offset="1" stop-color="#5a0208"/>
+    </linearGradient>
+    <clipPath id="cutUp"><polygon points="-181,84.6 181,-84.6 96.4,-265.8 -265.6,-96.6"/></clipPath>
+    <clipPath id="cutDown"><polygon points="-181,84.6 181,-84.6 265.6,96.6 -96.4,265.8"/></clipPath>
+  </defs>
+</svg>
+
+<header>
+  <h1>ロックオン<span>・</span>レティクル案</h1>
+  <p class="lead">「忍」の表現(筆の円相・墨の垂れ・鋼と赤・斬り口・常夜の街のネオン・結界・妖・刀・ナビのドローン・月・花・札・絵巻)から22案と、線を細く絞ったスマートな案9つ(S1〜S9)。囲む形だけでなく、頭の上(十四)・足元の床(十五)に出す案もあります。各カードの「ロックオン」で入りの動き、「切り替え」で対象を変えたときの動きをもう一度流せます。</p>
+</header>
+
+<div class="ctrl"><div class="in">
+  <span>背景</span>
+  <div class="seg" id="bgSeg"><button class="on" data-v="normal">通常(夜の街・白い敵)</button><button data-v="ult">血殺中(赤・黒い敵)</button></div>
+  <span>距離</span>
+  <div class="seg" id="distSeg"><button class="on" data-v="0.85">近い</button><button data-v="0.5">遠い</button></div>
+  <button class="btn" id="allLock">全部ロックオン</button>
+</div></div>
+
+<main>
+  <div class="sec"><h2>スマートな案</h2>
+    <p>細い線・色は紙色と赤の2色だけ・入りは0.2秒前後・止まった後はほぼ動かない。和の要素は「線の質」と小さな赤の一点だけに絞っています。</p></div>
+  <div class="grid" id="smartGrid"></div>
+
+  <div class="sec"><h2>そのほかの案</h2><p>世界観の要素をはっきり出した案。</p></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="note">
+    <h2>選ぶときの目安</h2>
+    <ul>
+      <li><b>世界観にいちばん合う</b>のは <b>壱 円相</b>。リザルトのアイコン(赤い筆の円＋垂れ)・「殺」の UI と同じ言葉で、画面全体の和の筆の流れがそろう。</li>
+      <li><b>戦闘中の読みやすさ</b>なら <b>四 鉤括弧と赤帯</b> か <b>弐 四方クナイ</b>。輪郭が太く白い敵・赤い血の上でも形が崩れない。</li>
+      <li><b>「斬る」ゲームの印象</b>を強く出すなら <b>伍 斬られた輪</b>。タイトルロゴの「斬ってずれる」とつながる。</li>
+      <li><b>設定とつなげる</b>なら <b>十 鍔</b>(刀・血殺の赤い刀)、<b>七 妖眼</b>(妖)、<b>十二 ツクモの走査</b>(ナビのリコ)。</li>
+      <li><b>筆の表現を広げる</b>なら <b>九 白墨の四画</b> か <b>十一 落款</b>。落款は字を変えれば敵の種類・ボスで出し分けられる。</li>
+      <li><b>敵の動きを隠したくない</b>なら <b>十四 頭上の印</b>・<b>十五 足元の陣</b>・<b>二十二 最小の印</b>。体の上にほとんど何も重ならない。</li>
+      <li><b>「死」「捕らえる」の意味を持たせる</b>なら <b>十六 彼岸花</b>(死の花)・<b>二十 鎖鎌</b>(逃がさない)・<b>十七 お札</b>(封じる)。</li>
+      <li>組み合わせもできる: 例えば「円相(ふだん)＋落款の判(ボス)」「鉤括弧(ふだん)＋鍔(血殺中)」。</li>
+      <li>気をつける所: <b>赤い × は確殺UI、青い × はガードブレイクUI、紫の閃光はガードブレイクの演出</b>で使っているので、ロックオンは × の形・紫を主にしないほうが見分けやすい。</li>
+      <li>血殺中は背景が赤・敵が黒になるので、赤一色のレティクルは沈む。白(紙色)のふちか黒い縁取りを1本持たせると両方で読める(「背景」を切り替えて比べてください)。</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+const ENEMY = `
+<g class="enemy">
+  <circle cx="0" cy="-58" r="12"/>
+  <path d="M-22 -42 L22 -42 L28 8 L15 12 L17 72 L5 72 L0 26 L-5 72 L-17 72 L-15 12 L-28 8 Z"/>
+  <path d="M22 -40 L38 -6 L33 -2 L18 -26 Z"/><path d="M-22 -40 L-38 -6 L-33 -2 L-18 -26 Z"/>
+</g>`;
+
+/* 円相の弧(半径r・開始角a0・回す量sweep) */
+function arc(r,a0,sweep){
+  const t0=a0*Math.PI/180,t1=(a0+sweep)*Math.PI/180;
+  const x0=(r*Math.cos(t0)).toFixed(2),y0=(r*Math.sin(t0)).toFixed(2);
+  const x1=(r*Math.cos(t1)).toFixed(2),y1=(r*Math.sin(t1)).toFixed(2);
+  return `M${x0} ${y0} A${r} ${r} 0 ${sweep>180?1:0} 1 ${x1} ${y1}`;
+}
+
+const kunai = `
+  <g>
+    <path d="M0 0 L5.5 -12 L0 -27 L-5.5 -12 Z" fill="url(#steel)" stroke="#111" stroke-width="1"/>
+    <path d="M0 0 L5.5 -12 L0 -12 Z" fill="var(--red)"/>
+    <rect x="-1.8" y="-41" width="3.6" height="14" fill="#1a1a1f" stroke="#000" stroke-width=".6"/>
+    <path d="M-1.8 -38 h3.6 M-1.8 -34 h3.6 M-1.8 -30 h3.6" stroke="var(--red)" stroke-width="1.2"/>
+    <circle cx="0" cy="-45.5" r="4.2" fill="none" stroke="#c3c9d2" stroke-width="1.6"/>
+  </g>`;
+
+function ticks(n,r1,r2,attrs,skipEvery){
+  let s='';for(let i=0;i<n;i++){ if(skipEvery&&i%skipEvery===0)continue;
+    const a=i/n*Math.PI*2;s+=`<line x1="${(r1*Math.cos(a)).toFixed(2)}" y1="${(r1*Math.sin(a)).toFixed(2)}" x2="${(r2*Math.cos(a)).toFixed(2)}" y2="${(r2*Math.sin(a)).toFixed(2)}" ${attrs}/>`;}
+  return s;
+}
+function diamonds(n,r,size,attrs){
+  let s='';for(let i=0;i<n;i++){const a=i/n*360;
+    s+=`<g transform="rotate(${a}) translate(${r},0)"><path d="M${-size} 0 L0 ${-size*0.6} L${size} 0 L0 ${size*0.6} Z" ${attrs}/></g>`;}
+  return s;
+}
+function glyphRing(n,r){
+  let s='';let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+  for(let i=0;i<n;i++){const a=i/n*360;const k=Math.floor(rnd()*4);let g='';
+    if(k===0)g=`<path d="M-3 -4 h6 M0 -4 v8 M-3 4 h6"/>`;
+    else if(k===1)g=`<path d="M-3 -4 L3 4 M3 -4 L-1 0"/>`;
+    else if(k===2)g=`<path d="M-3 0 h6 M0 -4 v4 M-2 4 h4"/>`;
+    else g=`<circle r="2.6"/><path d="M0 -4.5 v-2"/>`;
+    s+=`<g transform="rotate(${a}) translate(0,${-r})">${g}</g>`;}
+  return s;
+}
+
+function star(n,r1,r2,rot){
+  return Array.from({length:n*2},(_,i)=>{const r=i%2?r2:r1;const a=(i/(n*2))*Math.PI*2+(rot||0);
+    return (r*Math.cos(a)).toFixed(1)+','+(r*Math.sin(a)).toFixed(1);}).join(' ');
+}
+function mokko(r,br){
+  const p=[45,135,225,315].map(d=>{const a=d*Math.PI/180;return [(r*Math.cos(a)).toFixed(1),(r*Math.sin(a)).toFixed(1)];});
+  let d=`M${p[0][0]} ${p[0][1]}`;
+  for(let i=1;i<=4;i++){const q=p[i%4];d+=` A${br} ${br} 0 0 1 ${q[0]} ${q[1]}`;}
+  return d+'Z';
+}
+/* 先が細い筆の一画(外側が太い) */
+function fudeStroke(rOut,rIn,w){
+  return `M${-w} ${-rOut} Q${-w*1.2} ${-(rOut+rIn)/2} 0 ${-rIn} Q${w*0.7} ${-(rOut+rIn)/2} ${w} ${-rOut} Q0 ${-rOut-w*1.1} ${-w} ${-rOut}Z`;
+}
+
+const PATTERNS = [
+{
+  id:'enso', num:'壱', name:'円相', sub:'墨の輪',
+  svg:`
+  <g class="breath">
+    <path class="enso-dry" d="${arc(63,140,250)}" pathLength="100" fill="none" stroke="var(--red)" stroke-width="3.2" stroke-dasharray="100" filter="url(#dry)" opacity=".9"/>
+    <path class="enso-main" d="${arc(57,120,322)}" pathLength="100" fill="none" stroke="#1a0004" stroke-width="13" stroke-linecap="round" filter="url(#brush)" opacity=".55"/>
+    <path class="enso-main" d="${arc(57,120,322)}" pathLength="100" fill="none" stroke="var(--red)" stroke-width="9.5" stroke-linecap="round" filter="url(#brush)"/>
+    <path class="enso-main" d="${arc(57,300,100)}" pathLength="100" fill="none" stroke="#ff5a6a" stroke-width="2" opacity=".55" filter="url(#dry)"/>
+  </g>
+  <g fill="var(--red)" filter="url(#brush)">
+    <path class="drip" d="M-31 49 v16 a3 3 0 0 0 6 0 v-19 z"/>
+    <path class="drip" d="M-20 54 v26 a2.6 2.6 0 0 0 5.2 0 v-28 z"/>
+    <path class="drip" d="M-8 56 v11 a2.2 2.2 0 0 0 4.4 0 v-12 z"/>
+  </g>
+  <g fill="var(--red)">
+    <circle class="splat" cx="66" cy="-26" r="2.2"/><circle class="splat" cx="72" cy="-16" r="1.4"/><circle class="splat" cx="-70" cy="-30" r="1.6"/>
+  </g>
+  <circle class="dot" r="3.4" fill="var(--paper)" stroke="#000" stroke-width="1.2"/>`,
+  idea:'筆で一息に描いた赤い円相。ロックオンした瞬間に筆が走って輪が閉じかけ、描き始めの所から墨が垂れる。',
+  fit:'リザルトの項目アイコン(赤い筆の円＋垂れ)・「殺」の UI と同じ表現。画面の中の和の部品がそろう。',
+  make:'輪・かすれ・垂れ・中心の点を別の PNG に。入りは CircleGauge のように角度で描き進めるか、輪の画像を DrawCircleGaugeF で 0→100%。垂れは縦に伸ばすだけ。',
+  care:'形がゆるいので遠いと読みにくい。血しぶきと色がかぶるので、中心の点は紙色＋黒ふちにした。'
+},
+{
+  id:'kunai', num:'弐', name:'四方クナイ', sub:'刃で囲む',
+  svg:`
+  <circle class="kring" r="46" fill="none" stroke="var(--red)" stroke-width="1.4" stroke-dasharray="3 5" opacity=".8"/>
+  <g class="kspin">
+    ${[0,90,180,270].map(a=>`<g transform="rotate(${a})"><g transform="translate(0,-36)"><g class="kunai">${kunai}</g></g></g>`).join('')}
+  </g>
+  <path d="M-4 0 h8 M0 -4 v8" stroke="var(--paper)" stroke-width="1.6" filter="url(#shadow)"/>`,
+  idea:'鋼のクナイ4本が外から飛んできて、相手を四方から刺すように止まる。45度ひねりながら入る。',
+  fit:'タイトルロゴの「鋼と赤」と同じ配色。忍具なので説明なしで「狙っている」と分かる。',
+  make:'クナイ1本の PNG を DrawRotaGraph で4回(0/90/180/270度)。入りは距離を 70→36 に縮めるだけ。点線の輪は別の PNG か DrawCircleAA。',
+  care:'4本が近いと「×」に見えやすい角度があるので、十字(上下左右)で止める。確殺の × と混ざらないように。'
+},
+{
+  id:'mon', num:'参', name:'家紋の輪', sub:'紋章の照準',
+  svg:`
+  <g class="mon">
+    <g class="spin">
+      <circle r="62" fill="none" stroke="var(--paper)" stroke-width="1.6" filter="url(#shadow)"/>
+      <circle r="57" fill="none" stroke="var(--paper)" stroke-width=".8" opacity=".7"/>
+      <g stroke="var(--paper)" stroke-width="1.4" filter="url(#shadow)">${ticks(36,62,67,'',3)}</g>
+      ${diamonds(4,71,6,'fill="var(--red)" stroke="#000" stroke-width="1"')}
+    </g>
+    <g class="spinR">
+      <circle r="42" fill="none" stroke="var(--red)" stroke-width="4" stroke-dasharray="30 14" filter="url(#glow)"/>
+    </g>
+    <g fill="none" stroke="var(--paper)" stroke-width="1.4" filter="url(#shadow)">
+      <path d="M0 -14 L8 0 L0 14 L-8 0 Z"/>
+    </g>
+    <circle r="2.4" fill="var(--red)"/>
+  </g>`,
+  idea:'家紋や和時計の目盛りを思わせる細い二重の輪に、四方の菱。外は右回り、内の赤い輪は左回りにゆっくり回る。',
+  fit:'朧衆(主人公の一族)の紋として「一族の目」を表せる。ネオンの街の上でも細い線で HUD らしく見える。',
+  make:'外の輪・内の輪・中心の菱の3枚の PNG を、それぞれ角度を変えて DrawRotaGraph。今の描画と同じ作りで差し替えやすい。',
+  care:'線が細いので白い敵の上では黒い縁取りが必須。遠いとき(小さいとき)は目盛りがつぶれるので、小さい用の画像を分けるとよい。'
+},
+{
+  id:'bracket', num:'四', name:'鉤括弧と赤帯', sub:'読みやすさ重視',
+  svg:`
+  ${[[-1,-1],[1,-1],[1,1],[-1,1]].map(([sx,sy])=>`
+    <g class="br" style="--dx:${sx*22}px;--dy:${sy*22}px">
+      <path d="M${sx*46} ${sy*26} V${sy*46} H${sx*26}" fill="none" stroke="#000" stroke-width="8" stroke-linecap="square"/>
+      <path d="M${sx*46} ${sy*26} V${sy*46} H${sx*26}" fill="none" stroke="var(--paper)" stroke-width="4" stroke-linecap="square"/>
+    </g>`).join('')}
+  <g class="band"><rect x="54" y="-50" width="17" height="92" fill="url(#redband)" filter="url(#brush)"/></g>
+  <g class="bandtxt" font-family="var(--brush)" fill="var(--paper)" font-size="13" text-anchor="middle">
+    <text x="62.5" y="-34">標</text><text x="62.5" y="-19">的</text>
+    <text x="62.5" y="20" font-family="var(--mincho)" font-size="5.5" letter-spacing="1" fill="#ffd9dd">LOCK</text>
+  </g>
+  <path d="M-5 0 h10 M0 -5 v10" stroke="var(--red)" stroke-width="2.2" filter="url(#shadow)"/>`,
+  idea:'四隅の鉤括弧「」がパチッと閉じて囲み、右にロゴと同じ赤い縦帯で「標的」。',
+  fit:'タイトルロゴの「赤い縦帯＋縦の文字(SHINOBI)」と同じ構成。ナビのリコのドローン「ツクモ」が付けた印、という設定の言い訳にもなる。',
+  make:'角1つの PNG を4回(左右・上下反転)。帯は暗殺UIの帯のように縦に伸ばす。文字は画像に焼くかフォントで。',
+  care:'白い太線＋黒ふちで、白い敵・血殺の赤い背景のどちらでも形が残る。和の味は弱めなので帯と文字で足している。'
+},
+{
+  id:'cut', num:'伍', name:'斬られた輪', sub:'斬り口の照準',
+  svg:`
+  <g class="cutring">
+    <g class="upper" clip-path="url(#cutUp)">
+      <circle r="56" fill="none" stroke="#000" stroke-width="9"/>
+      <circle r="56" fill="none" stroke="url(#steel)" stroke-width="5.5"/>
+      <g stroke="var(--paper)" stroke-width="1.2">${ticks(24,44,49,'')}</g>
+    </g>
+    <g clip-path="url(#cutDown)">
+      <circle r="56" fill="none" stroke="#000" stroke-width="9"/>
+      <circle r="56" fill="none" stroke="var(--red)" stroke-width="5.5"/>
+      <g stroke="var(--red)" stroke-width="1.2">${ticks(24,44,49,'')}</g>
+    </g>
+  </g>
+  <line class="cutline" x1="-84" y1="39.2" x2="84" y2="-39.2" pathLength="100" stroke="#ff4a5c" stroke-width="2.2" filter="url(#glowBig)"/>
+  <line class="cutline" x1="-84" y1="39.2" x2="84" y2="-39.2" pathLength="100" stroke="#fff" stroke-width=".9"/>
+  <circle class="flash" r="70" fill="#fff"/>
+  <circle r="3" fill="var(--paper)" stroke="#000" stroke-width="1.2"/>`,
+  idea:'鋼の輪が現れた直後に斜めの一閃で斬られ、上半分がずれて止まる。斬り口の下は赤く染まる。',
+  fit:'タイトルの「忍」を斬って上がずれ、下が赤く染まる演出とまったく同じ言葉。「このゲームは斬る」がロックオンだけで伝わる。',
+  make:'輪の上半分・下半分・斬り線の3枚。上半分を数px ずらすだけ。ロゴの TitleLogoPS の考え方(線より上をずらす)を流用できる。',
+  care:'入りの動き(約0.3秒)が派手なので、対象の切り替えが多いとうるさい。切り替えのときは一閃を省いて、ずれた形のまま出すとよい。'
+},
+{
+  id:'seal', num:'六', name:'結界の印', sub:'妖を縛る',
+  svg:`
+  <g class="seal">
+    <g class="spin flick" filter="url(#glow)">
+      <polygon points="${Array.from({length:8},(_,i)=>{const a=(i/8)*Math.PI*2+Math.PI/8;return (60*Math.cos(a)).toFixed(1)+','+(60*Math.sin(a)).toFixed(1)}).join(' ')}" fill="none" stroke="#ff3355" stroke-width="2"/>
+      <polygon points="${Array.from({length:8},(_,i)=>{const a=(i/8)*Math.PI*2;return (60*Math.cos(a)).toFixed(1)+','+(60*Math.sin(a)).toFixed(1)}).join(' ')}" fill="none" stroke="#ff3355" stroke-width="1" opacity=".6"/>
+    </g>
+    <g class="spinR" fill="none" stroke="var(--paper)" stroke-width="1.2" filter="url(#shadow)">${glyphRing(20,72)}</g>
+    <circle r="30" fill="none" stroke="#ff3355" stroke-width="1.4" stroke-dasharray="2 4" filter="url(#glow)"/>
+    <path d="M0 -20 L17.3 10 L-17.3 10 Z" fill="none" stroke="var(--paper)" stroke-width="1.2" opacity=".85" filter="url(#shadow)"/>
+  </g>
+  <circle r="2.6" fill="#ff3355" filter="url(#glow)"/>`,
+  idea:'八角の結界と、外を回る呪字(仮の記号)。ネオンのように時々ちらつく。',
+  fit:'設定の「東京を覆う結界」「妖を狩る一族」に直結。近未来(ネオン)と和(呪術)の両方を一つで出せる。',
+  make:'八角・呪字の輪・内の三角を別 PNG にして回すだけ。ちらつきは描く明るさを数フレーム落とす。',
+  care:'情報量が多いので小さいとごちゃつく。紫に寄せるとガードブレイクの閃光と混ざるので、赤＋紙色にした。'
+},
+{
+  id:'eye', num:'七', name:'妖眼', sub:'妖の目で見る',
+  svg:`
+  <g class="eye">
+    <path d="M-74 0 Q0 -52 74 0 Q0 52 -74 0Z" fill="none" stroke="#000" stroke-width="7"/>
+    <path d="M-74 0 Q0 -52 74 0 Q0 52 -74 0Z" fill="none" stroke="var(--paper)" stroke-width="3" filter="url(#brush)"/>
+    <path d="M-74 0 Q0 -52 74 0" fill="none" stroke="var(--red)" stroke-width="1.4" transform="translate(0,-5)" opacity=".8"/>
+    <circle r="25" fill="none" stroke="var(--red)" stroke-width="3.5" filter="url(#glow)"/>
+    <circle r="19" fill="none" stroke="var(--red)" stroke-width="1" stroke-dasharray="2 3" opacity=".8"/>
+  </g>
+  <g class="pupil">
+    <path d="M0 -21 Q5 0 0 21 Q-5 0 0 -21Z" fill="#ff3348" opacity=".35"/>
+    <path d="M0 -21 Q5 0 0 21 Q-5 0 0 -21Z" fill="none" stroke="#ff3348" stroke-width="1.6" filter="url(#glow)"/>
+  </g>
+  <g stroke="var(--red)" stroke-width="2" filter="url(#brush)">
+    <path d="M-60 -16 l-8 -9"/><path d="M-44 -26 l-5 -11"/><path d="M60 16 l8 9"/>
+  </g>`,
+  idea:'閉じた目が縦にパッと開き、赤い虹彩が敵を囲む。瞳孔は太い所から縦の細い裂け目に絞られる。',
+  fit:'敵が妖血で強化されている設定と、妖を斬る一族。「妖の目で獲物を見る」不気味さが出る。',
+  make:'目の輪郭・虹彩・瞳孔の3枚。開くのは縦の拡大率 0→1、瞳孔は横の拡大率 4→1 だけ。',
+  care:'横長なので背の高い敵(ボス)だと頭と足がはみ出す。主人公側の UI としては少し悪役っぽい。'
+},
+{
+  id:'shuriken', num:'八', name:'手裏剣', sub:'回って止まる',
+  svg:`
+  <g class="shuri"><g class="slow">
+    <polygon points="${star(4,74,24,-Math.PI/2)}" fill="none" stroke="#000" stroke-width="7" stroke-linejoin="miter"/>
+    <polygon points="${star(4,74,24,-Math.PI/2)}" fill="none" stroke="url(#steel)" stroke-width="3.5" stroke-linejoin="miter"/>
+    ${[0,90,180,270].map(a=>`<path transform="rotate(${a})" d="M0 -74 L10 -24" stroke="var(--red)" stroke-width="2.4" filter="url(#glow)"/>`).join('')}
+    <circle r="11" fill="none" stroke="url(#steel)" stroke-width="2.5"/>
+  </g></g>
+  <circle r="2.6" fill="var(--red)"/>`,
+  idea:'大きな四方手裏剣の輪郭が、すごい速さで回りながら飛んできて、相手に重なって止まる。止まった後もゆっくり回る。',
+  fit:'忍者らしさがいちばん直接伝わる。刃の片側だけ赤くして、ロゴの「鋼と赤」にそろえた。',
+  make:'手裏剣の輪郭1枚を DrawRotaGraph で回すだけ。入りは角度の速さを落としていく(イーズアウト)。',
+  care:'形がとがっているので、角度によって確殺の × に近く見える。止める角度を「十」(上下左右)にしておく。'
+},
+{
+  id:'fude', num:'九', name:'白墨の四画', sub:'筆の点で挟む',
+  svg:`
+  ${[[0,0,-18],[90,18,0],[180,0,18],[270,-18,0]].map(([a,dx,dy],i)=>`
+    <g transform="rotate(${a})"><g class="fude" style="--dx:0px;--dy:-22px;animation-delay:${i*0.05}s">
+      <path d="${fudeStroke(72,34,7)}" fill="#000" stroke="#000" stroke-width="4" stroke-linejoin="round" filter="url(#brush)"/>
+      <path d="${fudeStroke(72,34,7)}" fill="var(--paper)" filter="url(#brush)"/>
+      <path d="M-3 -70 L-1 -50" stroke="#fff" stroke-width="1" opacity=".5" filter="url(#dry)"/>
+    </g></g>`).join('')}
+  <g fill="var(--red)"><circle cx="50" cy="-48" r="3.2"/><circle cx="58" cy="-58" r="1.6"/><circle cx="-52" cy="50" r="2.4"/><circle cx="-46" cy="58" r="1.2"/></g>
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'白い筆の「点」が4つ、外から順に「トン」と打たれて相手を挟む。打った所に赤い飛沫。',
+  fit:'書道の筆づかい(入り・払い)そのもの。リザルトの字(KSO黒龍爽)と並べても違和感がない。',
+  make:'筆の一画1枚を4回回して描く。1画ずつ数フレームずらして出すと「書いている」感じになる。',
+  care:'白なので白い敵の上では黒い影が必須。夜の街では一番目立つ。'
+},
+{
+  id:'tsuba', num:'十', name:'鍔', sub:'刀の鍔の穴から',
+  svg:`
+  <g class="tsuba">
+    <path d="${mokko(64,48)}" fill="none" stroke="#000" stroke-width="10"/>
+    <path d="${mokko(64,48)}" fill="none" stroke="url(#steel)" stroke-width="6"/>
+    <path d="${mokko(55,41)}" fill="none" stroke="var(--red)" stroke-width="1.2" opacity=".8"/>
+    <path d="M0 -40 L9 -27 L9 27 L0 40 L-9 27 L-9 -27Z" fill="none" stroke="#000" stroke-width="5"/>
+    <path d="M0 -40 L9 -27 L9 27 L0 40 L-9 27 L-9 -27Z" fill="none" stroke="var(--red)" stroke-width="2.4" filter="url(#glow)"/>
+    <path d="M-36 -9 A10 10 0 0 0 -36 9 L-30 9 L-30 -9Z" fill="none" stroke="url(#steel)" stroke-width="2.2"/>
+    <path d="M36 -9 A10 10 0 0 1 36 9 L30 9 L30 -9Z" fill="none" stroke="url(#steel)" stroke-width="2.2"/>
+  </g>`,
+  idea:'刀の鍔(木瓜形)が回転しながら「カチッ」とはまり、真ん中の刀を通す穴(赤く光る)に敵が入る。',
+  fit:'主人公の武器は刀で、血殺で刀が赤くなる。「この刀で斬る相手」と分かる。和の工芸の形で、鋼の質感もロゴと合う。',
+  make:'鍔の輪郭と中の穴の2枚。入りは回転＋少し大きい所から縮めるだけ。血殺中は穴の赤を強くすると刀とつながる。',
+  care:'太い形なので遠い敵にはかなり大きく見える。遠いときは輪郭を細い版に差し替えると良い。'
+},
+{
+  id:'rakkan', num:'十一', name:'落款', sub:'判を押す',
+  svg:`
+  <circle class="thin" r="54" pathLength="100" stroke-dasharray="100" fill="none" stroke="var(--paper)" stroke-width="1.6" filter="url(#shadow)"/>
+  <g stroke="var(--paper)" stroke-width="1.6" filter="url(#shadow)">${ticks(4,54,62,'')}</g>
+  <g class="stamp">
+    <rect x="34" y="-78" width="34" height="34" rx="3" fill="var(--red)" filter="url(#brush)"/>
+    <rect x="37" y="-75" width="28" height="28" fill="none" stroke="var(--paper)" stroke-width="1.2" opacity=".85" filter="url(#dry)"/>
+    <text x="51" y="-52" text-anchor="middle" font-family="var(--brush)" font-size="21" fill="var(--paper)">斬</text>
+  </g>
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'細い輪がスッと描かれ、右上に赤い判(落款)が「ドン」と押される。判の字は「斬」。',
+  fit:'書や絵に押す判は「この作品は私のもの」の印。狙った相手に印を付ける意味になる。和の UI の中でも上品。',
+  make:'輪と判の2枚。判は拡大率 2.4→0.9→1 で押した感じ。字を「狙」「討」「殺」などに変えて、敵の種類やボスで出し分けもできる。',
+  care:'判が右上にあるので、画面の右上の端の敵だと判が画面の外に出る。そのときは左上に置き換える。'
+},
+{
+  id:'scan', num:'十二', name:'ツクモの走査', sub:'リコのドローン',
+  svg:`
+  <g class="glitch">
+    <g class="spin" fill="none" stroke="#39f3ff" stroke-width="2.2" filter="url(#glow)">
+      <path d="${arc(64,-80,70)}"/><path d="${arc(64,40,40)}"/><path d="${arc(64,150,80)}"/>
+    </g>
+    <g class="spinR" fill="none" stroke="#39f3ff" stroke-width="1" opacity=".6"><circle r="57" stroke-dasharray="1 4"/></g>
+    <g class="scan"><line x1="-50" y1="0" x2="50" y2="0" stroke="#39f3ff" stroke-width="1" opacity=".9" filter="url(#glow)"/></g>
+    <g class="lockbox">
+      <rect x="-30" y="-30" width="60" height="60" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-dasharray="14 32" stroke-dashoffset="7" filter="url(#glow)"/>
+      <circle r="2.6" fill="var(--red)"/>
+    </g>
+    <g font-family="Consolas,monospace" font-size="7.5" fill="#39f3ff">
+      <text x="68" y="-50">TSUKUMO-02</text>
+      <text x="68" y="-40" fill="var(--paper)">DIST 12.4m</text>
+      <text x="68" y="-30" fill="var(--red)">九頭 / 刃兵</text>
+    </g>
+  </g>`,
+  idea:'水色の HUD の輪が回り、走査線が上下に動く。真ん中に赤い角がパチッと付いて、横に距離と敵の名前。ときどき映像がずれる(グリッチ)。',
+  fit:'設定の「ナビのリコが小型ドローン ツクモで敵を調べる」をそのまま形にした。常夜の街のネオンの側の表現。',
+  make:'輪の弧・走査線・角の3枚＋文字。グリッチは数フレームだけ描く位置をずらす。文字は FontManager で。',
+  care:'和の味はほぼ無い(他の UI が和なので浮くかも)。水色はガードブレイクの青に近いので、ガードブレイクのチャンス中は隠す。'
+},
+{
+  id:'moon', num:'十三', name:'三日月', sub:'常夜の月',
+  svg:`
+  <circle r="62" fill="none" stroke="var(--paper)" stroke-width=".8" stroke-dasharray="1 5" opacity=".6"/>
+  <g transform="rotate(-25)"><g class="moon">
+    <circle r="68" fill="none"/>
+    <path d="M0 -68 A68 68 0 1 0 0 68 A70 70 0 0 1 0 -68Z" fill="#f3e7c4" opacity=".95" filter="url(#glow)"/>
+    <path d="M0 -68 A68 68 0 1 0 0 68" fill="none" stroke="#000" stroke-width="1" opacity=".6"/>
+    <path d="M0 68 A70 70 0 0 1 0 -68" fill="none" stroke="var(--red)" stroke-width="1.6"/>
+  </g></g>
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'大きな三日月がくるりと回り込んで、敵を片側から抱えるように止まる。月の内側のふちだけ赤い。',
+  fit:'舞台は夜が明けない「常夜の街」。夜・月・忍の組み合わせは王道で、白く光る月は夜の街で目立つ。',
+  make:'三日月1枚を回すだけ。月の向き(どちら側から抱えるか)を、プレイヤーがいる側に合わせると「こちらから斬る」向きになる。',
+  care:'片側だけなので、敵の中心が分かりにくい。中心の点を必ず付ける。'
+},
+{
+  id:'overhead', num:'十四', name:'頭上の印', sub:'囲まずに上に出す',
+  svg:`
+  <g class="drop"><g class="bob">
+    <path d="M-12 -104 L12 -104 L0 -86Z" fill="#000" transform="translate(1.5,1.5)"/>
+    <path d="M-12 -104 L12 -104 L0 -86Z" fill="var(--red)" filter="url(#brush)"/>
+    <path d="M-5 -101 L5 -101 L0 -93Z" fill="var(--paper)" opacity=".8"/>
+  </g></g>
+  <g class="pop">
+    <path d="M0 -8 L6 0 L0 8 L-6 0Z" fill="none" stroke="var(--paper)" stroke-width="1.6" filter="url(#shadow)"/>
+    <circle r="2" fill="var(--red)"/>
+  </g>`,
+  idea:'敵の頭の上に赤い筆の▼が落ちてきて、上下にゆっくり揺れる。体には小さな菱だけ。',
+  fit:'敵の体をほとんど隠さないので、斬るときに敵の動き(予備動作)がよく見える。NG4 のような速いアクションと相性がいい。',
+  make:'▼の画像1枚を、敵の頭の位置(足元＋高さ)に出して sin で揺らす。暗殺UIと同じ出し方。',
+  care:'暗殺UIも頭の上に出るので重なる。暗殺できる敵のときは▼を消すか、少し上へずらす。'
+},
+{
+  id:'ground', num:'十五', name:'足元の陣', sub:'床に描く',
+  svg:`
+  <g transform="translate(0,92) scale(1,0.26)">
+    <g class="pop">
+      <circle r="66" fill="rgba(216,32,58,.18)"/>
+      <g class="spin">
+        <circle r="66" fill="none" stroke="var(--red)" stroke-width="4" filter="url(#glow)"/>
+        <circle r="54" fill="none" stroke="var(--red)" stroke-width="2" stroke-dasharray="8 6"/>
+        <g stroke="var(--paper)" stroke-width="3">${ticks(12,58,66,'')}</g>
+        <polygon points="${star(4,50,20,0)}" fill="none" stroke="var(--paper)" stroke-width="2" opacity=".8"/>
+      </g>
+    </g>
+  </g>
+  <g class="pop"><path d="M-4 0 h8 M0 -4 v8" stroke="var(--paper)" stroke-width="1.4" filter="url(#shadow)"/></g>`,
+  idea:'敵の足元の床に、赤い陣(円と目盛り)が広がってゆっくり回る。',
+  fit:'床に残る血の跡と同じ「床の上の赤」。体の上に何も重ならないので、いちばん画面がすっきりする。',
+  make:'床にポリゴンを1枚貼るだけ(床の血の跡 BloodDecalManager と同じやり方)。3D なので遠近が自然に付く。',
+  care:'空中の敵(打ち上げ中)では床の陣が離れて見えにくい。空中では体の印に切り替えるか、陣から敵へ細い線を伸ばす。'
+},
+{
+  id:'higan', num:'十六', name:'彼岸花', sub:'死の花が咲く',
+  svg:`
+  <g class="bloom"><g class="slow">
+    ${Array.from({length:6},(_,i)=>`<g transform="rotate(${i*60})">
+      <path d="M0 -24 Q14 -44 2 -58 Q-6 -64 4 -68" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0 -24 Q14 -44 2 -58 Q-6 -64 4 -68" fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+      <path d="M2 -24 Q-14 -50 -20 -76" fill="none" stroke="#ff4d5f" stroke-width="1"/>
+      <circle cx="-20" cy="-76" r="1.8" fill="#ffd0d5"/>
+    </g>`).join('')}
+  </g></g>
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'赤い彼岸花がパッと開いて敵を囲む。反った花びらと、外へ伸びるしべ。ゆっくり回る。',
+  fit:'彼岸花は「死・あの世」の花。和の赤で、「この敵はもう死ぬ」という意味を持たせられる。血殺の赤とも合う。',
+  make:'花びら1枚(しべ付き)の画像を6回回して描く。入りは拡大＋回転。',
+  care:'細い線が多いので、遠いとつぶれる。小さいときは花びらだけにする。'
+},
+{
+  id:'ofuda', num:'十七', name:'お札', sub:'封じの札',
+  svg:`
+  ${[[-1,'封'],[1,'縛']].map(([s,ch])=>`
+  <g class="slide" style="--dx:${s*40}px;--dy:0px"><g transform="translate(${s*58},-44)"><g class="sway" style="animation-delay:${s>0?'.6s':'0s'}">
+    <rect x="-10" y="0" width="20" height="64" fill="#000" transform="translate(1.5,1.5)"/>
+    <rect x="-10" y="0" width="20" height="64" fill="#efe6cf"/>
+    <rect x="-7.5" y="3" width="15" height="58" fill="none" stroke="var(--red)" stroke-width="1"/>
+    <text x="0" y="22" text-anchor="middle" font-family="var(--brush)" font-size="15" fill="var(--red)">${ch}</text>
+    <path d="M-4 30 Q0 40 -3 48 M3 32 L1 54" stroke="#222" stroke-width="1.6" fill="none"/>
+    <circle cx="0" cy="56" r="3" fill="none" stroke="var(--red)" stroke-width="1.2"/>
+  </g></g></g>`).join('')}
+  <path class="thin" d="M-58 -44 Q0 -34 58 -44" pathLength="100" stroke-dasharray="100" fill="none" stroke="var(--red)" stroke-width="1.2"/>
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'左右から「封」「縛」のお札が貼り付き、赤い紐でつながる。お札は風で少し揺れる。',
+  fit:'妖を封じる術。「結界」「妖」の設定に合い、紙の色と赤の組み合わせは和の UI として見やすい。',
+  make:'お札1枚の画像を左右に。字を変えるだけで種類を増やせる。揺れは上の端を軸に少し回すだけ。',
+  care:'横に広いので、敵が並んでいると隣の敵にかぶる。'
+},
+{
+  id:'kasumi', num:'十八', name:'霞', sub:'絵巻のすやり霞',
+  svg:`
+  <defs><linearGradient id="kasumiG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e9d9a6" stop-opacity="0"/><stop offset=".25" stop-color="#e9d9a6"/><stop offset="1" stop-color="#c9a45a"/></linearGradient></defs>
+  <g class="slide" style="--dx:-50px;--dy:0px">
+    <rect x="-96" y="-64" width="120" height="12" rx="6" fill="url(#kasumiG)"/>
+    <rect x="-70" y="-55" width="80" height="9" rx="4.5" fill="url(#kasumiG)" opacity=".85"/>
+    <path d="M-96 -58 H24" stroke="var(--red)" stroke-width=".8" opacity=".7"/>
+  </g>
+  <g class="slide" style="--dx:50px;--dy:0px"><g transform="scale(-1,1)">
+    <rect x="-96" y="52" width="120" height="12" rx="6" fill="url(#kasumiG)"/>
+    <rect x="-70" y="46" width="80" height="9" rx="4.5" fill="url(#kasumiG)" opacity=".85"/>
+    <path d="M-96 58 H24" stroke="var(--red)" stroke-width=".8" opacity=".7"/>
+  </g></g>
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'絵巻物の金色の「すやり霞」が、上は左から・下は右から流れてきて、敵を上下から挟む。',
+  fit:'屏風・絵巻の表現で、画面に「和の絵」の格が出る。ボス戦の登場やロックオンの特別版にも向く。',
+  make:'霞の帯1枚を上下(左右反転)で。横に動かすだけ。',
+  care:'金色は今のゲームにまだ無い色。合わせるなら、タイトルやリザルトにも少し金を入れると浮かない。'
+},
+{
+  id:'ripple', num:'十九', name:'波紋', sub:'静かに広がる',
+  svg:`
+  <circle r="58" fill="none" stroke="var(--paper)" stroke-width="1.2" opacity=".7" filter="url(#shadow)"/>
+  ${[0,0.6,1.2].map(d=>`<circle class="ripple" style="animation-delay:${d}s" r="56" fill="none" stroke="var(--red)" stroke-width="2.4"/>`).join('')}
+  <circle class="shot" r="56" fill="none" stroke="#fff" stroke-width="4"/>
+  <circle r="4" fill="var(--red)" stroke="#000" stroke-width="1.2"/>`,
+  idea:'敵を中心に、水面の波紋のような赤い輪が静かに広がり続ける。ロックオンした瞬間だけ白い輪が強く広がる。',
+  fit:'「静」の表現。派手な演出の多いゲームの中で、ロックオンは静かにしておく、という考え方。',
+  make:'輪1枚を、時間をずらして3つ、大きくしながら薄くする。',
+  care:'動き続けるので、長いボス戦では目がうるさく感じるかも。広がる速さはゆっくりめに。'
+},
+{
+  id:'kusari', num:'二十', name:'鎖鎌', sub:'鎖で巻く',
+  svg:`
+  <g class="shuri"><g class="slow">
+    <circle r="58" fill="none" stroke="#000" stroke-width="6" stroke-dasharray="7 3"/>
+    <circle r="58" fill="none" stroke="url(#steel)" stroke-width="3" stroke-dasharray="7 3"/>
+    ${[0,180].map(a=>`<g transform="rotate(${a}) translate(0,-58) scale(1.7)">
+      <path d="M0 0 Q-26 -6 -36 12 Q-20 -2 0 4Z" fill="url(#steel)" stroke="#000" stroke-width="1"/>
+      <path d="M0 4 Q-20 -2 -36 12" fill="none" stroke="var(--red)" stroke-width="1.4"/>
+      <rect x="-2" y="-4" width="4" height="12" fill="#1a1a1f" stroke="#000" stroke-width=".6"/>
+    </g>`).join('')}
+  </g></g>
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'鎖の輪が敵に巻き付くように回りながら締まる。鎖の両端に鎌の刃。',
+  fit:'「捕らえる」意味がはっきりしていて、ロックオン(相手を逃がさない)にぴったり。忍具。',
+  make:'鎖の輪と鎌の2枚。手裏剣と同じく、回りながら入って止まる。',
+  care:'鎖の点線は小さいとただの点線になる。遠いときは鎌だけ残す。'
+},
+{
+  id:'nito', num:'二十一', name:'二刀の挟み', sub:'刃で上下から',
+  svg:`
+  ${[[-1,-54],[1,54]].map(([s,y])=>`
+  <g class="slide" style="--dx:${-s*60}px;--dy:0px"><g transform="translate(0,${y}) scale(${s},1)">
+    <path d="M-62 -2 L52 -3 Q66 -2 70 3 L-62 3Z" fill="#000" transform="translate(0,1.5)"/>
+    <path d="M-62 -2 L52 -3 Q66 -2 70 3 L-62 3Z" fill="url(#steel)"/>
+    <path d="M-62 2 L68 2" stroke="var(--red)" stroke-width="1.2" filter="url(#glow)"/>
+    <rect x="-70" y="-6" width="4" height="12" rx="1" fill="#c3c9d2" stroke="#000" stroke-width=".8"/>
+    <rect x="-90" y="-3" width="20" height="6" fill="#1a1a1f" stroke="#000" stroke-width=".6"/>
+  </g></g>`).join('')}
+  <circle r="3" fill="var(--red)" stroke="#000" stroke-width="1"/>`,
+  idea:'上は右から、下は左から、2本の刀が滑り込んで敵を上下から挟む。刃先のふちは赤く光る。',
+  fit:'刀のゲームであることがそのまま見える。血殺中は刃を赤く光らせると「赤い刀」とつながる。',
+  make:'刀1本の画像を上下(左右反転)で。横に動かすだけで、作るのは簡単。',
+  care:'横に長いので、遠くでも幅がある程度必要。敵の背の高さに合わせて上下の幅を変えるとよい。'
+},
+{
+  id:'minimal', num:'二十二', name:'最小の印', sub:'点と二本線',
+  svg:`
+  <g class="slide" style="--dx:-14px;--dy:0px"><path d="M-22 -7 L-14 0 L-22 7" fill="none" stroke="#000" stroke-width="5"/><path d="M-22 -7 L-14 0 L-22 7" fill="none" stroke="var(--paper)" stroke-width="2.4"/></g>
+  <g class="slide" style="--dx:14px;--dy:0px"><path d="M22 -7 L14 0 L22 7" fill="none" stroke="#000" stroke-width="5"/><path d="M22 -7 L14 0 L22 7" fill="none" stroke="var(--paper)" stroke-width="2.4"/></g>
+  <g class="pop"><circle r="5" fill="var(--red)" stroke="#000" stroke-width="1.6"/><circle r="1.6" fill="#fff" opacity=".8"/></g>`,
+  idea:'赤い点と、左右の小さな「く」の字だけ。入りは左右から閉じるだけ。',
+  fit:'いちばん控えめ。演出(血・白い爆発・墨のビネット)が多い画面の中で、ロックオンが主張しすぎない。',
+  make:'点とくの字の2枚。どんな背景でも黒ふちで読める。',
+  care:'世界観の味はほとんど無い。「どの敵を狙っているか」だけ分かればいい、と割り切る案。'
+}
+];
+
+const grid=document.getElementById('grid');
+grid.insertAdjacentHTML('beforeend',`
+<div class="card" data-cur>
+  <div class="stage">
+    <svg viewBox="-160 -100 320 200">${ENEMY}<g class="wrap" transform="translate(0,-8) scale(0.85)"><image href="../../2026_winter/data/UI/LockOnRaticle.png" x="-55" y="-55" width="110" height="110"/></g></svg>
+    <div class="tag">今<small>LockOnRaticle.png</small></div>
+  </div>
+  <div class="desc"><h3>比べる用: 今のレティクル</h3>
+  <dl><dt>見た目</dt><dd>ピンク寄りの赤一色、幾何学の照準(FPS・戦闘機の HUD の型)。どのゲームにもある形で、筆・墨・鋼の表現とはつながっていない。</dd></dl></div>
+</div>`);
+
+const U = (d,w)=>`<path d="${d}" fill="none" stroke="#000" stroke-width="${w+1.8}" opacity=".55" stroke-linecap="round" stroke-linejoin="round"/>`;
+const L = (d,w,c)=>`${U(d,w)}<path d="${d}" fill="none" stroke="${c||'var(--paper)'}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const CDOT = `<circle r="2.2" fill="var(--red)" stroke="#000" stroke-width=".8"/>`;
+const circ = r=>`M${-r} 0 A${r} ${r} 0 1 0 ${r} 0 A${r} ${r} 0 1 0 ${-r} 0`;
+
+const SMART = [
+{
+  id:'s1', num:'S1', name:'細輪と一刻み', sub:'',
+  svg:`
+  <circle class="shot" r="52" fill="none" stroke="#fff" stroke-width="1"/>
+  <g class="pop2">
+    <circle r="52" fill="none" stroke="#000" stroke-width="2.8" opacity=".55" stroke-dasharray="76.7 5" stroke-dashoffset="-38"/>
+    <circle r="52" fill="none" stroke="var(--paper)" stroke-width="1" stroke-dasharray="76.7 5" stroke-dashoffset="-38"/>
+  </g>
+  <g class="notch"><circle r="62" fill="none"/>
+    <rect x="-2.2" y="-61" width="4.4" height="11" fill="#000" opacity=".6"/>
+    <rect x="-1.4" y="-60" width="2.8" height="9" fill="var(--red)"/>
+  </g>
+  <circle r="1.6" fill="var(--paper)" stroke="#000" stroke-width=".8"/>`,
+  idea:'1px の細い輪が少し大きい所からスッと縮んで止まり、赤い刻みが輪の上をくるっと回って真上で止まる。同時に白い輪が一度だけ広がって消える。',
+  fit:'高級時計の文字盤のような静けさ。赤の一点だけが「ここを狙っている」と伝える。',
+  make:'輪1枚・刻み1枚。刻みは角度を -140°→0° にするだけ。白い輪は拡大しながら消す。',
+  care:'細いので遠いと見えにくい。小さいときは線の太さを保ったまま輪だけ小さくする(画像を縮めない)。'
+},
+{
+  id:'s2', num:'S2', name:'二つの弧', sub:'',
+  svg:`
+  <g class="rot">
+    <circle r="50" fill="none"/>
+    ${L(arc(50,150,60),1.4)}${L(arc(50,-30,60),1.4)}
+    ${L('M-47 -20 l-6 -2 M-47 20 l-6 2 M47 -20 l6 -2 M47 20 l6 2',1.2)}
+  </g>
+  ${CDOT}`,
+  idea:'左右の細い弧が90度回りながら入ってきて、敵を左右から挟んで止まる。弧の端に小さな爪。',
+  fit:'線が少なく、どの敵の上でもじゃまにならない。刀の反りのような弧。',
+  make:'弧1枚を左右反転で2回。入りは回転だけ。',
+  care:'上下が開いているので、背の高い敵でも頭と足を隠さない。逆に「囲っている」感じは弱い。'
+},
+{
+  id:'s3', num:'S3', name:'細い菱', sub:'',
+  svg:`
+  <g class="pop2">
+    ${L('M0 -44 L44 0 L0 44 L-44 0Z',1.1)}
+    ${L('M0 -50 V-58 M50 0 H58 M0 50 V58 M-50 0 H-58',1.1)}
+  </g>
+  <path d="M0 -4.5 L4.5 0 L0 4.5 L-4.5 0Z" fill="var(--red)" stroke="#000" stroke-width=".8"/>`,
+  idea:'細い線の菱(45度回した正方形)が縮んで止まり、四つの角から短い線が外へ伸びる。真ん中に小さな赤い菱。',
+  fit:'家紋の菱をいちばん簡単にした形。和の印象を残しつつ、線だけなのでスマート。',
+  make:'菱1枚＋中心の赤い菱1枚。',
+  care:'角が上下左右なので、確殺・ガードブレイクの × とは見分けやすい。'
+},
+{
+  id:'s4', num:'S4', name:'一文字', sub:'',
+  svg:`
+  <g class="growL">${L('M-70 0 H-12',1)}${L('M-70 -4 V4',1)}</g>
+  <g class="growR">${L('M12 0 H70',1)}${L('M70 -4 V4',1)}</g>
+  <g class="growR">${L('M-30 8 H30',.6)}</g>
+  <path d="M0 -4 L4 0 L0 4 L-4 0Z" fill="var(--red)" stroke="#000" stroke-width=".8"/>`,
+  idea:'敵の胸の高さに、真ん中から左右へ細い横線がスッと伸びる。真ん中だけ空けて赤い点。',
+  fit:'「横一文字に斬る」の一文字。刀の一閃の軌跡のようで、刀のゲームらしいのにとても控えめ。',
+  make:'横線1枚を左右に。入りは横の拡大率 0→1 だけ。',
+  care:'縦の情報が無いので、敵が重なって並ぶと、どの敵か分かりにくいことがある。'
+},
+{
+  id:'s5', num:'S5', name:'四つの点', sub:'',
+  svg:`
+  ${[[-1,-1],[1,-1],[1,1],[-1,1]].map(([sx,sy])=>`<g class="br" style="--dx:${sx*16}px;--dy:${sy*16}px"><circle cx="${sx*40}" cy="${sy*40}" r="2.6" fill="var(--paper)" stroke="#000" stroke-width="1"/></g>`).join('')}
+  ${L('M-14 0 H-6 M6 0 H14 M0 -14 V-6 M0 6 V14',1)}
+  ${CDOT}`,
+  idea:'四隅の小さな点が外から寄ってきて止まる。真ん中は細い十字(中心が空いている)と赤い点。',
+  fit:'いちばん情報が少ない「点」で囲む。画面の演出(血・白い爆発)とけんかしない。',
+  make:'点1つの画像を4回。十字は線で描いてもよい。',
+  care:'形が地味なので、ロックオンしたことに気づきにくい。入りの瞬間に白い輪(S1)を足すとよい。'
+},
+{
+  id:'s6', num:'S6', name:'細い円相', sub:'',
+  svg:`
+  <path class="enso-main" d="${arc(54,130,300)}" pathLength="100" fill="none" stroke="#000" stroke-width="3.6" opacity=".55" stroke-linecap="round"/>
+  <path class="enso-main" d="${arc(54,130,300)}" pathLength="100" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linecap="round"/>
+  <path class="enso-main" d="${arc(54,130,46)}" pathLength="100" fill="none" stroke="var(--red)" stroke-width="4.2" stroke-linecap="round"/>
+  <circle r="1.6" fill="var(--paper)" stroke="#000" stroke-width=".8"/>`,
+  idea:'円相を細い一本の線にしたもの。書き始めだけ少し太く(筆の入り)、あとは細くスッと回って閉じきらない。',
+  fit:'筆の表現(リザルトのアイコン)とつながったまま、すっきり見える。円相(壱)のスマート版。',
+  make:'輪の画像を CircleGauge で描き進める。垂れ・かすれは無し。',
+  care:'赤い線なので、血殺中の赤い背景では黒いふちが頼り。'
+},
+{
+  id:'s7', num:'S7', name:'三つの刃先', sub:'',
+  svg:`
+  ${[0,120,240].map((a,i)=>`<g transform="rotate(${a})"><g class="tip" style="animation-delay:${i*0.03}s">
+    ${U('M0 -42 L-5 -54 L5 -54Z',1.1)}
+    <path d="M0 -42 L-5 -54 L5 -54Z" fill="${i===0?'var(--red)':'none'}" stroke="${i===0?'var(--red)':'var(--paper)'}" stroke-width="1.1" stroke-linejoin="round"/>
+  </g></g>`).join('')}
+  <circle r="1.6" fill="var(--paper)" stroke="#000" stroke-width=".8"/>`,
+  idea:'小さな三角の刃先が3方向から内側を指して寄ってくる。上の1つだけ赤く塗る。',
+  fit:'クナイ(弐)をいちばん簡単にした形。3つなので × にも十字にも見えない。',
+  make:'刃先1つの画像を3回(120度ずつ)。',
+  care:'上の赤い刃先は、敵が画面の上にいても見えるように、画面の外に出るときは下に回すとよい。'
+},
+{
+  id:'s8', num:'S8', name:'細い亀甲括弧', sub:'',
+  svg:`
+  <g class="br" style="--dx:-18px;--dy:0px">${L('M-34 -44 L-46 -36 V36 L-34 44',1.2)}</g>
+  <g class="br" style="--dx:18px;--dy:0px">${L('M34 -44 L46 -36 V36 L34 44',1.2)}</g>
+  <g class="pop2"><text x="0" y="62" text-anchor="middle" font-family="Consolas,monospace" font-size="7" fill="var(--paper)" stroke="#000" stroke-width=".4" letter-spacing="1">12.4 m</text></g>
+  ${CDOT}`,
+  idea:'細い〔 〕が左右から閉じて敵を挟み、下に小さく距離だけ出す。',
+  fit:'文字の括弧なので、和の UI(游明朝の文字)と並べても自然。必要な情報(距離)だけ出す。',
+  make:'括弧1枚を左右反転で。距離は FontManager の小さい字。',
+  care:'距離の数字が要らなければ消してよい。数字は動き続けるとうるさいので、0.5m 単位などで丸める。'
+},
+{
+  id:'s9', num:'S9', name:'描き切る輪', sub:'',
+  svg:`
+  <circle r="50" fill="none" stroke="var(--paper)" stroke-width=".8" opacity=".35"/>
+  <g transform="rotate(-90)">
+    <path class="ringdraw" d="${circ(50)}" pathLength="100" stroke-dasharray="100" fill="none" stroke="#000" stroke-width="3.2" opacity=".55"/>
+    <path class="ringdraw" d="${circ(50)}" pathLength="100" stroke-dasharray="100" fill="none" stroke="var(--red)" stroke-width="1.4"/>
+  </g>
+  <circle class="shot" r="50" fill="none" stroke="#fff" stroke-width="1.2"/>
+  <circle r="1.6" fill="var(--paper)" stroke="#000" stroke-width=".8"/>`,
+  idea:'うすい輪の上を、赤い線が真上から一周描き切る(0.35秒)。閉じた瞬間に白い輪が広がって消える。',
+  fit:'「狙いが定まった」ことが、輪が閉じる瞬間ではっきり分かる。動きは一回だけで、あとは止まる。',
+  make:'輪の画像を CircleGauge で 0→100%。白い輪は S1 と同じ。',
+  care:'対象を何度も切り替えると毎回0.35秒かかる。切り替えのときは描き切った形のまま出す。'
+}
+];
+
+const sgrid=document.getElementById('smartGrid');
+const addCard=(g,p)=>{
+  g.insertAdjacentHTML('beforeend',`
+  <div class="card" id="c_${p.id}">
+    <div class="stage">
+      <svg viewBox="-160 -100 320 200">${ENEMY}
+        <g class="wrap" transform="translate(0,-8) scale(0.85)"><g class="swwrap"><g class="ret lock">${p.svg}</g></g></g>
+      </svg>
+      <div class="tag">${p.num}　${p.name}<small>${p.sub}</small></div>
+      <div class="acts"><button class="btn" data-a="lock">ロックオン</button><button class="btn" data-a="sw">切り替え</button></div>
+    </div>
+    <div class="desc"><h3>${p.num}　${p.name}</h3>
+      <dl><dt>動き</dt><dd>${p.idea}</dd><dt>合う所</dt><dd>${p.fit}</dd><dt>作り方</dt><dd>${p.make}</dd><dt>注意</dt><dd>${p.care}</dd></dl>
+    </div>
+  </div>`);
+};
+SMART.forEach(p=>addCard(sgrid,p));
+PATTERNS.forEach(p=>addCard(grid,p));
+
+function relock(card){
+  const r=card.querySelector('.ret'); if(!r)return;
+  r.classList.remove('lock'); void r.getBoundingClientRect(); r.classList.add('lock');
+}
+function swap(card){
+  const w=card.querySelector('.swwrap'); if(!w)return;
+  w.classList.remove('sw'); void w.getBoundingClientRect(); w.classList.add('sw');
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-a]'); if(!b)return;
+  const card=b.closest('.card'); b.dataset.a==='lock'?relock(card):swap(card);
+});
+document.getElementById('allLock').onclick=()=>document.querySelectorAll('.card').forEach(relock);
+
+function seg(id,fn){
+  const el=document.getElementById(id);
+  el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset.v);});
+}
+seg('bgSeg',v=>document.body.classList.toggle('ult',v==='ult'));
+seg('distSeg',v=>document.querySelectorAll('.wrap').forEach(g=>g.setAttribute('transform',`translate(0,-8) scale(${v})`)));
+</script>
+</body>
+</html>

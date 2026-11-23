@@ -17,56 +17,76 @@ namespace
 {
 	const std::string kKneelStartAnim = "KnockStart";
 	const std::string kKneelLoopAnim = "KnockLoop";
-	const std::string kRoarAnim = "Roar";
+	const std::string kStanceAnim = "AttackPose";
+	const std::string kLeapAnim = "BossLeapSlash";//暗殺の踏み切りから空中で振りかぶり、急降下で振り下ろす(tools/PlayerAnim)
 
 	//フェーズの長さ(実フレーム)
-	constexpr float kStaggerTime = 45.0f;
+	constexpr float kStaggerTime = 30.0f;
 	constexpr float kWhiteInTime = 12.0f;
-	constexpr float kWhiteOutTime = 14.0f;
-	constexpr float kSupplyStartFrame = 12.0f;
-	constexpr float kSupplyTime = 80.0f;
-	constexpr float kLeapFrame = 20.0f;
-	constexpr float kCutFrame = 20.0f;//切り落とすフレーム
-	constexpr float kCutTime = 68.0f;
-	constexpr float kSilenceTime = 36.0f;
-	constexpr float kSlashHitFrame = 8.0f;//刃が胸を通るフレーム
-	constexpr float kSlashMoveFrame = 16.0f;
-	constexpr float kSlashLineFrame = 22.0f;
-	constexpr float kSlashTime = 30.0f;
-	constexpr float kSheathFrame = 34.0f;//納刀のフレーム
-	constexpr float kSheathTime = 58.0f;
-	constexpr float kSplitTime = 48.0f;
-	constexpr float kExplodeFadeTime = 50.0f;
-	constexpr float kExplodeTime = 85.0f;
+	constexpr float kWhiteOutTime = 12.0f;
+	constexpr float kStanceTime = 70.0f;//構え//飛び上がるまでの間
+	constexpr float kBladeGrowEnd = 45.0f;//構えの中で刀身が伸びきる
+	constexpr float kKessatsuTime = 50.0f;//止め絵
+	constexpr float kSplitTime = 60.0f;
+	constexpr float kRestTime = 70.0f;//割れた後、しゃがんだまま
+	constexpr float kPullBackTime = 80.0f;//割れてから引く長さ
 
 	constexpr float kStaggerTimeScale = 0.35f;
-	constexpr float kSilenceTimeScale = 0.2f;
+	constexpr float kApexTimeScale = 0.8f;//頂点で少し遅くする
+	constexpr float kStrikeTimeScale = 0.5f;//着地の斬りを少し遅くする
+	constexpr float kFreezeTimeScale = 0.02f;//止め絵の間
 	constexpr int kUltFrame = 100000;//SetUltEndで終わらせる
 
+	//飛び越え斬りのアニメ(Boss_LeapSlash、30fps で全74F)
+	//0〜5Fしゃがんで踏み切り、12Fまでに振りかぶる、12〜22F頂点で止める、22〜26F振り下ろし、26〜30F刃を下に急降下、35Fで着地、36〜50Fしゃがみ、そのあと立つ
+	constexpr float kAnimSpeed = 0.6f;
+	constexpr float kDiveAnimSpeed = 1.2f;//急降下は速く
+	constexpr float kCrouchAnimSpeed = 0.5f;//着地の後のしゃがみ
+	constexpr float kCrouchHoldFrame = 46.0f;//しゃがんだまま止める(立ち上がらない)
+	constexpr float kTakeoffAnimFrame = 5.0f;//踏み切り
+	constexpr float kApexAnimFrame = 12.0f;//振りかぶりきる
+	constexpr float kDiveAnimFrame = 22.0f;//振り下ろし始め//ここで急降下する
+	constexpr float kStrikeAnimFrame = 30.0f;//着地の少し前//ここで真横のカメラへ
+	constexpr float kLandAnimFrame = 35.0f;//着地//ここで止める
+
 	//配置(闘技場の中央からの距離)
-	constexpr float kPlayerStartFront = 900.0f;
-	constexpr float kPlayerEndBack = 650.0f;
-	constexpr float kAirFrontOffset = 150.0f;//腕のどれだけ前で止まるか
-	constexpr float kThrowFrame = 17.2f;//PlayerStateBossPartThrowと同じ
+	constexpr float kStartFront = 330.0f;//構える位置(ボスのすぐ前)
+	constexpr float kApexFront = 230.0f;//頂点(ボスの頭の前の上)
+	constexpr float kApexSide = 60.0f;
+	constexpr float kApexHeight = 650.0f;
+	constexpr float kLandFront = 80.0f;//着地(ボスの真横)
+	constexpr float kLandSide = 380.0f;
 
-	//斬る面
-	constexpr float kCutTiltAngle = 30.0f * DX_PI_F / 180.0f;
-	constexpr float kSlideLength = 240.0f;//上半身がずれる距離
-	constexpr float kTiltMaxAngle = 12.0f * DX_PI_F / 180.0f;//上半身が傾く角度
-	constexpr float kBloodSideOffset = 170.0f;
+	//割れ方
+	constexpr float kSplitTiltAngle = 15.0f * DX_PI_F / 180.0f;//外へ傾く角度//大きいとプレイヤー側の半分がプレイヤーに重なる
+	constexpr float kSplitSlide = 60.0f;//外へずれる距離
 
-	//エフェクト
-	constexpr float kCutEffectScale = 10.0f;
-	constexpr float kBloodScale = 55.0f;
-	constexpr float kExplodeScale = 50.0f;
-	constexpr float kExplodeSubScale = 32.0f;
-	constexpr float kExplodeSubOffset = 260.0f;
+	//血
+	constexpr float kBloodScale = 45.0f;
 	constexpr float kBloodOwnSpeed = 0.65f;
+	constexpr float kBloodHeights[] = { 160.0f, 320.0f, 480.0f };//切り口に沿って出す高さ
+	constexpr float kAbsorbEffectScale = 20.0f;//構えで刀に血を吸い込む
 
-	//カメラ(手で詰める値はここ)
-	constexpr float kFovWide = 58.0f;
-	constexpr float kFovNormal = 50.0f;
-	constexpr float kFovClose = 38.0f;
+	//カメラ(手で詰める値はここ)//揺らさない・画角はほぼ変えない
+	constexpr float kBackCamFront = 380.0f;//カメラ①: プレイヤーの後ろの距離
+	constexpr float kBackCamSide = 110.0f;
+	constexpr float kBackCamHeight = 170.0f;
+	constexpr float kBackFov = 50.0f;
+	constexpr float kFollowRate = 0.22f;//プレイヤーを追う速さ
+	constexpr float kDiveFollowRate = 0.4f;
+	constexpr float kFollowHeight = 110.0f;//プレイヤーの足元からの注視点の高さ
+	//カメラ②: 着地したプレイヤーの真横(ボスと反対側)から//着地の斬り・止め絵はプレイヤーに寄り、割れるときに引く
+	constexpr float kCloseCamDistance = 230.0f;//寄り
+	constexpr float kCloseCamOut = 40.0f;//ボスから離れる向きへずらす
+	constexpr float kCloseCamHeight = 70.0f;
+	constexpr float kCloseTargetHeight = 120.0f;
+	constexpr float kCloseCenterRate = 0.85f;//注視点をボス(0)〜プレイヤー(1)のどこにするか
+	constexpr float kWideCamDistance = 430.0f;//引き
+	constexpr float kWideCamOut = 120.0f;
+	constexpr float kWideCamHeight = 70.0f;
+	constexpr float kWideTargetHeight = 210.0f;
+	constexpr float kWideCenterRate = 0.7f;
+	constexpr float kSideFov = 50.0f;
 }
 
 KingmechFinisher::KingmechFinisher(std::weak_ptr<EnemyBase> owner) :
@@ -130,93 +150,68 @@ void KingmechFinisher::Update()
 				return;
 			}
 			SetupStage();
-			ChangePhase(Phase::Supply);
+			ChangePhase(Phase::Stance);
 		}
 		break;
 
-	case Phase::Supply:
+	case Phase::Stance:
+		UpdateKneel();
 		screen.whiteRate = std::clamp(1.0f - m_frame / kWhiteOutTime, 0.0f, 1.0f);
-		if (!m_isEventDone && m_frame >= kSupplyStartFrame)
-		{
-			m_isEventDone = true;
-			owner->m_gatling->StartSupply();
-		}
-		if (m_isEventDone && !m_isSecondEventDone && owner->m_gatling->GetPhase() == KingmechGatling::Phase::Attached)
-		{
-			m_isSecondEventDone = true;
-			Shake(10.0f, 18.0f);
-		}
-		if (m_frame >= kSupplyTime)ChangePhase(Phase::Cut);
+		playerState->SetUltBladeRate(std::clamp(m_frame / kBladeGrowEnd, 0.0f, 1.0f));
+		if (m_frame >= kStanceTime)ChangePhase(Phase::Rise);
 		break;
 
-	case Phase::Cut:
+	case Phase::Rise:
 		UpdateKneel();
-		if (!m_isEventDone && m_frame >= kCutFrame)
+		//踏み切ったら真上へ
+		if (!m_isEventDone && playerState->GetAnimFrame() >= kTakeoffAnimFrame)
 		{
 			m_isEventDone = true;
-			const Vector3 cutPos = owner->m_gatling->GetAttachedPos();
-			owner->m_gatling->Cut();
-			EffectManager::GetInstance().Play(AsyncData::KingmechMissileExplodeEffect, cutPos, 0.0f, kCutEffectScale);
-			owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(kKneelStartAnim), false, owner->GetAnimSpeed(kKneelStartAnim));
-			Shake(14.0f, 16.0f);
-			FovPunch(5.0f, 16.0f);
+			const float riseTime = (kApexAnimFrame - kTakeoffAnimFrame) / kAnimSpeed;
+			playerState->MoveTo(Point(kApexFront, kApexSide, kApexHeight), riseTime, EasingMode::EaseOut, 2.5f);
 		}
-		if (m_frame >= kCutTime)ChangePhase(Phase::Throw);
+		FollowPlayer(kFollowRate);
+		if (playerState->GetAnimFrame() >= kApexAnimFrame)ChangePhase(Phase::Apex);
 		break;
 
-	case Phase::Throw:
+	case Phase::Apex:
 		UpdateKneel();
-		if (!m_isEventDone && playerState && playerState->GetAnimFrame() >= kThrowFrame)
-		{
-			m_isEventDone = true;
-			owner->m_gatling->ThrowAndStick();
-		}
-		if (owner->m_gatling->GetPhase() == KingmechGatling::Phase::Stuck)ChangePhase(Phase::Silence);
+		FollowPlayer(kFollowRate);
+		if (playerState->GetAnimFrame() >= kDiveAnimFrame)ChangePhase(Phase::Dive);
 		break;
 
-	case Phase::Silence:
+	case Phase::Dive:
 		UpdateKneel();
-		if (m_frame >= kSilenceTime)ChangePhase(Phase::Slash);
+		FollowPlayer(kDiveFollowRate);
+		if (playerState->GetAnimFrame() >= kStrikeAnimFrame)ChangePhase(Phase::Strike);
 		break;
 
-	case Phase::Slash:
-		UpdateKneel();
-		if (!m_isEventDone && m_frame >= kSlashHitFrame)
-		{
-			m_isEventDone = true;
-			StartSlashHit();
-		}
-		screen.slashRate = m_isEventDone ? std::clamp(1.0f - (m_frame - kSlashHitFrame) / kSlashLineFrame, 0.0f, 1.0f) : 0.0f;
-		if (m_frame >= kSlashTime)ChangePhase(Phase::Sheath);
+	case Phase::Strike:
+		if (playerState->GetAnimFrame() >= kLandAnimFrame)ChangePhase(Phase::Kessatsu);
 		break;
 
-	case Phase::Sheath:
-		if (!m_isEventDone && m_frame >= kSheathFrame)
-		{
-			m_isEventDone = true;
-			if (playerState)playerState->PlayAnim("Idle", true, 1.0f, -1.0f, 12.0f);
-		}
-		if (m_frame >= kSheathTime)ChangePhase(Phase::Split);
+	case Phase::Kessatsu:
+		if (m_frame >= kKessatsuTime)ChangePhase(Phase::Split);
 		break;
 
 	case Phase::Split:
 	{
 		const float t = std::clamp(m_frame / kSplitTime, 0.0f, 1.0f);
-		const float eased = Easing::Apply(EasingMode::EaseIn, t, 2.0f);
-		owner->SetFinisherCutMove(kSlideLength * eased, kTiltMaxAngle * eased);
-		if (m_frame >= kSplitTime)ChangePhase(Phase::Explode);
+		const float eased = Easing::Apply(EasingMode::EaseIn, t, 2.5f);
+		owner->SetFinisherCutMove(kSplitSlide * eased, kSplitTiltAngle * eased);
+		if (m_frame >= kSplitTime)ChangePhase(Phase::Rest);
 		break;
 	}
 
-	case Phase::Explode:
-		screen.whiteRate = std::clamp(1.0f - m_frame / kExplodeFadeTime, 0.0f, 1.0f);
-		if (m_frame >= kExplodeTime)Finish();
+	case Phase::Rest:
+		if (m_frame >= kRestTime)Finish();
 		break;
 
 	case Phase::Done:
 		//まだ先のフェーズがあるなら元に戻す//リザルトへ行くならこのまま暗転する
 		if (!m_isCleaned && !battle->GetIsBattleEnd())
 		{
+			owner->HideForFinisher();
 			Cleanup();
 			if (auto player = owner->m_player.lock())
 			{
@@ -246,81 +241,63 @@ void KingmechFinisher::ChangePhase(Phase next)
 	m_phase = next;
 	m_frame = 0.0f;
 	m_isEventDone = false;
-	m_isSecondEventDone = false;
 
-	const Vector3 bossChest = Point(0.0f, 0.0f, 480.0f);
+	const Vector3 backCam = Point(kStartFront + kBackCamFront, kBackCamSide, kBackCamHeight);
 
 	switch (m_phase)
 	{
-	case Phase::Supply:
-		owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(kRoarAnim), true, owner->GetAnimSpeed(kRoarAnim));
-		SetShot(Point(1500.0f, 420.0f, 130.0f), Point(1350.0f, 520.0f, 90.0f),
-			Point(0.0f, 0.0f, 500.0f), Point(0.0f, 0.0f, 620.0f), kFovWide, kFovWide - 6.0f, kSupplyTime);
+	case Phase::Stance:
+		//カメラ①: プレイヤーの後ろから膝をついたボスを見る//急降下までこの位置のまま
+		playerState->PlayAnim(playerState->GetAnimNameOf(kStanceAnim), true, 1.0f, -1.0f, 0.0f);
+		playerState->SetUltSword(true);
+		playerState->SetUltBladeRate(0.0f);
+		EffectManager::GetInstance().Play(AsyncData::UltBloodAbsorbEffect, Point(kStartFront, 0.0f, 100.0f), 0.0f, kAbsorbEffectScale);
+		SetShot(backCam, backCam, Point(0.0f, 0.0f, 280.0f), Point(0.0f, 0.0f, 280.0f), kBackFov, kBackFov, kStanceTime);
 		break;
 
-	case Phase::Cut:
+	case Phase::Rise:
+		//同じ位置のまま、注視点だけプレイヤーを追って見上げる
+		playerState->PlayAnim(playerState->GetAnimNameOf(kLeapAnim), false, kAnimSpeed, -1.0f, 3.0f);
+		break;
+
+	case Phase::Apex:
+		System::GetInstance().SetTimeScale(kApexTimeScale);
+		break;
+
+	case Phase::Dive:
 	{
-		const Vector3 armPos = owner->m_gatling->GetAttachedPos();
-		m_airPos = armPos + m_front * kAirFrontOffset;
-		const ComboNode& node = playerState->GetComboNode(ComboIndex::GuardBreakAttack1);
-		playerState->PlayAnim(node.animName, false, node.animTimeScale, node.endFrame, 6.0f, RootMotionCancel::Up);
-		playerState->MoveTo(m_airPos, kLeapFrame, EasingMode::EaseOut, 2.0f);
-		SetShot(Point(760.0f, -640.0f, 180.0f), Point(720.0f, -560.0f, 300.0f),
-			armPos, armPos + Vector3(0.0f, 60.0f, 0.0f), kFovNormal, kFovNormal - 4.0f, kCutTime);
-		break;
-	}
-
-	case Phase::Throw:
-	{
-		const ComboNode& node = playerState->GetComboNode(ComboIndex::AirAttack5);
-		playerState->PlayAnim(node.animName, false, 0.3f, node.endFrame, node.blendFrame, RootMotionCancel::Down);
-		const Vector3 camStart = m_airPos + m_front * 900.0f + m_side * 420.0f + Vector3(0.0f, -120.0f, 0.0f);
-		SetShot(camStart, camStart + m_front * -80.0f, bossChest, bossChest, kFovNormal, kFovNormal - 6.0f, 110.0f);
-		break;
-	}
-
-	case Phase::Silence:
-	{
-		System::GetInstance().SetTimeScale(kSilenceTimeScale);
-		Shake(18.0f, 14.0f);
-		FovPunch(-6.0f, 20.0f);
-		const Vector3 stuck = owner->m_gatling->GetPos();
-		SetShot(stuck + m_front * 560.0f + m_side * 230.0f + Vector3(0.0f, -40.0f, 0.0f),
-			stuck + m_front * 430.0f + m_side * 170.0f + Vector3(0.0f, -20.0f, 0.0f),
-			stuck, stuck, kFovClose, kFovClose - 4.0f, kSilenceTime);
-		break;
-	}
-
-	case Phase::Slash:
+		//ボスの真横へ急降下//着地まで(着地の斬りのスローも入れて)ちょうど降りきる
 		System::GetInstance().SetTimeScale(1.0f);
-		battle->SetUltStart(kUltFrame, owner->m_gatling->GetPos());
-		m_cutPoint = owner->m_gatling->GetPos();
-		playerState->PlayAnim(playerState->GetAnimNameOf("DashAttack"), false, 1.2f, -1.0f, 3.0f);
-		playerState->MoveTo(Point(-kPlayerEndBack, 0.0f, 0.0f), kSlashMoveFrame, EasingMode::EaseIn, 1.5f);
-		SetShot(Point(1500.0f, 200.0f, 260.0f), Point(1460.0f, 200.0f, 250.0f),
-			Point(0.0f, 0.0f, 400.0f), Point(0.0f, 0.0f, 400.0f), kFovWide, kFovWide, kSlashTime);
+		const float animFrame = playerState->GetAnimFrame();
+		playerState->PlayAnim(playerState->GetAnimNameOf(kLeapAnim), false, kDiveAnimSpeed, -1.0f, 0.0f, RootMotionCancel::None, animFrame);
+		playerState->SetFront(m_landDir);
+		const float diveTime = (kStrikeAnimFrame - animFrame) / kDiveAnimSpeed +
+			(kLandAnimFrame - kStrikeAnimFrame) / (kDiveAnimSpeed * kStrikeTimeScale);
+		playerState->MoveTo(m_landPos, diveTime, EasingMode::EaseIn, 1.4f);
+		break;
+	}
+
+	case Phase::Strike:
+		//カメラ②: 低い真横//ボスが左、プレイヤーが右の手前//止め絵の後もこの構図
+		System::GetInstance().SetTimeScale(kStrikeTimeScale);
+		SetShot(m_sideCamPos, m_sideCamPos, m_sideCamTarget, m_sideCamTarget, kSideFov, kSideFov, 1.0f);
 		break;
 
-	case Phase::Sheath:
-		playerState->Warp(Point(-kPlayerEndBack, 0.0f, 0.0f), m_front * -1.0f);
-		playerState->PlayAnim(playerState->GetAnimNameOf("AttackPose"), true, 1.0f, -1.0f, 4.0f);
-		SetShot(Point(-1230.0f, 280.0f, 60.0f), Point(-1130.0f, 250.0f, 60.0f),
-			Point(-200.0f, 0.0f, 300.0f), Point(-200.0f, 0.0f, 320.0f), kFovWide, kFovWide - 4.0f, kSheathTime + kSplitTime + kExplodeTime);
+	case Phase::Kessatsu:
+		battle->SetUltStart(kUltFrame, m_center + Vector3(0.0f, 380.0f, 0.0f));
+		System::GetInstance().SetTimeScale(kFreezeTimeScale);
 		break;
 
 	case Phase::Split:
-		PlayWhiteBlood(kBloodScale);
-		Shake(5.0f, kSplitTime);
+	{
+		//止め絵が終わったらすぐ割れる//寄りから、割れるのが見える引きまでゆっくり下がる
+		System::GetInstance().SetTimeScale(1.0f);
+		StartCut();
+		playerState->PlayAnim(playerState->GetAnimNameOf(kLeapAnim), false, kCrouchAnimSpeed, kCrouchHoldFrame, 0.0f, RootMotionCancel::None, playerState->GetAnimFrame());
+		PlayCutBlood(kBloodScale);
+		SetShot(m_sideCamPos, m_wideCamPos, m_sideCamTarget, m_wideCamTarget, kSideFov, kSideFov + 2.0f, kPullBackTime);
 		break;
-
-	case Phase::Explode:
-		owner->HideForFinisher();
-		battle->SetUltEnd();
-		battle->GetFinisherScreen().whiteRate = 1.0f;
-		PlayExplosions();
-		Shake(30.0f, 40.0f);
-		FovPunch(8.0f, 30.0f);
-		break;
+	}
 
 	default:
 		break;
@@ -339,14 +316,28 @@ void KingmechFinisher::SetupStage()
 	System::GetInstance().SetTimeScaleForFrames(1.0f, 0);
 
 	owner->m_missiles.clear();
-	owner->m_gatling->ResetForFinisher();
+	//腕に付いていなければ消す//付いていればボスと一緒に割れる
+	if (owner->m_gatling->GetPhase() != KingmechGatling::Phase::Attached)owner->m_gatling->ResetForFinisher();
 
 	owner->m_rb.m_pos = m_center;
 	owner->m_targetVec = m_front;
 	owner->SetRotY(atan2f(m_front.x, m_front.z) - DX_PI_F);
 
-	playerState->Warp(Point(kPlayerStartFront, 0.0f, 0.0f), m_front * -1.0f);
-	playerState->PlayAnim(playerState->GetAnimNameOf("AttackPose"), true, 1.0f, -1.0f, 0.0f);
+	playerState->Warp(Point(kStartFront, 0.0f, 0.0f), m_front * -1.0f);
+
+	//着地はボスの真横//着地したプレイヤーはボスに背を向ける
+	m_landPos = Point(kLandFront, kLandSide, 0.0f);
+	Vector3 toLand = m_landPos - m_center;
+	toLand.y = 0.0f;
+	m_landDir = toLand.Normalize();
+
+	//カメラ②: 着地したプレイヤーの真横から//この向きならボスが左、プレイヤーが右に映る
+	const Vector3 up(0.0f, 1.0f, 0.0f);
+	const Vector3 camSide = up.Cross(m_landDir).Normalize();
+	m_sideCamPos = m_landPos + camSide * kCloseCamDistance + m_landDir * kCloseCamOut + up * kCloseCamHeight;
+	m_sideCamTarget = m_center + (m_landPos - m_center) * kCloseCenterRate + up * kCloseTargetHeight;
+	m_wideCamPos = m_landPos + camSide * kWideCamDistance + m_landDir * kWideCamOut + up * kWideCamHeight;
+	m_wideCamTarget = m_center + (m_landPos - m_center) * kWideCenterRate + up * kWideTargetHeight;
 
 	if (auto player = owner->m_player.lock())
 	{
@@ -357,38 +348,29 @@ void KingmechFinisher::SetupStage()
 	}
 }
 
-void KingmechFinisher::StartSlashHit()
+void KingmechFinisher::StartCut()
 {
 	auto owner = GetBoss();
 	if (!owner)return;
-	const Vector3 up(0.0f, 1.0f, 0.0f);
-	const Vector3 normal = up * cosf(kCutTiltAngle) + m_side * sinf(kCutTiltAngle);
-	const Vector3 slideDir = m_side * cosf(kCutTiltAngle) - up * sinf(kCutTiltAngle);
-	owner->StartFinisherCut(normal, m_cutPoint, m_front, slideDir);
-	PlayWhiteBlood(kBloodScale * 0.7f);
-	Shake(24.0f, 18.0f);
-	FovPunch(7.0f, 24.0f);
+	//真横のカメラの見る向きと上を含む面で割る//画面の左右に倒れる
+	Vector3 view = m_sideCamTarget - m_sideCamPos;
+	view.y = 0.0f;
+	const Vector3 viewDir = view.Normalize();
+	const Vector3 normal = Vector3(0.0f, 1.0f, 0.0f).Cross(viewDir).Normalize();
+	owner->StartFinisherCut(normal, m_center, viewDir);
 }
 
-void KingmechFinisher::PlayWhiteBlood(float scale)
+void KingmechFinisher::PlayCutBlood(float scale)
 {
-	const float rotY = atan2f(m_side.x, m_side.z);
+	//切り口からプレイヤーの側へ噴く
+	const float rotY = atan2f(m_landDir.x, m_landDir.z);
 	auto& effect = EffectManager::GetInstance();
-	for (const float side : { -kBloodSideOffset, 0.0f, kBloodSideOffset })
+	for (const float height : kBloodHeights)
 	{
-		const Vector3 pos = m_cutPoint + m_side * side;
+		const Vector3 pos = m_center + Vector3(0.0f, height, 0.0f);
 		const int handle = effect.Play(AsyncData::BloodUltEffect, pos, rotY, scale);
 		effect.SetOwnSpeed(handle, kBloodOwnSpeed);
 	}
-}
-
-void KingmechFinisher::PlayExplosions()
-{
-	auto& effect = EffectManager::GetInstance();
-	effect.Play(AsyncData::KingmechMissileExplodeEffect, m_cutPoint, 0.0f, kExplodeScale);
-	effect.Play(AsyncData::GhostSkill3ImpactEffect, m_cutPoint, 0.0f, kExplodeScale);
-	effect.Play(AsyncData::KingmechMissileExplodeEffect, Point(0.0f, kExplodeSubOffset, 120.0f), 0.0f, kExplodeSubScale);
-	effect.Play(AsyncData::KingmechMissileExplodeEffect, Point(0.0f, -kExplodeSubOffset, 120.0f), 0.0f, kExplodeSubScale);
 }
 
 void KingmechFinisher::Finish()
@@ -428,32 +410,20 @@ void KingmechFinisher::SetShot(const Vector3& startPos, const Vector3& endPos, c
 	}
 }
 
-void KingmechFinisher::Shake(float power, float time)
-{
-	auto owner = GetBoss();
-	if (!owner)return;
-	auto player = owner->m_player.lock();
-	if (!player)return;
-	if (auto camera = player->GetCameraManager().lock())camera->StartCameraShake(power, time);
-}
-
-void KingmechFinisher::FovPunch(float angleDeg, float time)
-{
-	auto owner = GetBoss();
-	if (!owner)return;
-	auto player = owner->m_player.lock();
-	if (!player)return;
-	if (auto camera = player->GetCameraManager().lock())camera->StartFovPunch(angleDeg, time, 2.0f, 2.0f);
-}
-
 void KingmechFinisher::UpdateKneel()
 {
 	auto owner = GetBoss();
 	if (!owner)return;
 	if (owner->IsFinisherAnimStopped())return;
-	if (m_phase == Phase::Cut && !m_isEventDone)return;//まだ吠えている
 	if (!owner->m_anim.GetAnimEndFlag())return;
 	owner->m_anim.ChangeAnimWithModelHandle(owner->m_modelHandle, owner->GetAnimName(kKneelLoopAnim), true, owner->GetAnimSpeed(kKneelLoopAnim));
+}
+
+void KingmechFinisher::FollowPlayer(float rate)
+{
+	auto playerState = GetPlayerState();
+	if (!playerState)return;
+	if (auto camera = GetCamera())camera->SetFollowTarget(playerState->GetPos() + Vector3(0.0f, kFollowHeight, 0.0f), rate);
 }
 
 Vector3 KingmechFinisher::Point(float front, float side, float height)const

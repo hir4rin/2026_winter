@@ -24,6 +24,8 @@ public:
 	virtual void Exit()override;
 
 	void SetShot(const Shot& shot);
+	//注視点だけ goal を追う(位置と視野角は今のカットのまま)//rateは1フレームで寄る割合//次の SetShot で止まる
+	void SetFollowTarget(const Vector3& goal, float rate);
 
 	Type GetCameraType()const override { return Type::BossFinisherCamera; }
 	virtual BlendSetting GetBlendSetting()const override { return {}; }
@@ -35,4 +37,6 @@ private:
 	Shot m_shot;
 	float m_shotFrame = 0.0f;
 	bool m_hasShot = false;
+	bool m_isFollow = false;
+	Vector3 m_followTarget;
 };

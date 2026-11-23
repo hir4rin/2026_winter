@@ -20,9 +20,13 @@ public:
 	bool IsInvincible()const override { return true; }
 
 	void Warp(const Vector3& pos, const Vector3& front);//その場へ移す
+	void SetFront(const Vector3& front);//向きだけ変える
+	Vector3 GetPos()const;
 	void MoveTo(const Vector3& goal, float frame, EasingMode easing, float power);
+	void SetUltSword(bool isUlt);//必殺技の長い刀に持ち替える
+	void SetUltBladeRate(float rate);//長い刀の刀身の伸び具合(0～1)
 	void PlayAnim(const std::string& animName, bool isLoop, float speed, float endFrame, float blendFrame,
-		RootMotionCancel cancel = RootMotionCancel::None);
+		RootMotionCancel cancel = RootMotionCancel::None, float startFrame = 0.0f);
 	void Finish();
 
 	float GetAnimFrame()const;

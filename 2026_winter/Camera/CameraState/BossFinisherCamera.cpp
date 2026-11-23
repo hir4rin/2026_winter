@@ -40,14 +40,23 @@ void BossFinisherCamera::SetShot(const Shot& shot)
 	m_shot = shot;
 	m_shotFrame = 0.0f;
 	m_hasShot = true;
+	m_isFollow = false;
 	ApplyShot();
+}
+
+void BossFinisherCamera::SetFollowTarget(const Vector3& goal, float rate)
+{
+	if (!m_isFollow)m_followTarget = m_target;
+	m_isFollow = true;
+	m_followTarget = Vector3::Lerp(m_followTarget, goal, std::clamp(rate, 0.0f, 1.0f));
+	m_target = m_followTarget;
 }
 
 void BossFinisherCamera::ApplyShot()
 {
 	const float t = std::clamp(m_shotFrame / m_shot.frame, 0.0f, 1.0f);
 	m_pos = Vector3::Lerp(m_shot.startPos, m_shot.endPos, t);
-	m_target = Vector3::Lerp(m_shot.startTarget, m_shot.endTarget, t);
+	m_target = m_isFollow ? m_followTarget : Vector3::Lerp(m_shot.startTarget, m_shot.endTarget, t);
 	m_goalFov = std::lerp(m_shot.startFov, m_shot.endFov, t) * kDegToRad;
 	m_fov = m_goalFov;
 }

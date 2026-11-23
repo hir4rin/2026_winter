@@ -56,6 +56,7 @@ namespace
 
 	constexpr int kGatlingExplodeDamage = 300;//投げ返したガトリングの爆発のダメージ
 	constexpr float kFinisherRimWidth = 14.0f;//切り口の光の幅
+	constexpr float kFinisherPivotOffset = 120.0f;//半分が倒れる軸(足元の、切り口から外へずらした所)
 
 	//攻撃のエフェクト//フレームは攻撃のアニメのフレーム
 	constexpr float kAttackEffectScale = 20.0f;//1/20で作っている
@@ -332,28 +333,35 @@ void BossEnemyKingmech::Draw()
 
 void BossEnemyKingmech::DrawFinisherCut()
 {
-	auto& shader = ModelShaderManager::GetInstance();
-	const FinisherCut& cut = m_finisherCut;
 	const MATRIX baseMat = MV1GetMatrix(m_modelHandle);
-
-	//下半身
-	const Vector3 lowerNormal = cut.normal * -1.0f;
-	shader.SetCutPlane(lowerNormal.ToDxLibVector(), lowerNormal.Dot(cut.hinge), kFinisherRimWidth);
-	shader.DrawModel(m_modelHandle);
-	m_gatling->Draw();
-
-	//上半身//面ごとずらす
-	const MATRIX rot = MGetRotAxis(cut.front.ToDxLibVector(), cut.tilt);
-	const Vector3 movedHinge = cut.hinge + cut.slideDir * cut.slide;
-	const MATRIX offset = MMult(MMult(MGetTranslate((cut.hinge * -1.0f).ToDxLibVector()), rot), MGetTranslate(movedHinge.ToDxLibVector()));
-	const Vector3 movedNormal(VTransformSR(cut.normal.ToDxLibVector(), rot));
-	shader.SetCutPlane(movedNormal.ToDxLibVector(), movedNormal.Dot(movedHinge), kFinisherRimWidth);
-	MV1SetMatrix(m_modelHandle, MMult(baseMat, offset));
-	shader.DrawModel(m_modelHandle);
-	m_gatling->Draw(offset);
-
+	DrawFinisherHalf(1.0f, baseMat);
+	DrawFinisherHalf(-1.0f, baseMat);
 	MV1SetMatrix(m_modelHandle, baseMat);
-	shader.ClearCutPlane();
+	ModelShaderManager::GetInstance().ClearCutPlane();
+}
+
+void BossEnemyKingmech::DrawFinisherHalf(float sign, const MATRIX& baseMat)
+{
+	const FinisherCut& cut = m_finisherCut;
+	const Vector3 normal = cut.normal * sign;
+	const Vector3 pivot = cut.center + normal * kFinisherPivotOffset;
+
+	//上が外へ倒れる向きに回す
+	MATRIX rot = MGetRotAxis(cut.front.ToDxLibVector(), cut.tilt);
+	if (Vector3(VTransformSR(VGet(0.0f, 1.0f, 0.0f), rot)).Dot(normal) < 0.0f)
+	{
+		rot = MGetRotAxis(cut.front.ToDxLibVector(), -cut.tilt);
+	}
+	const Vector3 movedPivot = pivot + normal * cut.slide;
+	const MATRIX offset = MMult(MMult(MGetTranslate((pivot * -1.0f).ToDxLibVector()), rot), MGetTranslate(movedPivot.ToDxLibVector()));
+
+	//面も一緒に動かす
+	const Vector3 movedNormal(VTransformSR(normal.ToDxLibVector(), rot));
+	const Vector3 movedCenter(VTransform(cut.center.ToDxLibVector(), offset));
+	ModelShaderManager::GetInstance().SetCutPlane(movedNormal.ToDxLibVector(), movedNormal.Dot(movedCenter), kFinisherRimWidth);
+	MV1SetMatrix(m_modelHandle, MMult(baseMat, offset));
+	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);
+	m_gatling->Draw(offset);
 }
 
 void BossEnemyKingmech::ApplyPos()
@@ -379,9 +387,9 @@ void BossEnemyKingmech::StartFinisher()
 	if (auto player = m_player.lock())player->RequestBossFinisher(GetSharedPtr());
 }
 
-void BossEnemyKingmech::StartFinisherCut(const Vector3& normal, const Vector3& hinge, const Vector3& front, const Vector3& slideDir)
+void BossEnemyKingmech::StartFinisherCut(const Vector3& normal, const Vector3& center, const Vector3& front)
 {
-	m_finisherCut = { true, normal, hinge, front, slideDir, 0.0f, 0.0f };
+	m_finisherCut = { true, normal, center, front, 0.0f, 0.0f };
 }
 
 void BossEnemyKingmech::SetFinisherCutMove(float slide, float tilt)
