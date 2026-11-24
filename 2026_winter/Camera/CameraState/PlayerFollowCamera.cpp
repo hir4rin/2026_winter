@@ -183,11 +183,12 @@ void PlayerFollowCamera::Update()
 
 void PlayerFollowCamera::Exit()
 {
+
 	//m_angleH/m_angleVを、カメラ→注視点のベクトルから計算し直す(次のStateに正しい向きを渡すため)
 	Vector3 toTarget = m_target - m_pos;
 	float horizontalDist = Vector3(toTarget.x, 0.0f, toTarget.z).Magnitude();
 	m_angleH = atan2f(toTarget.x, toTarget.z);
-	m_angleV = atan2f(toTarget.y, horizontalDist);
+	m_angleV = atan2f(-toTarget.y, horizontalDist);//プラスでカメラが上(FixCameraPosと同じ向き)
 }
 
 void PlayerFollowCamera::FixCameraPos()

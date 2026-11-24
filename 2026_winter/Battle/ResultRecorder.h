@@ -52,6 +52,7 @@ public:
 	void OnPlayerAttackHit();
 	void OnPlayerDamaged();
 	ResultData MakeResult(int stageType, int targetClearSec, int killCount, int enemyNum) const;
+	int GetClearFrame() const { return m_clearFrame; }
 
 private:
 	int m_clearFrame = 0;

@@ -232,6 +232,7 @@ public:
 	int GetSkillGauge()const { return m_comboInfo.SkillGauge; }//スキルゲージの取得
 	int GetUltGauge()const { return m_comboInfo.UltGauge; }//必殺技ゲージの取得
 	int GetMaxGauge()const { return kMaxGaugeValue; }//スキル・必殺技ゲージの最大値
+	int GetSkillCost()const { return kSkillAttackGaugeCost; }//スキル1回分
 	int GetMaxHp()const;//最大HP
 	//血殺(必殺技ゲージ)を最大にする//ラストヒットイベント演出用
 	void MaxUltGauge() { m_comboInfo.UltGauge = kMaxGaugeValue; }

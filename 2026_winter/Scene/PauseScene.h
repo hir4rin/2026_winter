@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include "Scene.h"
+#include "UI/Menu/PauseUI.h"
+#include <vector>
 
 /// <summary>
 /// ポーズシーン
@@ -8,7 +10,7 @@ class PauseScene :
 	public Scene
 {
 public:
-	PauseScene(SceneController& controller);
+	PauseScene(SceneController& controller, const PauseUI::Record& record);
 	virtual ~PauseScene();
 
 	void Update() override;
@@ -31,9 +33,16 @@ private:
 		StageSelect,//ステージセレクトへ戻る
 		Num
 	};
-	int m_cursor = 0;//選択中の項目(MenuItemのint値)
+	//L3+R3で開発用の項目(フォトモード・ステージ編集)を出す。ゲームを閉じるまで出たまま
+	static bool s_isDebugItemOpen;
+	std::vector<MenuItem> m_items;//今出している項目
+	int m_cursor = 0;//選択中の項目(m_itemsの番号)
+	PauseUI m_ui;
 
 	//選択した項目を実行する
-	void Decide();
+	void Decide(MenuItem item);
+	//出す項目を作り直す(カーソルは同じ項目に残す)
+	void RebuildItems();
+	//説明をカーソルの項目に合わせる
+	void ApplyCursor();
 };
-

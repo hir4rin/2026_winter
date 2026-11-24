@@ -138,7 +138,7 @@ void MenuUI::Draw()
 {
 	SetDrawMode(DX_DRAWMODE_BILINEAR);
 	DrawBackground();
-	DrawTitle();
+	DrawTitle(kTitleLineX1, kTitleLineX2);
 	DrawListPanel();
 	DrawDetailPanel();
 	DrawGuide();
@@ -164,18 +164,16 @@ void MenuUI::DrawBackground()
 	DrawExtendGraph(0, 0, Game::GetScreenWidth(), Game::GetScreenHeight(), m_vignetteHandle, FALSE);
 }
 
-void MenuUI::DrawTitle()
+void MenuUI::DrawTitle(float x1, float x2)
 {
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	SetDrawBright(kRedR, kRedG, kRedB);
-	DrawExtendGraph(ToScreenX(kTitleLineX1), ToScreenY(kTitleLineY - 2), ToScreenX(kTitleLineX2), ToScreenY(kTitleLineY + 2), m_lineFadeHandle, TRUE);
-	SetDrawBright(255, 255, 255);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
+	DrawFadeLine(x1, kTitleLineY - 2, x2, kTitleLineY + 2);
 
 	const unsigned int red = GetColor(kRedR, kRedG, kRedB);
 	//両端の丸と中央の菱形
-	DrawCircleAA(static_cast<float>(ToScreenX(kTitleLineX1)), static_cast<float>(ToScreenY(kTitleLineY)), 4.0f * Game::GetScale(), 16, red, FALSE);
-	DrawCircleAA(static_cast<float>(ToScreenX(kTitleLineX2)), static_cast<float>(ToScreenY(kTitleLineY)), 4.0f * Game::GetScale(), 16, red, FALSE);
-	const float cx = static_cast<float>(Game::GetScreenWidth()) * 0.5f;
+	DrawCircleAA(static_cast<float>(ToScreenX(x1)), static_cast<float>(ToScreenY(kTitleLineY)), 4.0f * Game::GetScale(), 16, red, FALSE);
+	DrawCircleAA(static_cast<float>(ToScreenX(x2)), static_cast<float>(ToScreenY(kTitleLineY)), 4.0f * Game::GetScale(), 16, red, FALSE);
+	const float cx = static_cast<float>(ToScreenX((x1 + x2) * 0.5f));
 	const float cy = static_cast<float>(ToScreenY(kTitleLineY));
 	const float d = 5.0f * Game::GetScale();
 	DrawQuadrangleAA(cx, cy - d * 1.6f, cx + d, cy, cx, cy + d * 1.6f, cx - d, cy, red, TRUE);
@@ -190,7 +188,7 @@ void MenuUI::DrawListPanel()
 
 	const unsigned int red = GetColor(kRedR, kRedG, kRedB);
 	//見出しの左のアイコン(仮で小さい四角を並べる)
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
 	DrawBox(ToScreenX(kListIconX1), ToScreenY(kListHeaderY1), ToScreenX(kListIconX2), ToScreenY(kListHeaderY2), red, FALSE);
 	const float cell = (kListIconX2 - kListIconX1) / 4.0f;
 	for (int i = 0; i < 4; ++i)
@@ -217,12 +215,12 @@ void MenuUI::DrawListPanel()
 		}
 		else
 		{
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 200);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(200));
 			SetDrawBright(kRedR, kRedG, kRedB);
 			DrawExtendGraph(ToScreenX(kItemBracketX), ToScreenY(y), ToScreenX(kItemBracketX + 12.0f), ToScreenY(y + kItemHeight), m_bracketHandle, TRUE);
 			SetDrawBright(255, 255, 255);
 		}
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
 		const unsigned int color = isSelected ? GetColor(255, 236, 238) : red;
 		DrawStringToHandle(ToScreenX(kItemX), ToScreenY(y + 6.0f), m_items[i].c_str(), color, m_itemFont);
 	}
@@ -238,12 +236,12 @@ void MenuUI::DrawSelectBar(float x, float y, float w, float h)
 
 	//光(加算)
 	const float pulse = 0.5f + 0.5f * std::sin(m_frame * kGlowPulseSpeed);
-	SetDrawBlendMode(DX_BLENDMODE_ADD, static_cast<int>((35 + 30 * pulse) * flicker));
+	SetDrawBlendMode(DX_BLENDMODE_ADD, Alpha(static_cast<int>((35 + 30 * pulse) * flicker)));
 	SetDrawBright(kRedR, kRedG / 2, kRedB / 2);
 	DrawExtendGraph(ToScreenX(x - 10.0f), ToScreenY(y - 8.0f), ToScreenX(x + barW + 10.0f), ToScreenY(y + h + 8.0f), m_glowHandle, TRUE);
 
 	//ベース(左が濃い向きに反転して描く)
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(220 * flicker));
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(static_cast<int>(220 * flicker)));
 	SetDrawBright(kRedR, kRedG, kRedB);
 	const float sx1 = static_cast<float>(ToScreenX(x));
 	const float sx2 = static_cast<float>(ToScreenX(x + barW));
@@ -253,11 +251,11 @@ void MenuUI::DrawSelectBar(float x, float y, float w, float h)
 	SetDrawBright(255, 255, 255);
 
 	//網点を暗く重ねる
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
 	DrawTiled(m_halftoneHandle, x, y, x + barW, y + h, 6.0f, 0.0f, 0.0f, 40, 0, 10, 90);
 
 	//左端の明るい縦線
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * flicker));
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(static_cast<int>(255 * flicker)));
 	DrawBox(ToScreenX(x), ToScreenY(y), ToScreenX(x + 3.0f), ToScreenY(y + h), GetColor(255, 90, 110), TRUE);
 }
 
@@ -265,24 +263,37 @@ void MenuUI::DrawDetailPanel()
 {
 	DrawFrame(kDetailX1, kDetailY1, kDetailX2, kDetailY2, kRedR, kRedG, kRedB);
 
-	const unsigned int red = GetColor(kRedR, kRedG, kRedB);
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
 	const float hx = kDetailX1 + kDetailPad;
-	const float hy = kDetailY1 + 10.0f;
-	DrawStringToHandle(ToScreenX(hx), ToScreenY(hy), m_detailHeader.c_str(), red, m_smallFont);
-	//見出しから右へ伸びる線
-	const int headerW = GetDrawStringWidthToHandle(m_detailHeader.c_str(), static_cast<int>(m_detailHeader.size()), m_smallFont);
-	const int lineY = ToScreenY(hy + 10.0f);
-	const int lineX2 = ToScreenX(kDetailX2 - kDetailPad);
-	DrawLine(ToScreenX(hx) + headerW + ToScreenX(8.0f), lineY, lineX2, lineY, red);
-	DrawCircleAA(static_cast<float>(lineX2), static_cast<float>(lineY), 3.5f * Game::GetScale(), 12, red, FALSE);
+	DrawHeaderLine(hx, kDetailY1 + 10.0f, kDetailX2 - kDetailPad, m_detailHeader);
 
 	DrawStringToHandle(ToScreenX(hx + 8.0f), ToScreenY(kDetailNameY), m_detailName.c_str(), GetColor(255, 236, 238), m_itemFont);
-	SetDrawBright(kRedR, kRedG, kRedB);
-	DrawExtendGraph(ToScreenX(hx), ToScreenY(kDetailNameY + 36.0f), ToScreenX(kDetailX2 - kDetailPad), ToScreenY(kDetailNameY + 39.0f), m_lineFadeHandle, TRUE);
-	SetDrawBright(255, 255, 255);
+	DrawFadeLine(hx, kDetailNameY + 36.0f, kDetailX2 - kDetailPad, kDetailNameY + 39.0f);
 
 	DrawWrapText(hx + 8.0f, kDetailTextY, kDetailX2 - kDetailX1 - kDetailPad * 2 - 16.0f, kDetailLineHeight, m_detailText, GetColor(220, 150, 160), m_smallFont);
+}
+
+void MenuUI::DrawHeaderLine(float x1, float y, float x2, const std::string& label)
+{
+	const unsigned int red = GetColor(kRedR, kRedG, kRedB);
+	DrawStringToHandle(ToScreenX(x1), ToScreenY(y), label.c_str(), red, m_smallFont);
+	const int labelW = GetDrawStringWidthToHandle(label.c_str(), static_cast<int>(label.size()), m_smallFont);
+	const int lineY = ToScreenY(y + 10.0f);
+	const int lineX2 = ToScreenX(x2);
+	DrawLine(ToScreenX(x1) + labelW + static_cast<int>(8.0f * Game::GetScale()), lineY, lineX2, lineY, red);
+	DrawCircleAA(static_cast<float>(lineX2), static_cast<float>(lineY), 3.5f * Game::GetScale(), 12, red, FALSE);
+}
+
+void MenuUI::DrawFadeLine(float x1, float y1, float x2, float y2)
+{
+	SetDrawBright(kRedR, kRedG, kRedB);
+	DrawExtendGraph(ToScreenX(x1), ToScreenY(y1), ToScreenX(x2), ToScreenY(y2), m_lineFadeHandle, TRUE);
+	SetDrawBright(255, 255, 255);
+}
+
+int MenuUI::Alpha(int a) const
+{
+	return static_cast<int>(a * m_alpha);
 }
 
 void MenuUI::DrawGuide()
@@ -305,7 +316,7 @@ void MenuUI::DrawGuide()
 
 void MenuUI::DrawFrame(float x1, float y1, float x2, float y2, int r, int g, int b)
 {
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
 	SetDrawBright(r, g, b);
 	const float c = static_cast<float>(kFrameCorner);
 	const int mid = kFrameSize - kFrameCorner * 2;
@@ -385,7 +396,7 @@ void MenuUI::DrawWrapText(float x, float y, float width, float lineHeight, const
 
 int MenuUI::ToScreenX(float x) const
 {
-	return static_cast<int>(Game::ScaleX(x));
+	return static_cast<int>(Game::ScaleX(x + m_offsetX));
 }
 
 int MenuUI::ToScreenY(float y) const

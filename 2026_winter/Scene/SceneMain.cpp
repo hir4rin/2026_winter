@@ -30,6 +30,7 @@
 #include "Scene/PauseScene.h"
 #include "Scene/ResultScene.h"
 #include "Scene/TutorialScene.h"
+#include "Scene/GameOverScene.h"
 #include "Battle/ResultRecorder.h"
 #include "Stage/WallZone/WallZoneEditor.h"
 #include "Stage/Phase/PhaseAreaEditor.h"
@@ -246,7 +247,14 @@ void SceneMain::NormalUpdate()
 			m_cameraManager->GetActiveCamera()->Exit();
 			m_cameraManager->SetPhotoCamera();
 		}
-		m_controller.PushScene(std::make_shared<PauseScene>(m_controller));
+		PauseUI::Record record;
+		record.stageName = StageData::GetInfo(m_stageType).name;
+		if (auto recorder = battleMgr->GetResultRecorder().lock())
+		{
+			record.elapsedFrame = recorder->GetClearFrame();
+		}
+		record.killCount = m_enemyManager->GetTotalKillCount();
+		m_controller.PushScene(std::make_shared<PauseScene>(m_controller, record));
 		return;
 	}
 
@@ -350,6 +358,13 @@ void SceneMain::NormalUpdate()
 
 	//再生中のエフェクトを、このフレームのタイムスケールに合わせて進める(自分の速さを持つエフェクトの設定し直しもここで行う)
 	EffectManager::GetInstance().Update();
+
+	//プレイヤーが死んだらゲームオーバーシーンを積む
+	if (m_player->GetIsDead())
+	{
+		m_controller.PushScene(std::make_shared<GameOverScene>(m_controller));
+		return;
+	}
 
 	//バトルが終わったらフェードアウトしてリザルトへ
 	if (m_battleManager->GetIsBattleEnd())

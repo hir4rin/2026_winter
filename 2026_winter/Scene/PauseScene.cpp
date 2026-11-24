@@ -2,33 +2,67 @@
 #include "SceneController.h"
 #include "DxLib.h"
 #include "Main/Input.h"
-#include "Main/Game.h"
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
 #include "StageSelectScene.h"
 #include <iterator>
 
-namespace
-{
-	constexpr int kDarkenAlpha = 164;//画面を少し黒くするアルファ値
+bool PauseScene::s_isDebugItemOpen = false;
 
-	constexpr int kTextX = 300;//ポーズ中の表示のX座標
-	constexpr int kTextY = 300;//ポーズ中の表示のY座標
-	constexpr int kTextLineHeight = 40;//表示の行間
-}
-
-PauseScene::PauseScene(SceneController& controller) :Scene(controller)
+PauseScene::PauseScene(SceneController& controller, const PauseUI::Record& record) :Scene(controller)
 {
 	m_updateFunc = static_cast<UpdateFunc_t>(&PauseScene::NormalUpdate);
 	m_drawFunc = static_cast<DrawFunc_t>(&PauseScene::NormalDraw);
+
+	m_ui.Init();
+	m_ui.SetTitle("ポーズ");
+	m_ui.SetListHeader("メニュー");
+	m_ui.SetRecord(record);
+	RebuildItems();
 }
 
 PauseScene::~PauseScene()
 {
 }
 
+void PauseScene::RebuildItems()
+{
+	const char* const names[] = { "ゲームに戻る", "フォトモード", "ステージ編集", "ステージセレクトへ" };
+	static_assert(std::size(names) == static_cast<size_t>(MenuItem::Num), "項目名の数をMenuItemと合わせる");
+
+	const MenuItem current = m_items.empty() ? MenuItem::ReturnGame : m_items[m_cursor];
+	m_items.clear();
+	std::vector<std::string> itemNames;
+	for (int i = 0; i < static_cast<int>(MenuItem::Num); ++i)
+	{
+		const MenuItem item = static_cast<MenuItem>(i);
+		const bool isDebugItem = (item == MenuItem::PhotoMode || item == MenuItem::StageEdit);
+		if (isDebugItem && !s_isDebugItemOpen) continue;
+		if (item == current) m_cursor = static_cast<int>(m_items.size());
+		m_items.push_back(item);
+		itemNames.push_back(names[i]);
+	}
+	m_ui.SetItems(itemNames);
+	ApplyCursor();
+}
+
+void PauseScene::ApplyCursor()
+{
+	const char* const texts[] =
+	{
+		"任務に戻る。Start・B ボタンでもすぐに戻れる。",
+		"カメラを自由に動かして撮影する。(開発用・カメラデバッグ)",
+		"壁キック・壁走りのゾーンを置き直す。(開発用)",
+		"任務を中断してステージセレクトに戻る。ここまでの進み具合は残らない。",
+	};
+	static_assert(std::size(texts) == static_cast<size_t>(MenuItem::Num), "説明の数をMenuItemと合わせる");
+	m_ui.SetCursor(m_cursor);
+	m_ui.SetDetail("", "", texts[static_cast<int>(m_items[m_cursor])]);
+}
+
 void PauseScene::Update()
 {
+	m_ui.Update();
 	(this->*m_updateFunc)();
 }
 
@@ -42,7 +76,16 @@ void PauseScene::NormalUpdate()
 	auto& input = Input::GetInstance();
 	input.Update();
 
-	const int itemNum = static_cast<int>(MenuItem::Num);
+	//裏コマンド: L3+R3の同時押しで開発用の項目を出す
+	const bool isDebugCommand = input.IsPressed("L3") && input.IsPressed("R3") &&
+		(input.IsTriggered("L3") || input.IsTriggered("R3"));
+	if (isDebugCommand && !s_isDebugItemOpen)
+	{
+		s_isDebugItemOpen = true;
+		RebuildItems();
+	}
+
+	const int itemNum = static_cast<int>(m_items.size());
 
 	//上下で項目を選ぶ(端まで行ったら反対側に回る)
 	if (input.IsTriggered("Up"))
@@ -53,28 +96,28 @@ void PauseScene::NormalUpdate()
 	{
 		m_cursor = (m_cursor + 1) % itemNum;
 	}
+	ApplyCursor();
 
 	//Aで決定
 	if (input.IsTriggered("A"))
 	{
-		Decide();
+		Decide(m_items[m_cursor]);
 		return;
 	}
 
-	//Startはいつでもゲームに戻る
-	if (input.IsTriggered("Start"))
+	//Start・Bはいつでもゲームに戻る
+	if (input.IsTriggered("Start") || input.IsTriggered("B"))
 	{
-		m_cursor = static_cast<int>(MenuItem::ReturnGame);
-		Decide();
+		Decide(MenuItem::ReturnGame);
 		return;
 	}
 }
 
-void PauseScene::Decide()
+void PauseScene::Decide(MenuItem item)
 {
 	auto battleMgr = System::GetInstance().GetBattleMgr();
 
-	switch (static_cast<MenuItem>(m_cursor))
+	switch (item)
 	{
 	case MenuItem::ReturnGame:
 		//フォトモード・ステージ編集を解除してSceneMainに戻る
@@ -116,30 +159,8 @@ void PauseScene::FadeInDraw()
 
 void PauseScene::NormalDraw()
 {
-	//画面を少し黒くする(下に積まれたSceneMainはSceneController::Drawで先に描画される)
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, kDarkenAlpha);
-	DrawBox(0, 0, Game::GetScreenWidth(), Game::GetScreenHeight(), GetColor(0, 0, 0), TRUE);
-	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-
-	const unsigned int white = GetColor(255, 255, 255);
-	const unsigned int yellow = GetColor(255, 255, 0);
-	DrawFormatString(kTextX, kTextY, white, "PauseScene  (上下:選択 A:決定 Start:ゲームに戻る)");
-
-	const char* const itemNames[] =
-	{
-		"ゲームに戻る",
-		"フォトモード(カメラデバッグ)",
-		"ステージ編集(壁キック/壁走りゾーン)",
-		"ステージセレクトへ戻る",
-	};
-	static_assert(std::size(itemNames) == static_cast<size_t>(MenuItem::Num), "項目名の数をMenuItemと合わせる");
-
-	for (int i = 0; i < static_cast<int>(MenuItem::Num); ++i)
-	{
-		const bool isSelected = (i == m_cursor);
-		DrawFormatString(kTextX, kTextY + kTextLineHeight * (i + 1), isSelected ? yellow : white,
-			"%s %s", isSelected ? ">" : " ", itemNames[i]);
-	}
+	//下に積まれたSceneMainはSceneController::Drawで先に描画される
+	m_ui.Draw();
 }
 
 void PauseScene::FadeOutDraw()

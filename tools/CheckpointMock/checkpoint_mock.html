@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>チェックポイント案</title>
+<style>
+body{margin:0;background:#0b0c10;color:#ddd;font-family:"Yu Gothic UI","Meiryo",sans-serif}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;border-bottom:1px solid #1d1f26}
+header h1{font-size:16px;margin:0 12px 0 0;font-weight:normal;color:#fff}
+.grp{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.grp span{font-size:12px;color:#888;margin-right:4px}
+button{background:#1b1d24;color:#bbb;border:1px solid #333;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit}
+button.on{background:#3a3f52;color:#fff;border-color:#8890a8}
+main{display:flex;flex-wrap:wrap;gap:14px;padding:14px 16px}
+.panel{background:#000;border:1px solid #23252c}
+.panel h2{font-size:14px;margin:0;padding:6px 8px;background:#121318;font-weight:normal;display:flex;justify-content:space-between}
+.panel h2 em{font-style:normal;font-size:12px;color:#8a8fa0}
+.panel p{font-size:12px;color:#999;margin:0;padding:6px 8px;width:304px;line-height:1.55}
+canvas{display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>チェックポイント案</h1>
+  <div class="grp" data-key="page"><span>表示</span>
+    <button data-v="text" class="on">D の文字の案</button><button data-v="concepts">最初の4案</button>
+  </div>
+  <div class="grp" data-key="color"><span>色</span>
+    <button data-v="blue" class="on">白銀＋薄い青</button><button data-v="red">白銀＋差し色の赤</button><button data-v="gold">金</button><button data-v="cyan">青緑</button>
+  </div>
+  <div class="grp" data-key="view"><span>見え方</span>
+    <button data-v="near" class="on">近く</button><button data-v="far">遠く(目的地として)</button>
+  </div>
+  <div class="grp" data-key="mode"><span>再生</span>
+    <button data-v="loop" class="on">自動ループ</button><button data-v="idle">待機だけ</button><button data-v="act">起動を再生</button>
+  </div>
+  <div class="grp" data-key="after"><span>起動後</span>
+    <button data-v="vanish" class="on">消える</button><button data-v="small">小さく残る</button><button data-v="color">色が変わる</button>
+  </div>
+</header>
+<main id="main"></main>
+<script>
+const W = 320, H = 420, SQ = 0.32, R = 90, CX = 160, CY = 330, HX = CX - 140;
+const PAL = {
+  blue: { core: [255,255,255], glow: [140,180,255], acc: [205,225,255], done: [255,196,110] },
+  red:  { core: [255,255,255], glow: [205,212,228], acc: [200,28,48],   done: [110,112,124] },
+  gold: { core: [255,248,225], glow: [255,178,70],  acc: [255,226,150], done: [140,185,255] },
+  cyan: { core: [235,255,255], glow: [50,215,228],  acc: [160,255,245], done: [255,190,90] },
+};
+const S = { page: 'text', color: 'blue', view: 'near', mode: 'loop', after: 'vanish', actStart: 0 };
+const LOOP = 5.8, IDLE_T = 3.0;
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const mix = (c1, c2, k) => c1.map((v, i) => v + (c2[i] - v) * k);
+const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${clamp(a)})`;
+const q = c => c.map(v => Math.round(v / 8) * 8);
+const ease = k => 1 - Math.pow(1 - k, 3);
+function hash(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+
+// 起動からの時間 a に対して、縦の要素・地面・閃光・済の色の度合い
+function stateOf(a) {
+  if (a < 0) return { pil: 1, gnd: 1, flash: 0, done: 0 };
+  const flash = clamp(1 - a / 0.5);
+  if (S.after === 'vanish') { const k = clamp(1 - (a - 0.6) / 1.0); return { pil: k, gnd: k, flash, done: 0 }; }
+  if (S.after === 'small') { const k = clamp((a - 0.6) / 1.0); return { pil: 1 - k, gnd: 1 - 0.7 * k, flash, done: 0 }; }
+  return { pil: 1, gnd: 1, flash, done: clamp((a - 0.3) / 0.6) };
+}
+
+const spriteCache = {};
+function pillarSprite(col, core) {
+  const key = col.join() + '/' + core.join();
+  if (spriteCache[key]) return spriteCache[key];
+  const c = document.createElement('canvas'); c.width = 64; c.height = 256;
+  const g = c.getContext('2d');
+  const hg = g.createLinearGradient(0, 0, 64, 0);
+  hg.addColorStop(0, rgba(col, 0)); hg.addColorStop(0.3, rgba(col, 0.3));
+  hg.addColorStop(0.46, rgba(core, 0.95)); hg.addColorStop(0.54, rgba(core, 0.95));
+  hg.addColorStop(0.7, rgba(col, 0.3)); hg.addColorStop(1, rgba(col, 0));
+  g.fillStyle = hg; g.fillRect(0, 0, 64, 256);
+  g.globalCompositeOperation = 'destination-in';
+  const vg = g.createLinearGradient(0, 0, 0, 256);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(0.55, 'rgba(0,0,0,0.55)');
+  vg.addColorStop(0.97, 'rgba(0,0,0,1)'); vg.addColorStop(1, 'rgba(0,0,0,0.4)');
+  g.fillStyle = vg; g.fillRect(0, 0, 64, 256);
+  return spriteCache[key] = c;
+}
+
+function drawFloor(ctx) {
+  const bg = ctx.createLinearGradient(0, 0, 0, 150);
+  bg.addColorStop(0, '#040507'); bg.addColorStop(1, '#0c0e13');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, 150);
+  const fg = ctx.createLinearGradient(0, 150, 0, H);
+  fg.addColorStop(0, '#0a0b0f'); fg.addColorStop(1, '#16181e');
+  ctx.fillStyle = fg; ctx.fillRect(0, 150, W, H - 150);
+  ctx.strokeStyle = 'rgba(255,255,255,0.045)'; ctx.lineWidth = 1;
+  for (let k = 1; k <= 14; k++) { const y = 150 + 270 * Math.pow(k / 14, 2); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  for (let x = -900; x <= 1220; x += 85) { ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(CX, 150); ctx.stroke(); }
+}
+
+function drawHuman(ctx, x, feet, h, back) {
+  ctx.fillStyle = back ? '#06070a' : '#020305';
+  const u = h / 10;
+  ctx.beginPath(); ctx.arc(x, feet - h + u * 0.75, u * 0.7, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x - u * 1.25, feet - h + u * 1.7); ctx.lineTo(x + u * 1.25, feet - h + u * 1.7);
+  ctx.lineTo(x + u * 0.95, feet - u * 4.6); ctx.lineTo(x + u * 0.8, feet);
+  ctx.lineTo(x + u * 0.15, feet); ctx.lineTo(x, feet - u * 4.0); ctx.lineTo(x - u * 0.15, feet);
+  ctx.lineTo(x - u * 0.8, feet); ctx.lineTo(x - u * 0.95, feet - u * 4.6); ctx.closePath(); ctx.fill();
+  // 背中の刀
+  ctx.strokeStyle = back ? '#06070a' : '#020305'; ctx.lineWidth = u * 0.3;
+  ctx.beginPath(); ctx.moveTo(x - u * 1.6, feet - h + u * 1.2); ctx.lineTo(x + u * 1.3, feet - u * 5.2); ctx.stroke();
+}
+
+function pool(ctx, col, amt) {
+  if (amt <= 0) return;
+  ctx.save(); ctx.translate(CX, CY); ctx.scale(1, SQ);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 2.3);
+  g.addColorStop(0, rgba(col, 0.22 * amt)); g.addColorStop(1, rgba(col, 0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R * 2.3, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function ring(ctx, r) { ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke(); }
+
+// 足元の紋(二重の輪＋目盛り＋切れた輪＋手裏剣)
+function crest(ctx, r, t, col, acc, amt) {
+  if (amt <= 0) return;
+  ctx.save(); ctx.translate(CX, CY); ctx.scale(1, SQ);
+  ctx.shadowColor = rgba(col, 1); ctx.shadowBlur = 14;
+  ctx.strokeStyle = rgba(col, 0.9 * amt); ctx.lineWidth = 3; ring(ctx, r);
+  ctx.lineWidth = 1.2; ring(ctx, r * 0.9);
+  ctx.save(); ctx.rotate(t * 0.25);
+  for (let i = 0; i < 32; i++) {
+    const an = i / 32 * Math.PI * 2, len = i % 4 ? 5 : 12;
+    ctx.beginPath(); ctx.moveTo(Math.cos(an) * r * 0.9, Math.sin(an) * r * 0.9);
+    ctx.lineTo(Math.cos(an) * (r * 0.9 - len), Math.sin(an) * (r * 0.9 - len)); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.save(); ctx.rotate(-t * 0.45); ctx.strokeStyle = rgba(acc, 0.85 * amt); ctx.lineWidth = 2.2;
+  for (let i = 0; i < 3; i++) { const s = i * Math.PI * 2 / 3; ctx.beginPath(); ctx.arc(0, 0, r * 0.64, s, s + 1.5); ctx.stroke(); }
+  ctx.restore();
+  ctx.save(); ctx.rotate(t * 0.7);
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) { const an = i / 8 * Math.PI * 2, rr = i % 2 ? r * 0.12 : r * 0.44; ctx.lineTo(Math.cos(an) * rr, Math.sin(an) * rr); }
+  ctx.closePath(); ctx.fillStyle = rgba(acc, 0.28 * amt); ctx.fill();
+  ctx.strokeStyle = rgba(col, 0.9 * amt); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.restore();
+  ctx.restore();
+}
+
+function motes(ctx, t, col, amt, n = 16) {
+  if (amt <= 0) return;
+  for (let i = 0; i < n; i++) {
+    const L = 2 + hash(i + 40) * 2, p = (t / L + hash(i + 41)) % 1;
+    const an = hash(i + 42) * Math.PI * 2, rr = R * (0.3 + hash(i + 43) * 0.7);
+    const x = CX + Math.cos(an) * rr + Math.sin(t + i) * 4, y = CY + Math.sin(an) * rr * SQ - p * 120;
+    ctx.fillStyle = rgba(col, amt * Math.sin(p * Math.PI) * 0.8);
+    ctx.beginPath(); ctx.arc(x, y, 1.4, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function drawPillar(ctx, w, h, col, core, amt, t) {
+  if (amt <= 0) return;
+  const s = pillarSprite(q(col), q(core));
+  const fl = 1 + 0.06 * Math.sin(t * 9) + 0.04 * Math.sin(t * 23);
+  ctx.globalAlpha = clamp(amt); ctx.drawImage(s, CX - w * fl / 2, CY - h, w * fl, h);
+  ctx.globalAlpha = clamp(amt * 0.35); ctx.drawImage(s, CX - w * 2.5, CY - h * 0.75, w * 5, h * 0.75);
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1.2;
+  for (let i = 0; i < 14; i++) {
+    const sp = 0.35 + hash(i) * 0.45, p = (t * sp + hash(i + 50)) % 1;
+    const y = CY - p * h * 0.8, x = CX + (hash(i + 9) - 0.5) * w * 0.9, len = 10 + hash(i + 3) * 26;
+    ctx.strokeStyle = rgba(core, clamp(amt) * (1 - p) * 0.8);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - len); ctx.stroke();
+  }
+}
+
+function drawBurst(ctx, a, col, core) {
+  if (a < 0 || a > 1.4) return;
+  const k = clamp(a / 0.7);
+  if (k < 1) {
+    ctx.save(); ctx.translate(CX, CY); ctx.scale(1, SQ);
+    ctx.shadowColor = rgba(col, 1); ctx.shadowBlur = 20;
+    ctx.strokeStyle = rgba(core, (1 - k) * 0.9); ctx.lineWidth = 9 * (1 - k) + 1;
+    ring(ctx, R * (1 + ease(k) * 2.2)); ctx.restore();
+  }
+  const f = clamp(1 - a / 0.35);
+  if (f > 0) {
+    const g = ctx.createRadialGradient(CX, CY - 60, 0, CX, CY - 60, R * 2.2);
+    g.addColorStop(0, rgba(core, f * 0.7)); g.addColorStop(0.4, rgba(col, f * 0.3)); g.addColorStop(1, rgba(col, 0));
+    ctx.fillStyle = g; ctx.fillRect(CX - R * 2.5, CY - 60 - R * 2.5, R * 5, R * 5);
+  }
+  ctx.lineWidth = 1.5;
+  const pos = (i, tt) => {
+    const an = hash(i) * Math.PI * 2, sp = (0.5 + hash(i + 1) * 0.9) * R * 2, up = 90 + hash(i + 2) * 230;
+    return [CX + Math.cos(an) * sp * tt, CY + Math.sin(an) * sp * tt * SQ - (up * tt - 280 * tt * tt)];
+  };
+  for (let i = 0; i < 38; i++) {
+    const life = 0.5 + hash(i + 3) * 0.7, al = clamp(1 - a / life);
+    if (al <= 0) continue;
+    const [x, y] = pos(i, a), [x2, y2] = pos(i, Math.max(0, a - 0.035));
+    ctx.strokeStyle = rgba(core, al); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+}
+
+function blob(ctx, x, y, r, c, a) {
+  if (r <= 0 || a <= 0) return;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, rgba(c, a)); g.addColorStop(1, rgba(c, 0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+}
+
+function flame(ctx, fx, fy, amt, t, col, core, acc, scale = 1) {
+  if (amt <= 0.01) return;
+  const s = amt * scale;
+  blob(ctx, fx, fy, 60 * s, col, 0.18 * amt);
+  for (let i = 0; i < 36; i++) {
+    const L = 0.7 + hash(i) * 0.6, p = (t / L + hash(i + 7)) % 1;
+    const x = fx + (hash(i + 3) - 0.5) * 14 * (1 - p) * s + Math.sin(t * 3 + i) * 6 * p * s;
+    const y = fy + 8 * s - p * 72 * s;
+    const r = (17 * (1 - p) + 3) * s * (0.6 + hash(i + 5) * 0.6);
+    const c = p < 0.5 ? mix(core, col, p * 2) : mix(col, acc, (p - 0.5) * 2);
+    blob(ctx, x, y, r, c, (1 - p) * 0.42 * Math.min(1, amt));
+  }
+  ctx.save(); ctx.translate(fx, fy + 4 * s); ctx.scale(1, 1.4);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 11 * s);
+  g.addColorStop(0, rgba(core, Math.min(1, amt))); g.addColorStop(1, rgba(core, 0));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 11 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// 鬼火がはじけてプレイヤーに吸い込まれる
+function absorb(ctx, a, fx, fy, col, core) {
+  if (a < 0 || a > 1.4) return;
+  const tx = HX, ty = CY - 95;
+  for (let i = 0; i < 26; i++) {
+    const an = hash(i + 20) * Math.PI * 2, out = ease(clamp(a / 0.3));
+    const mx = fx + Math.cos(an) * 75 * out, my = fy + Math.sin(an) * 55 * out;
+    const k = ease(clamp((a - 0.3 - hash(i + 21) * 0.2) / 0.55));
+    const x = mx + (tx - mx) * k, y = my + (ty - my) * k;
+    const al = a < 0.95 ? 1 : clamp(1 - (a - 0.95) / 0.2);
+    blob(ctx, x, y, 7, core, al * 0.9); blob(ctx, x, y, 16, col, al * 0.35);
+  }
+  const h = clamp(1 - Math.abs(a - 1.0) / 0.25);
+  blob(ctx, tx, ty, 70, col, h * 0.45);
+}
+
+function flameAmt(a) {
+  if (a < 0) return 1;
+  if (a < 0.1) return 1 + a * 8;
+  if (a < 0.4) return clamp(1.8 - (a - 0.1) * 6);
+  if (S.after !== 'color') return 0;
+  return ease(clamp((a - 0.9) / 0.5));
+}
+
+const KUJI = '臨兵闘者皆陣列在前';
+function seal(ctx, t, col, acc, amt) {
+  if (amt <= 0) return;
+  ctx.save(); ctx.translate(CX, CY); ctx.scale(1, SQ);
+  ctx.shadowColor = rgba(col, 1); ctx.shadowBlur = 12;
+  ctx.strokeStyle = rgba(col, 0.9 * amt); ctx.lineWidth = 2.5; ring(ctx, R);
+  ctx.lineWidth = 1.2; ring(ctx, R * 0.78);
+  ctx.save(); ctx.rotate(t * 0.15);
+  ctx.fillStyle = rgba(acc, 0.95 * amt); ctx.font = 'bold 16px "Yu Mincho","MS Mincho",serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i = 0; i < 9; i++) { ctx.save(); ctx.rotate(i / 9 * Math.PI * 2); ctx.translate(0, -R * 0.89); ctx.fillText(KUJI[i], 0, 0); ctx.restore(); }
+  ctx.restore();
+  ctx.save(); ctx.rotate(-t * 0.1); ctx.strokeStyle = rgba(acc, 0.8 * amt); ctx.lineWidth = 1.6;
+  const e = R * 0.42;
+  for (let i = 0; i < 5; i++) { const y = -e + i * e * 2 / 4; ctx.beginPath(); ctx.moveTo(-e, y); ctx.lineTo(e, y); ctx.stroke(); }
+  for (let i = 0; i < 4; i++) { const x = -e * 0.8 + i * e * 1.6 / 3; ctx.beginPath(); ctx.moveTo(x, -e); ctx.lineTo(x, e); ctx.stroke(); }
+  ctx.restore();
+  ctx.restore();
+}
+
+function curtain(ctx, t, a, col, core, amt, flash) {
+  if (amt <= 0) return;
+  let k = 0;
+  if (a >= 0) k = a < 0.35 ? ease(a / 0.35) : clamp(1 - (a - 0.55) / 0.4);
+  const N = 44;
+  for (let i = 0; i < N; i++) {
+    const th = i / N * Math.PI * 2 + t * 0.15;
+    const x = CX + Math.cos(th) * R, y = CY + Math.sin(th) * R * SQ, front = Math.sin(th) > 0;
+    const h = (75 + 55 * (0.5 + 0.5 * Math.sin(t * 1.7 + i * 2.3))) * (1 + k * 2.2);
+    const tx = x + (CX - x) * k * 0.9;
+    const g = ctx.createLinearGradient(x, y, tx, y - h);
+    const al = (front ? 0.75 : 0.35) * amt * (1 + flash);
+    g.addColorStop(0, rgba(core, al)); g.addColorStop(0.25, rgba(col, al * 0.7)); g.addColorStop(1, rgba(col, 0));
+    ctx.strokeStyle = g; ctx.lineWidth = front ? 1.6 : 1.1;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, y - h); ctx.stroke();
+    const p = (t * 0.6 + hash(i)) % 1;
+    blob(ctx, x + (tx - x) * p, y - h * p, 2.5, core, al * (1 - p));
+  }
+}
+
+const CONCEPTS = [
+  { id: 'A', title: 'A 光の柱＋地面の紋',
+    desc: '細い光の柱が空へ伸び、足元で手裏剣の紋が回る。遠くからいちばん分かりやすい。踏むと柱が太く光り、輪が広がって火花が飛ぶ。',
+    draw(ctx, t, a, P) {
+      const st = stateOf(a), col = mix(P.glow, P.done, st.done), core = P.core, acc = mix(P.acc, P.done, st.done);
+      pool(ctx, col, st.gnd * (1 + st.flash * 2));
+      crest(ctx, R * (1 + 0.12 * st.flash), t, col, acc, st.gnd * (1 + st.flash));
+      motes(ctx, t, core, st.gnd);
+      drawPillar(ctx, 16 * (1 + 3 * st.flash), 760, col, core, st.pil * (0.85 + st.flash), t);
+      drawBurst(ctx, a, col, core);
+    } },
+  { id: 'B', title: 'B 鬼火',
+    desc: '胸の高さに鬼火が浮かんで揺れる。忍者らしいが、遠くからは柱より目立たない。踏むとはじけて、火の粉がプレイヤーに吸い込まれる。',
+    draw(ctx, t, a, P) {
+      const st = stateOf(a), col = mix(P.glow, P.done, st.done), core = P.core, acc = mix(P.acc, P.done, st.done);
+      const fx = CX, fy = CY - 112 + Math.sin(t * 1.6) * 5, fa = flameAmt(a);
+      pool(ctx, col, st.gnd * 0.6 + fa * 0.4 + st.flash);
+      ctx.save(); ctx.translate(CX, CY); ctx.scale(1, SQ); ctx.shadowColor = rgba(col, 1); ctx.shadowBlur = 10;
+      ctx.strokeStyle = rgba(col, 0.45 * st.gnd); ctx.lineWidth = 1.5; ring(ctx, R * 0.55); ctx.restore();
+      motes(ctx, t, col, st.gnd * 0.7, 10);
+      flame(ctx, fx, fy, fa, t, col, core, acc);
+      absorb(ctx, a, fx, fy, col, core);
+    } },
+  { id: 'C', title: 'C 結界の印',
+    desc: '地面に九字の円陣と格子(ドーマン)。縁から細い光の線が立ち上がる。踏むと線が真ん中へ閉じて、結界が張られる。',
+    draw(ctx, t, a, P) {
+      const st = stateOf(a), col = mix(P.glow, P.done, st.done), core = P.core, acc = mix(P.acc, P.done, st.done);
+      pool(ctx, col, st.gnd * (1 + st.flash * 2));
+      seal(ctx, t, col, acc, st.gnd * (1 + st.flash));
+      curtain(ctx, t, a, col, core, st.pil, st.flash);
+      if (a >= 0 && a < 1.2) {
+        const f = clamp(1 - Math.abs(a - 0.38) / 0.2);
+        const g = ctx.createLinearGradient(CX, CY, CX, CY - 380);
+        g.addColorStop(0, rgba(core, f * 0.8)); g.addColorStop(1, rgba(col, 0));
+        ctx.fillStyle = g; ctx.fillRect(CX - 6 - f * 10, CY - 380, 12 + f * 20, 380);
+      }
+    } },
+  { id: 'D', title: 'D 柱＋鬼火＋紋',
+    desc: '遠くでは細い柱で場所を示し、近づくと根元の鬼火と紋が見える。豪華だが作る量は増える。',
+    draw(ctx, t, a, P) { drawD(ctx, t, a, P); } },
+];
+
+function drawD(ctx, t, a, P, ringText) {
+  const st = stateOf(a), col = mix(P.glow, P.done, st.done), core = P.core, acc = mix(P.acc, P.done, st.done);
+  const fx = CX, fy = CY - 105 + Math.sin(t * 1.6) * 4, fa = flameAmt(a);
+  pool(ctx, col, st.gnd * (1 + st.flash * 2));
+  crest(ctx, R * 0.85 * (1 + 0.12 * st.flash), t, col, acc, st.gnd * 0.8 * (1 + st.flash));
+  if (ringText) textRing(ctx, t, col, acc, st.gnd * (1 + st.flash), 1 + 0.12 * st.flash);
+  drawPillar(ctx, 9 * (1 + 3 * st.flash), 760, col, core, st.pil * (0.6 + st.flash), t);
+  flame(ctx, fx, fy, fa, t, col, core, acc, 0.8);
+  absorb(ctx, a, fx, fy, col, core);
+  drawBurst(ctx, a, col, core);
+  return { st, col, core, acc, fy };
+}
+
+const FONT = '"Bahnschrift","Segoe UI",sans-serif';
+function spaced(ctx, s) { try { ctx.letterSpacing = s; } catch (e) { } }
+
+// 紋の外側の帯に沿って回る文字
+function textRing(ctx, t, col, acc, amt, sc) {
+  if (amt <= 0) return;
+  const str = 'CHECKPOINT ◆ CHECKPOINT ◆ ', r = R * 1.08 * sc;
+  ctx.save(); ctx.translate(CX, CY); ctx.scale(1, SQ);
+  ctx.shadowColor = rgba(col, 1); ctx.shadowBlur = 10;
+  ctx.strokeStyle = rgba(col, 0.7 * amt); ctx.lineWidth = 1; ring(ctx, r - 11); ring(ctx, r + 11);
+  ctx.rotate(-t * 0.12);
+  ctx.fillStyle = rgba(acc, 0.95 * amt); ctx.font = `600 14px ${FONT}`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i = 0; i < str.length; i++) {
+    ctx.save(); ctx.rotate(i / str.length * Math.PI * 2); ctx.translate(0, -r); ctx.fillText(str[i], 0, 0); ctx.restore();
+  }
+  ctx.restore();
+}
+
+// 鬼火の上に浮かぶ文字(いつもカメラを向く)
+function textFloat(ctx, t, a, d) {
+  const { st, col, core } = d;
+  const amt = st.pil;
+  if (amt <= 0) return;
+  const pop = a >= 0 ? clamp(1 - a / 0.6) : 0;
+  const y = d.fy - 70 - (a >= 0 ? ease(clamp((a - 0.5) / 1.0)) * 30 : 0);
+  ctx.save(); ctx.translate(CX, y); ctx.scale(1 + pop * 0.25, 1 + pop * 0.25);
+  ctx.shadowColor = rgba(col, 1); ctx.shadowBlur = 12 + pop * 20;
+  ctx.font = `600 15px ${FONT}`; spaced(ctx, '4px'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = rgba(core, 0.95 * amt); ctx.fillText('CHECKPOINT', 2, 0);
+  ctx.strokeStyle = rgba(col, 0.8 * amt); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(-110, 0); ctx.lineTo(-78, 0); ctx.moveTo(78, 0); ctx.lineTo(110, 0); ctx.stroke();
+  spaced(ctx, '0px');
+  ctx.restore();
+}
+
+// 踏んだときだけ出る大きな文字(線が走って、左から現れて、上へ消える)
+function textStamp(ctx, a, d) {
+  if (a < 0 || a > 1.9) return;
+  const { col, core } = d;
+  const y = CY - 205 - ease(clamp((a - 1.3) / 0.6)) * 20;
+  const out = clamp(1 - (a - 1.3) / 0.6);
+  const wipe = ease(clamp(a / 0.18));
+  ctx.save(); ctx.translate(CX, y);
+  ctx.strokeStyle = rgba(core, out); ctx.lineWidth = 2; ctx.shadowColor = rgba(col, 1); ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.moveTo(-140, 22); ctx.lineTo(-140 + 280 * wipe, 22); ctx.stroke();
+  const rev = ease(clamp((a - 0.08) / 0.25));
+  ctx.beginPath(); ctx.rect(-150, -40, 300 * rev, 70); ctx.clip();
+  ctx.font = `700 30px ${FONT}`; spaced(ctx, '5px'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowBlur = 18 + clamp(1 - a / 0.4) * 30;
+  ctx.fillStyle = rgba(core, out); ctx.fillText('CHECKPOINT', 2, 0);
+  spaced(ctx, '0px');
+  ctx.restore();
+}
+
+const TEXTS = [
+  { title: 'D-1 紋の外を回る文字', desc: '足元の紋の外側に帯を足し、「CHECKPOINT」が沿って回る。地面に書いてあるので近くでないと読めない。',
+    draw(ctx, t, a, P) { drawD(ctx, t, a, P, true); } },
+  { title: 'D-2 鬼火の上に浮かぶ文字', desc: '鬼火の上に小さな文字がいつもカメラを向いて浮かぶ。少し離れても読める。踏むと少しふくらみ、上へ消える。',
+    draw(ctx, t, a, P) { textFloat(ctx, t, a, drawD(ctx, t, a, P)); } },
+  { title: 'D-3 踏んだときだけ出る文字', desc: '待機中は文字なし。踏んだ瞬間に線が走り、大きな「CHECKPOINT」が左から現れて上へ消える。通過したことがはっきり分かる。',
+    draw(ctx, t, a, P) { textStamp(ctx, a, drawD(ctx, t, a, P)); } },
+  { title: 'D-4 紋の文字＋踏んだときの文字', desc: 'D-1 と D-3 の組み合わせ。待機中は足元に小さく、踏んだら大きく出る。',
+    draw(ctx, t, a, P) { textStamp(ctx, a, drawD(ctx, t, a, P, true)); } },
+];
+
+const panels = [...TEXTS.map(c => ({ ...c, page: 'text' })), ...CONCEPTS.map(c => ({ ...c, page: 'concepts' }))].map(c => {
+  const el = document.createElement('div'); el.className = 'panel'; el.dataset.page = c.page;
+  el.innerHTML = `<h2>${c.title}<em></em></h2><canvas width="${W}" height="${H}"></canvas><p>${c.desc}</p>`;
+  document.getElementById('main').appendChild(el);
+  return { c, el, ctx: el.querySelector('canvas').getContext('2d'), label: el.querySelector('em') };
+});
+function showPage() { for (const p of panels) p.el.style.display = p.c.page === S.page ? '' : 'none'; }
+showPage();
+
+document.querySelectorAll('.grp').forEach(g => g.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  g.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  S[g.dataset.key] = b.dataset.v;
+  if (g.dataset.key === 'mode' && b.dataset.v === 'act') S.actStart = performance.now() / 1000;
+  if (g.dataset.key === 'page') showPage();
+}));
+
+function actTime(t) {
+  if (S.mode === 'idle') return -1;
+  if (S.mode === 'act') return Math.min(t - S.actStart, 4);
+  const c = t % LOOP; return c < IDLE_T ? -1 : c - IDLE_T;
+}
+
+function frame() {
+  const t = performance.now() / 1000, a = actTime(t), P = PAL[S.color];
+  const far = S.view === 'far';
+  for (const p of panels) {
+    if (p.c.page !== S.page) continue;
+    const ctx = p.ctx;
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    drawFloor(ctx);
+    ctx.save();
+    if (far) { ctx.translate(CX, 200); ctx.scale(0.24, 0.24); ctx.translate(-CX, -CY); }
+    drawHuman(ctx, HX, CY + 8, 150, false);
+    ctx.globalCompositeOperation = 'lighter';
+    p.c.draw(ctx, t, a, P);
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over'; ctx.shadowBlur = 0;
+    if (far) drawHuman(ctx, 115, H + 40, 240, true);
+    p.label.textContent = a < 0 ? '待機' : a < 1.6 ? '起動' : '起動後';
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

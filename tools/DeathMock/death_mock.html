@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>死亡演出モック</title>
+<style>
+:root{--bg:#141218;--fg:#e8e4dc;--sub:#a09aa8;--line:#3a3640}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Yu Gothic UI","Meiryo",sans-serif;padding:16px}
+.wrap{max-width:960px;margin:0 auto}
+canvas{width:100%;display:block;border-radius:8px;background:#000}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer}
+button:hover{border-color:var(--sub)}
+#ph{font-size:13px;color:var(--sub);line-height:1.8;min-height:48px}
+h1{font-size:18px;font-weight:500;margin:0 0 4px}
+p{font-size:13px;color:var(--sub);margin:0 0 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>死亡演出(決定: 彼岸花が咲いて「死」→ 鬼火から復帰)</h1>
+<p>「死」は tools/DeathTextGen で作った data/UI/Death/shi.png・shi_drip.png を表示する(読めなければ文字で代わりに出す)。キャラは仮の棒人間。</p>
+<canvas id="cv" width="640" height="360"></canvas>
+<div class="row">
+<button id="all">通しで見る(死亡から復帰まで)</button>
+<button id="die">死亡だけ</button>
+<label style="font-size:13px;color:var(--sub)"><input type="checkbox" id="slow"> 0.5倍で見る</label>
+</div>
+<div id="ph"></div>
+</div>
+<script>
+const C=document.getElementById('cv'),x=C.getContext('2d');const W=640,H=360,GY=290;
+const F='"Yu Mincho","Hiragino Mincho ProN",serif';
+const IMG_SIZE=512,DRIP_TOP=322;   // shi_drip.png の垂れの始まり(画像の上から)。MakeDeathText.ps1 の出力の dripTopY
+const shi=new Image(),drip=new Image();let imgOk=false;
+shi.onload=()=>{imgOk=true};shi.src='../../2026_winter/data/UI/Death/shi.png';drip.src='../../2026_winter/data/UI/Death/shi_drip.png';
+let seed=11;function R(){seed=(seed*16807)%2147483647;return seed/2147483647}
+const blds=[];for(let i=0;i<12;i++){const b={x:i*58-10,w:46+R()*20,h:90+R()*140,win:[]};for(let j=0;j<10;j++)b.win.push([R()*(b.w-8),R()*(b.h-10)]);blds.push(b)}
+const lilies=[];for(let i=0;i<13;i++)lilies.push({x:190+i*19+(R()-.5)*12,d:Math.abs(i-6)*3+R()*6,h:24+R()*24,r:R()*.6-.3});
+const loose=[];for(let i=0;i<60;i++)loose.push({x:190+R()*250,y:GY-28-R()*30,vx:-1-R()*2.5,vy:-.3-R()*.8,ph:R()*6,rot:R()*6});
+const DE=165,RE=105;let mode='idle',t=0,g=0;
+const cl=k=>Math.max(0,Math.min(1,k)),eo=k=>1-Math.pow(1-cl(k),3);
+function col(c,s,a=1){const l=c[0]*.3+c[1]*.59+c[2]*.11;return `rgba(${l+(c[0]-l)*s|0},${l+(c[1]-l)*s|0},${l+(c[2]-l)*s|0},${a})`}
+function ninja(o){const s=o.s??1;x.save();x.globalAlpha=o.al??1;x.translate(o.x,o.y);x.rotate(o.rot||0);x.lineCap='round';
+const b=o.white?`rgba(255,255,255,${o.white})`:col([22,22,30],s);x.strokeStyle=b;x.fillStyle=b;
+x.lineWidth=6;x.beginPath();x.moveTo(0,-22);x.lineTo(-6,0);x.moveTo(0,-22);x.lineTo(7,0);x.stroke();x.lineWidth=10;x.beginPath();x.moveTo(0,-22);x.lineTo(0,-46);x.stroke();x.beginPath();x.arc(0,-55,7,0,7);x.fill();
+if(!o.white){const sw=o.sw??.6;x.strokeStyle=col([205,210,220],s);x.lineWidth=2;x.beginPath();x.moveTo(4,-36);x.lineTo(4+Math.cos(-sw)*32,-36+Math.sin(-sw)*32);x.stroke();
+x.strokeStyle='rgb(215,45,60)';x.lineWidth=3;x.beginPath();x.moveTo(0,-48);x.lineTo(-15,-43+Math.sin(g*.2)*2);x.stroke()}x.restore()}
+function enemy(px,s){x.save();x.lineCap='round';x.strokeStyle=col([225,228,238],s);x.fillStyle=x.strokeStyle;x.lineWidth=7;x.beginPath();x.moveTo(px,GY-24);x.lineTo(px-6,GY);x.moveTo(px,GY-24);x.lineTo(px+7,GY);x.stroke();
+x.lineWidth=12;x.beginPath();x.moveTo(px,GY-24);x.lineTo(px,GY-50);x.stroke();x.beginPath();x.arc(px,GY-60,8,0,7);x.fill();x.lineWidth=2;x.beginPath();x.moveTo(px-4,GY-38);x.lineTo(px-38,GY-30);x.stroke();x.restore()}
+function world(s,en=true){x.fillStyle=col([18,16,38],s);x.fillRect(0,0,W,H);for(const b of blds){x.fillStyle=col([34,30,62],s);x.fillRect(b.x,GY-b.h,b.w,b.h);x.fillStyle=col([255,190,90],s,.7);for(const w of b.win)x.fillRect(b.x+w[0],GY-b.h+w[1],4,5)}
+x.fillStyle=col([0,220,255],s,.85);x.fillRect(96,150,10,60);x.fillStyle=col([255,40,140],s,.85);x.fillRect(560,120,10,70);x.fillStyle=col([30,28,48],s);x.fillRect(0,GY,W,H-GY);x.fillStyle=col([60,56,90],s);x.fillRect(0,GY,W,2);if(en)enemy(380,s)}
+function lily(cx,k,h,r){if(k<=0)return;x.save();x.translate(cx,GY);x.rotate(r*.3);const hh=h*eo(k*1.6);x.strokeStyle='rgb(40,60,38)';x.lineWidth=2;x.beginPath();x.moveTo(0,0);x.lineTo(0,-hh);x.stroke();
+const b=eo((k-.4)*2.2);if(b>0){x.translate(0,-hh);x.strokeStyle='rgb(215,22,34)';x.lineCap='round';for(let i=0;i<6;i++){const a=i/6*6.283+r;x.lineWidth=3;x.beginPath();x.moveTo(0,0);x.quadraticCurveTo(Math.cos(a)*10*b,Math.sin(a)*7*b-6*b,Math.cos(a)*14*b,Math.sin(a)*9*b-2*b);x.stroke();
+x.lineWidth=1;x.beginPath();x.moveTo(0,0);x.quadraticCurveTo(Math.cos(a)*16*b,Math.sin(a)*8*b-14*b,Math.cos(a)*22*b,Math.sin(a)*10*b-18*b);x.stroke()}}x.restore()}
+function petal(px,py,rot,a){x.save();x.globalAlpha=a;x.translate(px,py);x.rotate(rot);x.fillStyle='rgb(215,22,34)';x.beginPath();x.ellipse(0,0,4,1.6,0,0,7);x.fill();x.restore()}
+function drawShi(t){const a=cl((t-100)/22);if(a<=0)return;const S=260,dx=320-S/2,dy=190-S*300/IMG_SIZE;
+if(imgOk){x.save();x.globalAlpha=a;const sc=1+.06*(1-eo((t-100)/22));x.translate(320,190);x.scale(sc,sc);x.translate(-320,-190);x.drawImage(shi,dx,dy,S,S);
+const dl=cl((t-108)/28);if(dl>0){const sy=DRIP_TOP,sh=(IMG_SIZE-DRIP_TOP)*eo(dl);x.drawImage(drip,0,sy,IMG_SIZE,sh,dx,dy+S*sy/IMG_SIZE,S,S*sh/IMG_SIZE)}x.restore()}
+else{x.textAlign='center';x.font=`130px ${F}`;x.fillStyle=`rgba(190,20,34,${a})`;x.fillText('死',320,215)}}
+function dying(t){const s=1-cl((t-8)/40);world(s);ninja({x:320,y:GY,rot:t<6?0:-1.45*eo((t-6)/45),s});
+if(t<6){x.fillStyle=`rgba(255,40,50,${.35*(1-t/6)})`;x.fillRect(0,0,W,H)}if(t<10){x.strokeStyle=`rgba(255,255,255,${1-t/10})`;x.lineWidth=3;x.beginPath();x.moveTo(280,GY-80);x.lineTo(370,GY-10);x.stroke()}
+const dim=cl((t-50)/30)*.35;if(dim>0){x.fillStyle=`rgba(0,0,0,${dim})`;x.fillRect(0,0,W,H)}
+for(const l of lilies)lily(l.x,(t-38-l.d)/42,l.h,l.r);
+if(t>92)for(const p of loose){const kk=t-92;petal(p.x+p.vx*kk,p.y+p.vy*kk+Math.sin(kk*.1+p.ph)*6,p.rot+kk*.1,1-cl(kk/50))}
+drawShi(t);const fk=cl((t-138)/24);if(fk>0){x.fillStyle=`rgba(0,0,0,${fk})`;x.fillRect(0,0,W,H)}}
+function respawn(t){world(1,false);const pa=t<60?cl(t/10):1-cl((t-60)/30);
+x.fillStyle=`rgba(200,230,255,${pa*.22})`;x.fillRect(282,0,36,GY);x.fillStyle=`rgba(255,255,255,${pa*.45})`;x.fillRect(296,0,8,GY);
+x.strokeStyle=`rgba(200,230,255,${pa*.8})`;x.lineWidth=2;x.beginPath();x.ellipse(300,GY,52+Math.sin(t*.1)*3,10,0,0,7);x.stroke();x.beginPath();x.ellipse(300,GY,34,6,0,0,7);x.stroke();
+if(t>8&&t<58){const k=eo((t-12)/38),r=80*(1-k);for(let i=0;i<8;i++){const a=i/8*6.283+t*.09,wx=300+Math.cos(a)*r,wy=GY-32+Math.sin(a)*r*.5;x.fillStyle='rgba(170,225,255,.35)';x.beginPath();x.arc(wx+Math.sin(a)*6,wy+5,5,0,7);x.fill();x.fillStyle='rgba(235,250,255,.95)';x.beginPath();x.arc(wx,wy,3.5,0,7);x.fill()}}
+ninja({x:300,y:GY,al:cl((t-50)/12),sw:t>70&&t<88?.6-Math.sin((t-70)/18*Math.PI)*2:.6});if(t>46&&t<66)ninja({x:300,y:GY,white:1-Math.abs(t-56)/10});
+if(t<14){x.fillStyle=`rgba(0,0,0,${1-t/14})`;x.fillRect(0,0,W,H)}}
+const PH=[[0,'被弾(赤く光って止まる)'],[6,'倒れる・赤以外の色が抜ける'],[38,'倒れた体のまわりに彼岸花が咲く'],[92,'花びらが舞う'],[100,'「死」(108から垂れが伸びる)'],[138,'暗転']];
+const PR=[[DE,'明転'],[DE+12,'鬼火が集まる'],[DE+50,'姿が現れる'],[DE+70,'刀を払って構え直す']];
+function draw(){if(mode==='idle'){world(1);ninja({x:320,y:GY});return}if(t<DE)dying(t);else respawn(t-DE);
+x.fillStyle='rgba(255,255,255,.8)';x.font='13px sans-serif';x.textAlign='left';x.fillText(Math.round(t)+'F / '+(t/60).toFixed(2)+' 秒',W-120,H-12)}
+function panel(){const el=document.getElementById('ph');if(mode==='idle'){el.textContent='ボタンを押すと再生します。';return}
+const list=mode==='all'?PH.concat(PR):PH;let cur=0;list.forEach((v,i)=>{if(t>=v[0])cur=i});
+el.innerHTML=list.map((v,i)=>`<span style="${i===cur?'color:var(--fg)':''}">${v[0]}F ${v[1]}</span>`).join('　→　')+`<br>死亡 ${DE}F(約${(DE/60).toFixed(1)}秒)`+(mode==='all'?` ＋ 復帰 ${RE}F(約${(RE/60).toFixed(1)}秒)`:'')}
+document.getElementById('all').onclick=()=>{mode='all';t=0};document.getElementById('die').onclick=()=>{mode='die';t=0};
+const fix=location.hash.match(/t=(\d+)/);if(fix){mode='all';t=+fix[1]}   // death_mock.html#t=130 でそのフレームに止める(撮影用)
+function loop(){g++;if(mode!=='idle'&&!fix){t+=document.getElementById('slow').checked?.5:1;const end=mode==='all'?DE+RE:DE;if(t>end+40){mode='idle';t=0}}draw();panel();requestAnimationFrame(loop)}
+loop();
+</script>
+</body>
+</html>

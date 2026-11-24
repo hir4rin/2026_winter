@@ -8,11 +8,11 @@ class MenuUI
 {
 public:
 	MenuUI() = default;
-	~MenuUI();
+	virtual ~MenuUI();
 
-	void Init();
-	void Update();
-	void Draw();
+	virtual void Init();
+	virtual void Update();
+	virtual void Draw();
 
 	void SetTitle(const std::string& title) { m_title = title; }
 	void SetListHeader(const std::string& header) { m_listHeader = header; }
@@ -21,13 +21,20 @@ public:
 	void SetCursor(int cursor);
 	void SetDetail(const std::string& header, const std::string& name, const std::string& text);
 
-private:
+protected:
 	void DrawBackground();
-	void DrawTitle();
+	//x1〜x2 に線を引いて真ん中にタイトル
+	void DrawTitle(float x1, float x2);
 	void DrawListPanel();
 	void DrawDetailPanel();
 	void DrawGuide();
 	void DrawSelectBar(float x, float y, float w, float h);
+	//「詳細」のような見出しと右へ伸びる線
+	void DrawHeaderLine(float x1, float y, float x2, const std::string& label);
+	//線が左から右へ薄くなる横線
+	void DrawFadeLine(float x1, float y1, float x2, float y2);
+	//m_alpha を掛けたアルファ値
+	int Alpha(int a) const;
 
 	//9スライスの枠
 	void DrawFrame(float x1, float y1, float x2, float y2, int r, int g, int b);
@@ -49,6 +56,10 @@ private:
 	int m_cursor = 0;
 	int m_frame = 0;
 	int m_selectFrame = 0;//カーソルが変わってからのフレーム
+
+	//出てくる演出用(パネルごとに変えて描く)
+	float m_alpha = 1.0f;
+	float m_offsetX = 0.0f;
 
 	int m_frameHandle = -1;
 	int m_selectBaseHandle = -1;

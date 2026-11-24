@@ -312,6 +312,7 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Scene\PauseScene.cpp" />
+    <ClCompile Include="Scene\GameOverScene.cpp" />
     <ClCompile Include="Scene\TutorialScene.cpp" />
     <ClCompile Include="Scene\StageSelectScene.cpp" />
     <ClCompile Include="Scene\TitleScene.cpp" />
@@ -344,6 +345,7 @@
     <ClCompile Include="UI\HUD\PlayerHUD.cpp" />
     <ClCompile Include="UI\HUD\BossHpUI.cpp" />
     <ClCompile Include="UI\Menu\MenuUI.cpp" />
+    <ClCompile Include="UI\Menu\PauseUI.cpp" />
     <ClCompile Include="UI\Menu\ResultUI.cpp" />
     <ClCompile Include="UI\UIFont.cpp" />
   </ItemGroup>
@@ -524,6 +526,7 @@
     <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Scene\PauseScene.h" />
+    <ClInclude Include="Scene\GameOverScene.h" />
     <ClInclude Include="Scene\TutorialScene.h" />
     <ClInclude Include="Scene\StageSelectScene.h" />
     <ClInclude Include="Scene\TitleScene.h" />
@@ -563,6 +566,7 @@
     <ClInclude Include="UI\HUD\PlayerHUD.h" />
     <ClInclude Include="UI\HUD\BossHpUI.h" />
     <ClInclude Include="UI\Menu\MenuUI.h" />
+    <ClInclude Include="UI\Menu\PauseUI.h" />
     <ClInclude Include="UI\Menu\ResultUI.h" />
     <ClInclude Include="UI\UIFont.h" />
   </ItemGroup>
