@@ -64,4 +64,5 @@ private:
 	static constexpr int kSlashLineNum = 3;
 	std::array<SlashLine, kSlashLineNum> m_slashLines = {};
 	int m_slashHandle = -1;
+	bool m_isBossCut = false;//ボスのトドメ//斬撃の線は FinisherUI が出し、白い爆発は小さくする
 };

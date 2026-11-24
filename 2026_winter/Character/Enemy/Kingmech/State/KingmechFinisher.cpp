@@ -29,7 +29,7 @@ namespace
 	constexpr float kKessatsuTime = 50.0f;//止め絵
 	constexpr float kSplitTime = 60.0f;
 	constexpr float kRestTime = 70.0f;//割れた後、しゃがんだまま
-	constexpr float kPullBackTime = 80.0f;//割れてから引く長さ
+	constexpr float kPullBackTime = 80.0f;//割れてから下がる長さ
 
 	constexpr float kStaggerTimeScale = 0.35f;
 	constexpr float kApexTimeScale = 0.8f;//頂点で少し遅くする
@@ -60,6 +60,9 @@ namespace
 	//割れ方
 	constexpr float kSplitTiltAngle = 15.0f * DX_PI_F / 180.0f;//外へ傾く角度//大きいとプレイヤー側の半分がプレイヤーに重なる
 	constexpr float kSplitSlide = 60.0f;//外へずれる距離
+	constexpr float kCutLineTop = 600.0f;//血殺の斬撃を出す線の上の端(足元からの高さ)//膝をついたボスの頭より少し上
+	constexpr float kCutLineBottom = -20.0f;
+	constexpr float kCutBurstHeight = 480.0f;//血殺の白い爆発を出す高さ
 
 	//血
 	constexpr float kBloodScale = 45.0f;
@@ -75,18 +78,19 @@ namespace
 	constexpr float kFollowRate = 0.22f;//プレイヤーを追う速さ
 	constexpr float kDiveFollowRate = 0.4f;
 	constexpr float kFollowHeight = 110.0f;//プレイヤーの足元からの注視点の高さ
-	//カメラ②: 着地したプレイヤーの真横(ボスと反対側)から//着地の斬り・止め絵はプレイヤーに寄り、割れるときに引く
+	//カメラ②: 着地したプレイヤーの真横(ボスと反対側)から//着地の斬りはプレイヤーに寄り、止め絵で引きへ切り替える
 	constexpr float kCloseCamDistance = 230.0f;//寄り
 	constexpr float kCloseCamOut = 40.0f;//ボスから離れる向きへずらす
 	constexpr float kCloseCamHeight = 70.0f;
 	constexpr float kCloseTargetHeight = 120.0f;
 	constexpr float kCloseCenterRate = 0.85f;//注視点をボス(0)〜プレイヤー(1)のどこにするか
-	constexpr float kWideCamDistance = 430.0f;//引き
-	constexpr float kWideCamOut = 120.0f;
-	constexpr float kWideCamHeight = 70.0f;
-	constexpr float kWideTargetHeight = 210.0f;
-	constexpr float kWideCenterRate = 0.7f;
+	constexpr float kWideCamDistance = 1000.0f;//止め絵の引き//ボスの全身を入れる
+	constexpr float kWideCamOut = 150.0f;
+	constexpr float kWideCamHeight = 200.0f;
+	constexpr float kWideTargetHeight = 320.0f;
+	constexpr float kWideCenterRate = 0.55f;
 	constexpr float kSideFov = 50.0f;
+	constexpr float kPullBackDistance = 60.0f;//割れるときにさらに少し下がる
 }
 
 KingmechFinisher::KingmechFinisher(std::weak_ptr<EnemyBase> owner) :
@@ -278,24 +282,38 @@ void KingmechFinisher::ChangePhase(Phase next)
 	}
 
 	case Phase::Strike:
-		//カメラ②: 低い真横//ボスが左、プレイヤーが右の手前//止め絵の後もこの構図
+		//カメラ②: 低い真横//ボスが左、プレイヤーが右の手前
 		System::GetInstance().SetTimeScale(kStrikeTimeScale);
 		SetShot(m_sideCamPos, m_sideCamPos, m_sideCamTarget, m_sideCamTarget, kSideFov, kSideFov, 1.0f);
 		break;
 
 	case Phase::Kessatsu:
-		battle->SetUltStart(kUltFrame, m_center + Vector3(0.0f, 380.0f, 0.0f));
+		//白い爆発は切れる線の上のほうに小さく出す
+		battle->SetUltStart(kUltFrame, m_center + Vector3(0.0f, kCutBurstHeight, 0.0f));
 		System::GetInstance().SetTimeScale(kFreezeTimeScale);
+		{
+			//斬撃はボスが切れる線(中心の縦の線)に沿わせる
+			auto& screen = battle->GetFinisherScreen();
+			screen.isCutLine = true;
+			screen.cutTop = m_center + Vector3(0.0f, kCutLineTop, 0.0f);
+			screen.cutBottom = m_center + Vector3(0.0f, kCutLineBottom, 0.0f);
+		}
+		//止め絵は引きに切り替えて、ボスの全身とプレイヤーを入れる
+		SetShot(m_wideCamPos, m_wideCamPos, m_wideCamTarget, m_wideCamTarget, kSideFov, kSideFov, 1.0f);
 		break;
 
 	case Phase::Split:
 	{
-		//止め絵が終わったらすぐ割れる//寄りから、割れるのが見える引きまでゆっくり下がる
+		//止め絵が終わったらすぐ割れる
 		System::GetInstance().SetTimeScale(1.0f);
 		StartCut();
 		playerState->PlayAnim(playerState->GetAnimNameOf(kLeapAnim), false, kCrouchAnimSpeed, kCrouchHoldFrame, 0.0f, RootMotionCancel::None, playerState->GetAnimFrame());
 		PlayCutBlood(kBloodScale);
-		SetShot(m_sideCamPos, m_wideCamPos, m_sideCamTarget, m_wideCamTarget, kSideFov, kSideFov + 2.0f, kPullBackTime);
+		{
+			//止め絵の引きから、少しだけ下がる
+			const Vector3 back = (m_wideCamPos - m_wideCamTarget).Normalize() * kPullBackDistance;
+			SetShot(m_wideCamPos, m_wideCamPos + back, m_wideCamTarget, m_wideCamTarget, kSideFov, kSideFov, kPullBackTime);
+		}
 		break;
 	}
 

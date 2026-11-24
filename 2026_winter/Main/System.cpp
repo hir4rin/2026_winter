@@ -74,6 +74,11 @@ namespace
 	//ダッシュ
 	const std::string kDashStartEffectPath = "data/Effect/Move/DashStart.efk";
 	const std::string kDashSparkleEffectPath = "data/Effect/Move/DashSparkle.efk";
+	//チェックポイント
+	const std::string kCheckpointIdleEffectPath = "data/Effect/Checkpoint/CheckpointIdle.efk";
+	const std::string kCheckpointActivateEffectPath = "data/Effect/Checkpoint/CheckpointActivate.efk";
+	//回復
+	const std::string kHealEffectPath = "data/Effect/Heal/HealSpiral.efk";
 
 	//Kingmechのミサイルの雨
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
@@ -127,6 +132,9 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::JumpKickEffect] = LoadEffekseerEffect(kJumpKickEffectPath.c_str());
 	m_asyncHandles[AsyncData::DashStartEffect] = LoadEffekseerEffect(kDashStartEffectPath.c_str());
 	m_asyncHandles[AsyncData::DashSparkleEffect] = LoadEffekseerEffect(kDashSparkleEffectPath.c_str());
+	m_asyncHandles[AsyncData::CheckpointIdleEffect] = LoadEffekseerEffect(kCheckpointIdleEffectPath.c_str());
+	m_asyncHandles[AsyncData::CheckpointActivateEffect] = LoadEffekseerEffect(kCheckpointActivateEffectPath.c_str());
+	m_asyncHandles[AsyncData::HealEffect] = LoadEffekseerEffect(kHealEffectPath.c_str());
 }
 
 void System::LoadStage(StageType type)
@@ -334,6 +342,9 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::JumpKickEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DashStartEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DashSparkleEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::CheckpointIdleEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::CheckpointActivateEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::HealEffect]);
 
 }
 

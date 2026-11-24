@@ -98,6 +98,22 @@ namespace
         PhaseAreaColumnNum,//列数
     };
 
+    //チェックポイント
+    const std::string kCheckpointDirectory = "data/Stage/Checkpoints/";//後ろに"Stage005.csv"
+    const char* const kCheckpointHeaderComment = "#name,posX,posY,posZ,rotYDeg,phase,radius";
+    enum CheckpointColumn : int
+    {
+        CheckpointName = 0,
+        CheckpointPosX,
+        CheckpointPosY,
+        CheckpointPosZ,
+        CheckpointRotYDeg,
+        CheckpointPhase,
+        CheckpointRadius,//省略可
+        CheckpointColumnNum,//列数
+    };
+    constexpr int kCheckpointMinColumnNum = CheckpointColumn::CheckpointRadius;
+
     const std::string kTutorialPath = "data/Tutorial/Tutorial.csv";
 
     //PhaseFlowColumn などと名前がぶつからないように頭に Tutorial を付ける
@@ -636,6 +652,65 @@ bool DataManager::SavePhaseAreas(int stageNumber, const std::vector<PhaseArea>& 
     if (!file.good()) return false;
 
     m_phaseAreas = areas;//保存した内容を持っているデータにも反映する
+    return true;
+}
+
+std::string DataManager::GetCheckpointFilePath(int stageNumber)
+{
+    std::ostringstream oss;
+    oss << kCheckpointDirectory << "Stage" << std::setw(3) << std::setfill('0') << stageNumber << ".csv";
+    return oss.str();
+}
+
+void DataManager::LoadCheckpoints(int stageNumber)
+{
+    m_checkpoints.clear();
+
+    std::ifstream file(GetCheckpointFilePath(stageNumber));
+    if (!file.is_open()) return;//無ければチェックポイント無し
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();//改行コードの\rを消す
+        if (line.empty() || line[0] == '#') continue;//空行・コメントは飛ばす
+
+        auto tokens = Split(line, ',');
+        if (tokens.size() < kCheckpointMinColumnNum) continue;//列不足は飛ばす
+
+        //数値の欄が空欄・文字だとstd::stofの例外で止まる
+        CheckpointData cp;
+        cp.name = tokens[CheckpointColumn::CheckpointName];
+        cp.position = Vector3(std::stof(tokens[CheckpointColumn::CheckpointPosX]),
+            std::stof(tokens[CheckpointColumn::CheckpointPosY]), std::stof(tokens[CheckpointColumn::CheckpointPosZ]));
+        cp.rotYDeg = std::stof(tokens[CheckpointColumn::CheckpointRotYDeg]);
+        cp.phase = std::stoi(tokens[CheckpointColumn::CheckpointPhase]);
+        if (tokens.size() > CheckpointColumn::CheckpointRadius && !tokens[CheckpointColumn::CheckpointRadius].empty())
+        {
+            cp.radius = std::stof(tokens[CheckpointColumn::CheckpointRadius]);
+        }
+        m_checkpoints.push_back(cp);
+    }
+}
+
+bool DataManager::SaveCheckpoints(int stageNumber, const std::vector<CheckpointData>& checkpoints)
+{
+    //出力先フォルダが無ければ作る
+    std::filesystem::create_directories(kCheckpointDirectory);
+
+    std::ofstream file(GetCheckpointFilePath(stageNumber));
+    if (!file.is_open()) return false;
+
+    file << kCheckpointHeaderComment << "\n";
+    for (const auto& cp : checkpoints)
+    {
+        file << SanitizeCsvCell(cp.name) << ","
+            << cp.position.x << "," << cp.position.y << "," << cp.position.z << ","
+            << cp.rotYDeg << "," << cp.phase << "," << cp.radius << "\n";
+    }
+    if (!file.good()) return false;
+
+    m_checkpoints = checkpoints;//保存した内容を持っているデータにも反映する
     return true;
 }
 

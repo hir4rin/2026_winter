@@ -26,6 +26,7 @@ namespace
 	constexpr int kBurstAngleRange = 12;//そこからずらす最大(度)
 	constexpr float kBurstStartRate = 0.45f;//出始めの大きさ
 	constexpr float kBurstCreepRate = 0.08f;//止まっている間に広がる分
+	constexpr float kBurstBossCutRate = 0.45f;//ボスのトドメ(切れる線を出すとき)は小さくして、線の上のほうの飛沫にする
 	//実フレーム
 	constexpr int kBurstGrowFrame = 4;
 	constexpr int kBurstCreepFrame = 66;//少しずつ広がる長さ
@@ -154,6 +155,9 @@ void KessatsuUI::StartBurst()
 	m_burstAngle = (GetRand(kBurstAngleRange * 2) - kBurstAngleRange - kBurstAngleUp) * DX_PI_F / 180.0f;
 	m_burstX = Game::ScaleX(Game::kScreenWidth * 0.5f);
 	m_burstY = Game::ScaleY(Game::kScreenHeight * 0.5f);
+	//ボスのトドメでは斬撃の線を FinisherUI が切れる線に沿って出すので、ここでは出さない//白い爆発も小さくする
+	auto battleMgr = System::GetInstance().GetBattleMgr();
+	m_isBossCut = battleMgr && battleMgr->GetFinisherScreen().isCutLine;
 	StartSlash();
 }
 
@@ -182,6 +186,7 @@ void KessatsuUI::StartSlash()
 void KessatsuUI::DrawSlash()
 {
 	if (m_burstFrame < 0) return;
+	if (m_isBossCut) return;
 
 	const float scale = Game::GetScale();
 	SetDrawMode(DX_DRAWMODE_BILINEAR);
@@ -236,7 +241,8 @@ void KessatsuUI::DrawBurst()
 
 	SetDrawMode(DX_DRAWMODE_BILINEAR);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-	DrawRotaGraphF(m_burstX, m_burstY, kBurstScale * rate * Game::GetScale(), m_burstAngle, m_burstHandles[m_burstIndex], TRUE);
+	const float bossRate = m_isBossCut ? kBurstBossCutRate : 1.0f;
+	DrawRotaGraphF(m_burstX, m_burstY, kBurstScale * rate * bossRate * Game::GetScale(), m_burstAngle, m_burstHandles[m_burstIndex], TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	SetDrawMode(DX_DRAWMODE_NEAREST);
 }

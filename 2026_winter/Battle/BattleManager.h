@@ -15,6 +15,9 @@ public:
 	{
 		bool isPlaying = false;
 		float whiteRate = 0.0f;//白いフラッシュ
+		bool isCutLine = false;//ボスが切れる線に斬撃を出す
+		Vector3 cutTop;//切れる線の上の端(ワールド)
+		Vector3 cutBottom;//下の端
 	};
 
 	//エンディングの画面(クレジット・ロゴ)

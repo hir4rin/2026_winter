@@ -1,0 +1,7 @@
+#name,posX,posY,posZ,rotYDeg,phase,radius
+CP_Car1,0,0,0,0,1,150
+CP_Car2,0,0,2250,0,2,150
+CP_Car3,0,0,4600,0,3,150
+CP_Car4,0,602,10500,0,4,150
+CP_Car5,0,0,17450,0,5,150
+CP_Car6,0,0,21450,0,6,150

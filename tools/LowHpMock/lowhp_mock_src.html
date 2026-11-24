@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HP低下の画面効果</title>
+<style>
+:root{
+  --bg:#0d0b0e; --panel:#17141a; --line:#2b2530; --text:#e9e4ea; --sub:#9a909f;
+  --accent:#dc3a48; --accent2:#8a1a24; --good:#e0b45a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}
+header{position:sticky;top:0;z-index:5;background:rgba(13,11,14,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 16px}
+h1{font-family:"Yu Mincho","YuMincho",serif;font-weight:600;font-size:20px;margin:0 0 8px;letter-spacing:.06em}
+h1 small{font-family:"Yu Gothic UI",sans-serif;font-size:12px;color:var(--sub);font-weight:400;margin-left:10px;letter-spacing:0}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:13px}
+.ctrl label{display:flex;align-items:center;gap:6px;color:var(--sub)}
+.ctrl input[type=range]{width:150px;accent-color:var(--accent)}
+.ctrl b{color:var(--text);font-weight:600;min-width:3.2em;display:inline-block}
+.btn{background:#221d26;color:var(--text);border:1px solid #3a3240;border-radius:4px;padding:5px 10px;font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.on{background:var(--accent2);border-color:var(--accent)}
+.hpbar{width:180px;height:10px;background:#2a1418;border:1px solid #4a2a30;border-radius:2px;position:relative;overflow:hidden}
+.hpbar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#ff9aa4,#dc3a48 45%,#8a1a24);}
+.hpbar s{position:absolute;top:-2px;bottom:-2px;width:1px;background:#fff;opacity:.6}
+.state{font-size:12px;color:var(--sub)}
+.state em{font-style:normal;color:var(--accent)}
+main{padding:14px 16px 40px;max-width:1500px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;cursor:zoom-in}
+.card:hover{border-color:#4a3a50}
+.card.rec{border-color:var(--good)}
+.card canvas{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.info{padding:8px 10px 10px}
+.info .t{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:600}
+.no{font-family:"Yu Mincho",serif;color:var(--accent);font-size:17px;min-width:1.4em}
+.rec .no{color:var(--good)}
+.info p{margin:4px 0 0;font-size:12px;color:var(--sub);line-height:1.55}
+.tag{font-size:11px;padding:1px 6px;border-radius:3px;background:#2a2230;color:#c9bfcd;font-weight:400}
+.rec .tag{background:#3a2e14;color:var(--good)}
+.note{margin:18px 0 0;font-size:12px;color:var(--sub);line-height:1.7}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;z-index:10;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:16px}
+#modal.open{display:flex}
+#modal canvas{max-width:min(96vw,1280px);width:100%;aspect-ratio:16/9;background:#000;border:1px solid var(--line)}
+#modal .cap{font-size:14px;color:var(--text);text-align:center;max-width:1280px}
+#modal .cap span{color:var(--sub);font-size:12px;display:block;margin-top:3px}
+#modal .nav{font-size:12px;color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <h1>HP低下の画面効果<small>HPを下げると全部の案が同時に変わる。カードを押すと大きく見られる(←→で切り替え、Escで閉じる)</small></h1>
+  <div class="ctrl">
+    <label>HP <input id="hp" type="range" min="0" max="100" value="10"><b id="hpv">10%</b></label>
+    <div class="hpbar" title="白い線＝効き始めるHP"><i id="hpfill"></i><s id="hpth"></s></div>
+    <label><input id="auto" type="checkbox"> 自動で減らす・回復する</label>
+    <label>効き始め <input id="th" type="range" min="10" max="60" value="30"><b id="thv">30%</b></label>
+    <label>強さ <input id="str" type="range" min="30" max="150" value="100"><b id="strv">1.00</b></label>
+    <button class="btn on" id="heart">心拍 ON</button>
+    <button class="btn" id="pause">一時停止</button>
+    <button class="btn" id="ink" title="ScreenBloodUI と同じ ink_vignette.png を 110/255 で重ねる">暗殺・確殺の墨のビネットを重ねる</button>
+    <span class="state" id="state"></span>
+  </div>
+</header>
+<main>
+  <div class="grid" id="grid"></div>
+  <p class="note">
+    背景はゲームの画面(Log/lock_001.png を切り取り、デバッグの線を消したもの)。効果は WebGL のピクセルシェーダーで、ゲームに入れるときは同じ計算を HLSL に移す。<br>
+    心拍: HPが低いほど速くなる(72→150bpm)。ドクン・ドクンの2つの山で強さが変わる。<br>
+    「暗殺・確殺の墨のビネット」は、今のゲームで暗殺・確殺したときに出る黒いふち(ScreenBloodUI)。HP低下の表現がこれと見分けられるかを確かめる用。<br>
+    HUD はこの画面に入っていない(ゲームでは効果をかけた後に描くので、HPバーは色が抜けたり暗くなったりしない)。
+  </p>
+</main>
+<div id="modal"><canvas id="big" width="1280" height="720"></canvas><div class="cap" id="cap"></div><div class="nav">← → で切り替え / Esc・クリックで閉じる / スペースで一時停止</div></div>
+
+<script id="vs" type="x-shader/x-vertex">
+attribute vec2 aPos;
+varying vec2 vUv;
+void main(){ vUv = aPos*0.5+0.5; gl_Position = vec4(aPos,0.0,1.0); }
+</script>
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTex;
+uniform float uTime;
+uniform float uLow;   // 効き具合 0〜1
+uniform float uBeat;  // 心拍 0〜1
+uniform float uAspect;
+uniform int uMode;
+
+float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
+float noise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f*f*(3.0-2.0*f);
+  return mix(mix(hash(i), hash(i+vec2(1.0,0.0)), u.x), mix(hash(i+vec2(0.0,1.0)), hash(i+vec2(1.0,1.0)), u.x), u.y);
+}
+float fbm(vec2 p){
+  float v = 0.0, a = 0.5;
+  for(int i=0;i<5;i++){ v += a*noise(p); p = p*2.03+vec2(1.7,9.2); a *= 0.5; }
+  return v;
+}
+vec3 tex(vec2 uv){ return texture2D(uTex, clamp(uv, vec2(0.001), vec2(0.999))).rgb; }
+// 中心0・四隅1
+float edgeDist(vec2 uv){
+  vec2 c = (uv-0.5)*vec2(uAspect,1.0);
+  return length(c)/length(vec2(uAspect,1.0)*0.5);
+}
+float luma(vec3 c){ return dot(c, vec3(0.299,0.587,0.114)); }
+
+// 1 赤いビネット＋心拍
+vec3 fxRed(vec2 uv){
+  vec3 col = tex(uv);
+  float e = edgeDist(uv);
+  float inner = mix(0.80, 0.30, uLow) - 0.12*uBeat*uLow;
+  float v = smoothstep(inner, inner+0.50, e);
+  vec3 blood = vec3(0.50,0.02,0.04)*(0.65+0.55*uBeat);
+  float amt = v*min(1.0, uLow*1.6)*(0.80+0.35*uBeat);
+  return mix(col, col*0.25+blood, clamp(amt,0.0,1.0));
+}
+// 2 色が抜ける(赤だけ残す)
+vec3 applyDesat(vec3 col, float e, float k){
+  float l = luma(col);
+  float red = clamp((col.r-max(col.g,col.b))*2.8, 0.0, 1.0);
+  float s = mix(1.0, red*1.35, k*0.93);
+  col = mix(vec3(l), col, s);
+  col = mix(col, col*vec3(0.92,0.95,1.04), k*0.6); // 少し冷たく
+  col *= mix(1.0, 0.86, k);
+  col *= 1.0 - 0.35*k*smoothstep(0.45, 1.1, e);
+  return col;
+}
+vec3 fxDesat(vec2 uv){
+  float e = edgeDist(uv);
+  vec3 col = applyDesat(tex(uv), e, uLow);
+  col *= 1.0 - 0.18*uBeat*uLow*smoothstep(0.4,1.0,e);
+  return col;
+}
+// 3 縁から墨がにじむ
+vec3 applyInk(vec3 col, vec2 uv, float e, float k, float beat){
+  vec2 p = uv*vec2(uAspect,1.0)*2.2;
+  float n  = fbm(p + vec2(0.0, uTime*0.035));
+  float n2 = fbm(p*4.0 - vec2(uTime*0.05, 0.0));
+  float field = e + (n-0.5)*0.48 + (n2-0.5)*0.12;
+  float th = mix(1.08, 0.50, k) - 0.06*beat*k;
+  float m = smoothstep(th, th+0.045, field);
+  float fringe = smoothstep(th-0.11, th, field)*(1.0-m);
+  col = mix(col, col*vec3(0.55,0.12,0.14)+vec3(0.13,0.0,0.015), fringe*0.85);
+  vec3 ink = vec3(0.028,0.010,0.016) + (n2-0.5)*0.03;
+  return mix(col, ink, m*0.97);
+}
+vec3 fxInk(vec2 uv){
+  float e = edgeDist(uv);
+  return applyInk(tex(uv), uv, e, uLow, uBeat);
+}
+// 4 縁から血管・ひびが伸びる
+vec3 fxVeins(vec2 uv){
+  vec3 col = tex(uv);
+  float e = edgeDist(uv);
+  vec2 p = uv*vec2(uAspect,1.0)*2.4;
+  vec2 w = vec2(fbm(p*1.3), fbm(p*1.3+5.2));
+  vec2 q = p + w*1.6;
+  float l1 = pow(1.0-abs(noise(q*3.0)*2.0-1.0), 16.0);
+  float l2 = pow(1.0-abs(noise(q*7.0+3.0)*2.0-1.0), 20.0)*0.7;
+  float veins = clamp(l1+l2, 0.0, 1.0);
+  float th = mix(1.10, 0.35, uLow);
+  float grow = smoothstep(th, th+0.35, e + (fbm(p*2.0)-0.5)*0.25);
+  col *= 1.0 - 0.45*grow*uLow;
+  vec3 vc = vec3(0.85,0.04,0.07)*(0.55+0.95*uBeat);
+  return mix(col, vc, veins*grow);
+}
+// 5 色収差
+vec3 fxChroma(vec2 uv){
+  float e = edgeDist(uv);
+  vec2 d = uv-0.5;
+  float amt = uLow*(0.010 + 0.028*uBeat)*e*e;
+  vec3 col;
+  col.r = tex(uv + d*amt).r;
+  col.g = tex(uv).g;
+  col.b = tex(uv - d*amt).b;
+  col *= 1.0 - 0.30*uLow*smoothstep(0.5, 1.1, e);
+  return col;
+}
+// 6 周辺がぼける
+vec3 fxBlur(vec2 uv){
+  float e = edgeDist(uv);
+  float r = uLow*(0.010 + 0.007*uBeat)*smoothstep(0.25, 1.0, e);
+  vec3 sum = vec3(0.0);
+  for(int i=0;i<24;i++){
+    float fi = float(i);
+    float a = fi*2.39996;
+    float rr = sqrt((fi+0.5)/24.0)*r;
+    sum += tex(uv + vec2(cos(a), sin(a)*uAspect)*rr);
+  }
+  vec3 col = sum/24.0;
+  col *= 1.0 - 0.40*uLow*smoothstep(0.35, 1.1, e);
+  return col;
+}
+// 7 画面がゆらぐ
+vec3 fxWarp(vec2 uv){
+  float e = edgeDist(uv);
+  float s = 1.0 - 0.022*uBeat*uLow;
+  vec2 w = (uv-0.5)*s + 0.5;
+  w += vec2(sin(uv.y*16.0+uTime*2.1), cos(uv.x*13.0+uTime*1.7))*0.0035*uLow*e;
+  vec3 col = tex(w);
+  col *= 1.0 - 0.25*uLow*smoothstep(0.5, 1.1, e);
+  return col;
+}
+// おすすめ 2+3+心拍
+vec3 fxRec(vec2 uv){
+  float e = edgeDist(uv);
+  float s = 1.0 - 0.008*uBeat*uLow;
+  vec2 w = (uv-0.5)*s + 0.5;
+  vec3 col = applyDesat(tex(w), e, uLow*0.9);
+  col = applyInk(col, uv, e, uLow*0.85, uBeat*1.4);
+  return col;
+}
+
+void main(){
+  vec2 uv = vUv;
+  vec3 c;
+  if(uMode==1) c = fxRed(uv);
+  else if(uMode==2) c = fxDesat(uv);
+  else if(uMode==3) c = fxInk(uv);
+  else if(uMode==4) c = fxVeins(uv);
+  else if(uMode==5) c = fxChroma(uv);
+  else if(uMode==6) c = fxBlur(uv);
+  else if(uMode==7) c = fxWarp(uv);
+  else if(uMode==8) c = fxRec(uv);
+  else c = tex(uv);
+  gl_FragColor = vec4(c, 1.0);
+}
+</script>
+
+<script>
+const BG_SRC = "__BG__";
+const INK_SRC = "__INK__";
+
+const FX = [
+  {mode:0, no:"0", title:"元の画面", tag:"比べる用", desc:"効果なし。"},
+  {mode:1, no:"1", title:"赤いビネット＋心拍", tag:"定番", desc:"端が赤黒くなり、ドクン、ドクンと脈打つ。HPが減るほど速く・濃く・内側まで。"},
+  {mode:2, no:"2", title:"色が抜ける(赤だけ残す)", tag:"和・彼岸花と合う", desc:"彩度が落ちて灰色に近づき、赤(服・血・HP)だけが残る。端は少し暗く。"},
+  {mode:3, no:"3", title:"縁から墨がにじむ", tag:"世界観に一番合う", desc:"ノイズで形を変えながら、端から墨が迫ってくる。境目は赤くにじむ。心拍で少し押し寄せる。"},
+  {mode:4, no:"4", title:"縁から血管・ひびが伸びる", tag:"生々しい", desc:"端から赤い筋が伸びて、心拍で光る。少し洋ゲー寄り。"},
+  {mode:5, no:"5", title:"色収差", tag:"サイバー向き", desc:"端でRGBがずれる。心拍のときだけ強くなる。和の感じは弱い。"},
+  {mode:6, no:"6", title:"周辺がぼける", tag:"意識が遠のく", desc:"端がぼけて暗くなり、中心だけはっきり。強いと遊びにくい。"},
+  {mode:7, no:"7", title:"画面がゆらぐ", tag:"足し味", desc:"心拍に合わせて画面が少し縮み、端がゆらゆらゆがむ。酔いやすいので弱めに。"},
+  {mode:8, no:"★", title:"おすすめ: 2＋3＋心拍", tag:"組み合わせ", desc:"色が抜けて赤だけ残り、端から墨が迫る。心拍で墨が押し寄せ、画面がわずかに縮む。", rec:true},
+];
+
+const $ = id => document.getElementById(id);
+const W = 960, H = 540;
+const glc = document.createElement("canvas"); glc.width = W; glc.height = H;
+const gl = glc.getContext("webgl", {preserveDrawingBuffer:true, antialias:false});
+
+function sh(type, id){
+  const s = gl.createShader(type); gl.shaderSource(s, $(id).textContent); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER, "vs")); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, "fs"));
+gl.linkProgram(prog); gl.useProgram(prog);
+const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+const aPos = gl.getAttribLocation(prog, "aPos"); gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+const U = {}; ["uTex","uTime","uLow","uBeat","uAspect","uMode"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+
+// カード
+const grid = $("grid");
+const cards = FX.map((f, i) => {
+  const el = document.createElement("div");
+  el.className = "card" + (f.rec ? " rec" : "");
+  el.innerHTML = `<canvas width="480" height="270"></canvas><div class="info"><div class="t"><span class="no">${f.no}</span>${f.title}<span class="tag">${f.tag}</span></div><p>${f.desc}</p></div>`;
+  el.onclick = () => openModal(i);
+  grid.appendChild(el);
+  return {el, ctx: el.querySelector("canvas").getContext("2d")};
+});
+
+// 状態
+let hp = 10, autoMode = false, heartOn = true, paused = false;
+let t = 0, phase = 0, autoT = 0, inkFrame = -1, modalIdx = -1;
+const bigCtx = $("big").getContext("2d");
+
+function lowRate(){
+  const th = +$("th").value;
+  const k = Math.min(1, Math.max(0, (th - hp) / Math.max(1, th - 5)));
+  return Math.min(1, k * (+$("str").value / 100));
+}
+// ドクン・ドクン
+function beatShape(p){
+  const g = (x, c, w) => Math.exp(-Math.pow((x - c) / w, 2));
+  return Math.min(1, g(p, 0.06, 0.05) + 0.65 * g(p, 0.27, 0.06));
+}
+
+function updateUi(low, bpm){
+  $("hpv").textContent = Math.round(hp) + "%";
+  $("hp").value = Math.round(hp);
+  $("hpfill").style.width = hp + "%";
+  $("hpth").style.left = $("th").value + "%";
+  $("thv").textContent = $("th").value + "%";
+  $("strv").textContent = (+$("str").value / 100).toFixed(2);
+  $("state").innerHTML = low > 0 ? `効き具合 <em>${(low*100|0)}%</em>　心拍 <em>${heartOn ? Math.round(bpm) + "bpm" : "OFF"}</em>` : "効いていない(HPが効き始めより上)";
+}
+
+function render(ctx, w, h, mode, low, beat){
+  gl.viewport(0, 0, W, H);
+  gl.uniform1f(U.uTime, t); gl.uniform1f(U.uLow, low); gl.uniform1f(U.uBeat, beat);
+  gl.uniform1f(U.uAspect, W / H); gl.uniform1i(U.uMode, mode);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  ctx.drawImage(glc, 0, 0, w, h);
+  // 暗殺・確殺の墨のビネット(ScreenBloodUI と同じ 4F で出て 90F で消える、最大 110/255)
+  if(inkFrame >= 0 && inkImg){
+    const a = Math.min(1, (inkFrame + 1) / 4) * (1 - inkFrame / 90) * (110 / 255);
+    ctx.globalAlpha = Math.max(0, a); ctx.drawImage(inkImg, 0, 0, w, h); ctx.globalAlpha = 1;
+  }
+}
+
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if(!paused){
+    t += dt;
+    if(autoMode){
+      // 100→5 を 8秒、3秒そのまま、2秒で回復、2秒待つ
+      autoT = (autoT + dt) % 15;
+      if(autoT < 8) hp = 100 - 95 * (autoT / 8);
+      else if(autoT < 11) hp = 5;
+      else if(autoT < 13) hp = 5 + 95 * ((autoT - 11) / 2);
+      else hp = 100;
+    }
+    if(inkFrame >= 0){ inkFrame += dt * 60; if(inkFrame >= 90) inkFrame = -1; }
+  }
+  const low = lowRate();
+  const bpm = 72 + 78 * low;
+  if(!paused) phase = (phase + dt * bpm / 60) % 1;
+  const beat = heartOn && low > 0 ? beatShape(phase) : 0;
+  updateUi(low, bpm);
+  if(modalIdx >= 0){
+    render(bigCtx, 1280, 720, FX[modalIdx].mode, low, beat);
+  } else {
+    cards.forEach((c, i) => render(c.ctx, 480, 270, FX[i].mode, low, beat));
+  }
+  requestAnimationFrame(frame);
+}
+
+// 画像
+let inkImg = null;
+function loadImg(src){ return new Promise(r => { const im = new Image(); im.onload = () => r(im); im.src = src; }); }
+Promise.all([loadImg(BG_SRC), loadImg(INK_SRC)]).then(([bg, ink]) => {
+  inkImg = ink;
+  const tx = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tx);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, bg);
+  gl.uniform1i(U.uTex, 0);
+  requestAnimationFrame(frame);
+});
+
+// 操作
+$("hp").oninput = e => { hp = +e.target.value; autoMode = false; $("auto").checked = false; };
+$("auto").onchange = e => { autoMode = e.target.checked; autoT = 0; };
+$("heart").onclick = e => { heartOn = !heartOn; e.target.classList.toggle("on", heartOn); e.target.textContent = heartOn ? "心拍 ON" : "心拍 OFF"; };
+$("pause").onclick = () => togglePause();
+$("ink").onclick = () => { inkFrame = 0; };
+function togglePause(){ paused = !paused; $("pause").classList.toggle("on", paused); $("pause").textContent = paused ? "再生" : "一時停止"; }
+
+function openModal(i){
+  modalIdx = i; $("modal").classList.add("open");
+  const f = FX[i]; $("cap").innerHTML = `${f.no}　${f.title}<span>${f.desc}</span>`;
+}
+function closeModal(){ modalIdx = -1; $("modal").classList.remove("open"); }
+$("modal").onclick = e => { if(e.target.id === "modal" || e.target.id === "big") closeModal(); };
+document.addEventListener("keydown", e => {
+  if(e.code === "Space"){ e.preventDefault(); togglePause(); }
+  if(modalIdx >= 0){
+    if(e.key === "Escape") closeModal();
+    if(e.key === "ArrowRight") openModal((modalIdx + 1) % FX.length);
+    if(e.key === "ArrowLeft") openModal((modalIdx + FX.length - 1) % FX.length);
+  }
+});
+</script>
+</body>
+</html>

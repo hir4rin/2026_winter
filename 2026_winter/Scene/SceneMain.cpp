@@ -24,6 +24,7 @@
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
 #include "Battle/PhaseManager.h"
+#include "Battle/CheckpointManager.h"
 #include "Main/Game.h"
 #include "Main/imguiApp.h"
 #include "Main/FrameProfiler.h"
@@ -34,6 +35,7 @@
 #include "Battle/ResultRecorder.h"
 #include "Stage/WallZone/WallZoneEditor.h"
 #include "Stage/Phase/PhaseAreaEditor.h"
+#include "Stage/Phase/CheckpointEditor.h"
 #include "UI/UIManager.h"
 #include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieCutCamera.h"
 #include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieLandCamera.h"
@@ -180,6 +182,12 @@ void SceneMain::Init()
 	}
 	m_phaseAreaEditor = std::make_unique<PhaseAreaEditor>();
 	m_phaseAreaEditor->SetStageNumber(stageInfo.enemySpawnNumber);
+	//チェックポイント(無ければ空。前のステージのが残らないように毎回読む)
+	DataManager::GetInstance().LoadCheckpoints(stageInfo.enemySpawnNumber);
+	m_checkpointManager = std::make_shared<CheckpointManager>();
+	m_checkpointManager->Init(m_player);
+	m_checkpointEditor = std::make_unique<CheckpointEditor>();
+	m_checkpointEditor->SetStageNumber(stageInfo.enemySpawnNumber);
 
 
 	m_battleManager = std::make_shared<BattleManager>();
@@ -302,6 +310,7 @@ void SceneMain::NormalUpdate()
 	FrameProfiler::GetInstance().Mark("Upd:Player");
 	m_enemyManager->Update();
 	m_phaseManager->Update();
+	m_checkpointManager->Update();
 	m_stage->UpdateGates(m_phaseManager->GetCurrentPhase());//押し戻しの前に開け閉めする	FrameProfiler::GetInstance().Mark("Upd:Enemy");
 	m_stage->Update();
 	CollisionManager::GetInstance().Update();
@@ -541,6 +550,10 @@ void SceneMain::NormalDraw()
 			m_cameraManager->GetPhotoCameraTarget());
 		m_phaseAreaEditor->DrawAreas(*m_phaseManager);
 		m_phaseAreaEditor->DrawWindow(*m_phaseManager, *m_stage, m_player.get(),
+			m_cameraManager->GetPhotoCameraTarget());
+		m_checkpointEditor->DrawCheckpoints(*m_checkpointManager);
+		m_checkpointEditor->DrawWindow(*m_checkpointManager, *m_stage, m_player.get(),
+			m_cameraManager->GetPhotoCameraPos(),
 			m_cameraManager->GetPhotoCameraTarget());
 	}
 

@@ -1,0 +1,8 @@
+#name,posX,posY,posZ,rotYDeg,phase,radius
+CP_Start,0,0,0,0,1,150
+CP_Pylon1,566,0,12990,0,3,150
+CP_Holo,8650,600,18017,0,5,150
+CP_Industrial,-2150,-100,26170,0,7,150
+CP_Room,-2150,-100,30236,0,9,150
+CP_Valley,6298,0,32990,7,11,150
+CP_Boss,9850,0,44090,90,13,150

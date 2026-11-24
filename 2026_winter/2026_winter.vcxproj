@@ -151,6 +151,7 @@
     <ClCompile Include="Battle\BattleManager.cpp" />
     <ClCompile Include="Battle\ResultRecorder.cpp" />
     <ClCompile Include="Battle\PhaseManager.cpp" />
+    <ClCompile Include="Battle\CheckpointManager.cpp" />
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\CameraManager.cpp" />
     <ClCompile Include="Camera\CameraState\BossAppearCamera.cpp" />
@@ -336,12 +337,14 @@
     <ClCompile Include="Stage\WallZone\WallZone.cpp" />
     <ClCompile Include="Stage\WallZone\WallZoneEditor.cpp" />
     <ClCompile Include="Stage\Phase\PhaseAreaEditor.cpp" />
+    <ClCompile Include="Stage\Phase\CheckpointEditor.cpp" />
     <ClCompile Include="Main\System.cpp" />
     <ClCompile Include="UI\FontManager.cpp" />
     <ClCompile Include="UI\UIBase.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="UI\Effect\KessatsuUI.cpp" />
     <ClCompile Include="UI\Effect\ScreenBloodUI.cpp" />
+    <ClCompile Include="UI\Effect\LowHpInkUI.cpp" />
     <ClCompile Include="UI\HUD\PlayerHUD.cpp" />
     <ClCompile Include="UI\HUD\BossHpUI.cpp" />
     <ClCompile Include="UI\Menu\MenuUI.cpp" />
@@ -359,6 +362,7 @@
     <ClInclude Include="Battle\BattleManager.h" />
     <ClInclude Include="Battle\ResultRecorder.h" />
     <ClInclude Include="Battle\PhaseManager.h" />
+    <ClInclude Include="Battle\CheckpointManager.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Camera\CameraManager.h" />
     <ClInclude Include="Camera\CameraState\BossAppearCamera.h" />
@@ -554,6 +558,8 @@
     <ClInclude Include="Stage\Phase\EnemySpawnData.h" />
     <ClInclude Include="Stage\Phase\PhaseFlowData.h" />
     <ClInclude Include="Stage\Phase\PhaseAreaData.h" />
+    <ClInclude Include="Stage\Phase\CheckpointData.h" />
+    <ClInclude Include="Stage\Phase\CheckpointEditor.h" />
     <ClInclude Include="Stage\Phase\PhaseAreaEditor.h" />
     <ClInclude Include="Stage\StageInfo.h" />
     <ClInclude Include="Stage\WallZone\WallZoneEditor.h" />
@@ -563,6 +569,7 @@
     <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="UI\Effect\KessatsuUI.h" />
     <ClInclude Include="UI\Effect\ScreenBloodUI.h" />
+    <ClInclude Include="UI\Effect\LowHpInkUI.h" />
     <ClInclude Include="UI\HUD\PlayerHUD.h" />
     <ClInclude Include="UI\HUD\BossHpUI.h" />
     <ClInclude Include="UI\Menu\MenuUI.h" />
@@ -585,6 +592,7 @@
     <None Include="Render\Shader\SwordPS.hlsl" />
     <None Include="Render\Shader\UltSwordPS.hlsl" />
     <None Include="Render\Shader\TitleLogoPS.hlsl" />
+    <None Include="Render\Shader\LowHpInkPS.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

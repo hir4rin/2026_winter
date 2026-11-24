@@ -95,6 +95,9 @@ enum class AsyncData : int
 	JumpKickEffect,//地上からジャンプしたときの風の三日月と踏み跡の光
 	DashStartEffect,//ダッシュの入りの風
 	DashSparkleEffect,//ダッシュ中に肩の帯からこぼれる光の粒(ループ)
+	CheckpointIdleEffect,//チェックポイントの待機(光の柱・鬼火・紋)
+	CheckpointActivateEffect,//チェックポイントを踏んだ瞬間
+	HealEffect,//回復したときに足元から昇る筆の螺旋
 	Goal,
 };
 

@@ -135,6 +135,9 @@
     <ClCompile Include="Stage\Phase\PhaseAreaEditor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Stage\Phase\CheckpointEditor.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Render\BloodDecalManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -379,6 +382,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\Effect\ScreenBloodUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Effect\LowHpInkUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\HUD\PlayerHUD.cpp">
@@ -630,6 +636,9 @@
     <ClCompile Include="Battle\PhaseManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Battle\CheckpointManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Enemy\Bazooka\EnemyBazookaMissile.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -765,6 +774,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\Phase\PhaseAreaData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage\Phase\CheckpointData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage\Phase\CheckpointEditor.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Stage\Phase\PhaseAreaEditor.h">
@@ -1037,6 +1052,9 @@
     <ClInclude Include="UI\Effect\ScreenBloodUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Effect\LowHpInkUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="UI\HUD\PlayerHUD.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1286,6 +1304,9 @@
     <ClInclude Include="Battle\PhaseManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Battle\CheckpointManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="DataLoader\TutorialPageData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1322,6 +1343,9 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\TitleLogoPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\LowHpInkPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\VertexShader.h">

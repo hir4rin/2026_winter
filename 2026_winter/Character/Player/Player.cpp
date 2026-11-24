@@ -62,6 +62,9 @@ namespace
 	constexpr float kBloodWingBackLean = -15.0f * DX_PI_F / 180.0f;//翼を背中側(カメラ側)に倒す角度//マイナスで後ろに倒れる
 	constexpr float kBloodWingActivateDelay = 40.0f;//発動の演出から翼を出すまで//演出の血が弾けるフレームに合わせる
 
+	constexpr float kHealRate = 0.4f;//1回の回復量(最大HPに対する割合)
+	constexpr float kHealEffectScale = 20.0f;//回復のエフェクトのスケール//1/20で作っている
+
 	constexpr float kRotationLerpFactor = 0.1f;//モデルの向きを目標角度に近づける割合(ほぼlerp)
 
 	constexpr float kGroundCheckCapsuleTopOffset = 100.0f;//地面判定用カプセルの上端のy軸オフセット
@@ -207,6 +210,7 @@ Player::~Player()
 	}
 	if (m_bloodWingPlayingHandle != -1)StopEffekseer3DEffect(m_bloodWingPlayingHandle);
 	if (m_bloodWingActivateHandle != -1)StopEffekseer3DEffect(m_bloodWingActivateHandle);
+	if (m_healEffectHandle != -1)StopEffekseer3DEffect(m_healEffectHandle);
 	MV1DeleteModel(m_modelHandle);
 	DeleteGraph(m_whiteHandle);
 }
@@ -351,6 +355,13 @@ void Player::Update(Camera& camera)
 			StartBloodWingActivate();
 		}
 	}
+
+	//RBで回復
+	if (input.IsTriggered("RB"))
+	{
+		Heal();
+	}
+	HealEffectUpdate();
 
 	//押し戻しの処理が続かないように消す//縦の速度(重力)は空中のステート(Jump,Fall,Attack)が自分で作る
 	m_rb.m_vel = Vector3(0, 0, 0);
@@ -1179,6 +1190,34 @@ void Player::StartBloodWingActivate()
 	SetScalePlayingEffekseer3DEffect(m_bloodWingActivateHandle, kBloodWingScale, kBloodWingScale, kBloodWingScale);
 	m_bloodWingDelay = kBloodWingActivateDelay;
 	BloodWingUpdate();//出た瞬間から背中に合わせる
+}
+
+void Player::Heal()
+{
+	//死んでいる・満タンなら使わない
+	int maxHp = GetMaxHp();
+	if (m_hp <= 0 || m_hp >= maxHp)return;
+
+	m_hp = (std::min)(maxHp, m_hp + static_cast<int>(maxHp * kHealRate));
+
+	//前のエフェクトが残っていたら消して出し直す
+	if (m_healEffectHandle != -1)StopEffekseer3DEffect(m_healEffectHandle);
+	m_healEffectHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(AsyncData::HealEffect));
+	SetScalePlayingEffekseer3DEffect(m_healEffectHandle, kHealEffectScale, kHealEffectScale, kHealEffectScale);
+	HealEffectUpdate();
+}
+
+void Player::HealEffectUpdate()
+{
+	if (m_healEffectHandle == -1)return;
+	//終わったらハンドルを捨てる
+	if (IsEffekseer3DEffectPlaying(m_healEffectHandle) != 0)
+	{
+		m_healEffectHandle = -1;
+		return;
+	}
+	//足元についていく
+	SetPosPlayingEffekseer3DEffect(m_healEffectHandle, m_rb.m_pos.x, m_rb.m_pos.y, m_rb.m_pos.z);
 }
 
 //回転行列の回転量だけを割合で弱める(回転軸はそのまま)

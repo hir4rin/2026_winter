@@ -4,6 +4,7 @@
 #include "Stage/Phase/EnemySpawnData.h"
 #include "Stage/Phase/PhaseFlowData.h"
 #include "Stage/Phase/PhaseAreaData.h"
+#include "Stage/Phase/CheckpointData.h"
 #include "TutorialPageData.h"
 #include <vector>
 #include <string>
@@ -135,6 +136,13 @@ public:
 	const std::vector<PhaseArea>& GetPhaseAreas() const { return m_phaseAreas; }
 	static std::string GetPhaseAreaFilePath(int stageNumber);
 	//---------------------------------------------------------------------------
+
+	//チェックポイント-----------------------------------------------------------
+	void LoadCheckpoints(int stageNumber);//無ければ空
+	bool SaveCheckpoints(int stageNumber, const std::vector<CheckpointData>& checkpoints);//エディタから保存
+	const std::vector<CheckpointData>& GetCheckpoints() const { return m_checkpoints; }
+	static std::string GetCheckpointFilePath(int stageNumber);
+	//---------------------------------------------------------------------------
 private:
 	//シングルトンパターンの実装
 	DataManager() = default;
@@ -206,6 +214,7 @@ private:
 	std::vector<EnemySpawnData> m_enemySpawnData;//敵配置のデータ(最後にLoadしたステージのもの)
 	std::vector<PhaseTransition> m_phaseFlow;//遷移表
 	std::vector<PhaseArea> m_phaseAreas;//フェーズ進行のエリア
+	std::vector<CheckpointData> m_checkpoints;//チェックポイント
 	std::vector<TutorialPageData> m_tutorialPages;//チュートリアルのデータ
 
 };

@@ -63,7 +63,7 @@ void LockOnManager::Update()
 	//ターゲットの距離・死んでいるかのチェック
 	CheckLockOnTarget();
 
-	if (input.IsTriggered("RB"))
+	if (input.IsTriggered("R3"))
 	{
 		//ロックオン中だったら
 		if (IsLockOn())

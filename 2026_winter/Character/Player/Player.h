@@ -359,6 +359,8 @@ private:
 	void UpdateAngle();//回転処理
 	void BloodWingUpdate();//必殺技状態の翼エフェクトの再生・停止と、背中への追従
 	void StartBloodWingActivate();//必殺技状態に入るときの演出を出す//翼は演出の途中から出す
+	void Heal();//回復する(RB)//最大HPの一定割合
+	void HealEffectUpdate();//回復のエフェクトを足元に合わせる
 	void GetFootTrailPos(int side, Vector3& base, Vector3& tip)const;//足の軌跡の帯の根元(すね)と先(つま先)
 	void UpdateShoulderStrands();//風の筋を出したり消したりする
 	void GetShoulderTrailPos(int side, int index, Vector3& base, Vector3& tip)const;//肩の風の筋の端
@@ -420,6 +422,7 @@ private:
 	int m_bloodWingActivateHandle = -1;//必殺技状態に入るときの演出のハンドル//再生していなければ-1
 	float m_bloodWingDelay = 0.0f;//翼を出すまでの残りフレーム//演出で血を吸い込み終わってから翼を出す
 	int m_bloodWingFrame = -1;//翼の付け根にする背中(肩甲骨の高さ)のボーン//通常のモデル用
+	int m_healEffectHandle = -1;//回復のエフェクトのハンドル//再生していなければ-1
 	std::shared_ptr<PlayerWeapon> m_weapon;//武器
 
 	int m_whiteHandle;

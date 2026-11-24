@@ -12,12 +12,14 @@ class EnemySwordman;
 class CameraManager;
 class EnemyManager;
 class PhaseManager;
+class CheckpointManager;
 class BattleManager;
 class Camera;
 class Stage;
 class SkyBox;
 class WallZoneEditor;
 class PhaseAreaEditor;
+class CheckpointEditor;
 class UIManager;
 class TunnelEnding;
 class TutorialFinale;
@@ -68,6 +70,7 @@ private:
 	std::shared_ptr<Player> m_player;
 	std::shared_ptr<EnemyManager> m_enemyManager;
 	std::shared_ptr<PhaseManager> m_phaseManager;//フェーズ進行
+	std::shared_ptr<CheckpointManager> m_checkpointManager;//チェックポイント(踏んだら起動・最後に踏んだ物を覚える)
 	std::shared_ptr<CameraManager> m_cameraManager;
 	std::shared_ptr<BattleManager> m_battleManager;
 	std::unique_ptr<Camera> m_camera;//Player::Updateに渡すだけ(実際のカメラはCameraManagerが制御する)
@@ -75,6 +78,7 @@ private:
 	std::unique_ptr<SkyBox> m_skyBox;//空(空の画像があるステージだけ)
 	std::unique_ptr<WallZoneEditor> m_wallZoneEditor;//ステージ編集モードで壁ゾーンを設置・編集するImGuiウィンドウ
 	std::unique_ptr<PhaseAreaEditor> m_phaseAreaEditor;//ステージ編集モードでフェーズ進行のエリアを編集するImGuiウィンドウ
+	std::unique_ptr<CheckpointEditor> m_checkpointEditor;//ステージ編集モードでチェックポイントを編集するImGuiウィンドウ
 	std::unique_ptr<UIManager> m_uiManager;//このシーンで表示するUIをまとめて管理する
 	StageColorGrade m_stageColorGrade;//血殺中に背景とステージの色を変える
 	TempTopLight m_tempTopLight;//[TempTopLight]暗くて見づらいので真上から照らす(一時的)
