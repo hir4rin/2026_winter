@@ -104,6 +104,14 @@ bool Gate::IsOpenPhase(int phase) const
 	return phase < m_data.closePhase || phase >= m_data.openPhase;
 }
 
+void Gate::Snap(int currentPhase)
+{
+	m_isOpenTarget = IsOpenPhase(currentPhase);
+	m_openRate = m_isOpenTarget ? 1.0f : 0.0f;
+	m_waitFrame = 0.0f;
+	Update(currentPhase);
+}
+
 void Gate::Update(int currentPhase)
 {
 	const bool isOpen = IsOpenPhase(currentPhase);

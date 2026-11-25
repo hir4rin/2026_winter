@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,12 +19,14 @@ public:
 
 
 	//最初のフェーズを始める//DataManagerで読み込んだ後に呼ぶ
-	void Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player);
+	//startPhaseが1以上なら、そのフェーズから始める(リスポーン用。フェーズの頭のイベントは起こさない)
+	void Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player, int startPhase = 0, int killCount = 0);
 
 	void Update();
 
 	int GetCurrentPhase()const { return m_currentPhase; }//0:未開始 -1:終了
 	int GetPhaseKillCount()const;//このフェーズの撃破数
+	int GetKillCountAtPhaseStart(int phase)const;//そのフェーズが始まったときの撃破数(まだなら-1)
 
 	void DebugDraw()const;
 
@@ -52,6 +55,11 @@ private:
 	//EnterAreaの行のエリア名を番号に直す(無ければ-1)
 	void ResolveAreaIndex();
 
+	//途中のフェーズから始める(リスポーン用)
+	void StartFromPhase(int phase, int killCount);
+	//ボス戦の視野角・攻撃の上昇
+	void ApplyBossSettings(float fovBlendFrame);
+
 	//次のフェーズ
 	void ChangePhase(int next, PhaseEvent event,const std::string& eventParam = "",int eventDelay = 0);
 
@@ -70,6 +78,7 @@ private:
 	int m_currentPhase = 0;
 	int m_phaseFrame = 0;//経過フレーム
 	int m_killCountAtPhaseStart = 0;//フェーズ開始時の撃破数
+	std::map<int, int> m_phaseStartKills;//フェーズ→始まったときの撃破数
 
 	std::string m_tutorialId;//開くチュートリアル(空なら無し)
 	int m_tutorialDelay = 0;//フェーズが始まってから開くまでのフレーム

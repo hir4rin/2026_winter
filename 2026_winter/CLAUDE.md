@@ -2680,3 +2680,72 @@
 - **回復(仮)**: `Player::Update` の LT の処理の後で `IsTriggered("RB")` → `Player::Heal()`。最大HPの40%(`kHealRate`、.cpp 先頭)を足す。HP0・満タンのときは使わない。**回数は今は無制限**(アイテムの個数・HUD・リザルトの itemUseCount はまだ)。
   - エフェクト: `AsyncData::HealEffect`(`data/Effect/Heal/HealSpiral.efk`、System の LoadCommon で読む)を20倍(`kHealEffectScale`)で再生し、`HealEffectUpdate()` で毎フレーム足元(`m_rb.m_pos`)に合わせる。続けて押すと出し直す。
 - 確認: Debug(x64)のビルドは通った。**ゲームで RB・R3 を押しての確認はまだ**(エフェクトの大きさ・足元の高さ、攻撃中にも押せてしまうことも含めて)。操作説明の画像(`../tools/ControlGuideGen/MakeControlGuide.ps1` の「RB ロックオン」)もまだ直していない。
+
+### 2026-11-25 列車ステージのエンディングをスキップできるようにした
+- `TunnelEnding::UpdateSkip`: **Y(キーボードは C)を60F長押し**で飛ばす。離すとゲージは3倍の速さで戻る。イベント中は入力が止まるので `IsRealPressed` で見る。
+  - 飛ばせるのは出口が近づき始めてから(`Approach`〜)、落ちて暗転し始める(`Jump` の `kJumpBlackStart`)まで。倒した余韻(`Wait`、血殺中など)は飛ばせない。
+  - 飛ばしたら(`StartSkip`): 入力を止め、ミサイルの予告・落ちる煙の尾・無線の字幕を止めて、30F(`kSkipBlackFrame`)で暗転 → `SetIsBattleEnd(true)` でリザルトへ(普通の終わりと同じ流れ)。フェーズの進行は止める。
+- 案内: 右下に Yのアイコン＋「長押しでスキップ」、Yのまわりの輪が長押しの分だけ赤くたまる(`EndingUI::DrawSkip`、値は .cpp 先頭の `kSkip〜`)。出口が近づき始めたときと、A/B/X/Y を押したときに180F出す。
+  `BattleManager::EndingScreen` に `skipPromptAlpha` / `skipHoldRate` を足した。
+- 確認: TunnelEnding.cpp / EndingUI.cpp のコンパイルは通った。リンクは別の作業中の SceneMain / CheckpointManager の変更で止まっていて未確認。**ゲームでの確認はまだ**(F7 でエンディングを始めて試せる)。
+
+### 2026-11-25 リスポーン(死んだら SceneMain を作り直して最後のチェックポイントから)
+- 方針(会話で決めた A 案): 死んだら引き継ぐ物を `Battle/RespawnInfo`(新規、vcxproj/filters に登録)にまとめ、`SceneMain` を作り直す。敵・死体・血の跡・攻撃権などは作り直しで全部消える。
+  - `RespawnInfo`: `checkpointIndex`(-1 なら最初から) / `killCount`(戻ったときの撃破数) / `recorder`(`ResultRecorder` をまるごと。タイム・技・最大コンボ・死んだ回数は続きから)。
+- 流れ: `SceneMain::NormalUpdate` で死んだら `MakeRespawnInfo()` → `GameOverScene(controller, stageType, info)` を積む → 「死」の後 A(案内の字は「再開」)→ `ResetScene<SceneMain>(stageType, info)`。**タイトルへは戻らなくなった**。
+  - 撃破数: チェックポイントのフェーズが始まっていればそのときの数(`PhaseManager::GetKillCountAtPhaseStart`)、まだなら今の数。チェックポイントが無ければ0から。
+  - 死んだ回数: `ResultRecorder::OnPlayerDead()`(`m_deathCount`、`MakeResult` で `deathCount` に入る)。落下死も数える。
+- 作り直した `SceneMain::Init`(`m_respawn` があるとき):
+  - チェックポイントの読み込みをプレイヤーの Init の直後に移し、プレイヤーを `position` に置いて `Player::SetFacing(rotY)`(新規)で向ける。
+  - `PhaseManager::Init(..., startPhase, killCount)`: `StartFromPhase` でそのフェーズの敵だけ出す。Start の行・フェーズの頭のイベント(チュートリアルなど)は通らない。BossAppear の行の to 以上のフェーズならボス戦の視野角と攻撃の上昇をすぐ入れる(`ApplyBossSettings`、ChangePhase の BossAppear もこれを呼ぶ)。
+  - 扉は `Stage::SnapGates` / `Gate::Snap` で動かさずにそのフェーズの開け閉めにする。
+  - `CheckpointManager::Init(player, startIndex)`: そこまで演出なしで起動済み、次のチェックポイントにエフェクト。
+  - 記録は `*recorder = m_respawn->recorder`。カメラは `CameraManager::Init(player, stage, angleH)` に最初の角度を渡し、`PlayerFollowCamera::SnapToPlayer` でプレイヤーの後ろにすぐ置く(前は位置が原点から始まり、寄ってくるように見えた。普通のスタートも同じ)。登場演出(ステージ1の屋上・チュートリアルの落下)はしない。
+- 確認: Debug(x64)のビルド・リンクは通った。一時コード(起動の引数で RespawnInfo を作る、消した)でステージ1の CP_Holo(フェーズ5)と CP_Boss(フェーズ13)から始めて、位置・向き・カメラ・フェーズ・敵の出し直し・撃破数・ボス戦の視野角を画面で確認した。**実際に死んでからの流れ(GameOverScene → 再開)はまだ見ていない**。
+- まだ: 落下死もチェックポイントに戻る(前の案の「最後に着地した場所に戻すだけ」はやっていない)。死亡演出の「鬼火から復帰」は無い(すぐ立っている)。前のフェーズの生き残りは戻らない。アイテムの使用回数は引き継いでいない(まだ数えていない)。
+
+### 2026-11-25 RT 長押しで次のチェックポイントを見るカメラ(LookingNextCamera)
+- `Camera/CameraState/LookingNextCamera.h/.cpp`(vcxproj/filters に登録)。`CameraStateBase::Type::LookingNextCamera`(32)、`CameraManager::CameraStateName::LookingNextCamera`。
+  - 位置: プレイヤーの頭(足元 + 高さ150)から、プレイヤーの前の逆へ距離300・上へ5度(PlayerFollowCamera::FixCameraPos と同じ回転行列の計算)。注視点はプレイヤーの頭から次のチェックポイントの方向へ300(`kLookDistance`)。値は .cpp 先頭。
+  - **前の向きは Enter のときだけ見る**(Enter で `m_angleH` に入れる。移動はカメラ基準なので、毎フレーム見ると歩いたときにカメラが回り続けるため)。位置はプレイヤーについていく。
+  - 入るときは15FのSlerp(プレイヤー中心・EaseOut)。Exit で見ていた向きを角度にして、離したあとの追従カメラはその向きから始まる。
+- 出入り: 入るのは `CameraManager::SyncLookingNextState`(`Update` の `SyncLockOnState` の次)。RT を押していて・次のチェックポイントがあり・ロックオンしていなくて・今が追従カメラか BattleSmoothCamera なら入る。戻るのは BattleSmoothCamera と同じく自分の `Update` で、離すか次のチェックポイントが無くなったら追従カメラへ。
+- チェックポイントは `CameraContext::m_checkpointManager`(`SceneMain::Init` で `SetCheckpointManager`)、`CameraManager::GetNextCheckpointPos`。
+- ボス戦の視野角のオフセット(`IsFovOffsetCamera` に追加)が効く。**ステージとの当たり判定はしない**(`IsStageCollisionCamera` で外した。補正の戻りが注視点からの距離を1割ずつ伸ばすので、注視点が前に動くと寄ってから遠のいて見えた)。壁を背にするとカメラが壁にめり込む・壁ぎわで押すと補正の分だけ飛ぶ。
+- RT はほかに Debug ビルドの「必殺技中に RT で必殺技の状態を消す」(`Player.cpp`)だけで使っている。
+- 確認: Debug(x64)のビルドは通った。**ゲームでの確認はまだ**(Release のゲームが起動中で、確認用の起動ができなかった)。
+- (追記)出入りの条件はユーザーが「追従カメラからだけ入る」に変えた(BattleSmoothCamera からは入らない)。ニア・ファーは Enter で 100 / 1500、Exit で SceneMain と同じ 100 / 5000 に戻す。
+
+### 2026-11-25 次の目的地を見ている間の紋(LookNextUI)
+- 案はモック `../tools/LookNextMock/looknext_mock.html`(A〜E)で比べて、**A 目的地の紋**に決めた。そのあと、出す場所は**カメラの注視点**、距離の文字・画面の外の矢じりは無しにした(ユーザーの指定)。
+- `UI/Target/LookNextUI.h/.cpp`(UIBase 継承、Front、vcxproj/filters に登録)。`UIManager::InGameInit` で LockOnReticleUI の次に登録(CameraManager を渡す)。
+- 出す条件: 今のカメラが `LookingNextCamera`。今のカメラの `GetTarget()` の位置に、銀の円＋回る赤い菱形＋目盛り4本＋赤い点の紋(画像は使わず DrawCircleAA / DrawLineAA で描く)。カメラの後ろなら出さない。
+- 入りは 1.6倍から12Fで縮む(アルファは5F)、離したら10Fで消える(消える間は最後の注視点)。値は .cpp 先頭。
+- 確認: Debug(x64)のビルドは通った。一時コードで RT を押したことにしてステージ1で撮った(`../tools/LookNextMock/game_A_target.png`)。紋が画面の真ん中(注視点)に出る。一時コードは消した。
+- LookingNextCamera の値はユーザーが変えた(距離50・ニア200・ファー5000)。プレイヤーはニアより手前に入るので映らない。
+- (11/25 追記)注視点はチェックポイントそのもの(ファー5000より遠いことがある)なので、`LookNextUI::Draw` のカメラの後ろの判定を z ではなくカメラの前向きとの内積にした(z>=1 で弾かれて出ていなかった)。
+- (11/25 追記)`LookingNextCamera::Exit` で、カメラ→注視点の向きのまま注視点を `kLookDistance`(300)に寄せる(`m_target` を書き換える。次のカメラのブレンドが遠い注視点から始まって変になるため)。前は `m_goalTarget` を書き換えていて効いていなかった。
+
+### 2026-11-25 次の目的地を見ている間の画面効果(LookNextFxUI)
+- 案はモック `../tools/LookNextMock/postfx_mock.html`(A〜E、並べた画像は `postfx_sheet.png`。元は `postfx_mock_src.html` を直して `MakePostFxMock.ps1`)。**C に決定**: 色を抜いて目的地の周りだけ残す＋墨のふち＋入りだけ目的地へ吸い込む放射ブラー。
+- `UI/Effect/LookNextFxUI.h/.cpp`(UIBase 継承、Front、vcxproj/filters に登録)。`UIManager::InGameInit` で **LowHpInkUI の前**に登録(ほかのUIは効果の後に描くので HUD・紋にはかからない)。
+  - `Draw` で `GetDrawScreenGraph` で今の画面を `MakeScreen` に写し、`Render/Shader/LookNextFxPS.hlsl`(b11、t0 画面・t1 `bloodUI/ink_vignette.png`)で全画面に描き直す。
+  - 効き具合は今のカメラが `LookingNextCamera` か(トドメ・エンディング・イベント中は0)。入り10F・戻り15F(実フレーム、EaseOut)、放射ブラーは入ってから12F。目的地はカメラの注視点のスクリーン座標(離して消える間は前の位置)。
+  - 強さ(彩度0.08・明るさ0.8・円0.22・ぼけ0.55・中1.15・墨0.55・ブラー0.10)は hlsl の先頭、時間は .cpp の先頭。
+- 確認: Debug・Release(x64)のビルド、fxc のコンパイルは通った。一時コードで効果をかけっぱなしにしてステージ1(登場演出のカメラ)で撮り、真ん中だけ色が残り・周りが灰色・ふちが墨で暗くなるのを確認(一時コードは消した)。**実際に RT を押しての確認はまだ**(入りのブラー、目的地の位置、重さ)。
+
+### 2026-11-25 地上弱スキル1段目のエフェクト(GleamLight1)・F9 で確認
+- 方針(会話で決めた): スキルを地上弱(LB＋X)と地上強(LB＋Y)に分ける。今のスキル(打ち上げ→空中)を地上強にし、地上弱は新しく作る(3段の予定)。地上弱のスキル(入口・コンボ番号・CSV・判定)は**まだ作っていない**。
+- 見た目は NG4 のリュウの閃華の弱(L2＋□□□)が元(調査は `../EffectTools/RyuGleamLightRef/README.md`)。作業ファイル・版・保持リストは `../EffectTools/GleamLight/README.md`。
+- 1段目: 分身がほどけて前へ斬り抜ける → 敵を中心に6方向から2Fおきに分身が斬り抜ける連鎖 → 白い残像。分身は光らない白(白い切り絵)、白青の風の帯。赤い線は無し。空中スキルの分身(回る)とはテンポが違う。
+- `data/Effect/Skill/GleamLight1.efk`(テクスチャ `Texture/GL_WindRibbon.png`、分身のモデル・ノイズは GhostDash と共通)。エフェクトの +Z が前、斬り抜けは0→30(20倍で600)、敵の想定は Z=15(300前)。
+- **F9 でプレイヤーの足元から前向きに再生**(`AsyncData::DebugGleamLight1Effect`、20倍)。F7 はエンディングの確認で使っていたので F9 にした。`PlayDebugSkillEffect` に前へずらす距離の引数を足した(F5/F6 は今まで通り300)。
+- Debug(x64)でビルドは通った。`-bench=120 -stage=3` は正常終了。**ゲームで F9 を押して見る確認はまだ**。
+- (追記)**弱2・弱3のエフェクトも作った**: `data/Effect/Skill/GleamLight2.efk`(X 字の交差 → 10回の連鎖 → 放射状の白い筋)・`GleamLight3.efk`(跳び上がり → 突き下ろし → 風の渦 → 着地の輪・破片・筋・白い残像)。テクスチャ `GL_Streak.png`・`GB_Shard.png`(ガードブレイクのものと同じ)を `Texture/` に足した。弱3の残像は `Ghost_AirSlam_Impact.efkmodel`(空中スキルと共通のモデル)。
+  - **F9 を押すたびに弱1 → 弱2 → 弱3 の順に出る**(`AsyncData::DebugGleamLight1〜3Effect` は連続した値、`SceneMain::m_debugGleamStep`)。
+  - Debug(x64)でビルドは通った。`-bench=120 -stage=3` は正常終了。**ゲームで見る確認はまだ**。作業ファイル・中身は `../EffectTools/GleamLight/README.md`。
+
+### 2026-11-25 ソードマンだけ明るかった件
+- 原因: `Enemy.mv1` のマテリアルに自己発光(Emissive 0.867)が入っていた(ガンナーは0)。`LitModelPS` は「自己発光＋環境光」を足すので、ソードマンだけ白っぽく明るかった。
+- `Enemy.mv1` と部位(`Part/Swordman/LeftArm.mv1`・`Head.mv1`、`Part/Gunner/LeftArm.mv1`。どれも 0.89〜0.95 入っていた)の自己発光を0にして上書き保存した(圧縮なし。マテリアル・アニメ・テクスチャの数は同じ)。元は git の HEAD にある。
+- **Unity から書き出し直して mv1 を作り直したら、自己発光が戻っていないか見ること**。ゲームでの見た目の確認はまだ。

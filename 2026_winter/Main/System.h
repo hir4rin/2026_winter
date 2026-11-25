@@ -75,6 +75,9 @@ enum class AsyncData : int
 	//デバッグ
 	DebugGhostDashEffect,//スキルエフェクト確認用(F5キーで再生)
 	DebugGhostDash3DEffect,//スキルエフェクト確認用(F6キーで再生)
+	DebugGleamLight1Effect,//地上弱スキル1〜3段目の確認用(F9キーで順に再生)//1〜3は連続した値にしておく
+	DebugGleamLight2Effect,
+	DebugGleamLight3Effect,
 	GhostSkill3FallEffect,//スキル3の落下中の分身と残像//プレイヤーに追従させる
 	GhostSkill3ImpactEffect,//スキル3の着地の分身と閃光
 	BloodWingEffect,//必殺技状態の黒い片翼//必殺技状態の間プレイヤーの背中に追従させる

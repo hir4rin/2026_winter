@@ -9,6 +9,8 @@ public:
 	virtual void Enter(CameraData data)override;
 	virtual void Update()override;
 	virtual void Exit()override;
+	//今のプレイヤーの後ろへすぐ置く(シーンの始まり用)
+	void SnapToPlayer();
 
 	void FixCameraPos() override;
 	void CameraSetting() override;

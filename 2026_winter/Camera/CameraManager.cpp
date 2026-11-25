@@ -23,6 +23,8 @@
 #include "CameraState/BossFinisherCamera.h"
 #include "CameraState/EndingCamera.h"
 #include "CameraState/TitleCamera.h"
+#include "CameraState/LookingNextCamera.h"
+#include "Battle/CheckpointManager.h"
 #include "Collision/CollisionManager.h"
 #include "Stage/Stage.h"
 #include "Main/System.h"
@@ -74,14 +76,30 @@ CameraManager::~CameraManager()
 }
 
 
-void CameraManager::Init(std::weak_ptr<Player> player,std::weak_ptr<Stage> stage)
+void CameraManager::Init(std::weak_ptr<Player> player,std::weak_ptr<Stage> stage, float angleH)
 {
 	//プレイヤーカメラの初期化
 	m_context->m_player = player;
 	m_stage = stage;
 
-	////PlayerCameraでスタート
-	ChangeState(std::make_shared<PlayerFollowCamera>(shared_from_this()));
+	//PlayerCameraでスタート//原点から寄ってこないよう、プレイヤーの後ろに置く
+	auto followCamera = std::make_shared<PlayerFollowCamera>(shared_from_this());
+	CameraStateBase::CameraData data = {};
+	data.angleH = angleH;
+	m_currentState = followCamera;
+	m_currentState->SetStartFov(data.fov);
+	m_currentState->Enter(data);
+	followCamera->SnapToPlayer();
+}
+
+bool CameraManager::GetNextCheckpointPos(Vector3& pos) const
+{
+	auto checkpointMgr = m_context->m_checkpointManager.lock();
+	if (!checkpointMgr)return false;
+	const int next = checkpointMgr->GetNextIndex();
+	if (next < 0)return false;
+	pos = checkpointMgr->GetCheckpoints()[next].position;
+	return true;
 }
 
 void CameraManager::Update()
@@ -93,6 +111,7 @@ void CameraManager::Update()
 
 	//ロックオン状態だったらロックオンカメラへ移行させる
 	SyncLockOnState();
+	SyncLookingNextState();
 
 	m_currentState->Update();
 	//カメラに反映//stageとの当たり判定もする
@@ -170,6 +189,8 @@ bool CameraManager::IsStageCollisionCamera() const
 	//ここはよう悩み//一旦全部の判定をする
 	//エンディングは後ろのコンテナに当たって前へ飛ぶので判定しない
 	if (m_currentState && m_currentState->GetCameraType() == CameraStateBase::Type::EndingCamera) return false;
+	//次の目的地を見るカメラは注視点が前に動くので、補正の戻りでカメラが寄って見える
+	if (m_currentState && m_currentState->GetCameraType() == CameraStateBase::Type::LookingNextCamera) return false;
 	//登場演出は置いた位置のまま(C8は通常のカメラへつなぐので判定する)
 	if (m_currentState)
 	{
@@ -191,7 +212,8 @@ bool CameraManager::IsFovOffsetCamera() const
 	return type == CameraStateBase::Type::PlayerCamera ||
 		type == CameraStateBase::Type::LockOnCamera ||
 		type == CameraStateBase::Type::BattleSmoothCamera ||
-		type == CameraStateBase::Type::BossPartThrowCamera;
+		type == CameraStateBase::Type::BossPartThrowCamera ||
+		type == CameraStateBase::Type::LookingNextCamera;
 }
 CameraManager::CheckSwitch& CameraManager::Switch()
 {
@@ -263,6 +285,7 @@ const char* CameraManager::GetCameraTypeName(int type)
 	case CameraStateBase::Type::PlayerStartMovieLandCamera: return "PlayerStartMovieLandCamera";
 	case CameraStateBase::Type::PlayerStartMovieTurnCamera: return "PlayerStartMovieTurnCamera";
 	case CameraStateBase::Type::UltChargeCamera: return "UltChargeCamera";
+	case CameraStateBase::Type::LookingNextCamera: return "LookingNextCamera";
 	default: return "Other";
 	}
 }
@@ -704,6 +727,9 @@ void CameraManager::ChangeStateFromScene(CameraStateName stateName)
 	case CameraStateName::UltChargeCamera:
 		newState = std::make_shared<UltChargeCamera>(shared_from_this());
 		break;
+	case CameraStateName::LookingNextCamera:
+		newState = std::make_shared<LookingNextCamera>(shared_from_this());
+		break;
 	default:
 		return;
 
@@ -736,6 +762,21 @@ void CameraManager::SyncLockOnState()
 	{
 		ChangeStateFromScene(CameraStateName::PlayerCaemra);
 	}
+}
+
+void CameraManager::SyncLookingNextState()
+{
+	if (!m_currentState)return;
+	auto type = m_currentState->GetCameraType();
+	Vector3 checkpointPos;
+	const bool isLook = Input::GetInstance().IsPressed("RT") && GetNextCheckpointPos(checkpointPos);
+
+	//追従カメラからだけ入る(ロックオン・必殺技・演出カメラには触らない)
+	if (isLook && !IsLockOn() && (type == CameraStateBase::Type::PlayerCamera))
+	{
+		ChangeStateFromScene(CameraStateName::LookingNextCamera);
+	}
+	//戻るのはLookingNextCameraのUpdateで判定する
 }
 
 

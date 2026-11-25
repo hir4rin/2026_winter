@@ -26,6 +26,8 @@ private:
 
 	//無線の字幕
 	void DrawRadio(int index, int frame);
+	//Y長押しでスキップの案内とゲージ
+	void DrawSkip(float alpha, float holdRate);
 
 	static int MakeBlendGraph(int width, int height, bool isWipe);
 	static float Random01(int a, int b, int c);
@@ -46,4 +48,6 @@ private:
 	int m_logoFrame = -1;
 
 	int m_radioFont = -1;
+	int m_skipFont = -1;
+	int m_buttonYHandle = -1;
 };

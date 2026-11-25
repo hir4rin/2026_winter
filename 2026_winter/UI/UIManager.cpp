@@ -8,6 +8,8 @@
 #include "UI/Target/PartBrokenKillUI.h"
 #include "UI/Target/GuardBreakChanceUI.h"
 #include "UI/Target/LockOnReticleUI.h"
+#include "UI/Target/LookNextUI.h"
+#include "UI/Effect/LookNextFxUI.h"
 #include "UI/Effect/ScreenBloodUI.h"
 #include "UI/Effect/LowHpInkUI.h"
 #include "UI/Title/TitleBackUI.h"
@@ -31,6 +33,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	//インゲームで使うUIをここで生成して登録する
 	//必殺技中の「血殺」の文字
 	Add(std::make_shared<KessatsuUI>());
+	//RTで次の目的地を見ている間の画面効果(画面を写すので、ほかのUIより先に描く)
+	Add(std::make_shared<LookNextFxUI>(cameraManager));
 	//HPが低いときの墨(ほかのUIより先に描く)
 	Add(std::make_shared<LowHpInkUI>(player));
 	//画面に付く血(HUDより先に描く)
@@ -39,6 +43,8 @@ void UIManager::InGameInit(std::weak_ptr<CameraManager> cameraManager, std::weak
 	Add(std::make_shared<PlayerHUD>(player));
 	//ロックオンのレティクル
 	Add(std::make_shared<LockOnReticleUI>(player));
+	//RTで次の目的地を見ている間の注視点の紋
+	Add(std::make_shared<LookNextUI>(cameraManager));
 	//暗殺対象の頭の上のUI
 	Add(std::make_shared<AssasinTargetUI>(player));
 	//確殺対象の体の中心のUI

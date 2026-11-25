@@ -30,6 +30,8 @@ public:
 		int radioIndex = -1;//無線の字幕(-1なら無し)
 		int radioFrame = 0;//その字幕が出てからのフレーム
 		float blackRate = 0.0f;//画面を黒くする
+		float skipPromptAlpha = 0.0f;//スキップの案内
+		float skipHoldRate = 0.0f;//スキップの長押しのゲージ
 	};
 
 	BattleManager();

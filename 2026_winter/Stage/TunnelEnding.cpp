@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "EffekseerForDXLib.h"
 #include "Main/System.h"
+#include "Main/Input.h"
 #include "Battle/BattleManager.h"
 #include "Camera/CameraManager.h"
 #include "Camera/CameraState/EndingCamera.h"
@@ -136,6 +137,13 @@ namespace
 	constexpr int kJumpBlackFrame = 24;//真っ黒になるまで
 	constexpr int kJumpEndFrame = kJumpBlackStart + kJumpBlackFrame + 2;//リザルトへ
 
+	//スキップ(Y長押し)
+	constexpr int kSkipHoldFrame = 60;//押し続ける長さ
+	constexpr int kSkipDrainSpeed = 3;//離したときにゲージが戻る速さ
+	constexpr int kSkipPromptFrame = 180;//案内を出しておく長さ
+	constexpr int kSkipPromptFade = 20;
+	constexpr int kSkipBlackFrame = 30;//飛ばしてから真っ黒になるまで
+
 	constexpr int kRadioAmbush = 0;//無線の字幕の番号(EndingUIの文と合わせる)
 	constexpr int kRadioBeat = 1;
 }
@@ -147,6 +155,7 @@ TunnelEnding::TunnelEnding(std::weak_ptr<Stage> stage, std::weak_ptr<Player> pla
 {
 	if (auto stagePtr = m_stage.lock()) m_fog = stagePtr->GetTrainFog();
 	m_fromFog = m_fog;
+	m_skipPromptFrame = kSkipPromptFrame;
 	if (auto battle = System::GetInstance().GetBattleMgr()) battle->GetEndingScreen().isPlaying = true;
 	m_warningEffect = LoadEffekseerEffect(kWarningEffectPath);
 	m_fallEffect = LoadEffekseerEffect(kFallEffectPath);
@@ -177,6 +186,15 @@ void TunnelEnding::Update()
 	if (!battle || !stage)return;
 
 	m_frame++;
+	UpdateSkip();
+	if (m_skipFrame >= 0)
+	{
+		m_skipFrame++;
+		if (m_skipFrame == kSkipBlackFrame) battle->SetIsBattleEnd(true);
+		UpdateFog();
+		UpdateScreen();
+		return;
+	}
 	switch (m_phase)
 	{
 	case Phase::Wait:
@@ -187,6 +205,7 @@ void TunnelEnding::Update()
 			m_exitStartDistance = stage->StartTunnelExit(GetCameraPosition().z, kExitMinDistance);
 			stage->SetTunnelSpeedScale((std::max)(1.0f, m_exitStartDistance / (stage->GetTunnelSpeed() * kApproachFrame)));
 			ChangePhase(Phase::Approach);
+			m_skipPromptFrame = 0;//飛ばせることを知らせる
 		}
 		break;
 	case Phase::Approach:
@@ -269,6 +288,56 @@ void TunnelEnding::Update()
 	UpdateMissiles();
 	UpdateFog();
 	UpdateScreen();
+}
+
+void TunnelEnding::UpdateSkip()
+{
+	if (m_skipFrame >= 0)return;
+	//倒した余韻の間(血殺など)と、暗転し始めてからは飛ばさない
+	const bool canSkip = m_phase != Phase::Wait && m_phase != Phase::Done &&
+		!(m_phase == Phase::Jump && m_frame >= kJumpBlackStart);
+	if (!canSkip)
+	{
+		m_skipHoldFrame = 0;
+		return;
+	}
+	//イベント中は入力が止まるので生の入力を見る
+	auto& input = Input::GetInstance();
+	if (input.IsRealPressed("Y"))
+	{
+		m_skipHoldFrame++;
+		m_skipPromptFrame = 0;
+	}
+	else
+	{
+		m_skipHoldFrame = (std::max)(0, m_skipHoldFrame - kSkipDrainSpeed);
+		if (input.IsRealTriggered("A") || input.IsRealTriggered("B") || input.IsRealTriggered("X")) m_skipPromptFrame = 0;
+		m_skipPromptFrame++;
+	}
+	if (m_skipHoldFrame >= kSkipHoldFrame) StartSkip();
+}
+
+void TunnelEnding::StartSkip()
+{
+	auto battle = System::GetInstance().GetBattleMgr();
+	if (!battle)return;
+	m_skipFrame = 0;
+	battle->SetIsEventPlaying(true);
+	if (auto player = m_player.lock())
+	{
+		player->SetHidden(false);
+		if (m_phase != Phase::Jump) player->ForceIdleState();
+	}
+	for (auto& missile : m_missiles)
+	{
+		if (missile.warning != -1) StopEffekseer3DEffect(missile.warning);
+		missile.warning = -1;
+	}
+	m_missiles.clear();
+	if (m_fallTrailPlaying != -1) StopEffekseer3DEffect(m_fallTrailPlaying);
+	m_fallTrailPlaying = -1;
+	m_radioIndex = -1;
+	if (auto stage = m_stage.lock()) stage->SetTunnelSpeedScale(1.0f);
 }
 
 void TunnelEnding::StartAmbush()
@@ -527,6 +596,16 @@ void TunnelEnding::UpdateScreen()
 	screen.blackRate = (m_phase == Phase::Jump || m_phase == Phase::Done) ?
 		std::clamp(static_cast<float>(m_frame - kJumpBlackStart) / kJumpBlackFrame, 0.0f, 1.0f) : 0.0f;
 	if (m_phase == Phase::Done) screen.blackRate = 1.0f;
+
+	//スキップ
+	screen.skipHoldRate = static_cast<float>(m_skipHoldFrame) / kSkipHoldFrame;
+	const float promptAlpha = std::clamp(static_cast<float>(kSkipPromptFrame - m_skipPromptFrame) / kSkipPromptFade, 0.0f, 1.0f);
+	screen.skipPromptAlpha = (m_phase == Phase::Wait || m_phase == Phase::Done) ? 0.0f : promptAlpha;
+	if (m_skipFrame >= 0)
+	{
+		screen.blackRate = (std::max)(screen.blackRate, std::clamp(static_cast<float>(m_skipFrame) / kSkipBlackFrame, 0.0f, 1.0f));
+		screen.skipPromptAlpha = 0.0f;
+	}
 }
 
 std::shared_ptr<EndingCamera> TunnelEnding::GetCamera() const

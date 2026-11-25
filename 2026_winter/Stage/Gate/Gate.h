@@ -17,6 +17,8 @@ public:
 	void Init(const GateData& data, const Vector3& offset);
 	/// <summary>今のフェーズに合わせて開け閉めする</summary>
 	void Update(int currentPhase);
+	/// <summary>動かさずに、そのフェーズの開け閉めの状態にする(リスポーン用)</summary>
+	void Snap(int currentPhase);
 	void Draw()const;
 
 	void OnCollision(Collider& other) override {}

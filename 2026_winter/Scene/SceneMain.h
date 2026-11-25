@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include "DxLib.h"
 #include <memory>
+#include <optional>
 #include "Scene/Scene.h"
+#include "Battle/RespawnInfo.h"
 #include "Stage/StageInfo.h"
 #include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieFrame.h"
 #include "Render/StageColorGrade.h"
@@ -27,7 +29,8 @@ class TutorialFinale;
 class SceneMain : public Scene
 {
 public:
-	SceneMain(SceneController& controller, StageType stageType);
+	//respawnがあれば、死ぬ前の続き(チェックポイント・フェーズ・記録)から始める
+	SceneMain(SceneController& controller, StageType stageType, std::optional<RespawnInfo> respawn = std::nullopt);
 	~SceneMain();
 
 	void Update() override;
@@ -49,7 +52,7 @@ private:
 	//フェード用の黒い板を描画する
 	void DrawFade();
 	//デバッグ用//プレイヤーの正面にスキルエフェクトを再生する
-	void PlayDebugSkillEffect(int effectHandle);
+	void PlayDebugSkillEffect(int effectHandle, float forwardDistance);
 
 	//チュートリアルを開いてよいか(演出の最中は待つ)
 	bool CanOpenTutorial()const;
@@ -60,6 +63,9 @@ private:
 	//プレイヤーの登場演出を始める(今の位置に着地する)//Roof:ステージ1 Fall:チュートリアル
 	void StartPlayerStartMovie(PlayerStartMovieFrame::Kind kind);
 
+	//死んだときに引き継ぐものをまとめる
+	RespawnInfo MakeRespawnInfo()const;
+
 private:
 	int m_frameCount;
 	int m_fadeFrame;//フェードの経過フレーム
@@ -67,6 +73,7 @@ private:
 	int m_lightHandle = -1;
 
 	StageType m_stageType;//遊ぶステージ(StageSelectSceneで選んだもの)
+	std::optional<RespawnInfo> m_respawn;//リスポーンで作り直したときの引き継ぎ
 	std::shared_ptr<Player> m_player;
 	std::shared_ptr<EnemyManager> m_enemyManager;
 	std::shared_ptr<PhaseManager> m_phaseManager;//フェーズ進行
@@ -89,5 +96,7 @@ private:
 	bool m_wasF4Pressed = false;//前フレームにF4キーが押されていたか(ボスの手前へ飛ぶ)
 	bool m_wasF5Pressed = false;//前フレームにF5キーが押されていたか(スキルエフェクト確認用)
 	bool m_wasF6Pressed = false;//前フレームにF6キーが押されていたか(スキルエフェクト確認用)
+	bool m_wasF9Pressed = false;//前フレームにF9キーが押されていたか(地上弱スキルのエフェクト確認用)
+	int m_debugGleamStep = 0;//F9で次に出す地上弱スキルの段(0〜2)
 	bool m_wasF7Pressed = false;//前フレームにF7キーが押されていたか(エンディング確認用)
 };

@@ -17,19 +17,23 @@ CheckpointManager::~CheckpointManager()
 	StopAllIdleEffects();
 }
 
-void CheckpointManager::Init(std::weak_ptr<Player> player)
+void CheckpointManager::Init(std::weak_ptr<Player> player, int startIndex)
 {
 	m_player = player;
 	m_checkpoints = DataManager::GetInstance().GetCheckpoints();
 	StopAllIdleEffects();
 	m_states.assign(m_checkpoints.size(), State());
 	m_lastIndex = -1;
+	if (startIndex >= 0 && startIndex < static_cast<int>(m_checkpoints.size()))
+	{
+		Activate(startIndex, false);
+	}
 
 	//始まったときに中にいる物は演出なしで起動済みにする
 	if (auto p = m_player.lock())
 	{
 		const Vector3 pos = p->GetRigidBody().GetPos();
-		for (int i = static_cast<int>(m_checkpoints.size()) - 1; i >= 0; i--)
+		for (int i = static_cast<int>(m_checkpoints.size()) - 1; i > m_lastIndex; i--)
 		{
 			if (!IsInside(m_checkpoints[i], pos))continue;
 			Activate(i, false);

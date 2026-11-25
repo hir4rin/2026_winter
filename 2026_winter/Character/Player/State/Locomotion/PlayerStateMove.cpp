@@ -97,7 +97,7 @@ void PlayerStateMove::Update()
 	}	
 	if (input.IsTriggered("Y"))//強攻撃
 	{
-		player->ChangeState(std::make_shared<PlayerStateAttack>(m_owner, AttackType::heavyAttack));
+		player->ChangeState(std::make_shared<PlayerStateCharge>(m_owner));
 		return;
 	}
 

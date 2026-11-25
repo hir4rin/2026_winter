@@ -49,6 +49,9 @@ namespace
 	//スキルエフェクト確認用
 	const std::string kDebugGhostDashEffectPath = "data/Effect/Skill/GhostDash.efk";
 	const std::string kDebugGhostDash3DEffectPath = "data/Effect/Skill/GhostDash3D.efk";
+	const std::string kDebugGleamLight1EffectPath = "data/Effect/Skill/GleamLight1.efk";
+	const std::string kDebugGleamLight2EffectPath = "data/Effect/Skill/GleamLight2.efk";
+	const std::string kDebugGleamLight3EffectPath = "data/Effect/Skill/GleamLight3.efk";
 	const std::string kGhostSkill3FallEffectPath = "data/Effect/Skill/GhostSkill3_Fall.efk";
 	const std::string kGhostSkill3ImpactEffectPath = "data/Effect/Skill/GhostSkill3_Impact.efk";
 	const std::string kBloodWingEffectPath = "data/Effect/Skill/BloodWing.efk";//
@@ -113,6 +116,9 @@ void System::LoadCommon()
 	//エフェクトは同期で読み込む
 	m_asyncHandles[AsyncData::DebugGhostDashEffect] = LoadEffekseerEffect(kDebugGhostDashEffectPath.c_str());
 	m_asyncHandles[AsyncData::DebugGhostDash3DEffect] = LoadEffekseerEffect(kDebugGhostDash3DEffectPath.c_str());
+	m_asyncHandles[AsyncData::DebugGleamLight1Effect] = LoadEffekseerEffect(kDebugGleamLight1EffectPath.c_str());
+	m_asyncHandles[AsyncData::DebugGleamLight2Effect] = LoadEffekseerEffect(kDebugGleamLight2EffectPath.c_str());
+	m_asyncHandles[AsyncData::DebugGleamLight3Effect] = LoadEffekseerEffect(kDebugGleamLight3EffectPath.c_str());
 	m_asyncHandles[AsyncData::GhostSkill3FallEffect] = LoadEffekseerEffect(kGhostSkill3FallEffectPath.c_str());
 	m_asyncHandles[AsyncData::GhostSkill3ImpactEffect] = LoadEffekseerEffect(kGhostSkill3ImpactEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodWingEffect] = LoadEffekseerEffect(kBloodWingEffectPath.c_str());
@@ -323,6 +329,9 @@ void System::Terminate()
 	//デバッグ
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGhostDashEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGhostDash3DEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGleamLight1Effect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGleamLight2Effect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGleamLight3Effect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3FallEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3ImpactEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodWingEffect]);

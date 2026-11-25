@@ -14,7 +14,8 @@ public:
 	~CheckpointManager();
 
 	//DataManagerで読み込んだ後に呼ぶ//始まったときに中にいる物は演出なしで起動済みにする
-	void Init(std::weak_ptr<Player> player);
+	//startIndexが0以上なら、そこまで起動済みにする(リスポーン用)
+	void Init(std::weak_ptr<Player> player, int startIndex = -1);
 
 	void Update();
 

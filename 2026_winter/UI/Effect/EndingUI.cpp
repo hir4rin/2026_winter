@@ -78,6 +78,19 @@ namespace
 	constexpr int kSpeakerR = 120;
 	constexpr int kSpeakerG = 220;
 	constexpr int kSpeakerB = 255;
+	//スキップの案内(右下)
+	const char* const kButtonYPath = "data/UI/button/Y.png";
+	const char* const kSkipText = "長押しでスキップ";
+	constexpr int kSkipFontSize = 20;
+	constexpr float kSkipIconX = 1070.0f;//Yの中心
+	constexpr float kSkipIconY = 672.0f;
+	constexpr float kSkipIconSize = 30.0f;
+	constexpr float kSkipRingRadius = 21.0f;
+	constexpr float kSkipRingThick = 3.0f;
+	constexpr int kSkipRingDiv = 48;
+	constexpr float kSkipTextGap = 30.0f;//輪の中心から文字まで
+	constexpr int kSkipBaseAlpha = 200;
+
 	//TunnelEndingの番号と合わせる
 	const char* const kRadioSpeaker = "ウミ";
 	const char* const kRadioLines[] =
@@ -99,6 +112,8 @@ EndingUI::~EndingUI()
 	DeleteGraph(m_noiseHandle);
 	DeleteGraph(m_wipeHandle);
 	DeleteFontToHandle(m_radioFont);
+	DeleteFontToHandle(m_skipFont);
+	DeleteGraph(m_buttonYHandle);
 }
 
 void EndingUI::Init()
@@ -122,6 +137,8 @@ void EndingUI::Init()
 	m_wipeHandle = MakeBlendGraph(w, h, true);
 
 	m_radioFont = CreateFontToHandle(kUiFontName, static_cast<int>(kRadioFontSize * scale), 3, DX_FONTTYPE_ANTIALIASING_EDGE_4X4);
+	m_skipFont = CreateFontToHandle(kUiFontName, static_cast<int>(kSkipFontSize * scale), 3, DX_FONTTYPE_ANTIALIASING_EDGE_4X4);
+	m_buttonYHandle = LoadGraph(kButtonYPath);
 }
 
 void EndingUI::Update()
@@ -143,6 +160,7 @@ void EndingUI::Draw()
 	{
 		const auto& screen = battle->GetEndingScreen();
 		if (screen.radioIndex >= 0) DrawRadio(screen.radioIndex, screen.radioFrame);
+		if (screen.skipPromptAlpha > 0.0f) DrawSkip(screen.skipPromptAlpha, screen.skipHoldRate);
 		if (screen.blackRate > 0.0f)
 		{
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * screen.blackRate));
@@ -177,6 +195,40 @@ void EndingUI::DrawRadio(int index, int frame)
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * alpha));
 	DrawStringFToHandle(left, y, kRadioSpeaker, GetColor(kSpeakerR, kSpeakerG, kSpeakerB), m_radioFont, GetColor(0, 0, 0));
 	DrawStringFToHandle(left + speakerWidth + gap, y, line, GetColor(255, 255, 255), m_radioFont, GetColor(0, 0, 0));
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+void EndingUI::DrawSkip(float alpha, float holdRate)
+{
+	const float s = Game::GetScale();
+	const float cx = Game::ScaleX(kSkipIconX);
+	const float cy = Game::ScaleY(kSkipIconY);
+	const float radius = kSkipRingRadius * s;
+	const float half = kSkipIconSize * 0.5f * s;
+	const int baseAlpha = static_cast<int>(kSkipBaseAlpha * alpha);
+
+	//輪の下地 → たまった分(上から時計回り)
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, baseAlpha / 2);
+	DrawCircleAA(cx, cy, radius, kSkipRingDiv, GetColor(0, 0, 0), FALSE, kSkipRingThick * s);
+	const float rate = std::clamp(holdRate, 0.0f, 1.0f);
+	if (rate > 0.0f)
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * alpha));
+		const int div = (std::max)(1, static_cast<int>(kSkipRingDiv * rate));
+		for (int i = 0; i < div; ++i)
+		{
+			const float a0 = DX_TWO_PI_F * rate * i / div - DX_PI_F * 0.5f;
+			const float a1 = DX_TWO_PI_F * rate * (i + 1) / div - DX_PI_F * 0.5f;
+			DrawLineAA(cx + cosf(a0) * radius, cy + sinf(a0) * radius, cx + cosf(a1) * radius, cy + sinf(a1) * radius,
+				GetColor(kTextR, kTextG, kTextB), kSkipRingThick * s);
+		}
+	}
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * alpha));
+	DrawExtendGraphF(cx - half, cy - half, cx + half, cy + half, m_buttonYHandle, TRUE);
+	const float textY = cy - kSkipFontSize * s * 0.5f;
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, baseAlpha);
+	DrawStringFToHandle(cx + kSkipTextGap * s, textY, kSkipText, GetColor(255, 255, 255), m_skipFont, GetColor(0, 0, 0));
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 

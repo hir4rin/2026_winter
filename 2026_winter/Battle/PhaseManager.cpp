@@ -18,11 +18,12 @@ namespace
 	constexpr float kBossAttackRiseScale = 1.22f;//ボス戦の攻撃の上昇の倍率//高さは2乗で効くので約1.5倍
 }
 
-void PhaseManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player)
+void PhaseManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player, int startPhase, int killCount)
 {
 	m_enemyManager = enemyManager;
 	m_player = player;
 	m_currentPhase = 0;
+	m_phaseStartKills.clear();
 
 	auto& data = DataManager::GetInstance();
 	m_transitions = data.GetPhaseFlow();
@@ -36,6 +37,12 @@ void PhaseManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<
 
 	ResolveAreaIndex();
 	assert(GetMissingAreaNames().empty() && "遷移表のエリア名がエリアCSVにありません");
+
+	if (startPhase > 0)
+	{
+		StartFromPhase(startPhase, killCount);
+		return;
+	}
 
 	//Startの行から始める
 	for (const auto& t : m_transitions)
@@ -83,6 +90,40 @@ void PhaseManager::Update()
 	}
 }
 
+void PhaseManager::StartFromPhase(int phase, int killCount)
+{
+	m_currentPhase = phase;
+	m_phaseFrame = 0;
+	m_killCountAtPhaseStart = killCount;
+	m_phaseStartKills[phase] = killCount;
+
+	if (auto enemyMgr = m_enemyManager.lock())
+	{
+		enemyMgr->SetTotalKillCount(killCount);
+		enemyMgr->StartPhase(phase);
+	}
+
+	//ボス戦の途中から始めるなら、視野角などはすぐ入れる(チュートリアルなどのイベントは起こさない)
+	//フェーズ番号はボス戦以降が小さくならない前提
+	for (const auto& t : m_transitions)
+	{
+		if (t.event != PhaseEvent::BossAppear || t.to <= 0 || t.to > phase)continue;
+		ApplyBossSettings(0.0f);
+		break;
+	}
+}
+
+void PhaseManager::ApplyBossSettings(float fovBlendFrame)
+{
+	auto player = m_player.lock();
+	if (!player)return;
+	if (auto cameraMgr = player->GetCameraManager().lock())
+	{
+		cameraMgr->SetFovOffset(kBossFovOffset, fovBlendFrame);
+	}
+	player->SetAttackRiseScale(kBossAttackRiseScale);
+}
+
 void PhaseManager::ChangePhase(int next, PhaseEvent event, const std::string& eventParam, int eventDelay)
 {
 	m_currentPhase = next;
@@ -91,6 +132,7 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event, const std::string& ev
 	if (auto enemyMgr = m_enemyManager.lock())
 	{
 		m_killCountAtPhaseStart = enemyMgr->GetTotalKillCount();
+		if (next > 0) m_phaseStartKills[next] = m_killCountAtPhaseStart;
 		//-1(終了)なら敵は出さない
 		if (next > 0)
 		{
@@ -107,16 +149,7 @@ void PhaseManager::ChangePhase(int next, PhaseEvent event, const std::string& ev
 	switch (event)
 	{
 	case PhaseEvent::BossAppear:
-		//printfDx("BossAppear\n");//仮
-		//ボス戦は視野角を広げる
-		if (auto player = m_player.lock())
-		{
-			if (auto cameraMgr = player->GetCameraManager().lock())
-			{
-				cameraMgr->SetFovOffset(kBossFovOffset, kBossFovBlendFrame);
-			}
-			player->SetAttackRiseScale(kBossAttackRiseScale);
-		}
+		ApplyBossSettings(kBossFovBlendFrame);
 		break;
 	case PhaseEvent::GameClear:
 		//printfDx("GameClear\n");//仮
@@ -282,6 +315,12 @@ int PhaseManager::GetPhaseKillCount() const
 	if (!enemyMgr)return 0;
 	//開始時の撃破数を引く
 	return enemyMgr->GetTotalKillCount() - m_killCountAtPhaseStart;
+}
+
+int PhaseManager::GetKillCountAtPhaseStart(int phase) const
+{
+	auto it = m_phaseStartKills.find(phase);
+	return it != m_phaseStartKills.end() ? it->second : -1;
 }
 
 void PhaseManager::DebugDraw() const

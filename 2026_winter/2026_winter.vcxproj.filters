@@ -168,6 +168,12 @@
     <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateCharge.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateChargeAttack.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -291,6 +297,9 @@
     <ClCompile Include="Camera\CameraState\BossPartThrowCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Camera\CameraState\LookingNextCamera.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Camera\CameraState\UltChargeCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -360,6 +369,9 @@
     <ClCompile Include="UI\Target\LockOnReticleUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="UI\Target\LookNextUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -385,6 +397,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\Effect\LowHpInkUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Effect\LookNextFxUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\HUD\PlayerHUD.cpp">
@@ -827,6 +842,12 @@
     <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateCharge.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateChargeAttack.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -953,6 +974,9 @@
     <ClInclude Include="Camera\CameraState\BossPartThrowCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Camera\CameraState\LookingNextCamera.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Camera\CameraState\UltChargeCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1028,6 +1052,9 @@
     <ClInclude Include="UI\Target\LockOnReticleUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Target\LookNextUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1053,6 +1080,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="UI\Effect\LowHpInkUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Effect\LookNextFxUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="UI\HUD\PlayerHUD.h">
@@ -1307,6 +1337,9 @@
     <ClInclude Include="Battle\CheckpointManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Battle\RespawnInfo.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="DataLoader\TutorialPageData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1346,6 +1379,9 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\LowHpInkPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Render\Shader\LookNextFxPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Render\Shader\VertexShader.h">

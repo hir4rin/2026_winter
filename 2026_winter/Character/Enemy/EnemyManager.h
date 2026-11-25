@@ -32,6 +32,7 @@ public:
 	void StartPhase(int phase);//そのフェーズの敵を出す
 	bool IsPhaseEnemiesAllDead()const;
 	int GetTotalKillCount()const { return m_totalKillCount; }
+	void SetTotalKillCount(int count) { m_totalKillCount = count; }//リスポーン用
 	//Group内の敵がすべて死んだかどうか
 	bool IsGroupAllDead(const std::string& groupId)const;
 	void DebugClearEnemies();//デバッグ用//敵と死体を全部消す

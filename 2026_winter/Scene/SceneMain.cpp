@@ -79,13 +79,13 @@ namespace
 	constexpr float kDebugSkillEffectDistance = 300.0f;//プレイヤーの正面のどこを中心にするか
 }
 
-SceneMain::SceneMain(SceneController& controller, StageType stageType) :
+SceneMain::SceneMain(SceneController& controller, StageType stageType, std::optional<RespawnInfo> respawn) :
 	Scene(controller),
 	m_frameCount(0),
 	m_fadeFrame(0),
-	m_stageType(stageType)
-{
-	m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::NormalUpdate);
+	m_stageType(stageType),
+	m_respawn(respawn)
+{	m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::NormalUpdate);
 	m_drawFunc = static_cast<DrawFunc_t>(&SceneMain::NormalDraw);
 	Init();
 }
@@ -160,6 +160,17 @@ void SceneMain::Init()
 	m_player->SetEnemyManager(m_enemyManager);
 	m_player->Init();
 
+	//チェックポイント(無ければ空。前のステージのが残らないように毎回読む)
+	DataManager::GetInstance().LoadCheckpoints(stageInfo.enemySpawnNumber);
+	//リスポーンならチェックポイントに置く
+	const int respawnIndex = m_respawn ? m_respawn->checkpointIndex : -1;
+	const auto& checkpoints = DataManager::GetInstance().GetCheckpoints();
+	const CheckpointData* respawnCp = (respawnIndex >= 0 && respawnIndex < static_cast<int>(checkpoints.size())) ? &checkpoints[respawnIndex] : nullptr;
+	if (respawnCp)
+	{
+		m_player->SetPos(respawnCp->position);
+		m_player->SetFacing(respawnCp->rotYDeg * DX_PI_F / 180.0f);
+	}
 
 	//敵の生成
 	m_enemyManager->SetPlayer(m_player);
@@ -171,7 +182,9 @@ void SceneMain::Init()
 	{
 		DataManager::GetInstance().LoadPhaseFlow(stageInfo.enemySpawnNumber);
 		DataManager::GetInstance().LoadPhaseAreas(stageInfo.enemySpawnNumber);
-		m_phaseManager->Init(m_enemyManager, m_player);
+		const int startPhase = respawnCp ? respawnCp->phase : 0;
+		m_phaseManager->Init(m_enemyManager, m_player, startPhase, m_respawn ? m_respawn->killCount : 0);
+		if (m_respawn) m_stage->SnapGates(m_phaseManager->GetCurrentPhase());
 	}
 	else
 	{
@@ -182,10 +195,8 @@ void SceneMain::Init()
 	}
 	m_phaseAreaEditor = std::make_unique<PhaseAreaEditor>();
 	m_phaseAreaEditor->SetStageNumber(stageInfo.enemySpawnNumber);
-	//チェックポイント(無ければ空。前のステージのが残らないように毎回読む)
-	DataManager::GetInstance().LoadCheckpoints(stageInfo.enemySpawnNumber);
 	m_checkpointManager = std::make_shared<CheckpointManager>();
-	m_checkpointManager->Init(m_player);
+	m_checkpointManager->Init(m_player, respawnCp ? respawnIndex : -1);
 	m_checkpointEditor = std::make_unique<CheckpointEditor>();
 	m_checkpointEditor->SetStageNumber(stageInfo.enemySpawnNumber);
 
@@ -194,13 +205,21 @@ void SceneMain::Init()
 	m_battleManager->Init();
 	System::GetInstance().SetBattleMgr(m_battleManager);
 	if (auto bloodMgr = m_battleManager->GetBloodDecalMgr().lock()) bloodMgr->Init(m_stage->GetStageModelHandle(), m_stage->GetStageViewHandle());
+	//記録は死ぬ前の続きから
+	if (m_respawn)
+	{
+		if (auto recorder = m_battleManager->GetResultRecorder().lock()) *recorder = m_respawn->recorder;
+	}
 
 	//プレイヤー追従カメラ
-	m_cameraManager->Init(m_player, m_stage);
-	if (m_stageType == StageType::Cyber) StartPlayerStartMovie(PlayerStartMovieFrame::Kind::Roof);
+	//リスポーンはチェックポイントの向きの後ろから始める
+	const float cameraAngleH = respawnCp ? respawnCp->rotYDeg * DX_PI_F / 180.0f : 0.0f;
+	m_cameraManager->Init(m_player, m_stage, cameraAngleH);
+	m_cameraManager->SetCheckpointManager(m_checkpointManager);
+	if (m_stageType == StageType::Cyber && !m_respawn) StartPlayerStartMovie(PlayerStartMovieFrame::Kind::Roof);
 	if (m_stageType == StageType::Tutorial)
 	{
-		StartPlayerStartMovie(PlayerStartMovieFrame::Kind::Fall);
+		if (!m_respawn) StartPlayerStartMovie(PlayerStartMovieFrame::Kind::Fall);
 		m_tutorialFinale = std::make_unique<TutorialFinale>(m_stage, m_player, m_cameraManager);
 	}
 
@@ -351,19 +370,28 @@ void SceneMain::NormalUpdate()
 	m_wasF4Pressed = isF4Pressed;
 //#endif
 
-	//F5/F6キーでスキルエフェクトを再生する(エフェクト確認用)
+	//F5/F6/F9キーでスキルエフェクトを再生する(エフェクト確認用)
 	const bool isF5Pressed = CheckHitKey(KEY_INPUT_F5) != 0;
 	const bool isF6Pressed = CheckHitKey(KEY_INPUT_F6) != 0;
+	const bool isF9Pressed = CheckHitKey(KEY_INPUT_F9) != 0;
 	if (isF5Pressed && !m_wasF5Pressed)
 	{
-		PlayDebugSkillEffect(System::GetInstance().GetHandle(AsyncData::DebugGhostDashEffect));
+		PlayDebugSkillEffect(System::GetInstance().GetHandle(AsyncData::DebugGhostDashEffect), kDebugSkillEffectDistance);
 	}
 	if (isF6Pressed && !m_wasF6Pressed)
 	{
-		PlayDebugSkillEffect(System::GetInstance().GetHandle(AsyncData::DebugGhostDash3DEffect));
+		PlayDebugSkillEffect(System::GetInstance().GetHandle(AsyncData::DebugGhostDash3DEffect), kDebugSkillEffectDistance);
+	}
+	//地上弱スキルはプレイヤーの位置から斬り抜けるので足元から出す//押すたびに1→2→3段目
+	if (isF9Pressed && !m_wasF9Pressed)
+	{
+		const auto key = static_cast<AsyncData>(static_cast<int>(AsyncData::DebugGleamLight1Effect) + m_debugGleamStep);
+		PlayDebugSkillEffect(System::GetInstance().GetHandle(key), 0.0f);
+		m_debugGleamStep = (m_debugGleamStep + 1) % 3;
 	}
 	m_wasF5Pressed = isF5Pressed;
 	m_wasF6Pressed = isF6Pressed;
+	m_wasF9Pressed = isF9Pressed;
 
 	//再生中のエフェクトを、このフレームのタイムスケールに合わせて進める(自分の速さを持つエフェクトの設定し直しもここで行う)
 	EffectManager::GetInstance().Update();
@@ -371,7 +399,7 @@ void SceneMain::NormalUpdate()
 	//プレイヤーが死んだらゲームオーバーシーンを積む
 	if (m_player->GetIsDead())
 	{
-		m_controller.PushScene(std::make_shared<GameOverScene>(m_controller));
+		m_controller.PushScene(std::make_shared<GameOverScene>(m_controller, m_stageType, MakeRespawnInfo()));
 		return;
 	}
 
@@ -391,11 +419,11 @@ void SceneMain::NormalUpdate()
 
 }
 
-void SceneMain::PlayDebugSkillEffect(int effectHandle)
+void SceneMain::PlayDebugSkillEffect(int effectHandle, float forwardDistance)
 {
 	const Vector3 playerPos = m_player->GetRigidBody().GetPos();
 	const Vector3 forward = m_player->GetTargetVec();
-	const Vector3 center = playerPos + forward * kDebugSkillEffectDistance;
+	const Vector3 center = playerPos + forward * forwardDistance;
 
 	const int playingHandle = PlayEffekseer3DEffect(effectHandle);
 	SetPosPlayingEffekseer3DEffect(playingHandle, center.x, center.y, center.z);
@@ -421,6 +449,24 @@ void SceneMain::StartEnding()
 		return;
 	}
 	m_ending = std::make_unique<TunnelEnding>(m_stage, m_player, m_cameraManager);
+}
+
+RespawnInfo SceneMain::MakeRespawnInfo() const
+{
+	RespawnInfo info;
+	if (auto recorder = m_battleManager->GetResultRecorder().lock()) info.recorder = *recorder;
+	info.recorder.OnPlayerDead();
+
+	const CheckpointData* cp = m_checkpointManager->GetLastCheckpoint();
+	if (!cp) return info;//最初から(撃破数も0)
+	info.checkpointIndex = m_checkpointManager->GetLastIndex();
+	if (cp->phase > 0)
+	{
+		//フェーズが始まっていればその時の数、まだなら今の数(そのフェーズの敵は出し直す)
+		const int startKill = m_phaseManager->GetKillCountAtPhaseStart(cp->phase);
+		info.killCount = startKill >= 0 ? startKill : m_enemyManager->GetTotalKillCount();
+	}
+	return info;
 }
 
 void SceneMain::StartPlayerStartMovie(PlayerStartMovieFrame::Kind kind)

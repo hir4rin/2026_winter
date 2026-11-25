@@ -1,6 +1,6 @@
 ﻿#include "GameOverScene.h"
 #include "SceneController.h"
-#include "TitleScene.h"
+#include "SceneMain.h"
 #include "DxLib.h"
 #include "Main/Input.h"
 #include "Main/Game.h"
@@ -46,7 +46,10 @@ namespace
 	constexpr int kFadeOutFrame = 30;
 }
 
-GameOverScene::GameOverScene(SceneController& controller) :Scene(controller)
+GameOverScene::GameOverScene(SceneController& controller, StageType stageType, const RespawnInfo& respawn) :
+	Scene(controller),
+	m_stageType(stageType),
+	m_respawn(respawn)
 {
 	m_shiHandle = LoadGraph(kShiPath);
 	m_shiDripHandle = LoadGraph(kShiDripPath);
@@ -102,8 +105,8 @@ void GameOverScene::FadeOutUpdate()
 	m_fadeFrame++;
 	if (m_fadeFrame >= kFadeOutFrame)
 	{
-		//下のSceneMainごと破棄する(このシーンも破棄されるので、呼んだ後は何もしない)
-		m_controller.ResetScene<TitleScene>();
+		//下のSceneMainごと破棄して、続きから作り直す(このシーンも破棄されるので、呼んだ後は何もしない)
+		m_controller.ResetScene<SceneMain>(m_stageType, std::optional<RespawnInfo>(m_respawn));
 	}
 }
 
@@ -183,7 +186,7 @@ void GameOverScene::DrawGuide()
 	const float blink = kGuideBlinkMin + (1.0f - kGuideBlinkMin) * (0.5f + 0.5f * std::cos(frame * kGuideBlinkSpeed));
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * inRate * blink));
 
-	const char* const text = "タイトルへ";
+	const char* const text = "再開";
 	const float scale = Game::GetScale();
 	const float buttonSize = kButtonSize * scale;
 	const float gap = kGuideGap * scale;

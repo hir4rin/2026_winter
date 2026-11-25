@@ -51,6 +51,7 @@ public:
 	void AddTechnique(ResultData::Technique t);
 	void OnPlayerAttackHit();
 	void OnPlayerDamaged();
+	void OnPlayerDead() { m_deathCount++; OnPlayerDamaged(); }
 	ResultData MakeResult(int stageType, int targetClearSec, int killCount, int enemyNum) const;
 	int GetClearFrame() const { return m_clearFrame; }
 
@@ -59,5 +60,6 @@ private:
 	int m_combo = 0;
 	int m_maxCombo = 0;
 	int m_comboTimer = 0;
+	int m_deathCount = 0;
 	std::array<int, ResultData::kTechniqueNum> m_techniqueCounts = {};
 };

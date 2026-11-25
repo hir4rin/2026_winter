@@ -11,10 +11,12 @@ class MainCamera;
 class Stage;
 class LockOnManager;
 class CameraStateBase;
+class CheckpointManager;
 
 struct CameraContext
 {
 	std::weak_ptr<Player> m_player;
+	std::weak_ptr<CheckpointManager> m_checkpointManager;//次の目的地を見るカメラ用
 	//std::weak_ptr<EnemyBase> m_targetEnemyNoLockOn;
 	bool m_isUltimate = false;
 };
@@ -43,7 +45,8 @@ public:
 		BossFinisherCamera,
 		EndingCamera,
 		TitleCamera,
-		UltChargeCamera
+		UltChargeCamera,
+		LookingNextCamera
 
 	};
 
@@ -51,7 +54,11 @@ public:
 	CameraManager();
 	virtual ~CameraManager();
 	//Playerのweak_ptrを渡す
-	void Init(std::weak_ptr<Player> player, std::weak_ptr<Stage> stage = {});
+	//angleH: 追従カメラの最初の水平角度
+	void Init(std::weak_ptr<Player> player, std::weak_ptr<Stage> stage = {}, float angleH = 0.0f);
+	void SetCheckpointManager(std::weak_ptr<CheckpointManager> checkpointManager) { m_context->m_checkpointManager = checkpointManager; }
+	//次のチェックポイントの位置(無ければfalse)
+	bool GetNextCheckpointPos(Vector3& pos)const;
 
 	/// <summary>
 	/// 
@@ -125,6 +132,8 @@ public:
 private:
 	//ロックオン状態とカメラのステートがずれていたら遷移する
 	void SyncLockOnState();
+	//RTを押したら、次のチェックポイントを見るカメラにする
+	void SyncLookingNextState();
 	//ステージに当たらない位置に補正する
 	Vector3 FixStageCollision(const Vector3& pos, const Vector3& target);
 	//今のカメラがステージとの当たり判定をするか

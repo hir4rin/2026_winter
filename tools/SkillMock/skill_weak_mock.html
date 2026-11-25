@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地上弱スキル モック</title>
+<style>
+  :root{--bg:#0b0607;--panel:#160c0e;--line:#3a1c22;--text:#e8e2de;--sub:#9c8a88;--red:#d8283c;--silver:#d8d4d0}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Yu Gothic UI","Meiryo",sans-serif;font-size:14px}
+  header{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  h1{font-size:16px;margin:0 12px 0 0;font-weight:600}
+  button,select{background:var(--panel);color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:4px;font:inherit;cursor:pointer}
+  button.on{border-color:var(--red);background:#3a0d16}
+  .wrap{padding:12px 16px}
+  #single canvas{width:100%;max-width:960px;display:block;border:1px solid var(--line);background:#000}
+  #grid{display:none;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:10px}
+  #grid canvas{width:100%;display:block;border:1px solid var(--line);background:#000}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+  input[type=range]{width:320px;max-width:100%}
+  .desc{max-width:960px;margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;line-height:1.7}
+  .desc b{color:#ff8a95}
+  .desc table{border-collapse:collapse;margin-top:6px}
+  .desc td,.desc th{border:1px solid var(--line);padding:3px 8px;text-align:left}
+  .sub{color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <h1>地上弱スキル(LB＋X)</h1>
+  <span id="planBtns"></span>
+  <button id="gridBtn">並べる</button>
+  <button id="playBtn">停止</button>
+  <button id="prevBtn">◀ 1F</button>
+  <button id="nextBtn">1F ▶</button>
+  <select id="speed"><option value="1">×1</option><option value="0.5">×0.5</option><option value="0.25">×0.25</option></select>
+</header>
+<div class="wrap">
+  <div class="row"><input type="range" id="seek" min="0" max="229" value="0"><span id="frameText" class="sub"></span></div>
+  <div id="single"><canvas id="main" width="960" height="540"></canvas></div>
+  <div id="grid"></div>
+  <div class="desc" id="desc"></div>
+  <div class="desc sub">
+    共通: 段ごとに強く、ゲージの消費は減る(NG4 の閃華・鵺の型と同じ考え)。数字は仮。
+    <table><tr><th></th><th>1段目</th><th>2段目</th><th>3段目</th></tr>
+    <tr><td>ゲージ消費</td><td>30</td><td>20</td><td>15</td></tr>
+    <tr><td>ダメージ倍率</td><td>×1.0</td><td>×1.3</td><td>×1.8</td></tr></table>
+    URL の <code>#E,140</code> でその案・フレームに止まる。<code>#all,140</code> で並べて止まる。
+  </div>
+</div>
+<script>
+const END = 230;
+const S = i => 20 + 48 * i;
+const COST = [30, 20, 15], MULT = ['×1.0', '×1.3', '×1.8'];
+const EB = [[130,0],[215,-75],[225,65],[95,105],[55,-105],[285,5]];
+const T = [140, 0];
+
+const clamp = (v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const easeOut = t=>1-Math.pow(1-t,3);
+const easeInOut = t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const lerp = (a,b,t)=>[a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t];
+const sub = (a,b)=>[a[0]-b[0],a[1]-b[1]];
+const len = v=>Math.hypot(v[0],v[1]);
+const norm = v=>{const l=len(v)||1;return [v[0]/l,v[1]/l];};
+const add = (a,b)=>[a[0]+b[0],a[1]+b[1]];
+const mul = (a,s)=>[a[0]*s,a[1]*s];
+
+//まわりの敵をまとめて当てる
+function areaHits(f, c, r, power, skip=[]) {
+  const out = [];
+  EB.forEach((p,i)=>{ if (skip.includes(i)) return; const d = sub(p,c); if (len(d) <= r) out.push({f, e:i, kb: mul(norm(d), power)}); });
+  return out;
+}
+//中心を通り抜ける分身
+function crossGhost(f0, c, r, deg, life) {
+  const a = deg*Math.PI/180, from = [c[0]+Math.cos(a)*r, c[1]+Math.sin(a)*r], to = [c[0]-Math.cos(a)*r, c[1]-Math.sin(a)*r];
+  return { ghost:{ segs:[{t0:f0, blink:true, b:from},{t0:f0+6, t1:f0+14, b:to}], life:[f0, f0+life] },
+           slash:{type:'line', f:f0+8, a:from, b:to, w:5, dur:16} };
+}
+function finaleAll(base, actorFrom) {
+  //分身3体＋本体で一斉に
+  const f0 = S(2), ghosts=[], slashes=[];
+  [60, 300, 0].forEach((d,i)=>{ const g = crossGhost(f0+i, T, 105, d, 30); ghosts.push(g.ghost); slashes.push(g.slash); });
+  slashes.push({type:'line', f:f0+10, a:actorFrom, b:[250,0], w:6, dur:16});
+  slashes.push({type:'ring', f:f0+14, c:T, r:125});
+  const hits = areaHits(f0+14, T, 140, 16, [0]).concat([{f:f0+14, e:0, kb:[4,0]}]);
+  return {ghosts, slashes, hits, segs:[{t0:f0, blink:true, b:actorFrom},{t0:f0+6, t1:f0+16, b:[250,0]}]};
+}
+
+const PLANS = {
+  A: (()=>{ return {
+    name:'A 瞬歩三連', labels:['消えて斬り抜ける','背後から斬り返す','正面から袈裟斬り'],
+    player:{ segs:[{t0:S(0),t1:S(0)+10,b:[215,12]},{t0:S(1),blink:true,b:[180,-75]},{t0:S(1)+5,t1:S(1)+14,b:[70,75]},{t0:S(2),blink:true,b:[60,-20]},{t0:S(2)+4,t1:S(2)+12,b:[100,-8]}], vanish:[S(0),S(2)+34] },
+    ghosts:[],
+    slashes:[{type:'line',f:S(0)+3,a:[-30,0],b:[205,10],w:5,dur:16},{type:'line',f:S(1)+7,a:[175,-70],b:[80,68],w:5,dur:16},
+             {type:'arc',f:S(2)+10,c:[135,0],r:70,a0:-2.3,a1:0.9,w:10,dur:20},{type:'ring',f:S(2)+13,c:[140,0],r:60}],
+    hits:[{f:S(0)+6,e:0,kb:[10,1]},{f:S(1)+10,e:0,kb:[-7,9]},{f:S(2)+13,e:0,kb:[24,4]}],
+    pulls:[],
+    desc:`<b>1体を速く削る。</b>消える→背後→正面と位置を変えながら斬る。NG4 の「消えて背後に現れる」閃華に近い。<br>
+      作る手間: 小。今の分身(スキル1)の仕組みで、分身の動く先を変えるだけ。3段目は着地の衝撃(ImpactSkillAttack)の流用。<br>
+      強との違い: 強は打ち上げて空中、こちらは地上で位置を入れ替える。多人数には弱い。`
+  };})(),
+  B: (()=>{ const T1=[136,0]; const pulls=[]; for(let e=1;e<EB.length;e++) pulls.push({e,f0:S(1)+8,f1:S(1)+24,to:add(T1,mul(norm(sub(EB[e],T1)),40))});
+    const fin=[]; for(let e=0;e<EB.length;e++){ const to = e===0?T1:pulls[e-1].to; fin.push({f:S(2)+10,e,kb:e===0?[6,0]:mul(norm(sub(to,T1)),18)}); }
+    return {
+    name:'B 神威寄せ', labels:['前方を扇に斬る','神威: まわりの敵を寄せる','集めた敵を一閃'],
+    player:{ segs:[{t0:S(0),t1:S(0)+8,b:[50,0]},{t0:S(1),blink:true,b:[100,-12]},{t0:S(2),blink:true,b:[30,-45]},{t0:S(2)+5,t1:S(2)+13,b:[260,40]}], vanish:[S(0),S(2)+34] },
+    ghosts:[],
+    slashes:[{type:'arc',f:S(0)+5,c:[50,0],r:95,a0:-1.0,a1:1.0,w:8,dur:16},{type:'arc',f:S(1)+4,c:T1,r:42,a0:3.6,a1:0.3,w:6,dur:14},
+             {type:'pull',f:S(1)+6,f1:S(1)+26,c:T1,r:170},{type:'line',f:S(2)+8,a:[40,-40],b:[250,38],w:9,dur:18},{type:'ring',f:S(2)+12,c:[140,0],r:110}],
+    hits:[{f:S(0)+7,e:0,kb:[6,0]},{f:S(1)+6,e:0,kb:[0,0]}].concat(fin),
+    pulls,
+    desc:`<b>多人数をまとめる。</b>2段目で当たった敵のまわりの敵を吸い寄せ、3段目でまとめて斬る。NG4 の閃華の一回転X(神威)が元。<br>
+      作る手間: 大。敵を引き寄せる処理(移動・当たり判定・壁や段差)を新しく作る必要がある。<br>
+      強との違い: 単体の強に対して、こちらは多人数向け。役割はいちばんはっきり分かれる。`
+  };})(),
+  C: (()=>{ const g1={segs:[{t0:S(0),blink:true,b:[50,-55]},{t0:S(0)+4,t1:S(0)+12,b:[215,50]}],life:[S(0),S(0)+26]};
+    const g2a={segs:[{t0:S(1),blink:true,b:[75,-85]},{t0:S(1)+4,t1:S(1)+12,b:[195,75]}],life:[S(1),S(1)+26]};
+    const g2b={segs:[{t0:S(1)+2,blink:true,b:[75,85]},{t0:S(1)+6,t1:S(1)+14,b:[195,-75]}],life:[S(1)+2,S(1)+28]};
+    const fin = finaleAll(T,[-60,0]);
+    return {
+    name:'C 分身が増える', labels:['分身1体が斬る','分身2体が交差して斬る','分身3体＋本体で一斉に'],
+    player:{ segs:[{t0:S(2)+6,t1:S(2)+16,b:[250,0]}], vanish:[S(2)+4,S(2)+30] },
+    ghosts:[g1,g2a,g2b].concat(fin.ghosts),
+    slashes:[{type:'line',f:S(0)+6,a:[50,-55],b:[215,50],w:5,dur:16},{type:'line',f:S(1)+6,a:[75,-85],b:[195,75],w:5,dur:16},{type:'line',f:S(1)+8,a:[75,85],b:[195,-75],w:5,dur:16}].concat(fin.slashes),
+    hits:[{f:S(0)+8,e:0,kb:[6,4]},{f:S(1)+8,e:0,kb:[4,-5]},{f:S(1)+10,e:0,kb:[4,5]}].concat(fin.hits),
+    pulls:[],
+    desc:`<b>段ごとに分身が1→2→3体と増える。</b>見た目で「後半ほど強い」が分かる。本体は3段目まで動かない。<br>
+      作る手間: 中。分身のエフェクトを同時に何体か出す。見映えはエフェクト次第。<br>
+      強との違い: 強は本体が分身になって飛ぶ、こちらは本体の外に分身を出す。`
+  };})(),
+  D: (()=>{ return {
+    name:'D 斬り抜け往復', labels:['前へ斬り抜け','折り返して斬り抜け','全方位の衝撃'],
+    player:{ segs:[{t0:S(0),t1:S(0)+10,b:[240,0]},{t0:S(1),t1:S(1)+10,b:[10,15]},{t0:S(2),t1:S(2)+6,b:[120,8]}], vanish:[S(0),S(2)+30] },
+    ghosts:[],
+    slashes:[{type:'line',f:S(0)+3,a:[-40,0],b:[230,0],w:5,dur:16},{type:'line',f:S(1)+3,a:[230,0],b:[20,15],w:5,dur:16},
+             {type:'arc',f:S(2)+6,c:[120,8],r:50,a0:0,a1:6.28,w:6,dur:16},{type:'ring',f:S(2)+8,c:[125,5],r:145}],
+    hits:[{f:S(0)+6,e:0,kb:[12,0]},{f:S(1)+6,e:0,kb:[-12,0]}].concat(areaHits(S(2)+9,[125,5],160,20)),
+    pulls:[],
+    desc:`<b>いちばん単純。</b>前に抜けて、戻って、その場で衝撃。<br>
+      作る手間: 最小。分身の移動2回と、スキル3の着地の衝撃をそのまま使う。<br>
+      強との違い: 動きが素直なぶん、手応えはエフェクトとヒットストップ頼み。`
+  };})(),
+  E: (()=>{ const fin = finaleAll(T,[20,10]); return {
+    name:'E おすすめ(A＋C)', labels:['消えて斬り抜ける','背後から斬り返す','分身3体＋本体で一斉に'],
+    player:{ segs:[{t0:S(0),t1:S(0)+10,b:[215,12]},{t0:S(1),blink:true,b:[180,-75]},{t0:S(1)+5,t1:S(1)+14,b:[70,75]}].concat(fin.segs), vanish:[S(0),S(2)+34] },
+    ghosts: fin.ghosts,
+    slashes:[{type:'line',f:S(0)+3,a:[-30,0],b:[205,10],w:5,dur:16},{type:'line',f:S(1)+7,a:[175,-70],b:[80,68],w:5,dur:16}].concat(fin.slashes),
+    hits:[{f:S(0)+6,e:0,kb:[10,1]},{f:S(1)+10,e:0,kb:[-7,9]}].concat(fin.hits),
+    pulls:[],
+    desc:`<b>1・2段目は A の速さ、3段目で分身が増えて締める。</b>3段目だけまわりも巻き込む。<br>
+      作る手間: 小〜中。1・2段目は今の分身の流用、3段目だけ分身を同時に出す。<br>
+      強との違い: 地上で速く斬り、最後だけ範囲。強(打ち上げ・空中・単体)と役割が分かれる。`
+  };})(),
+};
+const KEYS = Object.keys(PLANS);
+
+function posOf(segs, f, start){
+  let p = start;
+  for (const s of segs){
+    if (f < s.t0) return p;
+    if (s.blink){ p = s.b; continue; }
+    const a = p;
+    if (f < s.t1) return lerp(a, s.b, easeOut((f-s.t0)/(s.t1-s.t0)));
+    p = s.b;
+  }
+  return p;
+}
+function enemyPos(plan, e, f){
+  let p = EB[e];
+  for (const u of plan.pulls) if (u.e===e && f>u.f0) p = add(p, mul(sub(u.to, EB[e]), easeInOut(clamp((f-u.f0)/(u.f1-u.f0)))));
+  for (const h of plan.hits) if (h.e===e && f>=h.f) p = add(p, mul(h.kb, easeOut(clamp((f-h.f)/10))));
+  return p;
+}
+
+function render(ctx, key, f, W, H){
+  const plan = PLANS[key];
+  const sc = W/460, cx = W*0.5 - 110*sc, cy = H*0.56;
+  let shake = 0;
+  for (const s of plan.slashes) if (s.type==='ring'){ const p=(f-s.f)/14; if(p>=0&&p<1) shake += 7*(1-p); }
+  const ox = Math.sin(f*7.3)*shake*sc*0.5, oy = Math.cos(f*5.1)*shake*sc*0.5;
+  const P = (q,y=0)=>[cx+q[0]*sc+ox, cy+q[1]*0.55*sc - y*sc + oy];
+
+  ctx.setTransform(1,0,0,1,0,0);
+  const g = ctx.createRadialGradient(W*0.5,H*0.6,10,W*0.5,H*0.6,W*0.7);
+  g.addColorStop(0,'#1c0d10'); g.addColorStop(1,'#050203');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(120,40,50,0.18)'; ctx.lineWidth=1;
+  for (let x=-120;x<=340;x+=40){ const a=P([x,-160]),b=P([x,160]); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+  for (let z=-160;z<=160;z+=40){ const a=P([-140,z]),b=P([360,z]); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+
+  //下に描くもの(衝撃の輪・寄せ)
+  for (const s of plan.slashes){
+    if (s.type==='ring'){ const p=(f-s.f)/24; if(p<0||p>=1) continue;
+      const c=P(s.c), r=s.r*easeOut(p)*sc;
+      ctx.save(); ctx.translate(c[0],c[1]); ctx.scale(1,0.55);
+      ctx.strokeStyle=`rgba(255,230,230,${(1-p)})`; ctx.lineWidth=4*sc*(1-p); ctx.shadowColor='#ff2040'; ctx.shadowBlur=20;
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+      ctx.fillStyle=`rgba(200,20,40,${0.25*(1-p)})`; ctx.fill();
+      for(let i=0;i<16;i++){ const a=i/16*Math.PI*2+0.2; ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*0.5,Math.sin(a)*r*0.5); ctx.lineTo(Math.cos(a)*r*1.1,Math.sin(a)*r*1.1); ctx.strokeStyle=`rgba(230,40,60,${0.8*(1-p)})`; ctx.lineWidth=2*sc; ctx.stroke(); }
+      ctx.restore();
+    }
+    if (s.type==='pull'){ if(f<s.f||f>s.f1+8) continue; const p=clamp((f-s.f)/(s.f1-s.f)); const fade = f>s.f1? 1-(f-s.f1)/8 : 1;
+      const c=P(s.c); ctx.save(); ctx.translate(c[0],c[1]); ctx.scale(1,0.55);
+      for(let k=0;k<4;k++){ const r=s.r*(1-p*0.75)*sc*(1-k*0.12), a0=f*0.18+k*Math.PI/2;
+        ctx.beginPath(); ctx.arc(0,0,r,a0,a0+1.6); ctx.strokeStyle=k%2?`rgba(230,40,60,${0.8*fade})`:`rgba(255,240,240,${0.7*fade})`; ctx.lineWidth=3*sc; ctx.shadowColor='#ff2040'; ctx.shadowBlur=12; ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+
+  //奥から順に描く
+  const items = [];
+  EB.forEach((_,e)=>{ const p=enemyPos(plan,e,f); items.push({z:p[1],draw:()=>drawEnemy(ctx,P,p,e,plan,f,sc)}); });
+  const vanish = f>=plan.player.vanish[0] && f<plan.player.vanish[1];
+  const pp = posOf(plan.player.segs, f, [-60,0]);
+  if (vanish) items.push({z:pp[1],draw:()=>drawGhost(ctx,P,plan.player.segs,[-60,0],f,sc,true)});
+  else items.push({z:pp[1],draw:()=>drawPlayer(ctx,P,pp,sc)});
+  for (const gh of plan.ghosts){ if (f<gh.life[0]||f>=gh.life[1]) continue; const gp=posOf(gh.segs,f,gh.segs[0].b);
+    const a = f>gh.life[1]-8 ? (gh.life[1]-f)/8 : 1;
+    items.push({z:gp[1],draw:()=>drawGhost(ctx,P,gh.segs,gh.segs[0].b,f,sc,false,a)}); }
+  items.sort((a,b)=>a.z-b.z).forEach(i=>i.draw());
+
+  //消える・現れるの閃き
+  const blinkFx = (segs, start)=>{ let prev=start; for(const s of segs){ if(s.blink){ const p=(f-s.t0)/10; if(p>=0&&p<1){ for(const q of [prev,s.b]){ const c=P(q,14); ctx.save(); ctx.globalAlpha=1-p; ctx.strokeStyle='#fff'; ctx.shadowColor='#ff2040'; ctx.shadowBlur=14; ctx.lineWidth=2*sc; ctx.beginPath(); ctx.ellipse(c[0],c[1],(6+22*p)*sc,(10+30*p)*sc,0,0,Math.PI*2); ctx.stroke(); ctx.restore(); } } } prev = s.blink||!s.t1 ? s.b : s.b; } };
+  if (vanish || plan.player.segs.some(s=>s.blink)) blinkFx(plan.player.segs,[-60,0]);
+  for (const gh of plan.ghosts) blinkFx(gh.segs, gh.segs[0].b);
+
+  //斬撃
+  for (const s of plan.slashes){
+    const t = f - s.f; if (t<0 || t>=s.dur) continue;
+    const grow = clamp(t/3), fade = 1 - clamp((t-3)/(s.dur-3));
+    ctx.save(); ctx.lineCap='round'; ctx.shadowColor='#ff1030'; ctx.shadowBlur=18*sc;
+    if (s.type==='line'){
+      const a=P(s.a,16), b=P(lerp(s.a,s.b,grow),16), tail=P(lerp(s.a,s.b,clamp((t-4)/(s.dur-4))*0.9),16);
+      for (const [col,w] of [[`rgba(200,15,35,${0.9*fade})`,s.w*2.2],[`rgba(255,245,245,${fade})`,s.w*0.7]]){
+        ctx.strokeStyle=col; ctx.lineWidth=w*sc*fade+0.5; ctx.beginPath(); ctx.moveTo(tail[0],tail[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+    }
+    if (s.type==='arc'){
+      const c=P(s.c,16); ctx.translate(c[0],c[1]); ctx.scale(1,0.55);
+      const a1 = s.a0+(s.a1-s.a0)*grow, ccw = s.a1<s.a0;
+      for (const [col,w] of [[`rgba(200,15,35,${0.9*fade})`,s.w*2.2],[`rgba(255,245,245,${fade})`,s.w*0.7]]){
+        ctx.strokeStyle=col; ctx.lineWidth=w*sc*fade+0.5; ctx.beginPath(); ctx.arc(0,0,s.r*sc,s.a0,a1,ccw); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+  //当たったときの火花
+  for (const h of plan.hits){ const t=f-h.f; if(t<0||t>=8) continue; const p=enemyPos(plan,h.e,f), c=P(p,18), r=(6+16*t/8)*sc;
+    ctx.save(); ctx.strokeStyle=`rgba(255,255,255,${1-t/8})`; ctx.lineWidth=2*sc; ctx.shadowColor='#ff2040'; ctx.shadowBlur=10;
+    for(let i=0;i<4;i++){ const a=i*Math.PI/4+h.f; ctx.beginPath(); ctx.moveTo(c[0]+Math.cos(a)*r*0.3,c[1]+Math.sin(a)*r*0.3); ctx.lineTo(c[0]+Math.cos(a)*r,c[1]+Math.sin(a)*r); ctx.stroke(); }
+    ctx.restore(); }
+
+  drawHud(ctx, plan, f, W, H, sc);
+}
+
+function drawEnemy(ctx,P,p,e,plan,f,sc){
+  const base=P(p), top=P(p,30);
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(base[0],base[1],12*sc,5*sc,0,0,Math.PI*2); ctx.fill();
+  if (e===0){ ctx.strokeStyle='rgba(230,40,60,0.8)'; ctx.lineWidth=1.5*sc; ctx.beginPath(); ctx.ellipse(base[0],base[1],20*sc,9*sc,0,0,Math.PI*2); ctx.stroke(); }
+  const flash = plan.hits.some(h=>h.e===e && f>=h.f && f<h.f+5);
+  ctx.fillStyle = flash ? '#ffffff' : '#3b2b30'; ctx.strokeStyle='#7a6068'; ctx.lineWidth=1.2*sc;
+  ctx.beginPath(); ctx.roundRect(top[0]-7*sc, top[1], 14*sc, base[1]-top[1], 6*sc); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(top[0], top[1]-4*sc, 6*sc, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function drawPlayer(ctx,P,p,sc){
+  const base=P(p), top=P(p,30);
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(base[0],base[1],12*sc,5*sc,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#d8d4d0'; ctx.beginPath(); ctx.roundRect(top[0]-6*sc, top[1], 12*sc, base[1]-top[1], 6*sc); ctx.fill();
+  ctx.fillStyle='#c01c30'; ctx.fillRect(top[0]-6*sc, top[1]+4*sc, 12*sc, 3*sc);
+  ctx.beginPath(); ctx.arc(top[0], top[1]-4*sc, 5.5*sc, 0, Math.PI*2); ctx.fillStyle='#d8d4d0'; ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.5*sc; ctx.beginPath(); ctx.moveTo(top[0]+6*sc, top[1]+14*sc); ctx.lineTo(top[0]+22*sc, top[1]+4*sc); ctx.stroke();
+  ctx.restore();
+}
+function drawGhost(ctx,P,segs,start,f,sc,isPlayer,alpha=1){
+  //残像
+  for (let k=7;k>=0;k--){
+    const ff = f - k*1.5, p = posOf(segs, ff, start), q = posOf(segs, ff-1, start);
+    const moving = len(sub(p,q))>0.5;
+    if (k>0 && !moving) continue;
+    const a = (k===0?1:0.45*(1-k/8))*alpha;
+    const base=P(p), top=P(p,30), dir = norm(sub(p,q));
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.translate(base[0],base[1]); ctx.rotate(moving? dir[0]*0.35 : 0); ctx.translate(-base[0],-base[1]);
+    ctx.fillStyle = k===0 ? 'rgba(12,0,3,0.92)' : 'rgba(150,10,30,0.6)';
+    ctx.strokeStyle = '#e02840'; ctx.lineWidth=1.5*sc; ctx.shadowColor='#ff1030'; ctx.shadowBlur=k===0?14:0;
+    ctx.beginPath(); ctx.roundRect(top[0]-6*sc, top[1], 12*sc, base[1]-top[1], 6*sc); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(top[0], top[1]-4*sc, 5.5*sc, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    if (k===0){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5*sc; const d = moving?dir:[1,0];
+      ctx.beginPath(); ctx.moveTo(top[0], top[1]+14*sc); ctx.lineTo(top[0]+d[0]*22*sc, top[1]+14*sc+d[1]*8*sc); ctx.stroke(); }
+    ctx.restore();
+  }
+  if (isPlayer){ const c=P(posOf(segs,f,start),48); ctx.save(); ctx.fillStyle='rgba(232,226,222,0.75)'; ctx.font=`${10*sc}px sans-serif`; ctx.textAlign='center'; ctx.fillText('本体', c[0], c[1]); ctx.restore(); }
+}
+function drawHud(ctx,plan,f,W,H,sc){
+  const step = f>=S(2)?2:f>=S(1)?1:f>=S(0)?0:-1;
+  ctx.save();
+  ctx.fillStyle='#e8e2de'; ctx.font=`bold ${15*sc}px "Yu Gothic UI",sans-serif`; ctx.textAlign='left';
+  ctx.fillText(plan.name, 12*sc, 22*sc);
+  for (let i=0;i<3;i++){ const x=14*sc+i*22*sc, y=36*sc; ctx.beginPath(); ctx.arc(x,y,6*sc,0,Math.PI*2);
+    ctx.fillStyle = i<=step ? '#d8283c' : 'rgba(255,255,255,0.12)'; ctx.fill(); }
+  if (step>=0){ ctx.font=`${13*sc}px "Yu Gothic UI",sans-serif`; ctx.fillStyle='#ffb0b8';
+    ctx.fillText(`${step+1}段目  ${plan.labels[step]}`, 80*sc, 40*sc);
+    ctx.fillStyle='#9c8a88'; ctx.fillText(`消費 ${COST[step]} / ダメージ ${MULT[step]}`, 80*sc, 58*sc); }
+  //ゲージ
+  let gauge = 100; for (let i=0;i<3;i++) if (f>=S(i)) gauge -= COST[i];
+  const gx=12*sc, gy=H-22*sc, gw=150*sc;
+  ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fillRect(gx,gy,gw,6*sc);
+  ctx.fillStyle='#d8d4d0'; ctx.fillRect(gx,gy,gw*gauge/100,6*sc);
+  ctx.fillStyle='#9c8a88'; ctx.font=`${10*sc}px sans-serif`; ctx.fillText('スキルゲージ', gx, gy-5*sc);
+  //入力
+  for (let i=0;i<3;i++){ const t=f-S(i); if(t>=0&&t<16){ ctx.globalAlpha=1-t/16; ctx.fillStyle='#fff'; ctx.font=`bold ${14*sc}px sans-serif`; ctx.textAlign='right'; ctx.fillText('LB＋X', W-14*sc, H-18*sc); ctx.globalAlpha=1; } }
+  const hitN = plan.hits.filter(h=>f>=h.f).length;
+  if (hitN){ ctx.textAlign='right'; ctx.fillStyle='#e8e2de'; ctx.font=`bold ${18*sc}px sans-serif`; ctx.fillText(`${hitN} HIT`, W-14*sc, 26*sc); }
+  ctx.restore();
+}
+
+//再生まわり
+let cur='E', frame=0, playing=true, gridMode=false;
+const main = document.getElementById('main'), mctx = main.getContext('2d');
+const grid = document.getElementById('grid');
+const gridCanvases = KEYS.map(k=>{ const c=document.createElement('canvas'); c.width=640; c.height=360; grid.appendChild(c); return [k,c.getContext('2d')]; });
+const planBtns = document.getElementById('planBtns');
+KEYS.forEach(k=>{ const b=document.createElement('button'); b.textContent=PLANS[k].name; b.onclick=()=>{cur=k;gridMode=false;sync();}; b.dataset.k=k; planBtns.appendChild(b); });
+const seek=document.getElementById('seek');
+function sync(){
+  document.querySelectorAll('#planBtns button').forEach(b=>b.classList.toggle('on', !gridMode && b.dataset.k===cur));
+  document.getElementById('gridBtn').classList.toggle('on', gridMode);
+  document.getElementById('single').style.display = gridMode?'none':'block';
+  grid.style.display = gridMode?'grid':'none';
+  document.getElementById('desc').innerHTML = gridMode ? KEYS.map(k=>`<div><b>${PLANS[k].name}</b><br>${PLANS[k].desc}</div>`).join('<hr style="border-color:#3a1c22">') : PLANS[cur].desc;
+  document.getElementById('playBtn').textContent = playing?'停止':'再生';
+  draw();
+}
+function draw(){
+  const f = Math.floor(frame);
+  if (gridMode) gridCanvases.forEach(([k,c])=>render(c,k,f,640,360));
+  else render(mctx,cur,f,960,540);
+  seek.value=f; document.getElementById('frameText').textContent=`${f} / ${END-1}F`;
+}
+document.getElementById('gridBtn').onclick=()=>{gridMode=!gridMode;sync();};
+document.getElementById('playBtn').onclick=()=>{playing=!playing;sync();};
+document.getElementById('prevBtn').onclick=()=>{playing=false;frame=(Math.floor(frame)-1+END)%END;sync();};
+document.getElementById('nextBtn').onclick=()=>{playing=false;frame=(Math.floor(frame)+1)%END;sync();};
+seek.oninput=()=>{playing=false;frame=+seek.value;sync();};
+const h = location.hash.slice(1).split(',');
+if (h[0]){ if (h[0]==='all') gridMode=true; else if (PLANS[h[0]]) cur=h[0]; if (h[1]!==undefined){ frame=+h[1]; playing=false; } }
+let last=performance.now();
+function loop(now){
+  const dt=(now-last)/1000; last=now;
+  if (playing){ frame=(frame+dt*60*(+document.getElementById('speed').value))%END; draw(); }
+  requestAnimationFrame(loop);
+}
+sync(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

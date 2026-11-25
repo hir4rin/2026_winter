@@ -630,6 +630,14 @@ void Stage::UpdateGates(int currentPhase)
 	}
 }
 
+void Stage::SnapGates(int currentPhase)
+{
+	for (auto& gate : m_gates)
+	{
+		gate->Snap(currentPhase);
+	}
+}
+
 MV1_COLL_RESULT_POLY Stage::CollCheckCameraLine(const Vector3& start, const Vector3& end) const
 {
 	MV1_COLL_RESULT_POLY best = MV1CollCheck_Line(m_stageModelHandle, -1, start.ToDxLibVector(), end.ToDxLibVector());

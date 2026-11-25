@@ -35,6 +35,7 @@ public:
 
 	/// <summary>扉(ゲート)を今のフェーズに合わせて開け閉めする</summary>
 	void UpdateGates(int currentPhase);
+	void SnapGates(int currentPhase);//動かさずにそのフェーズの状態にする(リスポーン用)
 	/// <summary>扉の当たり判定の線枠(デバッグ用。閉まっているものは赤)</summary>
 	void DrawGateCols()const;
 	/// <summary>

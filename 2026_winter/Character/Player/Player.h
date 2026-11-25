@@ -30,6 +30,8 @@
 #include "Character/Player/State/Defence/PlayerHitAirState.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakChance.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateGuardBreakAttack.h"//以下同文
+#include "Character/Player/State/Attack/PlayerStateCharge.h"//以下同文
+#include "Character/Player/State/Attack/PlayerStateChargeAttack.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateBossPartThrow.h"//以下同文
 #include "Character/Player/State/Attack/PlayerStateBossFinisher.h"//以下同文
 #include "DataLoader/AnimData.h"
@@ -166,6 +168,9 @@ namespace ComboIndex
 	constexpr int AirSkillAttack1 = 19;//空中から直接出すスキル攻撃1//y軸の移動なし//次はスキル攻撃2へ
 	constexpr int GuardBreakAttack0 = 20;//ブレイク時の打ち上げ
 	constexpr int GuardBreakAttack1 = 21;//ブレイク時の切り上げ
+	constexpr int SkillWeakAttack1 = 22;//地上弱スキル(LB+X)1段目
+	constexpr int SkillWeakAttack2 = 23;
+	constexpr int SkillWeakAttack3 = 24;
 
 };
 
@@ -286,6 +291,8 @@ public:
 	bool CanInputPartBrokenState()const;//Yで確殺に入れるステートのときtrue
 	//プレイヤーの向いている方向
 	Vector3 GetTargetVec()const { return m_targetVec; }
+	//向きをすぐ変える(0で+Z)//リスポーン用
+	void SetFacing(float rotY) { m_targetVec = Vector3(sinf(rotY), 0.0f, cosf(rotY)); m_rotAngleY = rotY - DX_PI_F; }
 	//必殺技の長い刀の伸び具合(0〜1)
 	float GetUltBladeRate()const;
 	//確殺演出中かどうか//演出中は確殺対象を固定する
@@ -523,6 +530,8 @@ private:
 	friend class PlayerHitAirState;
 	friend class PlayerStateGuardBreakChance;
 	friend class PlayerStateGuardBreakAttack;
+	friend class PlayerStateCharge;
+	friend class PlayerStateChargeAttack;
 	friend class PlayerStateBossPartThrow;
 	friend class PlayerStateBossFinisher;
 	//武器

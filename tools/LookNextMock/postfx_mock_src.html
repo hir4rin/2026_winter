@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>次の目的地を見る間のポストエフェクト</title>
+<style>
+  :root { --bg:#111216; --panel:#1b1d23; --line:#2c2f38; --text:#e6e8ee; --sub:#9aa0ad; --accent:#dc3a48; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"Yu Gothic UI","Meiryo",sans-serif; }
+  .wrap { max-width:1320px; margin:0 auto; padding:16px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .note { color:var(--sub); font-size:13px; margin:0 0 12px; line-height:1.6; }
+  .view { position:relative; width:100%; aspect-ratio:16/9; background:#000; border:1px solid var(--line); }
+  canvas { width:100%; height:100%; display:block; cursor:crosshair; }
+  .tag { position:absolute; right:10px; bottom:10px; background:rgba(0,0,0,.6); padding:4px 8px; font-size:12px; border-radius:3px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; align-items:center; }
+  button { background:var(--panel); color:var(--text); border:1px solid var(--line); padding:8px 12px; font-size:13px; cursor:pointer; border-radius:3px; font-family:inherit; }
+  button.on { border-color:var(--accent); background:#3a1a20; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:10px 18px; background:var(--panel); padding:12px; border:1px solid var(--line); }
+  label { font-size:12px; color:var(--sub); display:flex; flex-direction:column; gap:4px; }
+  label span b { color:var(--text); font-weight:normal; }
+  input[type=range] { width:100%; }
+  .desc { background:var(--panel); border:1px solid var(--line); padding:10px 12px; font-size:13px; line-height:1.7; margin-top:12px; }
+  @media (max-width:600px){ .wrap{padding:12px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>RT で次の目的地を見ている間のポストエフェクト</h1>
+  <p class="note">画面をクリックすると目的地(色が残る中心)を動かせます。HUD と注視点の紋には効果をかけていません(ゲームでもかけない予定)。緑の縦線・赤の点線はデバッグ表示の写り込みです。</p>
+
+  <div class="view"><canvas id="cv" width="1280" height="720"></canvas><div class="tag" id="tag"></div></div>
+
+  <div class="row" id="presets"></div>
+  <div class="row">
+    <button id="hold">RT を押す/離す</button>
+    <button id="loop" class="on">自動でくり返す</button>
+    <button id="compare">元の画面と比べる(押している間)</button>
+  </div>
+
+  <div class="grid" id="sliders"></div>
+  <div class="desc" id="desc"></div>
+</div>
+
+<script>
+const BG_SRC = "__BG__";
+const INK_SRC = "__INK__";
+
+const PRESETS = {
+  A: { name:"A 色を抜いて目的地だけ残す", desc:"画面全体を灰色に寄せ、目的地の周りだけ元の色。いちばん素直な形。",
+       sat:0.08, dark:0.80, radius:0.22, soft:0.55, boost:1.15, vig:0.0, blur:0.0, dof:0.0, tint:0.0 },
+  B: { name:"B A＋墨のふち", desc:"A に血殺・HP低下と同じ墨のビネットを薄く重ねる。絵柄とそろう。",
+       sat:0.08, dark:0.80, radius:0.22, soft:0.55, boost:1.15, vig:0.55, blur:0.0, dof:0.0, tint:0.0 },
+  C: { name:"C B＋入りの放射ブラー(おすすめ)", desc:"B に、RT を押した瞬間だけ目的地へ吸い込まれる放射状のブラーを足す(約12F)。",
+       sat:0.08, dark:0.80, radius:0.22, soft:0.55, boost:1.15, vig:0.55, blur:0.10, dof:0.0, tint:0.0 },
+  D: { name:"D ぼかし(被写界深度ふう)", desc:"色は残し、目的地の周り以外をぼかして暗くする。色の情報は残るが、見ている所ははっきりする。",
+       sat:0.85, dark:0.78, radius:0.20, soft:0.60, boost:1.0, vig:0.35, blur:0.0, dof:1.0, tint:0.0 },
+  E: { name:"E 墨の世界(赤だけ残す)", desc:"周りを青黒い墨色に沈め、目的地の周りは元の色。ゲームの赤・銀の色とも合わせやすい。",
+       sat:0.0, dark:0.62, radius:0.20, soft:0.60, boost:1.2, vig:0.70, blur:0.06, dof:0.4, tint:1.0 },
+};
+
+const SLIDERS = [
+  ["sat",   "周りの色の残り(彩度)", 0, 1, 0.01],
+  ["dark",  "周りの明るさ", 0.3, 1, 0.01],
+  ["radius","色が残る円の大きさ", 0.05, 0.6, 0.01],
+  ["soft",  "円のふちのぼけ", 0.05, 1, 0.01],
+  ["boost", "円の中の明るさ", 0.8, 1.6, 0.01],
+  ["vig",   "墨のふちの濃さ", 0, 1, 0.01],
+  ["blur",  "入りの放射ブラー", 0, 0.25, 0.005],
+  ["dof",   "周りのぼかし", 0, 1, 0.01],
+  ["tint",  "周りを墨色(青黒)に", 0, 1, 0.01],
+];
+
+let params = { ...PRESETS.C };
+let presetKey = "C";
+let target = [641/1280, 360/720];
+
+const cv = document.getElementById("cv");
+const gl = cv.getContext("webgl", { preserveDrawingBuffer:true });
+
+const vs = `attribute vec2 p; varying vec2 uv; void main(){ uv = p*0.5+0.5; uv.y = 1.0-uv.y; gl_Position = vec4(p,0.,1.); }`;
+const fs = `
+precision highp float;
+varying vec2 uv;
+uniform sampler2D uTex, uInk;
+uniform float uRate, uSat, uDark, uRadius, uSoft, uBoost, uVig, uBlur, uDof, uTint, uPulse, uAspect;
+uniform vec2 uTarget;
+
+float lum(vec3 c){ return dot(c, vec3(0.299,0.587,0.114)); }
+
+vec3 dofSample(vec2 p, float amt){
+  vec3 s = vec3(0.0);
+  float r = amt * 0.006;
+  for(int i=0;i<12;i++){
+    float a = float(i)*0.5236;
+    s += texture2D(uTex, p + vec2(cos(a), sin(a)) * r * vec2(1.0/uAspect,1.0) * (1.0+mod(float(i),2.0))).rgb;
+  }
+  return s/12.0;
+}
+
+void main(){
+  vec3 orig = texture2D(uTex, uv).rgb;
+
+  // HUD と注視点の紋には効果をかけない(ゲームでも UI は後から描く)
+  vec2 px = uv * vec2(1280.0, 720.0);
+  bool hud = length(px - vec2(89.0, 96.0)) < 84.0
+          || (px.x > 150.0 && px.x < 608.0 && px.y > 8.0 && px.y < 96.0 && (px.y > 56.0 || px.x < 200.0))
+          || (px.x > 530.0 && px.x < 590.0 && px.y > 80.0 && px.y < 120.0);
+  bool crest = length(px - vec2(641.0, 360.0)) < 27.0;
+  if (hud || crest) { gl_FragColor = vec4(orig,1.0); return; }
+
+  vec2 d = (uv - uTarget) * vec2(uAspect, 1.0);
+  float dist = length(d);
+  float inside = 1.0 - smoothstep(uRadius*(1.0-uSoft), uRadius*(1.0+uSoft), dist);
+
+  // 入りの放射ブラー(目的地へ吸い込む)
+  vec3 c = orig;
+  float bl = uBlur * uPulse;
+  if (bl > 0.0001) {
+    vec3 acc = vec3(0.0);
+    for(int i=0;i<16;i++){
+      float t = float(i)/15.0;
+      acc += texture2D(uTex, mix(uv, uTarget, t*bl*(1.0-inside*0.7))).rgb;
+    }
+    c = acc/16.0;
+  }
+
+  // 周りのぼかし
+  vec3 outer = c;
+  if (uDof > 0.0) outer = mix(c, dofSample(uv, 1.0 + 3.0*uDof), uDof * (1.0-inside));
+
+  float l = lum(outer);
+  vec3 gray = vec3(l);
+  vec3 ink = vec3(l*0.78, l*0.86, l*1.08) * vec3(0.85,0.9,1.05);
+  vec3 desat = mix(gray, outer, uSat);
+  desat = mix(desat, ink, uTint);
+  desat *= uDark;
+
+  vec3 focus = c * uBoost;
+  vec3 col = mix(desat, focus, inside);
+
+  // 墨のふち
+  float inkA = texture2D(uInk, uv).a;
+  col *= 1.0 - inkA * uVig;
+
+  gl_FragColor = vec4(mix(orig, col, uRate), 1.0);
+}`;
+
+function compile(type, src){ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); return s; }
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, vs));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fs));
+gl.linkProgram(prog); gl.useProgram(prog);
+const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog,"p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+const U = n => gl.getUniformLocation(prog, n);
+
+function makeTex(img, unit){
+  const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0+unit); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+}
+function loadImg(src){ return new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.src=src; }); }
+
+// 状態: RT を押しているか
+let holding = true, loop = true, compare = false;
+let rate = 0, frame = 0, pressFrame = 0, loopFrame = 0;
+const IN_FRAME = 10, OUT_FRAME = 15, PULSE_FRAME = 12;
+
+function setHold(v){ if(v && !holding) pressFrame = frame; holding = v; }
+
+function step(){
+  frame++;
+  if (loop) {
+    loopFrame = (loopFrame+1) % 240;
+    setHold(loopFrame < 170);
+  }
+  if (holding) rate = Math.min(1, rate + 1/IN_FRAME); else rate = Math.max(0, rate - 1/OUT_FRAME);
+  const since = frame - pressFrame;
+  const pulse = holding ? Math.max(0, 1 - since/PULSE_FRAME) : 0;
+  const e = 1 - Math.pow(1-rate, 3);
+
+  gl.uniform1i(U("uTex"),0); gl.uniform1i(U("uInk"),1);
+  gl.uniform1f(U("uRate"), compare ? 0 : e);
+  gl.uniform1f(U("uPulse"), pulse*pulse);
+  for (const k of ["sat","dark","radius","soft","boost","vig","blur","dof","tint"]) gl.uniform1f(U("u"+k[0].toUpperCase()+k.slice(1)), params[k]);
+  gl.uniform1f(U("uAspect"), 1280/720);
+  gl.uniform2f(U("uTarget"), target[0], target[1]);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
+  document.getElementById("tag").textContent = (compare ? "元の画面" : PRESETS[presetKey] ? PRESETS[presetKey].name : "調整中") + (holding ? "  ・RT 押している" : "  ・RT 離した");
+  requestAnimationFrame(step);
+}
+
+function buildUI(){
+  const pr = document.getElementById("presets");
+  for (const k in PRESETS) {
+    const b = document.createElement("button"); b.textContent = PRESETS[k].name; b.dataset.k = k;
+    b.onclick = () => applyPreset(k); pr.appendChild(b);
+  }
+  const sl = document.getElementById("sliders");
+  for (const [k,label,min,max,st] of SLIDERS) {
+    const l = document.createElement("label");
+    l.innerHTML = `<span>${label}: <b id="v_${k}"></b></span><input type="range" id="s_${k}" min="${min}" max="${max}" step="${st}">`;
+    sl.appendChild(l);
+    l.querySelector("input").oninput = e => { params[k] = parseFloat(e.target.value); presetKey = null; refresh(); };
+  }
+  document.getElementById("hold").onclick = () => { loop = false; document.getElementById("loop").classList.remove("on"); setHold(!holding); };
+  document.getElementById("loop").onclick = e => { loop = !loop; e.target.classList.toggle("on", loop); loopFrame = 0; };
+  const cmp = document.getElementById("compare");
+  cmp.onpointerdown = () => compare = true; cmp.onpointerup = cmp.onpointerleave = () => compare = false;
+  cv.onclick = e => { const r = cv.getBoundingClientRect(); target = [(e.clientX-r.left)/r.width, (e.clientY-r.top)/r.height]; };
+}
+function applyPreset(k){ params = { ...PRESETS[k] }; presetKey = k; refresh(); }
+function refresh(){
+  for (const [k] of SLIDERS) { document.getElementById("s_"+k).value = params[k]; document.getElementById("v_"+k).textContent = params[k].toFixed(2); }
+  document.querySelectorAll("#presets button").forEach(b => b.classList.toggle("on", b.dataset.k === presetKey));
+  document.getElementById("desc").textContent = presetKey ? PRESETS[presetKey].desc : "スライダーで調整中。";
+}
+
+(async () => {
+  const [bg, ink] = await Promise.all([loadImg(BG_SRC), loadImg(INK_SRC)]);
+  makeTex(bg, 0); makeTex(ink, 1);
+  buildUI();
+  const h = location.hash.slice(1);
+  applyPreset(PRESETS[h] ? h : "C");
+  requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>

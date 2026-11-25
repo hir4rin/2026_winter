@@ -45,6 +45,9 @@ private:
 	};
 
 	void ChangePhase(Phase phase);
+	//Y長押しで飛ばす
+	void UpdateSkip();
+	void StartSkip();
 	void StartAmbush();
 	void UpdateAmbush();
 	void UpdateMissiles();
@@ -87,4 +90,9 @@ private:
 	int m_leapBurstEffect = -1;//煙を突き抜ける
 	int m_fallTrailEffect = -1;//落ちる間の煙の尾・風の筋
 	int m_fallTrailPlaying = -1;
+
+	//スキップ
+	int m_skipHoldFrame = 0;//長押ししているフレーム
+	int m_skipPromptFrame = 0;//案内を出してからのフレーム
+	int m_skipFrame = -1;//飛ばし始めてからのフレーム(-1なら飛ばしていない)
 };

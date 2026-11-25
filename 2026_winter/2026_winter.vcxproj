@@ -168,6 +168,7 @@
     <ClCompile Include="Camera\CameraState\UltCameraState.cpp" />
     <ClCompile Include="Camera\CameraState\BattleSmoothCamera.cpp" />
     <ClCompile Include="Camera\CameraState\BossPartThrowCamera.cpp" />
+    <ClCompile Include="Camera\CameraState\LookingNextCamera.cpp" />
     <ClCompile Include="Camera\CameraState\UltChargeCamera.cpp" />
     <ClCompile Include="Camera\CameraState\BossFinisherCamera.cpp" />
     <ClCompile Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieCutCamera.cpp" />
@@ -191,6 +192,7 @@
     <ClCompile Include="UI\Target\PartBrokenKillUI.cpp" />
     <ClCompile Include="UI\Target\GuardBreakChanceUI.cpp" />
     <ClCompile Include="UI\Target\LockOnReticleUI.cpp" />
+    <ClCompile Include="UI\Target\LookNextUI.cpp" />
     <ClCompile Include="Camera\CameraState\SkillKessatuCamera.cpp" />
     <ClCompile Include="Camera\LockOnManager.cpp" />
     <ClCompile Include="Collision\AttackCol.cpp" />
@@ -203,6 +205,8 @@
     <ClCompile Include="Character\Player\State\Attack\PlayerStateAttackBase.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateDashAttack.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.cpp" />
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateCharge.cpp" />
+    <ClCompile Include="Character\Player\State\Attack\PlayerStateChargeAttack.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateAttackLanding.cpp" />
     <ClCompile Include="Character\Player\State\Attack\PlayerStateSkillAttack.cpp" />
@@ -345,6 +349,7 @@
     <ClCompile Include="UI\Effect\KessatsuUI.cpp" />
     <ClCompile Include="UI\Effect\ScreenBloodUI.cpp" />
     <ClCompile Include="UI\Effect\LowHpInkUI.cpp" />
+    <ClCompile Include="UI\Effect\LookNextFxUI.cpp" />
     <ClCompile Include="UI\HUD\PlayerHUD.cpp" />
     <ClCompile Include="UI\HUD\BossHpUI.cpp" />
     <ClCompile Include="UI\Menu\MenuUI.cpp" />
@@ -363,6 +368,7 @@
     <ClInclude Include="Battle\ResultRecorder.h" />
     <ClInclude Include="Battle\PhaseManager.h" />
     <ClInclude Include="Battle\CheckpointManager.h" />
+    <ClInclude Include="Battle\RespawnInfo.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Camera\CameraManager.h" />
     <ClInclude Include="Camera\CameraState\BossAppearCamera.h" />
@@ -379,6 +385,7 @@
     <ClInclude Include="Camera\CameraState\UltCameraState.h" />
     <ClInclude Include="Camera\CameraState\BattleSmoothCamera.h" />
     <ClInclude Include="Camera\CameraState\BossPartThrowCamera.h" />
+    <ClInclude Include="Camera\CameraState\LookingNextCamera.h" />
     <ClInclude Include="Camera\CameraState\UltChargeCamera.h" />
     <ClInclude Include="Camera\CameraState\BossFinisherCamera.h" />
     <ClInclude Include="Camera\CameraState\PlayerStartMovieCamera\PlayerStartMovieFrame.h" />
@@ -404,6 +411,7 @@
     <ClInclude Include="UI\Target\PartBrokenKillUI.h" />
     <ClInclude Include="UI\Target\GuardBreakChanceUI.h" />
     <ClInclude Include="UI\Target\LockOnReticleUI.h" />
+    <ClInclude Include="UI\Target\LookNextUI.h" />
     <ClInclude Include="Camera\CameraState\SkillKessatuCamera.h" />
     <ClInclude Include="Camera\LockOnManager.h" />
     <ClInclude Include="Collision\AttackCol.h" />
@@ -417,6 +425,8 @@
     <ClInclude Include="Character\Player\State\Attack\PlayerStateAttackBase.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateDashAttack.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakChance.h" />
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateCharge.h" />
+    <ClInclude Include="Character\Player\State\Attack\PlayerStateChargeAttack.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateGuardBreakAttack.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateAttackLanding.h" />
     <ClInclude Include="Character\Player\State\Attack\PlayerStateSkillAttack.h" />
@@ -570,6 +580,7 @@
     <ClInclude Include="UI\Effect\KessatsuUI.h" />
     <ClInclude Include="UI\Effect\ScreenBloodUI.h" />
     <ClInclude Include="UI\Effect\LowHpInkUI.h" />
+    <ClInclude Include="UI\Effect\LookNextFxUI.h" />
     <ClInclude Include="UI\HUD\PlayerHUD.h" />
     <ClInclude Include="UI\HUD\BossHpUI.h" />
     <ClInclude Include="UI\Menu\MenuUI.h" />
@@ -593,6 +604,7 @@
     <None Include="Render\Shader\UltSwordPS.hlsl" />
     <None Include="Render\Shader\TitleLogoPS.hlsl" />
     <None Include="Render\Shader\LowHpInkPS.hlsl" />
+    <None Include="Render\Shader\LookNextFxPS.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -135,5 +135,6 @@ ResultData ResultRecorder::MakeResult(int stageType, int targetClearSec, int kil
 	data.enemyNum = enemyNum;
 	data.maxCombo = m_maxCombo;
 	data.techniqueCounts = m_techniqueCounts;
+	data.deathCount = m_deathCount;
 	return data;
 }

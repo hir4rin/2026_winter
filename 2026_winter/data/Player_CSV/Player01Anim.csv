@@ -37,3 +37,7 @@ HitKirimomi,Ninja_HitReact_Explosion
 GetUp,Get_Up_Combat
 TitlePose,Ninja_Idle_LookingAround
 BossLeapSlash,Boss_LeapSlash
+ChargeStart,Power_Attack_Start
+ChargeLoop,Power_Attack_Loop
+ChargeAttack1,Combo_Attack_04_03
+ChargeAttack2,Combo_Attack_04_04
