@@ -82,6 +82,10 @@ namespace
 	const std::string kCheckpointActivateEffectPath = "data/Effect/Checkpoint/CheckpointActivate.efk";
 	//回復
 	const std::string kHealEffectPath = "data/Effect/Heal/HealSpiral.efk";
+	//溜め攻撃
+	const std::string kChargeEffectPath = "data/Effect/ChargeAttack/Charge.efk";
+	const std::string kChargeSlash1EffectPath = "data/Effect/ChargeAttack/Slash1.efk";
+	const std::string kChargeSlash2EffectPath = "data/Effect/ChargeAttack/Slash2.efk";
 
 	//Kingmechのミサイルの雨
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
@@ -141,6 +145,9 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::CheckpointIdleEffect] = LoadEffekseerEffect(kCheckpointIdleEffectPath.c_str());
 	m_asyncHandles[AsyncData::CheckpointActivateEffect] = LoadEffekseerEffect(kCheckpointActivateEffectPath.c_str());
 	m_asyncHandles[AsyncData::HealEffect] = LoadEffekseerEffect(kHealEffectPath.c_str());
+	m_asyncHandles[AsyncData::ChargeChargeEffect] = LoadEffekseerEffect(kChargeEffectPath.c_str());
+	m_asyncHandles[AsyncData::ChargeSlash1Effect] = LoadEffekseerEffect(kChargeSlash1EffectPath.c_str());
+	m_asyncHandles[AsyncData::ChargeSlash2Effect] = LoadEffekseerEffect(kChargeSlash2EffectPath.c_str());
 }
 
 void System::LoadStage(StageType type)
@@ -354,6 +361,9 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::CheckpointIdleEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::CheckpointActivateEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::HealEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeChargeEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeSlash1Effect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeSlash2Effect]);
 
 }
 

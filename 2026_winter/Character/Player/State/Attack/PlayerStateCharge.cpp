@@ -3,18 +3,27 @@
 #include "Main/Input.h"
 #include "Main/Game.h"
 #include "Main/System.h"
+#include "Render/EffectManager.h"
+#include "EffekseerForDXLib.h"
 
 namespace
 {
 	constexpr float kChargeThreshold = 15.0f;//溜め攻撃になるまでのフレーム//仮
 
-	const std::string kStartAnim = "Power_Attack_Start";//構え始め
-	const std::string kLoopAnim = "Power_Attack_Loop";//構えたまま溜める
-	constexpr float kAnimSpeed = 0.5f;
-	constexpr float kStartBlendFrame = 9.0f;
+	constexpr float kAnimSpeed = 0.8f;
+	constexpr float kStartBlendFrame = 5.0f;
+
+	//構えはじめ
+	constexpr float kChargeStartEndAnimFrame = 9.0f;
+	constexpr float kChargeStartAnimSpeed = 0.8f;
+
+	
+
 
 	constexpr float kDecelFrame = 8.0f;//最高速から止まるまでのフレーム数
 	constexpr float kDecel = Game::kMoveSpeed / kDecelFrame;//1フレームに減る速さ
+
+	constexpr float kChargeEffectScale = 20.0f;//溜めのエフェクト//1/20で作っている
 }
 
 PlayerStateCharge::PlayerStateCharge(std::weak_ptr<Player> player) :
@@ -46,8 +55,11 @@ void PlayerStateCharge::Enter()
 
 	m_frame = 0.0f;
 	m_isLoop = false;
-	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, kStartAnim, false, kAnimSpeed, -1.0f, 0.0f, kStartBlendFrame);
+	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("ChargeStart"), false, kChargeStartAnimSpeed, kChargeStartEndAnimFrame, 0.0f, kStartBlendFrame);
 
+	//溜めのエフェクト//+Zを前にして作っているので、ゲームでは180度回す
+	const Vector3 forward = player->GetTargetVec();
+	m_effectHandle = EffectManager::GetInstance().Play(AsyncData::ChargeChargeEffect, player->m_rb.GetPos(), atan2f(forward.x, forward.z) + DX_PI_F, kChargeEffectScale);
 }
 
 void PlayerStateCharge::Update()
@@ -58,11 +70,18 @@ void PlayerStateCharge::Update()
 
 	UpdateMoveVel(Vector3(0, 0, 0), kDecel);
 
+	//エフェクトを足元についていかせる
+	if (m_effectHandle != -1)
+	{
+		const Vector3 pos = player->m_rb.GetPos();
+		SetPosPlayingEffekseer3DEffect(m_effectHandle, pos.x, pos.y, pos.z);
+	}
+
 	//構え始めが終わったらループへ
 	if (!m_isLoop && player->m_anim.GetAnimEndFlag())
 	{
 		m_isLoop = true;
-		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, kLoopAnim, true, kAnimSpeed);
+		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, player->GetAnimName("ChargeLoop"), true, kAnimSpeed);
 	}
 
 	//TODO: 離したときの分岐(強攻撃 / 溜め攻撃)・回避
@@ -89,6 +108,11 @@ void PlayerStateCharge::Update()
 
 void PlayerStateCharge::Exit()
 {
+	if (m_effectHandle != -1)
+	{
+		StopEffekseer3DEffect(m_effectHandle);
+		m_effectHandle = -1;
+	}
 }
 
 void PlayerStateCharge::DebugDraw()

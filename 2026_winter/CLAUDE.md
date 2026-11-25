@@ -2749,3 +2749,56 @@
 - 原因: `Enemy.mv1` のマテリアルに自己発光(Emissive 0.867)が入っていた(ガンナーは0)。`LitModelPS` は「自己発光＋環境光」を足すので、ソードマンだけ白っぽく明るかった。
 - `Enemy.mv1` と部位(`Part/Swordman/LeftArm.mv1`・`Head.mv1`、`Part/Gunner/LeftArm.mv1`。どれも 0.89〜0.95 入っていた)の自己発光を0にして上書き保存した(圧縮なし。マテリアル・アニメ・テクスチャの数は同じ)。元は git の HEAD にある。
 - **Unity から書き出し直して mv1 を作り直したら、自己発光が戻っていないか見ること**。ゲームでの見た目の確認はまだ。
+
+### 2026-11-25 LT の発動演出で吸い込むものを血しぶきの塊にした
+- `data/Effect/Skill/BloodWingActivate.efk / .efkefc`(0〜40F の吸い込みだけ変更。閃光・爆発・斬撃・翼はそのまま)。前は同じ太さの赤い Track の線(管)が集まるだけで、血に見えなかった。
+- 一度、線を BloodHit の色・太さに合わせて塊や滴を混ぜたが、**ユーザーに「吸い込まれていくものを血にしてほしい」「全然だめ」と言われた**。線や、移動方向ビルボードで細長く伸びた破片は「赤い線」に見える。
+- 今の作り: 吸い込むものは**血しぶきの塊** `BloodClot`(空中から22個)・`FloorClot`(床から12個)。塊は None で、Easing(EaseInCubic、中間点は `IsRandomGroupEnabled` で始点と同じ乱数)で付け根へ飛ぶ。子に BloodHit と同じテクスチャの
+  `ClotChunk`(BH_Chunk_c ×3)・`ClotBlob`(BH_Core_d ×1)・`ClotShred`(BH_Shred_c ×1)・`ClotFine`(BH_Fine_c ×10、移動方向ビルボード)・`ClotThread`(暗い細い Track)。子は親と同じ寿命20Fで、ばらけた位置(Easing の始点 ±0.3〜1.5)から親の位置へ寄りながら小さくなる(`Removal.WhenParentIsRemoved`)。
+- **形を見せるスプライトは `RotatedBillboard`(Billboard=3)＋ RotationValues の z をランダム**。`Billboard`(0)では z の回転が効かず、全部縦向きにそろった。
+- 全部を `Vortex`(None、Y 軸に 3.5°/F)の子にして渦を巻いて集まる。ばらの滴 `AbsorbFine`(40個)・もや `InMist` も残している。付け根に血の塊 `CoreBlob`(BH_Core_d)を足し、光る玉(`ChargeCore` の色を暗く、`ChargePulse` の加算を 150→85)を弱めた。
+- 書き出しは今まで通り DummyBody を消して export(保存はしない)。
+- 確認: 一時コードでデモステージの200F目に発動させ、前と今を撮って比べた(`../EffectTools/BloodWing/compare_absorb_blood.png`、上=前・下=今。一時コードは消した)。Release(x64)のビルドは通った。**実際に LT を押しての確認・暗いステージでの見え方・重さの測定はまだ**。
+### 2026-11-25 溜め攻撃のエフェクト(A・B・C・E の4案 → A に決定)
+- **詳しくは `../EffectTools/ChargeAttack/README.md`**。案のモックは `../tools/ChargeMock/charge_mock.html`。
+- 溜め攻撃の2段は**横に回る斬り**だった(1段目 `Combo_Attack_04_03` は地上で約1回転、2段目 `04_04` は跳んで降りながら約1回転)。弧は Ring の Crescent を水平に置いて走らせる。
+- データ: `data/Effect/ChargeAttack/〇_Charge / 〇_Slash1 / 〇_Slash2.efk`(〇 = A B C E)と `Texture/`。1/20で作成、20倍で再生。
+- `AsyncData::ChargeAChargeEffect`〜`ChargeESlash2Effect`(12個、連続した値)。**F11 で案を A→B→C→E に切り替える**(`System::GetDebugChargeEffectType` / `GetChargeEffectKey`、最初は E)。`SceneMain::m_wasF11Pressed`。
+- 再生: `PlayerStateCharge::Enter`(溜め。Update で足元についていかせ、Exit で止める。`m_effectHandle`)、`PlayerStateChargeAttack::StartPhase`(段ごと)。向きは `atan2(前.x, 前.z) + π`(+Z を前にして作ったため)。
+- 確認: 一時コードでステージ1で溜め → 溜め攻撃を自動で出して4案とも撮った(`../EffectTools/ChargeAttack/game_A/B/C/E.png`。一時コードは消した)。1段目・2段目とも弧の先が刀の先と同じ向きに回る。Debug・Release(x64)のビルドは通った。
+  **実際に Y を長押ししての確認はまだ**(離すタイミング・敵に当たったときの見え方・暗いステージでの墨の見え方)。
+- (追記)**A と C に絞った**(ユーザーの希望: 赤を強く・どの方向からも見える・範囲を大きく)。**F11 は A↔C、最初は A**。B・E の .efk と AsyncData は残っている(決まったら消す)。
+  - 横から見ると水平の輪は線になるので、**縦の帯の Ring**(外側 Location.y を負=上、内側を正=下にして同じ半径に立てる)を足した。A は黒い煙の帯＋赤い光の帯(加算)、C は墨の帯＋赤い光の帯。輪の大きさは約1.25〜1.35倍(A 1段目の外側 8.5→10.6、C 6.6→8.8)。
+  - A: 輪・煙を血の色寄りに、縁の赤を太く明るく、弧に沿って赤いもや(ビルボード)、溜めは刀の赤を強め、15F後に体のまわりから赤いもやが立ちのぼる。
+  - C: 墨の下に朱の筆(外へはみ出す)、赤いしずく、2段目の着地に朱の墨の輪と赤い飛沫。溜めは円相の外に朱の円相・赤い飛沫・立ちのぼる墨と赤の煙・A と同じ刀の赤。
+  - エディタを別のセッションと取り合いになったので、**.efkefc をスクリプトで直接書き換えた**(`../tools/EfkXml/`、今回の書き換えは `../EffectTools/ChargeAttack/edit_AC_v2.ps1`)。
+  - 一時コードでステージ1で撮った(`../EffectTools/ChargeAttack/game_A2.png` / `game_C2.png`。一時コードは消した)。Debug・Release(x64)のビルドは通った。**実際に Y を長押ししての確認はまだ**(A は赤いもやが画面を大きく覆う。多ければ減らす)。
+- (追記)**A 案(赤黒の瘴気)に決定**。F11 の切り替え(`m_wasF11Pressed`・`GetChargeEffectKey`・`m_debugChargeEffectType`)は消した。
+  - `AsyncData::ChargeChargeEffect / ChargeSlash1Effect / ChargeSlash2Effect`。データは `data/Effect/ChargeAttack/Charge.efk / Slash1.efk / Slash2.efk`(元は A_〜)、テクスチャは A で使う5枚だけ。B・C・E の .efk と使わないテクスチャは消した(元のデータ `../EffectTools/ChargeAttack/〇_〜.efkefc` は残っている)。
+  - Debug・Release(x64)のビルドは通り、Release の `-bench=240 -stage=3` は正常に終わった。
+### 2026-11-25 必殺技(LT2回)の溜めで吸い込むものも血しぶきの塊にした(UltBloodAbsorb)
+- LT の羽の発動演出(上の欄)と同じ作りに置き換えた。前の赤い線(`Stream` の Track 64本)は消した。光る玉 `Core`(UBA_Glow)はそのまま。
+- `data/Effect/Blood/UltBloodAbsorb.efkefc` の中身: `Vortex`(None、Y 軸に 3.5°/F、寿命62F)の子に、空中から集まる `BloodClot`(26個・1.1Fおき)、床から這うように集まる `FloorClot`(14個・1.8Fおき、始点 y=-4.8)、ばらの滴 `AbsorbFine`(40個)。塊の子(Chunk/Blob/Fine/Shred/Thread)は羽と同じ。テクスチャは `Blood/Texture/` の BH_*。
+- **羽は14倍、これは20倍で再生するので、塊の大きさ・ばらけ方は羽の0.7倍**にした。糸(`ClotThread`)は近いカメラで長く伸びたので寿命を5→3Fにした。
+- 塊は始まって約45Fで刀の根元に集まり終わる(刀が伸び始めるのは約41F)。Kingmech のトドメ(`KingmechFinisher`)でも同じエフェクトが出る。
+- 確認: 一時コードでデモステージの200F目に `PlayerStateUlt` に入れ、前と今を撮って比べた(`../EffectTools/BloodExec/compare_ult_absorb_blood.png`、上=前・下=今。一時コードは消した)。Release(x64)のビルドは通った。**実際に LT を2回押しての確認・暗いステージ・Kingmech のトドメでの見え方はまだ**。
+- (追記)**液体の血を吸い込む形に作り直した**(ユーザーの依頼)。塊の版は `../EffectTools/BloodExec/UltBloodAbsorb_clot/` に控えてある(efkefc と efk を写せば戻る)。
+  - 今の中身: `Vortex` の子に `Flow`(床から16本)・`FlowAir`(空中から8本)・`AbsorbFine`(滴24個)。`Flow` は None で、Easing(EaseInCubic・中間点は同じ乱数)で付け根へ。子は
+    `FlowBody`(Track、寿命6F、幅 尾0/中0.2/頭0.3。左右を暗く(45,1,8)中央だけ明るく(235,70,88)してつや、フェードアウトなし)・`FlowHead`(BH_Core_d の塊)・`FlowDrip`(流れから落ちる滴、PVA の加速度 y=-0.014、生まれた場所に残る)・`FlowPool`(床の血だまり、Billboard=Fixed で X=-90、縮んで消える。`Flow` だけ)。付け根に集まる塊 `CoreBlob`(BH_Core_d、大きくなる)。
+  - 試してだめだったもの: Track を太く(頭0.65)するとピンクの半透明の管(触手)に見えた。AlphaTexture＋AlphaCutoff で尾を崩すと点線の細い線になった。滴を `WhenCreating_FollowParent` で頭に遅れてついてこさせると、流れにとげが生えたように見えた。
+  - この版は線っぽさが残ったので、11/26 に下の三日月の帯の形に作り直した(この版は `../EffectTools/BloodExec/UltBloodAbsorb_liquid1/` に控え)。
+
+### 2026-11-26 必殺技の溜めで吸い込む血を「三日月の帯で渦を巻く液体」に作り直した
+- ユーザーに「血の液体をもっと勉強して再チャレンジ」と言われた。**勉強したことは `../EffectTools/BloodExec/液体の血の勉強.md`**(NG4 の録画の分析・VFX の作り方・だめだったもの)。
+- NG4 では、液体の血は遠くから一直線に来るのではなく、体のまわりを**幅の広い三日月の帯**が球をなぞるように回り、暗い破片としぶきが一緒に飛ぶ。床の血は床の上を回りながら縮む弧になる。それをまねた。
+- `UltBloodAbsorb.efkefc` の今の中身(`Vortex` の子。Flow/FlowAir/FlowPool は消した):
+  - `Swirl`(None、20個・1.3Fおき・寿命22F、向きをランダム x±75 y0〜360 z±40)＞ `SwirlBand`(Ring の Crescent。始まりの角度 0→260、終わり 120→310 で走る弧。外の半径 9→1.4・内 6.3→0.7 を StartSlowly2 で縮める。合成、中心 (200,16,38)・ふち (95,4,16,190))＋ `SwirlGlow`(同じ形で加算、中心 (255,50,80,70))。
+  - `FloorSwirl`(None、X=90 で床に寝かせる、y=-4.75、10個)＞ `FloorBand`(外 13→2・内 11.6→1.5 の細い帯、暗め)。
+  - `Shard`(BH_Shred_c の暗い破片 30個、Easing で中心へ回りながら集まる)、`AbsorbFine`(滴24個)。`CoreBlob`・`Core` はそのまま。
+  - 帯の画像 `Texture/UBA_LiquidArc_a.png`・`UBA_LiquidArc2_a.png`(`../EffectTools/BloodExec/gen_liquid_arc.ps1` で作る。U が弧の向きで尾0→頭1)。
+- 確認: 一時コードでデモステージで撮って塊の版と比べた(`../EffectTools/BloodExec/compare_ult_absorb_swirl.png` 上=塊・下=今、`ult_absorb_swirl_F15.png`。一時コードは消した)。Release(x64)のビルドは通った。**この形に決定(ユーザー OK)**。まだ: 実際に LT を2回押しての確認・暗いステージ・Kingmech のトドメでの見え方。床の帯は今のカメラではほとんど見えない。控え: 塊の版 `UltBloodAbsorb_clot/`、Track の液体の版 `UltBloodAbsorb_liquid1/`。
+
+### 2026-11-26 LT の羽の発動演出にも三日月の帯を少しだけ足した
+- ユーザーの希望。必殺技の溜め(UltBloodAbsorb)の `Swirl`(三日月の帯＋加算の帯)を `BloodWingActivate.efkefc` の `Vortex` の子(InMist の次)に足した。血しぶきの塊はそのまま。
+- 少しだけなので 8本(2.5Fおき、2F目から)。羽は14倍・溜めは20倍で再生するので、半径・位置は溜めの版の約1.43倍(外 12.9→2・内 9→1)。画像は `Skill/Texture/UBA_LiquidArc_a.png`(Blood/Texture から写した)。
+- 書き出しは今まで通り DummyBody を消して export → 開き直し。確認: 一時コードでデモステージで撮った(`../EffectTools/BloodWing/wing_activate_swirl.png`。一時コードは消した)。Release(x64)のビルドは通った。

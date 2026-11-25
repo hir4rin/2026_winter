@@ -101,6 +101,9 @@ enum class AsyncData : int
 	CheckpointIdleEffect,//チェックポイントの待機(光の柱・鬼火・紋)
 	CheckpointActivateEffect,//チェックポイントを踏んだ瞬間
 	HealEffect,//回復したときに足元から昇る筆の螺旋
+	ChargeChargeEffect,//溜め攻撃の溜め(赤黒の瘴気)
+	ChargeSlash1Effect,//溜め攻撃の1段目
+	ChargeSlash2Effect,//溜め攻撃の2段目
 	Goal,
 };
 

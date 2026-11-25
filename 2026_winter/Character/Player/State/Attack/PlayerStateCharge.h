@@ -15,4 +15,5 @@ public:
 private:
 	float m_frame = 0.0f;//溜めた時間
 	bool m_isLoop = false;//ループのアニメに切り替えたか
+	int m_effectHandle = -1;//溜めのエフェクト
 };
