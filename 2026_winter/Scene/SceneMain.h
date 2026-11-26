@@ -52,7 +52,7 @@ private:
 	//フェード用の黒い板を描画する
 	void DrawFade();
 	//デバッグ用//プレイヤーの正面にスキルエフェクトを再生する
-	void PlayDebugSkillEffect(int effectHandle, float forwardDistance);
+	void PlayDebugSkillEffect(int effectHandle, float forwardDistance, float rotOffset = 0.0f);//rotOffset: 向きに足す角度(ラジアン)
 
 	//チュートリアルを開いてよいか(演出の最中は待つ)
 	bool CanOpenTutorial()const;
@@ -97,6 +97,8 @@ private:
 	bool m_wasF5Pressed = false;//前フレームにF5キーが押されていたか(スキルエフェクト確認用)
 	bool m_wasF6Pressed = false;//前フレームにF6キーが押されていたか(スキルエフェクト確認用)
 	bool m_wasF9Pressed = false;//前フレームにF9キーが押されていたか(地上弱スキルのエフェクト確認用)
+	bool m_wasF11Pressed = false;//前フレームにF11キーが押されていたか(溜め中のエフェクトの案の切り替え)
+	int m_chargeHoldLabelFrame = 0;//切り替えた案の名前を出す残りフレーム
 	int m_debugGleamStep = 0;//F9で次に出す地上弱スキルの段(0〜2)
 	bool m_wasF7Pressed = false;//前フレームにF7キーが押されていたか(エンディング確認用)
 };

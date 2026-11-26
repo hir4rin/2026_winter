@@ -20,7 +20,10 @@ private:
 	};
 
 	void StartPhase(Phase phase);//段の開始
+	void CreateAttackCol(const ComboNode& node) override;//球の大きさだけ変える
+	void AttackMoveMent() override;
 
 private:
 	Phase m_phase = Phase::First;
+	bool m_isSwingSePlayed = false;
 };

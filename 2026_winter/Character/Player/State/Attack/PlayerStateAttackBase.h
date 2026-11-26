@@ -24,7 +24,7 @@ protected:
 	//入力方向に敵がいたらそいつをターゲットにする
 	void CheckNoLockOnTargetEnemy();
 
-	void AttackMoveMent();//攻撃中の移動処理
+	virtual void AttackMoveMent();//攻撃中の移動処理
 
 	//多段ヒットの処理
 	// //今どの区間か見て、区間が変わったらヒット履歴クリア、最後の区間だけノックバック
@@ -37,7 +37,7 @@ protected:
 	//上下差がある攻撃の初速を保存する//実際に動き出すのはmoveStartFrameから(AttackMoveMent)
 	void InitVerticalMove(const ComboNode& node);
 	//コンボノードから攻撃データと当たり判定を生成する//最初は無効
-	void CreateAttackCol(const ComboNode& node);
+	virtual void CreateAttackCol(const ComboNode& node);
 	//攻撃の当たり判定を削除する
 	void ReleaseAttackCol();
 	//ドロップ攻撃の着地時に吹き飛ばしの当たり判定を置く//通常攻撃とスキル攻撃で共通

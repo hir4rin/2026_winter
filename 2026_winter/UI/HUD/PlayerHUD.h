@@ -79,4 +79,6 @@ private:
 	int m_ultMaxHandle = -1;//UltGauge_circle
 	int m_ultGlowHandle = -1;//hud_ultglow
 	int m_ultSparkHandle = -1;//hud_spark
+	int m_markOnHandle = -1;//hud_markon
+	int m_markOffHandle = -1;//hud_markoff
 };

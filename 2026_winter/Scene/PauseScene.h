@@ -38,6 +38,8 @@ private:
 	std::vector<MenuItem> m_items;//今出している項目
 	int m_cursor = 0;//選択中の項目(m_itemsの番号)
 	PauseUI m_ui;
+	MenuItem m_decideItem = MenuItem::ReturnGame;//決定の演出が終わったら実行する項目
+	int m_decideFrame = 0;
 
 	//選択した項目を実行する
 	void Decide(MenuItem item);

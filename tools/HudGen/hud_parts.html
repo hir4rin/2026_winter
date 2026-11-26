@@ -34,6 +34,15 @@ function kojiri(x,y,h=11){
   return `<path d="M${x-6} ${y-h} L${x+6} ${y-h} Q${x+16} ${y-h} ${x+16} ${y} Q${x+16} ${y+h} ${x+6} ${y+h} L${x-6} ${y+h} Z" fill="url(#silver)" stroke="${BK}" stroke-width="2.2"/>`+
     `<path d="M${x+1} ${y-h+2} Q${x+5} ${y} ${x+1} ${y+h-2}" fill="none" stroke="#6a7080" stroke-width="1.2"/><line x1="${x-6}" y1="${y-h}" x2="${x-6}" y2="${y+h}" stroke="${BK}" stroke-width="1.4"/>`;
 }
+// 左端(弧の始まり)の鯉口の金具。道の向きに回して描く(x=進む向き、0が端)
+function koiguchi(){
+  const [x,y]=pol(R,A0), deg=Math.atan2(Math.cos(A0),-Math.sin(A0))*180/Math.PI;
+  return `<g transform="translate(${x} ${y}) rotate(${deg})">`+
+    `<path d="M-6 -13.5 Q-8.5 -13.5 -8.5 -11 L-8.5 11 Q-8.5 13.5 -6 13.5 L-3 13.5 L-3 -13.5 Z" fill="url(#silver)" stroke="${BK}" stroke-width="2.2"/>`+
+    `<path d="M-3 -12 L5 -12 L5 12 L-3 12 Z" fill="url(#silver)" stroke="${BK}" stroke-width="2.2"/>`+
+    `<line x1="1" y1="-12" x2="1" y2="12" stroke="#6a7080" stroke-width="1.2"/>`+
+    `<line x1="-5.6" y1="-11" x2="-5.6" y2="11" stroke="#fff" stroke-width="1" opacity=".6"/></g>`;
+}
 function wrapBand(x0,x1){let s="";for(let x=x0;x<x1;x+=4.2)s+=`<line x1="${x+3}" y1="${EY-9}" x2="${x}" y2="${EY+9}" stroke="${BK}" stroke-width="4.2"/><line x1="${x+3}" y1="${EY-9}" x2="${x}" y2="${EY+9}" stroke="${CORD}" stroke-width="2.4"/><line x1="${x+2.6}" y1="${EY-7}" x2="${x+1.6}" y2="${EY-1}" stroke="${CORD_L}" stroke-width="1"/>`;return s;}
 function mekugi(){const x=SKTR+3,y=SY+4;
   return `<circle cx="${x}" cy="${y}" r="6.2" fill="${BK}"/><circle cx="${x}" cy="${y}" r="4.6" fill="url(#silver)"/><circle cx="${x}" cy="${y}" r="2" fill="${CORD}"/><circle cx="${x-1.4}" cy="${y-1.4}" r="1" fill="#fff" opacity=".85"/>`;}
@@ -51,7 +60,7 @@ if(part==="frame"){
   body+=poly([[SX+SL-3,SY-3],[SX+SL+SW+5,SY-3],[SX+SW+2,SY+SH+3],[SX-6,SY+SH+3]],`fill="url(#silver)"`);
   body+=poly([[SX+SL-1.5,SY-1.5],[SX+SL+SW+3,SY-1.5],[SX+SW+0.5,SY+SH+1.5],[SX-4,SY+SH+1.5]],`fill="${BK}"`);
   body+=poly(band(0,1),`fill="#160a0c"`);
-  body+=`<g filter="url(#ds)">${kojiri(X1,EY)}${wrapBand(X1-18,X1-6)}${mekugi()}</g>`;
+  body+=`<g filter="url(#ds)">${koiguchi()}${kojiri(X1,EY)}${wrapBand(X1-18,X1-6)}${mekugi()}</g>`;
 }else if(part==="fill"){
   body+=`<path d="${FULL}" fill="none" stroke="${HP_D}" stroke-width="12"/>`;
   body+=`<path d="${FULL}" fill="none" stroke="${HP_M}" stroke-width="7.44" transform="translate(0 -0.8)"/>`;
@@ -68,11 +77,20 @@ if(part==="frame"){
   body+=`<g filter="url(#ds)">${braid("M0 0 L0 12")}${knotKiku(0,17)}`+
     poly([[-2.72,22],[2.72,22],[3.57,29],[-3.57,29]],`fill="${SLV}" stroke="${BK}" stroke-width="1.6"`)+
     `<line x1="-3.06" y1="25.15" x2="3.06" y2="25.15" stroke="#6a7080" stroke-width="1"/></g>`;
+}else if(part==="markon"||part==="markoff"){
+  // 象嵌の菱形(中心が画像の真ん中。半幅4・半高6＋黒い縁1.2、4倍で描く)。on=HPがある、off=減った
+  w=64;h=80;vb="-8 -10 16 20";
+  const on=part==="markon";
+  const dia=(hw,hh)=>`M0 ${-hh} L${hw} 0 L0 ${hh} L${-hw} 0 Z`;
+  body+=`<path d="${dia(5.2,7.2)}" fill="${BK}"/>`;
+  body+=`<path d="${dia(4,6)}" fill="${on?"url(#silver)":"#4a4e58"}"/>`;
+  body+=`<path d="M0 -6 L4 0 L0 0 Z" fill="#fff" opacity="${on?0.55:0.12}"/>`;
+  body+=`<path d="M0 6 L-4 0 L0 0 Z" fill="#000" opacity="${on?0.25:0.3}"/>`;
 }
 if(part==="ultglow"){
   // 必殺技の縄をぼかした光(UltGaugeColor.png と同じ中心。にじむ分だけ周りを広げている)
   document.body.innerHTML=`<div style="width:1100px;height:1142px;display:flex;align-items:center;justify-content:center">`+
-    `<img src="../../2026_winter/data/UI/HUD/UltGaugeColor.png" width="943" height="985" style="filter:blur(26px) brightness(2.4) saturate(1.3)"></div>`;
+    `<img src="ult_src/UltGaugeColor.png" width="943" height="985" style="filter:blur(26px) brightness(2.4) saturate(1.3)"></div>`;
 }else if(part==="spark"){
   // たまっている先の光(加算で使う)
   document.body.innerHTML=`<div style="width:128px;height:128px;border-radius:50%;background:radial-gradient(circle,#ffffff 0,#dce8ff 10%,#7aa8ff 26%,rgba(58,106,255,.45) 45%,rgba(40,80,255,0) 70%)"></div>`;

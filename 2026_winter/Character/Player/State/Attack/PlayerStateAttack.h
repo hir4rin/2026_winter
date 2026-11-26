@@ -34,6 +34,7 @@ private:
 	int m_nextComboIndex = -1;//次のコンボの段数
 	bool m_isComboInputReserved = false;//コンボ入力を受け付けたかどうかのフラグ
 	bool m_isSkillAttackReserved = false;//スキル攻撃の予約がされているかどうかのフラグ
+	AttackType m_reservedSkillType = AttackType::SkillHeavyAttack;//予約したスキルの種類//LB+Xで弱、LB+Yで強
 
 	bool m_isSwingSePlayed = false;//振りのSEを再生したかどうか
 

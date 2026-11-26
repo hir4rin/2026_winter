@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タイトルの血の垂れ 案</title>
+<style>
+:root { --bg:#0b0710; --panel:#16101c; --line:#3a2a40; --text:#e8dde6; --sub:#a090a8; --accent:#d8303e; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:"Yu Gothic UI","Meiryo",sans-serif; }
+header { padding:14px 18px 6px; }
+h1 { font-size:18px; margin:0 0 6px; }
+.note { color:var(--sub); font-size:13px; line-height:1.6; }
+.bar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 18px; position:sticky; top:0; background:rgba(11,7,16,.92); z-index:2; border-bottom:1px solid var(--line); }
+button { background:var(--panel); color:var(--text); border:1px solid var(--line); padding:6px 10px; border-radius:4px; cursor:pointer; font-size:13px; }
+button.on { border-color:var(--accent); color:#fff; background:#3a1220; }
+.sep { width:1px; height:22px; background:var(--line); margin:0 6px; }
+#frame { color:var(--sub); font-size:12px; min-width:110px; font-variant-numeric:tabular-nums; }
+#grid { display:flex; flex-wrap:wrap; gap:14px; padding:14px 18px 30px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px; cursor:pointer; }
+.card h2 { font-size:15px; margin:2px 4px 4px; }
+.card p { font-size:12px; color:var(--sub); margin:0 4px 6px; line-height:1.5; max-width:380px; }
+.card canvas { display:block; }
+body.single .card { display:none; }
+body.single .card.sel { display:block; cursor:default; }
+body.single .card.sel p { max-width:none; }
+</style>
+</head>
+<body>
+<header>
+<h1>タイトルの「忍」の血の垂れ　案</h1>
+<div class="note">ゲームの TitleLogoPS.hlsl を WebGL に移したもの。垂れ始めは斬ってから22F、伸び切るまで約550F(60fps)。最初は伸び切った後(600F)から始まります。<br>
+カードをクリックで大きく表示。<code>#C,900</code> のように書くとその案のそのフレームで止まります(<code>#all,900</code> で全部)。</div>
+</header>
+<div class="bar">
+<button id="replay">斬りから再生</button>
+<button id="skip">伸び切った所へ</button>
+<button id="pause">一時停止</button>
+<span class="sep"></span>
+<button class="spd on" data-s="1">x1</button><button class="spd" data-s="2">x2</button><button class="spd" data-s="4">x4</button>
+<span class="sep"></span>
+<button id="all" class="on">並べる</button>
+<span class="sep"></span>
+<span id="frame"></span>
+</div>
+<div id="grid"></div>
+
+<script id="vs" type="x-shader/x-vertex">#version 300 es
+in vec2 aPos;
+out vec2 vUV;
+void main() { vUV = vec2(aPos.x * 0.5 + 0.5, 0.5 - aPos.y * 0.5); gl_Position = vec4(aPos, 0.0, 1.0); }
+</script>
+
+<script id="fs" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+in vec2 vUV;
+out vec4 outColor;
+uniform sampler2D uSteel, uRed, uBack, uCut;
+uniform vec2 uSize;
+uniform float uExtra;
+uniform vec4 uLine;
+uniform float uFrame;
+uniform int uMode;	// 0 今 / 1 A / 2 B / 3 C / 4 D
+uniform int uLook;	// 滴の見た目 0 前のB / 1 血の色と質感 / 2 長く糸を引く / 3 筋になって落ちる / 4 全部
+
+const float kSplitDelay = 4.0, kSplitTime = 8.0, kSplitShift = 18.0, kSplitGap = 7.0;
+const float kRedDelay = 10.0, kRedTime = 45.0, kRedBlur = 40.0;
+const float kDripDelay = 22.0, kDripTime = 300.0;
+const float kMaxLen = 190.0, kSpacing = 20.0, kWidth = 6.0;
+const float kSolid = 0.7;
+const float kFallLen = 420.0;
+
+float H(float n) { return fract(sin(n * 12.9898) * 43758.5453); }
+float sat(float x) { return clamp(x, 0.0, 1.0); }
+float rate(float s, float l) { return sat((uFrame - s) / l); }
+vec4 tex(sampler2D t, vec2 q) { return texture(t, q / uSize); }
+
+vec2 gDir; vec2 gNrm; float gHalfGap; float gDripProg; float gFlow;
+
+bool solidRed(vec2 q) {
+	if (dot(q - uLine.xy, gNrm) < gHalfGap) return false;
+	if (q.y > uSize.y) return false;
+	return tex(uRed, q).a > kSolid;
+}
+
+float redBottom(float x) {
+	float st = uSize.y / 48.0;
+	float y = uSize.y - 1.0;
+	bool found = false;
+	for (int i = 0; i < 48; ++i) {
+		vec2 q = vec2(x, y);
+		if (dot(q - uLine.xy, gNrm) < gHalfGap) break;
+		if (solidRed(q)) { found = true; break; }
+		y -= st;
+	}
+	if (!found) return -1.0;
+	float lo = y, hi = y + st;
+	for (int j = 0; j < 6; ++j) { float m = (lo + hi) * 0.5; if (solidRed(vec2(x, m))) lo = m; else hi = m; }
+	return lo;
+}
+
+// ---------------- 今(ゲームのまま) ----------------
+float dripLength(float x, out float profile) {
+	float id = floor(x / kSpacing);
+	float len = 0.0; profile = 0.0;
+	for (int i = -1; i <= 1; ++i) {
+		float c = id + float(i);
+		float has = step(0.4, H(c * 1.7));
+		float center = (c + 0.2 + 0.6 * H(c * 3.1)) * kSpacing;
+		float width = kWidth * (0.45 + H(c * 5.3));
+		float maxLen = kMaxLen * (0.12 + 0.88 * pow(H(c * 7.9), 1.6));
+		float t = sat(gDripProg * (0.55 + 0.9 * H(c * 9.7)));
+		float grow = 1.0 - pow(1.0 - t, 2.5);
+		float d = (x - center) / width;
+		float p = sqrt(sat(1.0 - d * d));
+		float l = has * maxLen * grow * p;
+		if (l > len) { len = l; profile = p; }
+	}
+	return len;
+}
+float ellipseCover(vec2 p, vec2 c, vec2 r) { float d = length((p - c) / r); return sat((1.0 - d) * min(r.x, r.y)); }
+vec4 addDrop(vec4 col, vec2 p, vec2 c, vec2 r, float w, float a) {
+	float cov = ellipseCover(p, c, r) * a;
+	if (cov <= 0.0) return col;
+	vec3 b = vec3(0.30, 0.0, 0.02);
+	vec2 hl = (p - c) / max(w, 1.0);
+	b += vec3(0.45, 0.12, 0.12) * sat(1.0 - length(hl + vec2(0.35)) * 2.2);
+	return col + vec4(b, 1.0) * cov * (1.0 - col.a);
+}
+vec4 oldDrops(vec2 p) {
+	vec4 col = vec4(0);
+	float id = floor(p.x / kSpacing);
+	for (int i = -1; i <= 1; ++i) {
+		float c = id + float(i);
+		if (H(c * 1.7) < 0.4) continue;
+		float center = (c + 0.2 + 0.6 * H(c * 3.1)) * kSpacing;
+		float width = kWidth * (0.45 + H(c * 5.3));
+		if (abs(p.x - center) > width * 2.0) continue;
+		float local = gFlow - kDripTime / (0.55 + 0.9 * H(c * 9.7));
+		if (local < 0.0) continue;
+		float bottom = redBottom(center);
+		if (bottom < 0.0) continue;
+		float maxLen = kMaxLen * (0.12 + 0.88 * pow(H(c * 7.9), 1.6));
+		float tip = bottom + maxLen;
+		float period = 70.0 + 120.0 * H(c * 11.3);
+		float u = fract(local / period + H(c * 13.7));
+		float s = u * u;
+		float r = width * (0.55 + 0.6 * s);
+		col = addDrop(col, p, vec2(center, tip - r * 0.6 + r * 0.9 * s), vec2(r, r * (1.0 + 0.25 * s)), width, 1.0);
+		float fr = width * 1.1;
+		for (int j = 0; j < 3; ++j) {
+			float ft = (u + float(j)) * period;
+			float fall = 0.5 * 0.045 * ft * ft;
+			if (fall > kFallLen) break;
+			float sp = 0.045 * ft;
+			col = addDrop(col, p, vec2(center, tip + fr * 0.3 + fall), vec2(fr * 0.8, fr * (1.0 + min(sp * 0.35, 1.6))), width, sat(1.0 - fall / kFallLen));
+		}
+	}
+	return col;
+}
+vec4 nowBlood(vec2 p, vec4 col, float redRate) {
+	float profile;
+	float len = dripLength(p.x, profile);
+	if (len > 0.5 && col.a < 0.99) {
+		for (int i = 1; i <= 32; ++i) {
+			float off = len * float(i) / 32.0;
+			vec2 q = p - vec2(0.0, off);
+			if (dot(q - uLine.xy, gNrm) < gHalfGap) break;
+			if (solidRed(q)) {
+				float k = off / max(len, 1.0);
+				vec3 b = mix(vec3(0.62, 0.02, 0.06), vec3(0.30, 0.0, 0.02), k);
+				b += vec3(0.45, 0.12, 0.12) * pow(profile, 14.0) * (1.0 - k);
+				col += vec4(b, 1.0) * redRate * (1.0 - col.a);
+				break;
+			}
+		}
+	}
+	if (col.a < 0.99 && gFlow > 0.0) col += oldDrops(p) * (1.0 - col.a);
+	return col;
+}
+
+// ---------------- 新しい案(形を距離で作って陰影を付ける) ----------------
+#define NS 5
+float sC[NS], sW[NS], sB[NS], sLen[NS], sLocal[NS], sThin[NS], sDrop[NS], sPer[NS], sPh[NS], sAmp[NS], sVel[NS], sFlowPer[NS], sSize[NS];
+bool gFlowOn, gDropOn, gPool;
+float gFloor;
+
+float smin(float a, float b, float k) { float h = sat(0.5 + 0.5 * (b - a) / k); return mix(b, a, h) - k * h * (1.0 - h); }
+
+void setupStrands(vec2 p) {
+	float id = floor(p.x / kSpacing);
+	for (int i = 0; i < NS; ++i) {
+		float c = id + float(i - NS / 2);
+		sC[i] = (c + 0.2 + 0.6 * H(c * 3.1)) * kSpacing;
+		sB[i] = -1.0;
+		bool has = H(c * 1.7) >= 0.4;
+		bool near = abs(p.x - sC[i]) < (gPool ? 70.0 : 30.0);
+		if (!has || !near) continue;
+		float fac = 0.55 + 0.9 * H(c * 9.7);
+		float maxLen = kMaxLen * (0.12 + 0.88 * pow(H(c * 7.9), 1.6));
+		float t = sat(gDripProg * fac);
+		float grow = 1.0 - pow(1.0 - t, 2.5);
+		float local = gFlow - kDripTime / fac;
+		sLocal[i] = local;
+		sW[i] = kWidth * (0.45 + H(c * 5.3));
+		float len = maxLen * grow;
+		if (gFlowOn) len += (0.025 + 0.09 * H(c * 15.1)) * max(local, 0.0);	// ゆっくり伸び続ける
+		sLen[i] = max(len, 0.5);
+		sThin[i] = mix(0.85, 0.32, sat((sLen[i] - 40.0) / 380.0));	// 長いほど先が細い
+		// 滴を落とす垂れ
+		bool drop = false;
+		if (uMode == 2) drop = H(c * 17.3) > 0.35;
+		if (uMode >= 3) drop = H(c * 17.3) > 0.62 && maxLen > 70.0;
+		sDrop[i] = drop ? 1.0 : 0.0;
+		sPer[i] = uMode == 2 ? 210.0 + 160.0 * H(c * 11.3) : 300.0 + 240.0 * H(c * 11.3);
+		sPh[i] = H(c * 13.7);
+		sAmp[i] = 0.25 + 0.35 * H(c * 19.1);
+		sVel[i] = 0.35 + 0.45 * H(c * 21.7);
+		sFlowPer[i] = 70.0 + 70.0 * H(c * 23.3);
+		sSize[i] = H(c * 25.9);
+		sB[i] = redBottom(sC[i]);
+	}
+}
+
+float vSeg(vec2 q, float a, float b, float ra, float rb, float pinch) {
+	float h = sat((q.y - a) / max(b - a, 0.001));
+	float r = mix(ra, rb, h) * (1.0 - pinch * sin(3.14159 * h));
+	return length(vec2(q.x, q.y - mix(a, b, h))) - r;
+}
+
+// 1本の垂れの形(滴・血だまりも)
+float strandField(int i, vec2 p) {
+	float dx = p.x - sC[i];
+	float dy = p.y - sB[i];
+	float len = sLen[i];
+	float W = sW[i];
+	float t = sat(dy / len);
+	float thin = mix(1.0, sThin[i], t * t * (3.0 - 2.0 * t));
+	float hw = W * thin * (1.0 + 1.3 * exp(-max(dy, 0.0) / 5.0));
+	if (gFlowOn && dy > 0.0 && dy < len) {
+		// 中を流れ下るふくらみ
+		float ph = (dy - max(sLocal[i], 0.0) * sVel[i]) / sFlowPer[i];
+		float f = fract(ph) - 0.5;
+		float bump = exp(-f * f * sFlowPer[i] * sFlowPer[i] / (W * W * 9.0));
+		hw *= 1.0 + sAmp[i] * bump * smoothstep(10.0, 40.0, dy) * (1.0 - smoothstep(len - 12.0, len, dy));
+	}
+	float body = (dy < -8.0 || dy > len) ? 1e4 : abs(dx) - hw;
+	float rT = W * sThin[i] * 1.15;
+	float tipY = len - rT * 0.15;
+	float d = smin(body, length(vec2(dx, dy - tipY)) - rT, 2.0);
+
+	if (sDrop[i] < 0.5 || !gDropOn) return d;
+	float lt = sLocal[i] - sPh[i] * sPer[i];
+	if (lt < 0.0) return d;
+	float P = sPer[i];
+	float s = mod(lt, P);
+	float n = floor(lt / P);
+	bool thread = uLook == 2 || uLook == 4;
+	bool streak = uLook == 3 || uLook == 4;
+	float rB = clamp(rT * 2.0, 5.5, 11.0) * (uLook == 0 ? 1.0 : 0.8 + 0.55 * sSize[i]);
+	float Tst = thread ? 80.0 : 30.0;
+	float Tsw = P - Tst - 40.0;
+	float stretch = thread ? rB * 7.5 : rB * 2.6;
+	vec2 q = vec2(dx, dy);
+	float g = 0.11;
+	float y0 = tipY + (rB - rT) * 0.9;
+	float ySnap0 = y0 + stretch;
+	if (s < Tsw) {
+		// 先にたまる
+		float u = smoothstep(0.0, 1.0, s / Tsw);
+		float r = mix(rT, rB, u);
+		d = smin(d, length(q - vec2(0.0, tipY + (r - rT) * 0.9)) - r, 3.0);
+	} else if (s < Tsw + Tst) {
+		// 首を引いて伸びる
+		float v = (s - Tsw) / Tst;
+		float r = rB * (1.0 - 0.08 * v);
+		float yc = y0 + pow(v, thread ? 2.2 : 1.7) * stretch;
+		d = smin(d, length(q - vec2(0.0, yc)) - r, 2.5);
+		if (thread) {
+			// ねばって細い糸になる
+			float h = sat((q.y - tipY) / max(yc - tipY, 0.001));
+			float rr = mix(rT * 0.95, r * 0.7, h) * (1.0 - (0.2 + 0.7 * v) * sin(3.14159 * pow(h, 0.8)));
+			rr = max(rr, 0.9);
+			d = smin(d, length(vec2(q.x, q.y - mix(tipY, yc, h))) - rr, 2.0);
+		} else {
+			d = smin(d, vSeg(q, tipY, yc, rT * 0.95, r * 0.75, 0.15 + 0.82 * v), 2.0);
+		}
+	} else {
+		// ちぎれた首が縮んで戻る
+		float ft = s - Tsw - Tst;
+		float rr = rT + rB * (thread ? 0.3 : 0.45) * exp(-ft / 7.0) * cos(ft * 0.4);
+		d = smin(d, length(q - vec2(0.0, tipY + rr * 0.4)) - rr, 2.5);
+		if (thread) {
+			float lr = stretch * 0.45 * exp(-ft / 12.0);
+			if (lr > 1.0) d = smin(d, vSeg(q, tipY, tipY + lr, rT * 0.8, 0.8, 0.0), 2.0);
+		}
+	}
+	// 落ちる滴(今の周期と1つ前)
+	float floorY = gFloor - sB[i];
+	for (int k = 0; k < 2; ++k) {
+		float ft = s - Tsw - Tst + float(k) * P;
+		if (k == 1 && n < 1.0) break;
+		if (ft < 0.0) continue;
+		float y = ySnap0 + 1.0 * ft + 0.5 * g * ft * ft;
+		float r = rB * 0.92;
+		if (gPool && y + r > floorY) continue;
+		if (y > uSize.y + uExtra + 200.0) continue;
+		float sp = 1.0 + g * ft;
+		if (streak) {
+			// 速さで縦に流れる筋になる
+			float ry = r * min(1.0 + sp * 0.22, 3.0);
+			float rx = r * mix(0.95, 0.7, sat(sp / 8.0));
+			float de = (length((q - vec2(0.0, y - (ry - r))) / vec2(rx, ry)) - 1.0) * min(rx, ry);
+			float tail = sp * 7.0;
+			de = smin(de, vSeg(q, y - ry * 1.6 - tail, y - ry * 0.5, 0.5, rx * 0.8, 0.0), 2.0);
+			d = min(d, de);
+		} else {
+			vec2 rr = vec2(r * 0.96, r * min(1.0 + sp * 0.04, 1.3));
+			d = min(d, (length((q - vec2(0.0, y)) / rr) - 1.0) * min(rr.x, rr.y));
+		}
+		if (thread) {
+			// 滴の上に残った糸
+			float lt2 = stretch * 0.5 * exp(-ft / 16.0);
+			if (lt2 > 1.5) d = smin(d, vSeg(q, y - r * 0.5 - lt2, y - r * 0.4, 0.7, r * 0.55, 0.0), 1.5);
+		}
+		if (uLook != 0) continue;
+		// 首がちぎれてできる小さな粒
+		float ft2 = ft - 5.0;
+		if (ft2 > 0.0) {
+			float y2 = ySnap0 - rB * 1.6 + 0.8 * ft2 + 0.5 * g * ft2 * ft2;
+			float r2 = rB * 0.3;
+			if (!(gPool && y2 + r2 > floorY)) d = min(d, length(q - vec2(0.0, y2)) - r2);
+		}
+	}
+	if (gPool) {
+		// 血だまり
+		float dist = floorY - rB - ySnap0;
+		float tf = (-1.0 + sqrt(1.0 + 2.0 * g * max(dist, 0.0))) / g;
+		float tl = lt - Tsw - Tst - tf;
+		if (tl > 0.0) {
+			float nL = floor(tl / P) + 1.0;
+			float since = mod(tl, P);
+			float grow = 1.0 - exp(-since / 10.0);
+			float rx = min(5.0 + 10.0 * sqrt(nL - 1.0 + grow), 48.0);
+			float ry = rx * 0.2;
+			vec2 pc = vec2(0.0, floorY);
+			float de = (length((q - pc) / vec2(rx, ry)) - 1.0) * ry;
+			d = smin(d, de, 2.0);
+			// 跳ね
+			if (since < 16.0) {
+				float a = since / 16.0;
+				for (int m = 0; m < 2; ++m) {
+					float sx = (m == 0 ? -1.0 : 1.0) * (4.0 + 22.0 * a);
+					float sy = floorY - 26.0 * a + 30.0 * a * a;
+					float rs = 1.8 * (1.0 - a) + 0.4;
+					d = min(d, length(q - vec2(sx, sy)) - rs);
+				}
+			}
+		}
+	}
+	return d;
+}
+
+float field(vec2 p) {
+	float d = 1e4;
+	for (int i = 0; i < NS; ++i) {
+		if (sB[i] < 0.0) continue;
+		if (!gPool && abs(p.x - sC[i]) > 30.0) continue;
+		d = min(d, strandField(i, p));
+	}
+	return d;
+}
+
+vec4 newBlood(vec2 p, vec4 col) {
+	setupStrands(p);
+	float d = field(p);
+	if (d > 1.5) return col;
+	vec2 gr = vec2(field(p + vec2(0.7, 0.0)) - field(p - vec2(0.7, 0.0)), field(p + vec2(0.0, 0.7)) - field(p - vec2(0.0, 0.7))) / 1.4;
+	float depth = sat(-d / 5.0);
+	vec3 n = normalize(vec3(gr * (1.0 - depth) * 1.3, 0.45 + depth));
+	vec3 L = normalize(vec3(-0.55, -0.75, 0.6));
+	float diff = max(dot(n, L), 0.0);
+	float spec = pow(max(dot(reflect(-L, n), vec3(0, 0, 1)), 0.0), 36.0);
+	float k = sat((p.y - 430.0) / 420.0);
+	vec3 c;
+	if (uLook == 1 || uLook == 4) {
+		// 血: 厚い所はほぼ黒い赤、薄いふちだけ明るい赤。つやは鈍く広い
+		float th = smoothstep(0.0, 1.0, sat(-d / 6.0));
+		vec3 deep = mix(vec3(0.36, 0.01, 0.035), vec3(0.13, 0.0, 0.01), k);
+		vec3 alb = mix(vec3(0.70, 0.04, 0.07), deep, th);
+		float sheen = pow(max(dot(reflect(-L, n), vec3(0, 0, 1)), 0.0), 9.0);
+		c = alb * (0.6 + 0.45 * diff) + vec3(0.50, 0.07, 0.08) * sheen * 0.45 + vec3(0.9, 0.55, 0.55) * pow(sheen, 7.0) * 0.18;
+		c *= mix(0.6, 1.0, smoothstep(0.0, 1.2, -d));
+	} else {
+		vec3 alb = mix(vec3(0.58, 0.02, 0.06), vec3(0.26, 0.0, 0.02), k);
+		c = alb * (0.35 + 0.8 * diff) + vec3(1.0, 0.78, 0.78) * spec * 0.75;
+		c *= mix(0.55, 1.0, smoothstep(0.0, 2.5, -d));
+	}
+	float a = sat(0.5 - d);
+	return col + vec4(c * a, a) * (1.0 - col.a);
+}
+
+vec3 background(vec2 uv) {
+	vec3 top = vec3(0.10, 0.05, 0.14), bot = vec3(0.04, 0.02, 0.05);
+	vec3 c = mix(top, bot, uv.y);
+	for (int i = 0; i < 9; ++i) {
+		float fi = float(i);
+		vec2 bp = vec2(H(fi * 3.3), 0.25 + 0.6 * H(fi * 7.1));
+		float r = 0.03 + 0.05 * H(fi * 5.9);
+		float b = exp(-pow(length((uv - bp) * vec2(1.0, 1.6)) / r, 2.0));
+		c += vec3(0.35, 0.18, 0.08) * b * 0.25;
+	}
+	return c;
+}
+
+void main() {
+	vec2 p = vUV * vec2(uSize.x, uSize.y + uExtra);
+	gDir = uLine.zw;
+	gNrm = vec2(-gDir.y, gDir.x);
+	float split = rate(kSplitDelay, kSplitTime);
+	float splitEase = 1.0 - (1.0 - split) * (1.0 - split);
+	float shift = kSplitShift * splitEase;
+	gHalfGap = kSplitGap * splitEase * 0.5;
+	float redProg = rate(kRedDelay, kRedTime);
+	gDripProg = rate(kDripDelay, kDripTime);
+	gFlow = max(uFrame - kDripDelay, 0.0);
+	gFlowOn = uMode == 1 || uMode >= 3;
+	gDropOn = uMode >= 2;
+	gPool = uMode == 4;
+	gFloor = uSize.y + uExtra - 70.0;
+
+	vec4 col = vec4(0);
+	float dist = dot(p - uLine.xy, gNrm);
+	bool inImg = p.y <= uSize.y;
+	if (dist < 0.0) {
+		if (dist <= -gHalfGap && inImg) col = tex(uSteel, p + gDir * shift);
+	} else if (dist >= gHalfGap) {
+		float redRate = sat((redProg * uSize.y - dist) / kRedBlur);
+		if (inImg) col = mix(tex(uSteel, p), tex(uRed, p), redRate);
+		if (uMode == 0) col = nowBlood(p, col, redRate);
+		else if (col.a < 0.99 && gFlow > 0.0) col = newBlood(p, col);
+	}
+	vec4 back = inImg ? tex(uBack, p) : vec4(0);
+	vec3 bg = background(vUV);
+	vec3 res = col.rgb + (back.rgb + bg * (1.0 - back.a)) * (1.0 - col.a);
+	// 斬り口の光
+	if (uFrame >= 0.0 && inImg) {
+		float wipe = rate(0.0, 5.0);
+		float a = mix(1.0, 110.0 / 255.0, rate(5.0, 50.0));
+		if (p.x / uSize.x <= wipe) res += tex(uCut, p).rgb * a;
+	}
+	outColor = vec4(res, 1.0);
+}
+</script>
+
+<script>
+const IMG = { steel: "__STEEL__", red: "__RED__", back: "__BACK__", cut: "__CUT__" };
+const SIZE = [745, 640], EXTRA = 560, LINE = [336.74, 296.15, 0.87573, 0.48281];
+const CARDS = [
+	{ key: "now", name: "今(ゲーム)", mode: 0, look: 0, desc: "今入っているもの。垂れが伸び切った後、先がふくらんで楕円の滴が落ち、途中で消える。" },
+	{ key: "B", name: "B(前の案)", mode: 2, look: 0, desc: "先にたまった血が首を引いて伸び、ちぎれて落ちる。丸い滴に白いつや・小さな粒で、水っぽく見える。" },
+	{ key: "B1", name: "B1 血の色と質感", mode: 2, look: 1, desc: "厚い所はほぼ黒い赤、薄いふちだけ明るい赤(光が透ける)。白い点のつやをやめて、鈍く広いつやに。小さな粒は無し。滴の大きさをばらつかせる。" },
+	{ key: "B2", name: "B2 長く糸を引く", mode: 2, look: 2, desc: "ねばりを強く。滴が下へ伸びる間に細い糸を長く引き、ちぎれた後も先と滴の両方に糸が残って縮む。" },
+	{ key: "B3", name: "B3 筋になって落ちる", mode: 2, look: 3, desc: "落ちるほど縦に伸びて、上に細い尾を引く筋になる。丸い粒に見えない。" },
+	{ key: "B4", name: "B4 B1＋B2＋B3(おすすめ)", mode: 2, look: 4, desc: "血の色と質感、長い糸、落ちると筋になる、を全部合わせたもの。" },
+];
+const GROWN = 622;
+let frame = GROWN, speed = 1, paused = false, single = null;
+const views = [];
+
+function loadImg(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src; }); }
+
+function makeView(card, imgs) {
+	const el = document.createElement("div");
+	el.className = "card";
+	el.innerHTML = `<h2>${card.name}</h2><p>${card.desc}</p>`;
+	const cv = document.createElement("canvas");
+	el.appendChild(cv);
+	document.getElementById("grid").appendChild(el);
+	const gl = cv.getContext("webgl2", { antialias: false, preserveDrawingBuffer: true });
+	const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(o)); return o; };
+	const pr = gl.createProgram();
+	gl.attachShader(pr, sh(gl.VERTEX_SHADER, document.getElementById("vs").textContent));
+	gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, document.getElementById("fs").textContent));
+	gl.linkProgram(pr);
+	if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(pr));
+	gl.useProgram(pr);
+	const buf = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+	const loc = gl.getAttribLocation(pr, "aPos");
+	gl.enableVertexAttribArray(loc);
+	gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+	gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+	["steel", "red", "back", "cut"].forEach((k, i) => {
+		const t = gl.createTexture();
+		gl.activeTexture(gl.TEXTURE0 + i);
+		gl.bindTexture(gl.TEXTURE_2D, t);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imgs[k]);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.uniform1i(gl.getUniformLocation(pr, "u" + k[0].toUpperCase() + k.slice(1)), i);
+	});
+	gl.uniform2f(gl.getUniformLocation(pr, "uSize"), SIZE[0], SIZE[1]);
+	gl.uniform1f(gl.getUniformLocation(pr, "uExtra"), EXTRA);
+	gl.uniform4f(gl.getUniformLocation(pr, "uLine"), ...LINE);
+	gl.uniform1i(gl.getUniformLocation(pr, "uMode"), card.mode);
+	gl.uniform1i(gl.getUniformLocation(pr, "uLook"), card.look);
+	const uFrame = gl.getUniformLocation(pr, "uFrame");
+	const v = { card, el, cv, gl, uFrame };
+	el.addEventListener("click", () => { if (!single) setSingle(card.key); });
+	views.push(v);
+}
+
+function layout() {
+	const scale = single ? 0.95 : 0.5;
+	for (const v of views) {
+		const w = Math.round(SIZE[0] * scale), h = Math.round((SIZE[1] + EXTRA) * scale);
+		const dpr = Math.min(window.devicePixelRatio || 1, 2);
+		v.cv.style.width = w + "px"; v.cv.style.height = h + "px";
+		v.cv.width = Math.round(w * dpr); v.cv.height = Math.round(h * dpr);
+		v.el.classList.toggle("sel", single === v.card.key);
+	}
+	document.body.classList.toggle("single", !!single);
+	document.getElementById("all").classList.toggle("on", !single);
+}
+function setSingle(k) { single = k; layout(); }
+
+function draw() {
+	for (const v of views) {
+		if (single && single !== v.card.key) continue;
+		const gl = v.gl;
+		gl.viewport(0, 0, v.cv.width, v.cv.height);
+		gl.uniform1f(v.uFrame, frame);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	}
+	const sec = (frame / 60).toFixed(1);
+	document.getElementById("frame").textContent = `${Math.floor(frame)}F(斬りから${sec}秒)`;
+}
+
+let last = 0, acc = 0;
+function tick(t) {
+	if (!paused) {
+		const dt = last ? Math.min(t - last, 100) : 16.67;
+		acc += dt;
+		while (acc >= 16.67) { frame += speed; acc -= 16.67; }
+	}
+	last = t;
+	draw();
+	requestAnimationFrame(tick);
+}
+
+(async () => {
+	const imgs = {};
+	for (const k in IMG) imgs[k] = await loadImg(IMG[k]);
+	for (const c of CARDS) makeView(c, imgs);
+	const hash = decodeURIComponent(location.hash.slice(1));
+	if (hash) {
+		const [k, f] = hash.split(",");
+		if (f !== undefined) { frame = parseFloat(f); paused = true; document.getElementById("pause").classList.add("on"); }
+		if (k && k !== "all" && CARDS.some(c => c.key === k)) single = k;
+	}
+	layout();
+	document.getElementById("replay").onclick = () => { frame = 0; acc = 0; };
+	document.getElementById("skip").onclick = () => { frame = GROWN; acc = 0; };
+	document.getElementById("pause").onclick = e => { paused = !paused; e.target.classList.toggle("on", paused); };
+	document.querySelectorAll(".spd").forEach(b => b.onclick = () => { speed = +b.dataset.s; document.querySelectorAll(".spd").forEach(x => x.classList.toggle("on", x === b)); });
+	document.getElementById("all").onclick = () => setSingle(null);
+	window.addEventListener("resize", layout);
+	requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

@@ -4,11 +4,12 @@
 #include "Main/Game.h"
 #include "Main/System.h"
 #include "Render/EffectManager.h"
+#include "Camera/CameraManager.h"
 #include "EffekseerForDXLib.h"
 
 namespace
 {
-	constexpr float kChargeThreshold = 15.0f;//溜め攻撃になるまでのフレーム//仮
+	constexpr float kChargeThreshold = 40.0f;//溜め攻撃になるまでのフレーム//仮
 
 	constexpr float kAnimSpeed = 0.8f;
 	constexpr float kStartBlendFrame = 5.0f;
@@ -59,7 +60,9 @@ void PlayerStateCharge::Enter()
 
 	//溜めのエフェクト//+Zを前にして作っているので、ゲームでは180度回す
 	const Vector3 forward = player->GetTargetVec();
-	m_effectHandle = EffectManager::GetInstance().Play(AsyncData::ChargeChargeEffect, player->m_rb.GetPos(), atan2f(forward.x, forward.z) + DX_PI_F, kChargeEffectScale);
+	m_effectRotY = atan2f(forward.x, forward.z) + DX_PI_F;
+	m_phase = Phase::Charging;
+	m_chargingEffect = PlayEffect(AsyncData::ChargeChargingEffect);
 }
 
 void PlayerStateCharge::Update()
@@ -71,10 +74,11 @@ void PlayerStateCharge::Update()
 	UpdateMoveVel(Vector3(0, 0, 0), kDecel);
 
 	//エフェクトを足元についていかせる
-	if (m_effectHandle != -1)
+	const Vector3 pos = player->m_rb.GetPos();
+	for (int handle : { m_chargingEffect, m_chargedEffect })
 	{
-		const Vector3 pos = player->m_rb.GetPos();
-		SetPosPlayingEffekseer3DEffect(m_effectHandle, pos.x, pos.y, pos.z);
+		if (handle == -1) continue;
+		SetPosPlayingEffekseer3DEffect(handle, pos.x, pos.y, pos.z);
 	}
 
 	//構え始めが終わったらループへ
@@ -87,6 +91,12 @@ void PlayerStateCharge::Update()
 	//TODO: 離したときの分岐(強攻撃 / 溜め攻撃)・回避
 
 	m_frame += 1.0f * System::GetInstance().GetTimeScale();
+
+	//溜まったら次の段階へ
+	if (m_phase == Phase::Charging && m_frame >= kChargeThreshold)
+	{
+		ChangePhase(Phase::Charged);
+	}
 
 	//指定フレーム以下の時は強攻撃に移動
 	if (!input.IsPressed("Y") && m_frame < kChargeThreshold)
@@ -108,11 +118,40 @@ void PlayerStateCharge::Update()
 
 void PlayerStateCharge::Exit()
 {
-	if (m_effectHandle != -1)
+	if (m_chargingEffect != -1)
 	{
-		StopEffekseer3DEffect(m_effectHandle);
-		m_effectHandle = -1;
+		StopEffekseer3DEffect(m_chargingEffect);
+		m_chargingEffect = -1;
 	}
+	if (m_chargedEffect != -1)
+	{
+		StopEffekseer3DEffect(m_chargedEffect);
+		m_chargedEffect = -1;
+	}
+}
+
+void PlayerStateCharge::ChangePhase(Phase next)
+{
+	m_phase = next;
+
+	if (next == Phase::Charged)
+	{
+		//溜め中は新しく出すのだけ止めて、出ている煙は自然に消す
+		if (m_chargingEffect != -1)
+		{
+			GetEffekseer3DManager()->StopRoot(m_chargingEffect);
+			m_chargingEffect = -1;
+		}
+		PlayEffect(AsyncData::ChargeDoneEffect);//1回だけなのでハンドルは持たない
+		m_chargedEffect = PlayEffect(AsyncData::ChargeChargedEffect);
+	}
+}
+
+int PlayerStateCharge::PlayEffect(AsyncData key)
+{
+	auto player = m_owner.lock();
+	if (!player) return -1;
+	return EffectManager::GetInstance().Play(key, player->m_rb.GetPos(), m_effectRotY, kChargeEffectScale);
 }
 
 void PlayerStateCharge::DebugDraw()

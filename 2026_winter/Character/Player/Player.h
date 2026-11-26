@@ -84,6 +84,8 @@ struct ComboNode
 	float cancelFrame = -1.0f;//予約済みの次のコンボに移行するフレーム//負の値なら進行率のデフォルト値を使う
 	float actionCancelFrame = -1.0f;//回避・ジャンプ・確殺でキャンセルできるフレーム//負の値なら進行率のデフォルト値を使う
 	std::vector<std::pair<float, float>> slashWindows;//刀の軌跡を伸ばすフレームの区間(開始, 終了)//空なら出さない
+	bool isCameraShake = false;//当たったときにカメラを揺らすか
+	CharacterBase::ShakePower shakePower = CharacterBase::ShakePower::Low;//揺れの強さ
 
 };
 struct ComboInfo
@@ -136,6 +138,8 @@ enum ComboNodeType : int
 	Size = 31,//ここまでは必須の列
 	SlashStart = 31,//ここから後ろは省略できる
 	SlashEnd = 32,
+	IsCameraShake = 33,
+	ShakePowerCol = 34,//CharacterBase::ShakePowerと名前がぶつかるのでColを付ける
 
 };
 namespace ComboIndex
@@ -168,9 +172,11 @@ namespace ComboIndex
 	constexpr int AirSkillAttack1 = 19;//空中から直接出すスキル攻撃1//y軸の移動なし//次はスキル攻撃2へ
 	constexpr int GuardBreakAttack0 = 20;//ブレイク時の打ち上げ
 	constexpr int GuardBreakAttack1 = 21;//ブレイク時の切り上げ
-	constexpr int SkillWeakAttack1 = 22;//地上弱スキル(LB+X)1段目
-	constexpr int SkillWeakAttack2 = 23;
-	constexpr int SkillWeakAttack3 = 24;
+	constexpr int SkillLightAttack1 = 22;//地上弱スキル(LB+X)1段目
+	constexpr int SkillLightAttack2 = 23;
+	constexpr int SkillLightAttack3 = 24;
+	constexpr int ChargeAttack1 = 25;//チャージ攻撃(Y長押し)1段目
+	constexpr int ChargeAttack2 = 26;
 
 };
 

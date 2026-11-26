@@ -27,6 +27,7 @@ namespace
 
 	//スキル1,2の分身エフェクト(GhostDash/GhostDash3D)
 	constexpr float kGhostDashScale = 30.0f;//分身モデルは1/20で作っているので20倍して元の大きさに戻す
+	constexpr float kGhostLaunchScale = 20.0f;//スキル0の白い分身(1/20で作っている)
 	constexpr float kGhostDashForwardDistance = 0.0f;//プレイヤーの正面にずらす距離//SceneMainの確認用(F5/F6)では300
 
 	//スキル1用の攻撃判定
@@ -37,8 +38,8 @@ namespace
 	constexpr float kKessatsuPoseFrame = 13.0f;//分身の姿勢のフレーム
 }
 
-PlayerStateSkillAttack::PlayerStateSkillAttack(std::weak_ptr<Player> player):
-	PlayerStateAttackBase(player)
+PlayerStateSkillAttack::PlayerStateSkillAttack(std::weak_ptr<Player> player, AttackType type):
+	PlayerStateAttackBase(player), m_attackType(type)
 {
 }
 
@@ -60,7 +61,8 @@ void PlayerStateSkillAttack::Enter()
 	int currentComboIndex = SelectAnimInit();
 	const ComboNode& node = player->m_comboChain[currentComboIndex];
 	//スキル1,2は分身の姿勢で止めておく
-	if (IsSkillAttack1(currentComboIndex) || currentComboIndex == ComboIndex::SkillAttack2)
+	if (IsSkillAttack1(currentComboIndex) || currentComboIndex == ComboIndex::SkillAttack2 || currentComboIndex == ComboIndex::SkillLightAttack1
+		|| currentComboIndex == ComboIndex::SkillLightAttack2)
 	{
 		player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, kKessatsuPoseAnim, false, 0.0f, -1.0f, kKessatsuPoseFrame, 0.0f);
 	}
@@ -89,6 +91,8 @@ void PlayerStateSkillAttack::Enter()
 
 	//スキル1,2はモデルを消して、代わりに分身エフェクトを出す
 	PlayGhostEffect(currentComboIndex);
+	//スキル0は踏み込みに白い分身を残す
+	if (currentComboIndex == ComboIndex::SkillAttack0)PlayLaunchGhost();
 
 	//打ち上げから続くスキル1以外はカメラの注視点を通常に戻す
 	InitLaunchCamera(currentComboIndex);
@@ -139,6 +143,8 @@ void PlayerStateSkillAttack::Update()
 	{
 		//打ち上げが当たったら、カメラの注視点のYを打ち上げた敵に合わせる
 		UpdateLaunchCamera();
+		//白い分身の出る位置をついてこさせる
+		UpdateLaunchGhost();
 		if (nowFrame >= cancelFrame && player->m_comboInfo.isHit)
 		{
 			//ゲージは打ち上げに入るときに減らしているので、ここでは減らさない
@@ -231,7 +237,7 @@ void PlayerStateSkillAttack::Update()
 	{
 		m_isComboInputReserved = false;//コンボ入力の予約を解除する
 		//スキル攻撃の次の段へ//同じクラスなのでコンボ段数を引き継ぐ
-		if (m_nextAttackType == AttackType::SkillAttack)
+		if (m_nextAttackType == AttackType::SkillHeavyAttack)
 		{
 			//スキル攻撃2,3はここでスキルゲージを減らす
 			player->AddSkillGauge(-player->kSkillAttackGaugeCost);
@@ -271,7 +277,6 @@ void PlayerStateSkillAttack::Exit()
 			player->m_comboInfo.currentComboIndex = ComboIndex::None;//攻撃していない状態に戻す
 			player->m_isCameraFocusOverride = false;//カメラの注視点を通常に戻す
 		}
-		
 	}
 
 	//分身エフェクトを止めて、モデルを表示に戻す//次の段で必要ならEnterでまた消す
@@ -311,15 +316,15 @@ void PlayerStateSkillAttack::AttackInputCheck()
 	bool canInput = nowFrame >= inputStartFrame && nowFrame <= inputEndFrame;//コンボ入力受付時間内かどうか
 	if (!canInput)return;//コンボ入力受付時間外なら、ここで処理を終える
 
-	//スキル攻撃の次の段
-	if (input.IsTriggered("LB"))
+	//スキル攻撃の次の段//弱スキルはLB+X、強スキルはLB+Y
+	if (input.IsPressed("LB") && input.IsTriggered(m_attackType == AttackType::SkillLightAttack ? "X" : "Y"))
 	{
 		//スキル攻撃ができるかどうか//ゲージは移行するときに減らす
 		if (!player->CanSkillAttack(false))return;
 		//弱攻撃ボタンでつながる次のコンボがあるか
 		if (currentNode.nextWeakAttack.empty())return;
 		m_nextComboIndex = currentNode.nextWeakAttack[0];//次のコンボ番号をセットする//今回は1つしかないので、0番目をセットする
-		m_nextAttackType = AttackType::SkillAttack;
+		m_nextAttackType = AttackType::SkillHeavyAttack;
 		m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
 	}
 	//強攻撃につなぐ//地上なら強攻撃1、空中なら空中強攻撃1(PlayerStateAttack側で選ぶ)
@@ -347,12 +352,37 @@ int PlayerStateSkillAttack::SelectAnimInit()
 	//スキル攻撃の次の段から来たとき以外(None、または他のステートの段数が残っていたとき)は、最初から始める
 	if (!IsSkillComboIndex(currentComboIndex))
 	{
-		//地上なら打ち上げ(スキル0)から、空中なら空中版のスキル攻撃1(y軸の移動なし)から
-		currentComboIndex = player->IsFloor() ? ComboIndex::SkillAttack0 : ComboIndex::AirSkillAttack1;
+		//スキル弱攻撃なら
+		if (m_attackType == AttackType::SkillLightAttack)
+		{
+			if (player->IsFloor())
+			{
+				currentComboIndex = ComboIndex::SkillLightAttack1;
+			}
+			else
+			{
+				currentComboIndex = ComboIndex::AirSkillAttack1;
+			}
+
+		}
+		else if (m_attackType == AttackType::SkillHeavyAttack)
+		{
+			//地上なら打ち上げ(スキル0)から、空中なら空中版のスキル攻撃1(y軸の移動なし)から
+			if (player->IsFloor())
+			{
+				currentComboIndex = ComboIndex::SkillAttack0;
+			}
+			else
+			{
+				currentComboIndex = ComboIndex::AirSkillAttack1;
+			}
+			
+		}
 		//現在のコンボの段数を更新する
 		player->m_comboInfo.currentComboIndex = currentComboIndex;
 		//前の攻撃(着地の衝撃など)で当たったフラグが残っていることがあるので戻す//残っていると突進しない
 		player->m_comboInfo.isHit = false;
+	
 	}
 	//空中でスキル攻撃をしたフラグを立てる(着地するまでもう一度スキルは出せない)
 	//地上にいる間はPlayer::Updateで毎フレームfalseに戻るので、打ち上げ後のスキル攻撃1に入ったときに立つ
@@ -369,7 +399,7 @@ void PlayerStateSkillAttack::StartNextSkill(int nextComboIndex)
 	player->m_comboInfo.currentComboIndex = nextComboIndex;//現在のコンボの段数を更新
 	player->m_comboInfo.isHit = false;
 	m_isComboTransition = true;//Exitでコンボ段数をリセットしないようにする
-	player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner));
+	player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner, m_attackType));
 }
 
 void PlayerStateSkillAttack::PlayGhostEffect(int comboIndex)
@@ -377,11 +407,14 @@ void PlayerStateSkillAttack::PlayGhostEffect(int comboIndex)
 	auto player = m_owner.lock();
 	if (!player) return;
 
-	//スキル1はGhostDash、スキル2はGhostDash3D、スキル3は落下中の分身//それ以外は分身を出さない
+	//スキル1はGhostDash、スキル2はGhostDash3D、スキル3は落下中の分身、弱スキル1〜3はGleamLight//それ以外は分身を出さない
 	AsyncData effectKey;
 	if (IsSkillAttack1(comboIndex))effectKey = AsyncData::DebugGhostDashEffect;
 	else if (comboIndex == ComboIndex::SkillAttack2)effectKey = AsyncData::DebugGhostDash3DEffect;
 	else if (comboIndex == ComboIndex::SkillAttack3)effectKey = AsyncData::GhostSkill3FallEffect;
+	else if (comboIndex == ComboIndex::SkillLightAttack1)effectKey = AsyncData::DebugGleamLight1Effect;
+	else if (comboIndex == ComboIndex::SkillLightAttack2)effectKey = AsyncData::DebugGleamLight2Effect;
+	else if (comboIndex == ComboIndex::SkillLightAttack3)effectKey = AsyncData::DebugGleamLight3Effect;
 	else return;
 
 	//分身エフェクトが出ている間はモデルを描画しない
@@ -407,8 +440,31 @@ void PlayerStateSkillAttack::UpdateGhostEffect()
 		SetRotationPlayingEffekseer3DEffect(m_ghostEffectHandle, 0.0f, player->m_rotAngleY + DX_PI_F, 0.0f);
 		return;
 	}
+	//弱スキル3(GleamLight3)はゲームでは逆を向くので、180度ずらす//弱1,2は強スキルの分身と同じ向き
+	if (player->m_comboInfo.currentComboIndex == ComboIndex::SkillLightAttack3)
+	{
+		SetRotationPlayingEffekseer3DEffect(m_ghostEffectHandle, 0.0f, atan2f(forward.x, forward.z) + DX_PI_F, 0.0f);
+		return;
+	}
 	//プレイヤーと同じ向きにする
 	SetRotationPlayingEffekseer3DEffect(m_ghostEffectHandle, 0.0f, atan2f(forward.x, forward.z), 0.0f);
+}
+
+void PlayerStateSkillAttack::PlayLaunchGhost()
+{
+	m_launchGhostHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(AsyncData::GhostLaunchEffect));
+	SetScalePlayingEffekseer3DEffect(m_launchGhostHandle, kGhostLaunchScale, kGhostLaunchScale, kGhostLaunchScale);
+	UpdateLaunchGhost();
+}
+
+void PlayerStateSkillAttack::UpdateLaunchGhost()
+{
+	if (m_launchGhostHandle == -1)return;
+	auto player = m_owner.lock();
+	if (!player) return;
+	const Vector3 pos = player->m_rb.m_pos;
+	SetPosPlayingEffekseer3DEffect(m_launchGhostHandle, pos.x, pos.y, pos.z);
+	SetRotationPlayingEffekseer3DEffect(m_launchGhostHandle, 0.0f, player->m_rotAngleY, 0.0f);
 }
 
 void PlayerStateSkillAttack::LandFallSkill()
@@ -441,9 +497,10 @@ Vector3 PlayerStateSkillAttack::GetSkillEffectBasePos()
 	auto player = m_owner.lock();
 	if (!player) return Vector3();
 
-	//敵に合わせるのはスキル0,1だけ//それ以外はプレイヤーの位置
+	//敵に合わせるのはスキル0,1と弱スキル1,2だけ//それ以外はプレイヤーの位置
 	int comboIndex = player->m_comboInfo.currentComboIndex;
-	if (comboIndex != ComboIndex::SkillAttack0 && !IsSkillAttack1(comboIndex))return player->m_rb.m_pos;
+	const bool isLightGhost = comboIndex == ComboIndex::SkillLightAttack1 || comboIndex == ComboIndex::SkillLightAttack2;
+	if (comboIndex != ComboIndex::SkillAttack0 && !IsSkillAttack1(comboIndex) && !isLightGhost)return player->m_rb.m_pos;
 
 	//打ち上げ(スキル0)で当てた敵//いなければ攻撃の対象(ロックオン対象 or 内部ターゲット)
 	auto enemy = player->m_cameraFocusEnemy.lock();
@@ -559,7 +616,10 @@ bool PlayerStateSkillAttack::IsSkillComboIndex(int comboIndex)
 		comboIndex == ComboIndex::SkillAttack1 ||
 		comboIndex == ComboIndex::SkillAttack2 ||
 		comboIndex == ComboIndex::SkillAttack3 ||
-		comboIndex == ComboIndex::AirSkillAttack1;
+		comboIndex == ComboIndex::AirSkillAttack1 ||
+		comboIndex == ComboIndex::SkillLightAttack1 ||
+		comboIndex == ComboIndex::SkillLightAttack2 ||
+		comboIndex == ComboIndex::SkillLightAttack3;
 }
 
 bool PlayerStateSkillAttack::IsSkillAttack1(int comboIndex)

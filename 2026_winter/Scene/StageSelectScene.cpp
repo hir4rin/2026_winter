@@ -97,6 +97,7 @@ void StageSelectScene::NormalUpdate()
 	//Aで決定してフェードアウト
 	if (input.IsTriggered("A"))
 	{
+		m_menu.StartDecide();
 		m_fadeFrame = 0;
 		m_updateFunc = static_cast<UpdateFunc_t>(&StageSelectScene::FadeOutUpdate);
 		m_drawFunc = static_cast<DrawFunc_t>(&StageSelectScene::FadeOutDraw);

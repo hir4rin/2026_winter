@@ -438,7 +438,7 @@ void PlayerStateAttackBase::InpuctAttackSetUp()
 			.allTimeScaleFlag = true,
 			.kAttackColOffset = kAttackColOffset,
 			.isKirimomi = true,
-			.attackType = node.attackType == AttackType::SkillAttack ? AttackType::ImpactSkillAttack : AttackType::ImpactAttack,
+			.attackType = node.attackType == AttackType::SkillHeavyAttack ? AttackType::ImpactSkillAttack : AttackType::ImpactAttack,
 			.isLastHit = true,
 			.comboIndex = player->m_comboInfo.currentComboIndex
 		};
@@ -478,7 +478,9 @@ void PlayerStateAttackBase::CreateAttackCol(const ComboNode& node)
 	.kAttackColOffset = kAttackColOffset,
 	.isKirimomi = node.isKirimomi,
 	.attackType = node.attackType,
-	.comboIndex = player->m_comboInfo.currentComboIndex
+	.comboIndex = player->m_comboInfo.currentComboIndex,
+	.isCameraShake = node.isCameraShake,
+	.shakePower = node.shakePower
 	};
 
 	m_attackCol = std::make_shared<AttackCol>(m_owner, player->m_attackData);

@@ -70,9 +70,29 @@ namespace
 	constexpr float kGuideIconSize = 24.0f;
 
 	//選択帯のアニメ
-	constexpr int kSelectAnimFrame = 10;
-	constexpr int kFlickerFrame = 4;
 	constexpr float kGlowPulseSpeed = 0.08f;
+	//前の項目から滑ってくる
+	constexpr int kSlideFrame = 7;
+	//文字が飛び出す
+	constexpr float kTextPopX = 8.0f;
+	constexpr int kTextPopFrame = 10;
+	constexpr int kTextBackFrame = 8;
+	constexpr float kTextPopBack = 2.2f;//イーズアウトバックの戻りの強さ
+	//バーを横切る光の帯
+	constexpr int kSheenPeriod = 90;
+	constexpr int kSheenFrame = 24;
+	constexpr int kSheenPhase = 60;//選んでから最初に流れるまでを短くする
+	constexpr float kSheenHalfWidth = 30.0f;
+	constexpr float kSheenSlant = 12.0f;
+	constexpr float kSheenOut = 60.0f;//バーの外から入って外へ抜ける
+	constexpr int kSheenAlpha = 140;
+	//決定
+	constexpr int kDecideFlashFrame = 4;
+	constexpr int kDecideOutStart = 5;
+	constexpr int kDecideOutFrame = 14;
+	constexpr float kDecideOutX = 260.0f;
+	constexpr int kDecideDimFrame = 10;
+	constexpr float kDecideDimRate = 0.75f;
 }
 
 MenuUI::~MenuUI()
@@ -118,13 +138,47 @@ void MenuUI::Update()
 {
 	m_frame++;
 	m_selectFrame++;
+	if (m_decideFrame >= 0) m_decideFrame++;
 }
 
 void MenuUI::SetCursor(int cursor)
 {
 	if (cursor == m_cursor) return;
+	m_prevCursor = m_cursor;
 	m_cursor = cursor;
 	m_selectFrame = 0;
+}
+
+void MenuUI::StartDecide()
+{
+	if (m_decideFrame >= 0) return;
+	m_decideFrame = 0;
+}
+
+float MenuUI::ItemTextOffsetX(int index) const
+{
+	if (index == m_cursor)
+	{
+		const float t = (std::min)(1.0f, static_cast<float>(m_selectFrame) / kTextPopFrame) - 1.0f;
+		return kTextPopX * (1.0f + (kTextPopBack + 1.0f) * t * t * t + kTextPopBack * t * t);
+	}
+	if (index == m_prevCursor)
+	{
+		const float t = (std::min)(1.0f, static_cast<float>(m_selectFrame) / kTextBackFrame);
+		const float inv = 1.0f - t;
+		return kTextPopX * inv * inv * inv;
+	}
+	return 0.0f;
+}
+
+float MenuUI::SelectBarY() const
+{
+	const float y = kItemStartY + kItemPitch * m_cursor;
+	if (m_prevCursor < 0) return y;
+	const float prevY = kItemStartY + kItemPitch * m_prevCursor;
+	const float t = (std::min)(1.0f, static_cast<float>(m_selectFrame) / kSlideFrame);
+	const float inv = 1.0f - t;
+	return y + (prevY - y) * inv * inv * inv;
 }
 
 void MenuUI::SetDetail(const std::string& header, const std::string& name, const std::string& text)
@@ -205,46 +259,75 @@ void MenuUI::DrawListPanel()
 	DrawBox(ToScreenX(kListHeaderX1), ToScreenY(kListHeaderY1), ToScreenX(kListHeaderX2), ToScreenY(kListHeaderY2), GetColor(205, 40, 62), TRUE);
 	DrawStringToHandle(ToScreenX(kListHeaderX1 + 14.0f), ToScreenY(kListHeaderY1 + 4.0f), m_listHeader.c_str(), GetColor(255, 215, 220), m_smallFont);
 
+	//決定したら選んでいない項目を暗くする
+	float dim = 1.0f;
+	if (m_decideFrame >= 0)
+	{
+		const float t = (std::min)(1.0f, static_cast<float>(m_decideFrame) / kDecideDimFrame);
+		dim = 1.0f - kDecideDimRate * (1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t));
+	}
+
 	for (int i = 0; i < static_cast<int>(m_items.size()); ++i)
 	{
+		if (i == m_cursor) continue;
 		const float y = kItemStartY + kItemPitch * i;
-		const bool isSelected = (i == m_cursor);
-		if (isSelected)
-		{
-			DrawSelectBar(kSelectX1, y, kSelectX2 - kSelectX1, kItemHeight);
-		}
-		else
-		{
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(200));
-			SetDrawBright(kRedR, kRedG, kRedB);
-			DrawExtendGraph(ToScreenX(kItemBracketX), ToScreenY(y), ToScreenX(kItemBracketX + 12.0f), ToScreenY(y + kItemHeight), m_bracketHandle, TRUE);
-			SetDrawBright(255, 255, 255);
-		}
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
-		const unsigned int color = isSelected ? GetColor(255, 236, 238) : red;
-		DrawStringToHandle(ToScreenX(kItemX), ToScreenY(y + 6.0f), m_items[i].c_str(), color, m_itemFont);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(static_cast<int>(200 * dim)));
+		SetDrawBright(kRedR, kRedG, kRedB);
+		DrawExtendGraph(ToScreenX(kItemBracketX), ToScreenY(y), ToScreenX(kItemBracketX + 12.0f), ToScreenY(y + kItemHeight), m_bracketHandle, TRUE);
+		SetDrawBright(255, 255, 255);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(static_cast<int>(255 * dim)));
+		DrawStringToHandle(ToScreenX(kItemX + ItemTextOffsetX(i)), ToScreenY(y + 6.0f), m_items[i].c_str(), red, m_itemFont);
+	}
+
+	if (m_cursor < 0 || m_cursor >= static_cast<int>(m_items.size())) return;
+
+	//決定: 白く光ってから右へ抜ける
+	float flash = 0.0f;
+	float outX = 0.0f;
+	const float alphaBackup = m_alpha;
+	if (m_decideFrame >= 0)
+	{
+		flash = (m_decideFrame < kDecideFlashFrame)
+			? 1.0f - static_cast<float>(m_decideFrame) / 6.0f
+			: (std::max)(0.0f, 0.35f - static_cast<float>(m_decideFrame - kDecideFlashFrame) / 20.0f);
+		const float t = std::clamp(static_cast<float>(m_decideFrame - kDecideOutStart) / kDecideOutFrame, 0.0f, 1.0f);
+		const float out = 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t);
+		outX = kDecideOutX * out;
+		m_alpha *= 1.0f - out;
+		//パネルの外へ出た分は描かない
+		SetDrawArea(ToScreenX(kListX1 + 4.0f), ToScreenY(kListY1), ToScreenX(kListX2 - 4.0f), ToScreenY(kListY2));
+	}
+
+	const float barY = SelectBarY();
+	DrawSelectBar(kSelectX1 + outX, barY, kSelectX2 - kSelectX1, kItemHeight);
+	if (flash > 0.0f)
+	{
+		SetDrawBlendMode(DX_BLENDMODE_ADD, Alpha(static_cast<int>(255 * flash)));
+		DrawBox(ToScreenX(kSelectX1 + outX), ToScreenY(barY), ToScreenX(kSelectX2 + outX), ToScreenY(barY + kItemHeight), GetColor(255, 220, 228), TRUE);
+	}
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
+	DrawStringToHandle(ToScreenX(kItemX + ItemTextOffsetX(m_cursor) + outX), ToScreenY(barY + 6.0f), m_items[m_cursor].c_str(), GetColor(255, 236, 238), m_itemFont);
+
+	if (m_decideFrame >= 0)
+	{
+		m_alpha = alphaBackup;
+		SetDrawAreaFull();
 	}
 }
 
 void MenuUI::DrawSelectBar(float x, float y, float w, float h)
 {
-	const float t = (std::min)(1.0f, static_cast<float>(m_selectFrame) / kSelectAnimFrame);
-	const float ease = 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t);
-	const float barW = w * ease;
-	//出始めはちらつかせる
-	const float flicker = (m_selectFrame < kFlickerFrame && (m_selectFrame % 2) == 1) ? 0.4f : 1.0f;
-
 	//光(加算)
 	const float pulse = 0.5f + 0.5f * std::sin(m_frame * kGlowPulseSpeed);
-	SetDrawBlendMode(DX_BLENDMODE_ADD, Alpha(static_cast<int>((35 + 30 * pulse) * flicker)));
+	SetDrawBlendMode(DX_BLENDMODE_ADD, Alpha(static_cast<int>(35 + 30 * pulse)));
 	SetDrawBright(kRedR, kRedG / 2, kRedB / 2);
-	DrawExtendGraph(ToScreenX(x - 10.0f), ToScreenY(y - 8.0f), ToScreenX(x + barW + 10.0f), ToScreenY(y + h + 8.0f), m_glowHandle, TRUE);
+	DrawExtendGraph(ToScreenX(x - 10.0f), ToScreenY(y - 8.0f), ToScreenX(x + w + 10.0f), ToScreenY(y + h + 8.0f), m_glowHandle, TRUE);
 
 	//ベース(左が濃い向きに反転して描く)
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(static_cast<int>(220 * flicker)));
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(220));
 	SetDrawBright(kRedR, kRedG, kRedB);
 	const float sx1 = static_cast<float>(ToScreenX(x));
-	const float sx2 = static_cast<float>(ToScreenX(x + barW));
+	const float sx2 = static_cast<float>(ToScreenX(x + w));
 	const float sy1 = static_cast<float>(ToScreenY(y));
 	const float sy2 = static_cast<float>(ToScreenY(y + h));
 	DrawModiGraphF(sx2, sy1, sx1, sy1, sx1, sy2, sx2, sy2, m_selectBaseHandle, TRUE);
@@ -252,11 +335,34 @@ void MenuUI::DrawSelectBar(float x, float y, float w, float h)
 
 	//網点を暗く重ねる
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
-	DrawTiled(m_halftoneHandle, x, y, x + barW, y + h, 6.0f, 0.0f, 0.0f, 40, 0, 10, 90);
+	DrawTiled(m_halftoneHandle, x, y, x + w, y + h, 6.0f, 0.0f, 0.0f, 40, 0, 10, 90);
 
 	//左端の明るい縦線
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(static_cast<int>(255 * flicker)));
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha(255));
 	DrawBox(ToScreenX(x), ToScreenY(y), ToScreenX(x + 3.0f), ToScreenY(y + h), GetColor(255, 90, 110), TRUE);
+
+	//斜めの光の帯が左から右へ横切る
+	const int sheenF = (m_frame + kSheenPhase) % kSheenPeriod;
+	if (sheenF < kSheenFrame)
+	{
+		const float p = static_cast<float>(sheenF) / kSheenFrame;
+		const float cx = x - kSheenOut + (w + kSheenOut * 2.0f) * p;
+		RECT area;
+		GetDrawArea(&area);
+		SetDrawArea((std::max)(static_cast<int>(area.left), ToScreenX(x)), (std::max)(static_cast<int>(area.top), ToScreenY(y)),
+			(std::min)(static_cast<int>(area.right), ToScreenX(x + w)), (std::min)(static_cast<int>(area.bottom), ToScreenY(y + h)));
+		SetDrawBlendMode(DX_BLENDMODE_ADD, Alpha(kSheenAlpha));
+		SetDrawBright(255, 190, 200);
+		const float x1 = cx - kSheenHalfWidth, x2 = cx + kSheenHalfWidth;
+		DrawModiGraphF(
+			static_cast<float>(ToScreenX(x1 + kSheenSlant)), static_cast<float>(ToScreenY(y)),
+			static_cast<float>(ToScreenX(x2 + kSheenSlant)), static_cast<float>(ToScreenY(y)),
+			static_cast<float>(ToScreenX(x2 - kSheenSlant)), static_cast<float>(ToScreenY(y + h)),
+			static_cast<float>(ToScreenX(x1 - kSheenSlant)), static_cast<float>(ToScreenY(y + h)),
+			m_glowHandle, TRUE);
+		SetDrawBright(255, 255, 255);
+		SetDrawArea(area.left, area.top, area.right, area.bottom);
+	}
 }
 
 void MenuUI::DrawDetailPanel()

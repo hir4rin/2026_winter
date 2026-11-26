@@ -80,6 +80,7 @@ enum class AsyncData : int
 	DebugGleamLight3Effect,
 	GhostSkill3FallEffect,//スキル3の落下中の分身と残像//プレイヤーに追従させる
 	GhostSkill3ImpactEffect,//スキル3の着地の分身と閃光
+	GhostLaunchEffect,//スキル0(打ち上げ)の白い分身
 	BloodWingEffect,//必殺技状態の黒い片翼//必殺技状態の間プレイヤーの背中に追従させる
 	BloodWingActivateEffect,//必殺技状態に入るときの演出//血を背中に吸い込んで翼として弾ける
 	PlayerUltWeaponModel,//必殺技(PlayerStateUlt)中だけ持たせる刀身の長い刀	//敵が斬られたときの血しぶき(3パターンからランダムで再生する)
@@ -104,6 +105,26 @@ enum class AsyncData : int
 	ChargeChargeEffect,//溜め攻撃の溜め(赤黒の瘴気)
 	ChargeSlash1Effect,//溜め攻撃の1段目
 	ChargeSlash2Effect,//溜め攻撃の2段目
+	ChargeChargingEffect,//溜め中(吸い込む)
+	ChargeDoneEffect,//溜まった瞬間
+	ChargeChargedEffect,//溜まった後
+	//溜め中のエフェクトの案(F11 で切り替える)//並びは kChargeHoldNames と同じ
+	ChargeHoldA2Effect,
+	ChargeHoldA3Effect,
+	ChargeHoldA4Effect,
+	ChargeHoldA5Effect,
+	ChargeHoldCEffect,
+	ChargeHoldDEffect,
+	ChargeHoldD2Effect,
+	ChargeHoldD3Effect,
+	ChargeHoldD4Effect,
+	ChargeHoldD5Effect,
+	ChargeHoldEEffect,
+	ChargeHoldFEffect,
+	ChargeHoldHEffect,
+	ChargeHoldJEffect,
+	ChargeHoldKEffect,
+	ChargeHoldLEffect,
 	Goal,
 };
 
@@ -151,6 +172,13 @@ public:
 	void LoadStage(StageType type);
 	int GetHandle(AsyncData key) { return m_asyncHandles[key]; }
 
+	//溜め中のエフェクトの案の切り替え(確認用)//0 は今の A(赤黒の瘴気)
+	static constexpr int kChargeHoldTypeNum = 17;
+	void CycleChargeHoldType() { m_chargeHoldType = (m_chargeHoldType + 1) % kChargeHoldTypeNum; }
+	int GetChargeHoldType() const { return m_chargeHoldType; }
+	const char* GetChargeHoldName() const;
+	AsyncData GetChargeHoldEffectKey() const;
+
 	void Update();
 	//バトルマネージャー
 	void SetBattleMgr(std::weak_ptr<BattleManager> mgr) { m_battleMgr = mgr; }
@@ -169,6 +197,8 @@ private:
 	std::weak_ptr<BattleManager> m_battleMgr;//バトルマネージャー
 
 	std::unordered_map<AsyncData, int> m_asyncHandles; //非同期ロードのハンドルを保持するマップ
+
+	int m_chargeHoldType = 0;//溜め中のエフェクトの案
 
 	//ステージ用に読むもの(まだ読んでいなければ読み、ReleaseStage で消す)
 	void LoadStageModel(AsyncData key, const std::string& path);

@@ -54,6 +54,7 @@ namespace
 	const std::string kDebugGleamLight3EffectPath = "data/Effect/Skill/GleamLight3.efk";
 	const std::string kGhostSkill3FallEffectPath = "data/Effect/Skill/GhostSkill3_Fall.efk";
 	const std::string kGhostSkill3ImpactEffectPath = "data/Effect/Skill/GhostSkill3_Impact.efk";
+	const std::string kGhostLaunchEffectPath = "data/Effect/Skill/GhostLaunch.efk";
 	const std::string kBloodWingEffectPath = "data/Effect/Skill/BloodWing.efk";//
 	const std::string kBloodWingActivateEffectPath = "data/Effect/Skill/BloodWingActivate.efk";
 
@@ -86,6 +87,33 @@ namespace
 	const std::string kChargeEffectPath = "data/Effect/ChargeAttack/Charge.efk";
 	const std::string kChargeSlash1EffectPath = "data/Effect/ChargeAttack/Slash1.efk";
 	const std::string kChargeSlash2EffectPath = "data/Effect/ChargeAttack/Slash2.efk";
+	const std::string kChargeChargingEffectPath = "data/Effect/ChargeHold/W1_Charging.efk";
+	const std::string kChargeDoneEffectPath = "data/Effect/ChargeHold/W1_Done.efk";
+	const std::string kChargeChargedEffectPath = "data/Effect/ChargeHold/W1_Charged.efk";
+	//溜め中のエフェクトの案//AsyncData::ChargeHoldA2Effect からの並び
+	const char* const kChargeHoldPaths[] = {
+		"data/Effect/ChargeHold/A2_Hold.efk",
+		"data/Effect/ChargeHold/A3_Hold.efk",
+		"data/Effect/ChargeHold/A4_Hold.efk",
+		"data/Effect/ChargeHold/A5_Hold.efk",
+		"data/Effect/ChargeHold/C_Hold.efk",
+		"data/Effect/ChargeHold/D_Hold.efk",
+		"data/Effect/ChargeHold/D2_Hold.efk",
+		"data/Effect/ChargeHold/D3_Hold.efk",
+		"data/Effect/ChargeHold/D4_Hold.efk",
+		"data/Effect/ChargeHold/D5_Hold.efk",
+		"data/Effect/ChargeHold/E_Hold.efk",
+		"data/Effect/ChargeHold/F_Hold.efk",
+		"data/Effect/ChargeHold/H_Hold.efk",
+		"data/Effect/ChargeHold/J_Hold.efk",
+		"data/Effect/ChargeHold/K_Hold.efk",
+		"data/Effect/ChargeHold/L_Hold.efk",
+	};
+	//F11 で切り替える案の名前//0 は今の溜め(Charge.efk)
+	const char* const kChargeHoldNames[] = {
+		"A 赤黒の瘴気(今)", "A2 吸う→噴く", "A3 刃が黒く染まる", "A4 煙の色が変わる", "A5 吸う＋染まる", "C 風を呑む", "D 紅の闘気(火の粉が集まる)", "D2 黒い炎→紅に着火", "D3 だんだん大きく", "D4 刀から燃え移る", "D5 鼓動", "E 赤い雷", "F 重圧・地割れ",
+		"H 鬼の眼光", "J 残像が重なる", "K 動画の型(青→赤)", "L 白銀→紅",
+	};
 
 	//Kingmechのミサイルの雨
 	const std::string kKingmechMissileWarningEffectPath = "data/Effect/Kingmech/MissileWarning.efk";
@@ -125,6 +153,7 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::DebugGleamLight3Effect] = LoadEffekseerEffect(kDebugGleamLight3EffectPath.c_str());
 	m_asyncHandles[AsyncData::GhostSkill3FallEffect] = LoadEffekseerEffect(kGhostSkill3FallEffectPath.c_str());
 	m_asyncHandles[AsyncData::GhostSkill3ImpactEffect] = LoadEffekseerEffect(kGhostSkill3ImpactEffectPath.c_str());
+	m_asyncHandles[AsyncData::GhostLaunchEffect] = LoadEffekseerEffect(kGhostLaunchEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodWingEffect] = LoadEffekseerEffect(kBloodWingEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodWingActivateEffect] = LoadEffekseerEffect(kBloodWingActivateEffectPath.c_str());
 	m_asyncHandles[AsyncData::BloodHitEffect] = LoadEffekseerEffect(kBloodHitEffectPath.c_str());
@@ -148,6 +177,24 @@ void System::LoadCommon()
 	m_asyncHandles[AsyncData::ChargeChargeEffect] = LoadEffekseerEffect(kChargeEffectPath.c_str());
 	m_asyncHandles[AsyncData::ChargeSlash1Effect] = LoadEffekseerEffect(kChargeSlash1EffectPath.c_str());
 	m_asyncHandles[AsyncData::ChargeSlash2Effect] = LoadEffekseerEffect(kChargeSlash2EffectPath.c_str());
+	m_asyncHandles[AsyncData::ChargeChargingEffect] = LoadEffekseerEffect(kChargeChargingEffectPath.c_str());
+	m_asyncHandles[AsyncData::ChargeDoneEffect] = LoadEffekseerEffect(kChargeDoneEffectPath.c_str());
+	m_asyncHandles[AsyncData::ChargeChargedEffect] = LoadEffekseerEffect(kChargeChargedEffectPath.c_str());
+	for (int i = 0; i < static_cast<int>(std::size(kChargeHoldPaths)); ++i)
+	{
+		m_asyncHandles[static_cast<AsyncData>(static_cast<int>(AsyncData::ChargeHoldA2Effect) + i)] = LoadEffekseerEffect(kChargeHoldPaths[i]);
+	}
+}
+
+const char* System::GetChargeHoldName() const
+{
+	return kChargeHoldNames[m_chargeHoldType];
+}
+
+AsyncData System::GetChargeHoldEffectKey() const
+{
+	if (m_chargeHoldType == 0) return AsyncData::ChargeChargeEffect;
+	return static_cast<AsyncData>(static_cast<int>(AsyncData::ChargeHoldA2Effect) + m_chargeHoldType - 1);
 }
 
 void System::LoadStage(StageType type)
@@ -341,6 +388,7 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::DebugGleamLight3Effect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3FallEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostSkill3ImpactEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::GhostLaunchEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodWingEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodWingActivateEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::BloodHitEffect]);
@@ -364,6 +412,13 @@ void System::Terminate()
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeChargeEffect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeSlash1Effect]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeSlash2Effect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeChargingEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeDoneEffect]);
+	DeleteEffekseerEffect(m_asyncHandles[AsyncData::ChargeChargedEffect]);
+	for (int i = 0; i < static_cast<int>(std::size(kChargeHoldPaths)); ++i)
+	{
+		DeleteEffekseerEffect(m_asyncHandles[static_cast<AsyncData>(static_cast<int>(AsyncData::ChargeHoldA2Effect) + i)]);
+	}
 
 }
 

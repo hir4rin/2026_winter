@@ -185,6 +185,7 @@
     <ClCompile Include="UI\Title\TitleBackUI.cpp" />
     <ClCompile Include="UI\Title\TitleLogoUI.cpp" />
     <ClCompile Include="UI\Title\TitleFlashUI.cpp" />
+    <ClCompile Include="UI\Title\TitleEmberUI.cpp" />
     <ClCompile Include="UI\Title\TitlePressUI.cpp" />
     <ClCompile Include="Stage\TunnelEnding.cpp" />
     <ClCompile Include="Stage\TutorialFinale.cpp" />
@@ -404,6 +405,7 @@
     <ClInclude Include="UI\Title\TitleBackUI.h" />
     <ClInclude Include="UI\Title\TitleLogoUI.h" />
     <ClInclude Include="UI\Title\TitleFlashUI.h" />
+    <ClInclude Include="UI\Title\TitleEmberUI.h" />
     <ClInclude Include="UI\Title\TitlePressUI.h" />
     <ClInclude Include="Stage\TunnelEnding.h" />
     <ClInclude Include="Stage\TutorialFinale.h" />

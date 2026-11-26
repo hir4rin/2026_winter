@@ -33,6 +33,13 @@ public:
 		B,
 	};
 
+	//ヒット時のカメラの揺れの強さ
+	enum class ShakePower
+	{
+		Low,
+		High,
+	};
+
 	//攻撃パラメーター
 	struct AttackData
 	{
@@ -50,6 +57,8 @@ public:
 		AttackType attackType = AttackType::None;//弱攻撃か強攻撃か//プレイヤーの通常攻撃以外はNone
 		bool isLastHit = false;//最後の区間か
 		int comboIndex = -1;//コンボの段数
+		bool isCameraShake = false;//当たったときにカメラを揺らすか
+		ShakePower shakePower = ShakePower::Low;//揺れの強さ
 	};
 
 	//被ダメ情報

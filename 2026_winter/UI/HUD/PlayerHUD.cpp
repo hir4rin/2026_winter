@@ -18,6 +18,8 @@ namespace
 	const char* const kUltMaxPath = "data/UI/HUD/UltGauge_circle.png";
 	const char* const kUltGlowPath = "data/UI/HUD/hud_ultglow.png";
 	const char* const kUltSparkPath = "data/UI/HUD/hud_spark.png";
+	const char* const kMarkOnPath = "data/UI/HUD/hud_markon.png";
+	const char* const kMarkOffPath = "data/UI/HUD/hud_markoff.png";
 
 	constexpr float kPi = 3.14159265f;
 
@@ -35,7 +37,7 @@ namespace
 	constexpr float kRadius = 86.0f;
 	constexpr float kArcStart = -kPi * 0.62f;
 	constexpr float kArcEnd = -kPi * 0.12f;
-	constexpr float kHpEndX = 590.0f;
+	constexpr float kHpEndX = 572.0f;
 	constexpr float kBandHalf = 10.0f;//切り取る幅の半分(帯は±6)
 
 	//スキルの帯(HPの直線の下)
@@ -48,9 +50,10 @@ namespace
 	//必殺技ゲージ
 	constexpr float kUltX = 90.0f;
 	constexpr float kUltY = 90.0f;
-	constexpr float kUltRingScale = 150.0f / 910.0f;//輪の直径150
-	constexpr float kUltBaseScale = 115.0f / 453.0f;//紋章の直径115
-	constexpr float kUltMaxScale = 160.0f / 436.0f;//満タンの光の直径160
+	//画像は描く大きさに縮めてある(tools/HudGen/ShrinkUltParts.ps1)
+	constexpr float kUltRingScale = 1.0f;//輪の直径150
+	constexpr float kUltBaseScale = 1.0f;//紋章の直径115
+	constexpr float kUltMaxScale = 1.0f;//満タンの光の直径160
 	constexpr int kUltEmptyBright = 25;//たまっていない所の明るさ
 	constexpr int kUltBrightAdd = 204;//たまった所に足す明るさ(255で2倍)
 	constexpr float kUltGlowMin = 150.0f;//にじむ光の強さ(呼吸の弱い時〜強い時)
@@ -59,7 +62,7 @@ namespace
 	constexpr float kUltGlowOverMax = 90.0f;
 	constexpr float kUltGlowSpeed = 0.05f;
 	constexpr float kUltRopeRadius = 63.0f;//縄の半径(先の光を置く所)
-	constexpr float kUltSparkScale = 24.0f / 128.0f;//先の光の直径24
+	constexpr float kUltSparkScale = 1.0f;//先の光の直径24
 	constexpr float kUltSparkSpeed = 0.23f;
 
 	constexpr float kHpFollowRate = 0.25f;
@@ -73,9 +76,7 @@ namespace
 	constexpr float kUseFlashDecay = 0.067f;
 
 	//象嵌の菱形(HPの1/4ごと)
-	constexpr float kMarkHalfW = 4.0f;
-	constexpr float kMarkHalfH = 6.0f;
-	constexpr float kMarkEdge = 1.2f;
+	constexpr float kMarkScale = 0.25f;//画像は設計座標の4倍
 
 	//房(支点はHPの右端の少し手前の下)
 	constexpr float kTasselPivotX = -10.0f;
@@ -122,6 +123,8 @@ PlayerHUD::~PlayerHUD()
 	DeleteGraph(m_ultMaxHandle);
 	DeleteGraph(m_ultGlowHandle);
 	DeleteGraph(m_ultSparkHandle);
+	DeleteGraph(m_markOnHandle);
+	DeleteGraph(m_markOffHandle);
 }
 
 void PlayerHUD::Init()
@@ -138,6 +141,8 @@ void PlayerHUD::Init()
 	m_ultMaxHandle = LoadGraph(kUltMaxPath);
 	m_ultGlowHandle = LoadGraph(kUltGlowPath);
 	m_ultSparkHandle = LoadGraph(kUltSparkPath);
+	m_markOnHandle = LoadGraph(kMarkOnPath);
+	m_markOffHandle = LoadGraph(kMarkOffPath);
 	SetUsePremulAlphaConvertLoad(FALSE);
 	m_isVisible = true;
 
@@ -351,20 +356,16 @@ void PlayerHUD::DrawHp()
 		SetDrawBlendMode(DX_BLENDMODE_PMA_ALPHA, 255);
 	}
 
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	const float s = Game::GetScale();
 	//象嵌の菱形(HPがそこより減ると暗くなる)
 	for (float rate : { 0.25f, 0.5f, 0.75f })
 	{
 		const PathPoint p = GetPathPoint(rate);
 		const VECTOR c = ToScreen(p.x, p.y);
-		const float w = kMarkHalfW * s;
-		const float h = kMarkHalfH * s;
-		const float e = kMarkEdge * s;
-		DrawQuadrangleAA(c.x, c.y - h - e, c.x + w + e, c.y, c.x, c.y + h + e, c.x - w - e, c.y, GetColor(6, 4, 6), TRUE);
-		const unsigned int col = (m_dispHpRate >= rate) ? GetColor(232, 236, 242) : GetColor(74, 78, 88);
-		DrawQuadrangleAA(c.x, c.y - h, c.x + w, c.y, c.x, c.y + h, c.x - w, c.y, col, TRUE);
+		const int handle = (m_dispHpRate >= rate) ? m_markOnHandle : m_markOffHandle;
+		DrawRotaGraphF(c.x, c.y, kMarkScale * s, 0.0, handle, TRUE);
 	}
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	//今のHPの先
 	if (m_dispHpRate > 0.0f && m_dispHpRate < 1.0f)
 	{

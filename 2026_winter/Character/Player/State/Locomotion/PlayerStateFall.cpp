@@ -100,15 +100,15 @@ void PlayerStateFall::Update()
 		return;
 	}
 
-	//スキル攻撃
-	if (input.IsTriggered("LB"))
+	//スキル攻撃//LB+Xで弱スキル、LB+Yで強スキル
+	if (input.IsPressed("LB") && (input.IsTriggered("X") || input.IsTriggered("Y")))
 	{
 		//初めての攻撃だったら
 		if (!player->m_comboInfo.isAirSkillAttack)
 		{
 			if (player->CanSkillAttack())
 			{
-				player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner));
+				player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner, input.IsTriggered("X") ? AttackType::SkillLightAttack : AttackType::SkillHeavyAttack));
 				return;
 			}
 		}

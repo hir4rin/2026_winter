@@ -150,7 +150,7 @@ void PlayerStateAttack::Update()
 			player->AddSkillGauge(-player->kSkillAttackGaugeCost);
 
 			//スキル攻撃に移行する
-			player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner));
+			player->ChangeState(std::make_shared<PlayerStateSkillAttack>(m_owner, m_reservedSkillType));
 			return;
 		}
 
@@ -383,8 +383,8 @@ void PlayerStateAttack::AttackInputCheck()
 	bool isPlayerAir = !player->IsFloor();//空中にいるかどうか
 	bool WasSkillAirAttack = player->m_comboInfo.isAirSkillAttack;//空中でスキル攻撃をしたかどうか
 
-	//スキル攻撃//コンボを終了して、PlayerStateSkillAttackに移行する
-	if (input.IsTriggered("LB"))
+	//スキル攻撃//コンボを終了して、PlayerStateSkillAttackに移行する//LB+Xで弱スキル、LB+Yで強スキル
+	if (input.IsPressed("LB") && (input.IsTriggered("X") || input.IsTriggered("Y")))
 	{
 		//スキル攻撃ができるかどうか//ゲージは移行するときに減らす
 		if (player->CanSkillAttack(false))
@@ -394,6 +394,7 @@ void PlayerStateAttack::AttackInputCheck()
 
 			m_isComboInputReserved = true;//コンボ入力が予約されているフラグを立てる
 			m_isSkillAttackReserved = true;//スキル攻撃の予約がされているフラグを立てる
+			m_reservedSkillType = input.IsTriggered("X") ? AttackType::SkillLightAttack : AttackType::SkillHeavyAttack;
 		}
 	}
 	//強攻撃

@@ -447,7 +447,7 @@ void BossEnemyPirateR1::OnDamage(Collider& other, AttackData& data)
 	if (std::dynamic_pointer_cast<BossGuard>(m_currentState))
 	{
 		//もし、スキル攻撃や必殺技が当たったらそのままダメージ処理へ進む
-		if (data.attackType == AttackType::SkillAttack || data.attackType == AttackType::UltAttack)
+		if (data.attackType == AttackType::SkillHeavyAttack || data.attackType == AttackType::SkillLightAttack || data.attackType == AttackType::UltAttack)
 		{
 			//そのままダメージ処理
 		}

@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>選択の動きモック</title>
+<style>
+  :root { --bg:#0b060c; --fg:#f2dde0; --red:#e62d46; --dim:#9a6a72; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"游ゴシック","Yu Gothic",sans-serif; }
+  .wrap { max-width:1280px; margin:0 auto; padding:16px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  p.note { margin:0 0 10px; color:var(--dim); font-size:13px; line-height:1.6; }
+  .row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; align-items:center; font-size:13px; }
+  .row .lbl { color:var(--dim); width:64px; flex:none; }
+  button, label.chk { background:#1a0d12; color:var(--fg); border:1px solid #5a2430; padding:5px 10px; cursor:pointer; font-size:13px; user-select:none; }
+  button.on, label.chk.on { background:var(--red); border-color:var(--red); color:#fff; }
+  label.chk input { display:none; }
+  canvas { width:100%; height:auto; display:block; background:#000; outline:1px solid #3a1820; }
+  .desc { font-size:13px; line-height:1.7; color:#d8c0c4; background:#140a0e; border-left:3px solid var(--red); padding:8px 12px; margin-top:10px; }
+  .desc b { color:#fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ステージセレクト・ポーズの「選んでいる項目」の動きの案</h1>
+  <p class="note">↑↓ で選ぶ / Enter・Space で決定 / 画面クリックでも決定。動きは組み合わせて確かめられます(ゲームの MenuUI と同じ素材・寸法・60F)。<br>
+  URL の <code>#1+3+6,10a</code> で組み合わせを開けます(<code>,auto</code> で自動でカーソルが動く)。</p>
+  <div class="row"><span class="lbl">まとめて</span><span id="presets"></span></div>
+  <div class="row"><span class="lbl">選んだ瞬間</span><span id="g1"></span></div>
+  <div class="row"><span class="lbl">選んでいる間</span><span id="g2"></span></div>
+  <div class="row"><span class="lbl">決定</span><span id="g3"></span></div>
+  <div class="row"><span class="lbl">画面</span>
+    <button id="scene">ステージセレクト</button>
+    <button id="auto">自動で動かす: オフ</button>
+    <button id="slow">1/4の速さ: オフ</button>
+  </div>
+  <canvas id="cv" width="1280" height="720"></canvas>
+  <div class="desc" id="desc"></div>
+</div>
+<script>
+const W = 1280, H = 720;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+const SRC = /*SRC*/{}/*SRC*/;
+const img = {};
+
+const RED = [230, 45, 70];
+const BG = [14, 8, 16];
+const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const FONT = '"游明朝","Yu Mincho",serif';
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const easeOut3 = t => 1 - Math.pow(1 - clamp01(t), 3);
+const easeOutBack = t => { t = clamp01(t); const c = 2.2; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+
+const SCENES = {
+  select: { title: 'ステージセレクト', header: 'ステージ一覧', items: [
+    { name: 'チュートリアル', text: '基本の動きと攻撃を覚える。(仮の説明文)' },
+    { name: 'ステージ1 電脳街', text: 'ネオンの街を抜けて、塔の上の首領を討つ。(仮の説明文)' },
+    { name: 'ステージ2 列車', text: '走る列車の上で、追ってくる機兵を退ける。(仮の説明文)' },
+    { name: 'ボス 海賊', text: '海賊の頭目との一騎打ち。(仮の説明文)' },
+    { name: 'ボス キングメック', text: '巨大な機兵との決戦。(仮の説明文)' },
+  ]},
+  pause: { title: 'ポーズ', header: 'メニュー', items: [
+    { name: 'ゲームに戻る', text: '任務に戻る。Start ボタンでもすぐに戻れる。' },
+    { name: 'フォトモード', text: 'カメラを自由に動かして撮影する。(開発用・カメラデバッグ)' },
+    { name: 'ステージ編集', text: '壁キック・壁走りのゾーンを置き直す。(開発用)' },
+    { name: 'ステージセレクトへ', text: '任務を中断してステージセレクトに戻る。ここまでの進み具合は残らない。' },
+  ]},
+};
+let sceneKey = 'select';
+
+const MOVES = [
+  { key: '1', g: 1, label: '1 文字が飛び出す', desc: '選んだ項目の文字が右へ飛び出して少し戻る(イーズアウトバック 10F・落ち着く位置は +8px)。外れた項目は 8F で元の位置へ戻る。' },
+  { key: '2', g: 1, label: '2 一閃', desc: 'バーが伸びるのに合わせて、白い細い光が左端から右端へ走り抜ける(8F)。抜けたあとに上下のふちが一瞬光る。' },
+  { key: '3', g: 1, label: '3 バーが滑る', desc: 'バーをその場で伸ばし直さず、前の項目の位置から新しい位置へ 7F で滑らせる。上下の移動がはっきり分かる。' },
+  { key: '4', g: 1, label: '4 文字化け', desc: '選んだ瞬間の 5F だけ、文字を赤と水色にずらして、バーを横に切ってずらす(サイバーの演出)。' },
+  { key: '5', g: 1, label: '5 火花', desc: '左端の縦線から火花が 8 粒はじける(14F で消える・加算)。' },
+  { key: '6', g: 2, label: '6 光の帯が流れる', desc: '斜めの光の帯が、バーの上を 1.5 秒ごとに左から右へ横切る(24F)。' },
+  { key: '7', g: 2, label: '7 括弧が揺れる', desc: '選んだ項目の左に明るい括弧を出し、左右に 3px ゆっくり行き来させる。' },
+  { key: '8', g: 2, label: '8 網点が流れる', desc: 'バーに重ねている網点の模様をゆっくり横に流す。' },
+  { key: '9', g: 2, label: '9 下線が伸び縮み', desc: '文字の下に細い線を出し、文字の幅の 75〜100% で伸び縮みさせる。' },
+];
+const DECIDES = [
+  { key: '', label: 'なし(今)', desc: '' },
+  { key: '10a', label: '10a 白く光って抜ける', desc: '決定でバーが白く光り(4F)、文字ごと右へ抜けていく。ほかの項目は暗くなる。' },
+  { key: '10b', label: '10b 斬って割る', desc: '決定で項目を斜めに一閃し、上下に割れてずれながら消える。' },
+  { key: '11', label: '11 ほかが引っ込む', desc: '決定した項目は残して少し光らせ、ほかの項目は暗くなって左へ引っ込む。' },
+];
+const PRESETS = [
+  { label: '今のゲーム', moves: [], decide: '' },
+  { label: '★ おすすめ 1+3+6 / 10a', moves: ['1', '3', '6'], decide: '10a' },
+  { label: '1+3+7+8 / 11', moves: ['1', '3', '7', '8'], decide: '11' },
+  { label: '1+2+5 / 10b(忍者寄り)', moves: ['1', '2', '5'], decide: '10b' },
+  { label: '全部', moves: MOVES.map(m => m.key), decide: '10a' },
+];
+const on = new Set(['1', '3', '6']);
+let decideKey = '10a';
+
+let cursor = 1, prevCursor = 0;
+let frame = 0, selectFrame = 99;
+let decideFrame = -1;
+let auto = false, slow = false;
+let sparks = [];
+
+// ---- 色を掛けた画像(SetDrawBright 相当) ----
+const tintCache = new Map();
+function tinted(name, c) {
+  const k = name + c.join(',');
+  if (tintCache.has(k)) return tintCache.get(k);
+  const src = img[name];
+  const oc = document.createElement('canvas');
+  oc.width = src.width; oc.height = src.height;
+  const o = oc.getContext('2d');
+  o.drawImage(src, 0, 0);
+  o.globalCompositeOperation = 'multiply';
+  o.fillStyle = rgb(c);
+  o.fillRect(0, 0, oc.width, oc.height);
+  o.globalCompositeOperation = 'destination-in';
+  o.drawImage(src, 0, 0);
+  tintCache.set(k, oc);
+  return oc;
+}
+function drawTiled(name, x1, y1, x2, y2, tile, u, v, c, a, op = 'source-over') {
+  const t = tinted(name, c);
+  const p = ctx.createPattern(t, 'repeat');
+  p.setTransform(new DOMMatrix().translate(x1 - u * tile, y1 - v * tile).scale(tile / t.width));
+  ctx.save();
+  ctx.globalCompositeOperation = op;
+  ctx.globalAlpha *= a / 255;
+  ctx.fillStyle = p;
+  ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+  ctx.restore();
+}
+function drawFrame(x1, y1, x2, y2) {
+  const t = tinted('frame', RED);
+  const C = 16, S = 48;
+  const xs = [x1, x1 + C, x2 - C, x2], ys = [y1, y1 + C, y2 - C, y2];
+  const sp = [0, C, S - C], sl = [C, S - 2 * C, C];
+  for (let iy = 0; iy < 3; iy++) for (let ix = 0; ix < 3; ix++) {
+    if (ix === 1 && iy === 1) continue;
+    ctx.drawImage(t, sp[ix], sp[iy], sl[ix], sl[iy], xs[ix], ys[iy], xs[ix + 1] - xs[ix], ys[iy + 1] - ys[iy]);
+  }
+}
+function text(str, x, y, size, color, space = 0, align = 'left') {
+  ctx.font = `bold ${size}px ${FONT}`;
+  ctx.letterSpacing = space + 'px';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = align;
+  ctx.fillStyle = color;
+  ctx.fillText(str, x, y);
+  ctx.letterSpacing = '0px';
+  ctx.textAlign = 'left';
+}
+function textWidth(str, size, space) {
+  ctx.font = `bold ${size}px ${FONT}`;
+  ctx.letterSpacing = space + 'px';
+  const w = ctx.measureText(str).width;
+  ctx.letterSpacing = '0px';
+  return w;
+}
+function wrapText(str, x, y, width, lh, size, color) {
+  ctx.font = `bold ${size}px ${FONT}`;
+  ctx.letterSpacing = '1px';
+  let line = '', n = 0;
+  for (const ch of str) {
+    if (ctx.measureText(line + ch).width > width && line) { text(line, x, y + lh * n, size, color, 1); n++; line = ch; }
+    else line += ch;
+  }
+  if (line) text(line, x, y + lh * n, size, color, 1);
+}
+
+// ---- 背景・タイトル・右パネル・ガイド(MenuUI と同じ) ----
+function drawBackground() {
+  ctx.fillStyle = rgb(BG); ctx.fillRect(0, 0, W, H);
+  drawTiled('grid', 0, 0, W, H, 64, 0, 0, RED, 14, 'lighter');
+  drawTiled('rain', 0, 0, W, H, 256, 0, -frame * 0.004, RED, 170, 'lighter');
+  ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(img.vignette, 0, 0, W, H); ctx.restore();
+}
+function drawTitle(title) {
+  const y = 40, x1 = 70, x2 = 1210;
+  ctx.drawImage(tinted('lineFade', RED), x1, y - 2, x2 - x1, 4);
+  ctx.strokeStyle = rgb(RED); ctx.lineWidth = 1.2;
+  for (const x of [x1, x2]) { ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.stroke(); }
+  const cx = W / 2, d = 5;
+  ctx.fillStyle = rgb(RED);
+  ctx.beginPath(); ctx.moveTo(cx, y - d * 1.6); ctx.lineTo(cx + d, y); ctx.lineTo(cx, y + d * 1.6); ctx.lineTo(cx - d, y); ctx.fill();
+  text(title, cx, 50, 22, rgb(RED), 6, 'center');
+}
+function headerLine(label, x1, y, x2) {
+  text(label, x1, y, 17, rgb(RED), 1);
+  const w = textWidth(label, 17, 1) + 8;
+  ctx.strokeStyle = rgb(RED); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x1 + w, y + 10.5); ctx.lineTo(x2, y + 10.5); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x2, y + 10.5, 3.5, 0, Math.PI * 2); ctx.stroke();
+}
+function drawDetailPanel(items) {
+  const x1 = 460, y1 = 117, x2 = 1037, y2 = 493, pad = 16, hx = x1 + pad;
+  drawFrame(x1, y1, x2, y2);
+  headerLine('詳細', hx, y1 + 10, x2 - pad);
+  const it = items[cursor];
+  text(it.name, hx + 8, 168, 22, 'rgb(255,236,238)', 3);
+  ctx.drawImage(tinted('lineFade', RED), hx, 204, x2 - pad - hx, 3);
+  wrapText(it.text, hx + 8, 222, x2 - x1 - pad * 2 - 16, 30, 17, 'rgb(220,150,160)');
+}
+function drawGuide() {
+  const y = 676;
+  ctx.drawImage(tinted('lineFade', RED), 380, y - 1, 520, 3);
+  ctx.fillStyle = rgb(BG); ctx.fillRect(W / 2 - 187, y - 14, 362, 28);
+  const ix = W / 2 - 175, iy = y - 12;
+  ctx.drawImage(img.btnA, ix, iy, 24, 24);
+  text('決定', ix + 30, iy + 2, 17, rgb(RED), 1);
+  text('↑↓ 選択', ix + 110, iy + 2, 17, rgb(RED), 1);
+}
+
+// ---- 一覧 ----
+const LIST = { x1: 57, y1: 117, x2: 417, y2: 623, itemX: 92, bracketX: 64, startY: 172, pitch: 44, h: 36, selX1: 66, selX2: 412 };
+const itemY = i => LIST.startY + LIST.pitch * i;
+
+// 文字の横のずれ(案1)
+function textOffset(i) {
+  if (!on.has('1')) return 0;
+  if (i === cursor) return 8 * easeOutBack(selectFrame / 10);
+  if (i === prevCursor) return 8 * (1 - easeOut3(selectFrame / 8));
+  return 0;
+}
+
+function drawSelectBar(x, y, w, h, flash) {
+  const slide = on.has('3');
+  const t = slide ? 1 : clamp01(selectFrame / 10);
+  const bw = w * easeOut3(t);
+  if (slide) y = itemY(prevCursor) + (y - itemY(prevCursor)) * easeOut3(selectFrame / 7);
+  const flicker = (!slide && selectFrame < 4 && selectFrame % 2 === 1) ? 0.4 : 1;
+  const pulse = 0.5 + 0.5 * Math.sin(frame * 0.08);
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = (35 + 30 * pulse) * flicker / 255;
+  ctx.drawImage(tinted('glow', [RED[0], RED[1] >> 1, RED[2] >> 1]), x - 10, y - 8, bw + 20, h + 16);
+  ctx.restore();
+
+  const glitch = on.has('4') && selectFrame < 5;
+  if (bw > 1) {
+    const slices = glitch ? 4 : 1;
+    for (let s = 0; s < slices; s++) {
+      const sy = y + h * s / slices, sh = h / slices;
+      const gx = glitch ? (((s * 37 + selectFrame * 13) % 7) - 3) * 4 : 0;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x - 20, sy, w + 40, sh); ctx.clip();
+      ctx.translate(gx, 0);
+      ctx.globalAlpha = 220 * flicker / 255;
+      ctx.save(); ctx.translate(x + bw, y); ctx.scale(-1, 1);
+      ctx.drawImage(tinted('selectBase', RED), 0, 0, bw, h);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      const u = on.has('8') ? frame * 0.03 : 0;
+      drawTiled('halftone', x, y, x + bw, y + h, 6, u, 0, [40, 0, 10], 90);
+      ctx.restore();
+    }
+  }
+  ctx.globalAlpha = flicker;
+  ctx.fillStyle = 'rgb(255,90,110)';
+  ctx.fillRect(x, y, 3, h);
+  ctx.globalAlpha = 1;
+
+  // 案2 一閃
+  if (on.has('2') && selectFrame < 14) {
+    const p = easeOut3(selectFrame / 8);
+    const hx = x + w * p;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    if (selectFrame < 9) {
+      const g = ctx.createLinearGradient(hx - 160, 0, hx, 0);
+      g.addColorStop(0, 'rgba(255,120,140,0)');
+      g.addColorStop(1, 'rgba(255,240,245,1)');
+      ctx.fillStyle = g;
+      ctx.fillRect(hx - 160, y + h / 2 - 1, 160, 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath(); ctx.ellipse(hx, y + h / 2, 10, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    const ea = selectFrame >= 7 ? 1 - (selectFrame - 7) / 7 : 0;
+    if (ea > 0) {
+      ctx.fillStyle = `rgba(255,150,165,${ea})`;
+      ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y + h - 1, w, 1);
+    }
+    ctx.restore();
+  }
+
+  // 案6 光の帯
+  if (on.has('6')) {
+    const period = 90, dur = 24;
+    const f = (frame + 60) % period;
+    if (f < dur) {
+      const p = f / dur;
+      const sx = x - 60 + (w + 120) * p;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x, y, bw, h); ctx.clip();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createLinearGradient(sx - 30, 0, sx + 30, 0);
+      g.addColorStop(0, 'rgba(255,140,155,0)');
+      g.addColorStop(0.5, 'rgba(255,190,200,0.55)');
+      g.addColorStop(1, 'rgba(255,140,155,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(sx - 30 + 12, y); ctx.lineTo(sx + 30 + 12, y); ctx.lineTo(sx + 30 - 12, y + h); ctx.lineTo(sx - 30 - 12, y + h);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // 決定 10a の白い光
+  if (flash > 0) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = flash;
+    ctx.fillStyle = 'rgb(255,220,228)';
+    ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  }
+  return y;
+}
+
+function drawItemText(str, x, y, selected, i) {
+  const color = selected ? 'rgb(255,236,238)' : rgb(RED);
+  if (selected && on.has('4') && selectFrame < 5) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    text(str, x - 3, y, 22, 'rgba(255,40,60,0.9)', 3);
+    text(str, x + 3, y, 22, 'rgba(40,220,255,0.8)', 3);
+    ctx.restore();
+  }
+  text(str, x, y, 22, color, 3);
+}
+
+function drawListPanel(items, header) {
+  const L = LIST;
+  drawFrame(L.x1, L.y1, L.x2, L.y2);
+  ctx.strokeStyle = rgb(RED); ctx.lineWidth = 1;
+  ctx.strokeRect(65.5, 125.5, 26, 26);
+  ctx.fillStyle = rgb(RED);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    if ((i * 3 + j * 5) % 3 === 0) continue;
+    ctx.fillRect(65 + 6.5 * i + 2, 125 + 6.5 * j + 2, 3.5, 3.5);
+  }
+  ctx.fillStyle = 'rgb(205,40,62)';
+  ctx.fillRect(96, 125, 313, 26);
+  text(header, 110, 129, 17, 'rgb(255,215,220)', 1);
+
+  const df = decideFrame;
+  const dec = df >= 0 ? decideKey : '';
+
+  items.forEach((it, i) => {
+    const y = itemY(i);
+    const sel = i === cursor;
+    let alpha = 1, dx = 0;
+    if (!sel && df >= 0 && dec) {
+      alpha = 1 - 0.75 * easeOut3(df / 10);
+      if (dec === '11') dx = -30 * easeOut3(df / 10);
+    }
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(dx, 0);
+    if (!sel) {
+      ctx.globalAlpha = alpha * 200 / 255;
+      ctx.drawImage(tinted('bracket', RED), L.bracketX, y, 12, 36);
+      ctx.globalAlpha = alpha;
+      drawItemText(it.name, L.itemX + textOffset(i), y + 6, false, i);
+    }
+    ctx.restore();
+  });
+
+  // 選んでいる項目
+  const i = cursor, y = itemY(i);
+  const ox = textOffset(i);
+  if (dec === '10a') {
+    const flash = df < 4 ? 1 - df / 6 : Math.max(0, 0.35 - (df - 4) / 20);
+    const out = easeOut3(Math.max(0, df - 5) / 14);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(L.x1 + 4, L.y1, L.x2 - L.x1 - 8, L.y2 - L.y1); ctx.clip();
+    ctx.globalAlpha = 1 - out;
+    ctx.translate(out * 260, 0);
+    const by = drawSelectBar(L.selX1, y, L.selX2 - L.selX1, L.h, flash);
+    drawItemText(items[i].name, L.itemX + ox, by + 6, true, i);
+    ctx.restore();
+    return;
+  }
+  if (dec === '10b') { drawSplit(items[i].name, y, ox, df); return; }
+  const glow = dec === '11' ? Math.max(0, 0.3 - df / 40) : 0;
+  const by = drawSelectBar(L.selX1, y, L.selX2 - L.selX1, L.h, glow);
+  // 案7 括弧
+  if (on.has('7')) {
+    const bx = 72 + 3 * Math.sin(frame * 0.12);
+    ctx.drawImage(tinted('bracket', [255, 236, 238]), bx, by + 4, 10, 28);
+  }
+  drawItemText(items[i].name, L.itemX + ox, by + 6, true, i);
+  // 案9 下線
+  if (on.has('9')) {
+    const tw = textWidth(items[i].name, 22, 3);
+    const grow = easeOut3(selectFrame / 10);
+    const k = 0.875 + 0.125 * Math.sin(frame * 0.1);
+    ctx.fillStyle = 'rgba(255,150,165,0.95)';
+    ctx.fillRect(L.itemX + ox, by + 31, tw * k * grow, 2);
+  }
+}
+
+// 決定 10b: 斜めに斬って上下に割る
+function drawSplit(name, y, ox, df) {
+  const L = LIST, x = L.selX1, w = L.selX2 - L.selX1, h = L.h;
+  const cutF = 5;
+  const sep = easeOut3(Math.max(0, df - cutF) / 16);
+  const a = 1 - easeOut3(Math.max(0, df - cutF - 6) / 14);
+  // 切り口: 左下 → 右上 の斜め線
+  const ax = x - 10, ay = y + h * 0.75, bx = x + w + 10, by = y + h * 0.25;
+  const halves = [
+    { poly: [[x - 30, y - 30], [x + w + 30, y - 30], [bx, by], [ax, ay]], dx: -14, dy: -10 },
+    { poly: [[ax, ay], [bx, by], [x + w + 30, y + h + 30], [x - 30, y + h + 30]], dx: 14, dy: 10 },
+  ];
+  halves.forEach(hf => {
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(hf.dx * sep, hf.dy * sep);
+    ctx.beginPath();
+    hf.poly.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    ctx.closePath(); ctx.clip();
+    drawSelectBar(x, y, w, h, df < cutF ? 0 : Math.max(0, 0.4 - (df - cutF) / 15));
+    drawItemText(name, L.itemX + ox, y + 6, true, cursor);
+    ctx.restore();
+  });
+  // 一閃の線
+  if (df < cutF + 8) {
+    const p = easeOut3(df / cutF);
+    const fade = df < cutF ? 1 : 1 - (df - cutF) / 8;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = `rgba(255,245,248,${fade})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * p, ay + (by - ay) * p); ctx.stroke();
+    ctx.lineWidth = 8; ctx.strokeStyle = `rgba(255,80,110,${0.35 * fade})`;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// 案5 火花
+function spawnSparks() {
+  const y = itemY(cursor) + LIST.h / 2;
+  for (let k = 0; k < 8; k++) {
+    const ang = (-0.9 + 1.8 * Math.random()) * 0.9;
+    const sp = 3 + Math.random() * 4;
+    sparks.push({ x: LIST.selX1 + 2, y: y + (Math.random() - 0.5) * 20, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 0.5, life: 0, max: 10 + Math.random() * 6 });
+  }
+}
+function updateSparks() {
+  sparks.forEach(s => { s.x += s.vx; s.y += s.vy; s.vx *= 0.9; s.vy = s.vy * 0.9 + 0.25; s.life++; });
+  sparks = sparks.filter(s => s.life < s.max);
+}
+function drawSparks() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  sparks.forEach(s => {
+    const a = 1 - s.life / s.max;
+    ctx.strokeStyle = `rgba(255,${150 + 80 * a | 0},${160 + 60 * a | 0},${a})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx * 1.8, s.y - s.vy * 1.8); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// ---- 操作 ----
+function items() { return SCENES[sceneKey].items; }
+function moveCursor(d) {
+  if (decideFrame >= 0) return;
+  const n = items().length;
+  const c = (cursor + d + n) % n;
+  if (c === cursor) return;
+  prevCursor = cursor; cursor = c; selectFrame = 0;
+  if (on.has('5')) spawnSparks();
+}
+function decide() {
+  if (decideFrame >= 0) return;
+  decideFrame = 0;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { moveCursor(1); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { moveCursor(-1); e.preventDefault(); }
+  else if (e.key === 'Enter' || e.key === ' ') { decide(); e.preventDefault(); }
+});
+cv.addEventListener('click', decide);
+
+// ---- UI ----
+function btn(parent, label, cls, fn) {
+  const b = document.createElement('button');
+  b.textContent = label; b.className = cls || ''; b.onclick = fn;
+  parent.appendChild(b); return b;
+}
+const presetBtns = PRESETS.map(p => btn(document.getElementById('presets'), p.label, '', () => {
+  on.clear(); p.moves.forEach(k => on.add(k)); decideKey = p.decide; refreshUI();
+}));
+const moveBtns = MOVES.map(m => btn(document.getElementById('g' + m.g), m.label, '', () => {
+  on.has(m.key) ? on.delete(m.key) : on.add(m.key); refreshUI();
+}));
+const decideBtns = DECIDES.map(d => btn(document.getElementById('g3'), d.label, '', () => { decideKey = d.key; refreshUI(); }));
+document.getElementById('scene').onclick = e => {
+  sceneKey = sceneKey === 'select' ? 'pause' : 'select';
+  e.target.textContent = sceneKey === 'select' ? 'ステージセレクト' : 'ポーズ';
+  cursor = Math.min(cursor, items().length - 1); prevCursor = 0; selectFrame = 99;
+};
+document.getElementById('auto').onclick = e => { auto = !auto; e.target.textContent = '自動で動かす: ' + (auto ? 'オン' : 'オフ'); e.target.classList.toggle('on', auto); };
+document.getElementById('slow').onclick = e => { slow = !slow; e.target.textContent = '1/4の速さ: ' + (slow ? 'オン' : 'オフ'); e.target.classList.toggle('on', slow); };
+
+function refreshUI() {
+  MOVES.forEach((m, i) => moveBtns[i].classList.toggle('on', on.has(m.key)));
+  DECIDES.forEach((d, i) => decideBtns[i].classList.toggle('on', d.key === decideKey));
+  PRESETS.forEach((p, i) => presetBtns[i].classList.toggle('on',
+    p.decide === decideKey && p.moves.length === on.size && p.moves.every(k => on.has(k))));
+  const lines = MOVES.filter(m => on.has(m.key)).map(m => `<b>${m.label}</b>: ${m.desc}`);
+  const d = DECIDES.find(d => d.key === decideKey);
+  if (d && d.key) lines.push(`<b>${d.label}</b>: ${d.desc}`);
+  if (!lines.length) lines.push('<b>今のゲーム</b>: バーが 10F で左から伸びて最初の 4F ちらつき、後ろの光が脈打つだけ。');
+  document.getElementById('desc').innerHTML = lines.join('<br>');
+  location.hash = [...on].sort().join('+') + (decideKey ? ',' + decideKey : '') + (auto ? ',auto' : '');
+}
+
+function readHash() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (!h) return;
+  const parts = h.split(',');
+  on.clear();
+  parts[0].split('+').filter(k => MOVES.some(m => m.key === k)).forEach(k => on.add(k));
+  decideKey = DECIDES.some(d => d.key === parts[1]) ? parts[1] : '';
+  if (parts.includes('auto')) document.getElementById('auto').click();
+}
+
+// ---- ループ(60F 固定) ----
+let acc = 0, last = performance.now(), autoTimer = 0;
+function step() {
+  frame++; selectFrame++;
+  updateSparks();
+  if (decideFrame >= 0) {
+    decideFrame++;
+    if (decideFrame > 50) decideFrame = -1;
+  }
+  if (auto && decideFrame < 0) {
+    autoTimer++;
+    if (autoTimer % 45 === 0) {
+      if (autoTimer % 360 === 0) decide();
+      else moveCursor((autoTimer / 45) % 8 < 4 ? 1 : -1);
+    }
+  }
+}
+function draw() {
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  const s = SCENES[sceneKey];
+  drawBackground();
+  drawTitle(s.title);
+  drawListPanel(s.items, s.header);
+  drawSparks();
+  drawDetailPanel(s.items);
+  drawGuide();
+}
+function loop(now) {
+  acc += (now - last) * (slow ? 0.25 : 1); last = now;
+  while (acc >= 1000 / 60) { step(); acc -= 1000 / 60; }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// #sheet: 案ごとにコマを並べた画像を作る(確認用)
+function buildSheet() {
+  const CASES = [
+    ['今', [], '', [1, 3, 6, 10, 40]],
+    ['1 文字が飛び出す', ['1'], '', [1, 3, 6, 10, 40]],
+    ['2 一閃', ['2'], '', [1, 3, 5, 8, 12]],
+    ['3 バーが滑る', ['3'], '', [1, 2, 4, 7, 40]],
+    ['4 文字化け', ['4'], '', [0, 1, 2, 4, 8]],
+    ['5 火花', ['5'], '', [1, 3, 6, 10, 14]],
+    ['6 光の帯', ['6'], '', [30, 36, 42, 48, 60]],
+    ['7 括弧', ['7'], '', [20, 33, 46, 59, 72]],
+    ['9 下線', ['9'], '', [2, 6, 10, 30, 45]],
+    ['10a 白く光って抜ける', [], '10a', [1, 4, 8, 13, 20]],
+    ['10b 斬って割る', [], '10b', [2, 5, 9, 14, 22]],
+    ['11 ほかが引っ込む', [], '11', [1, 4, 8, 12, 30]],
+  ];
+  const cw = 380, ch = 290, lab = 22;
+  const sc = document.createElement('canvas');
+  sc.width = cw * 5; sc.height = (ch + lab) * CASES.length;
+  const s = sc.getContext('2d');
+  s.fillStyle = '#000'; s.fillRect(0, 0, sc.width, sc.height);
+  CASES.forEach(([title, moves, dec, frames], row) => {
+    on.clear(); moves.forEach(k => on.add(k)); decideKey = dec;
+    sparks = []; decideFrame = -1; frame = 0; cursor = 1; selectFrame = 99;
+    let f = 0;
+    if (!dec) moveCursor(1); else { selectFrame = 99; decide(); }
+    frames.forEach((tf, i) => {
+      while (f < tf) { step(); f++; }
+      draw();
+      const y = (ch + lab) * row;
+      s.drawImage(cv, 50, 150, cw, ch, cw * i, y + lab, cw, ch);
+      s.fillStyle = '#fff'; s.font = 'bold 15px sans-serif';
+      s.fillText(`${title}  ${tf}F`, cw * i + 6, y + 16);
+    });
+  });
+  document.body.innerHTML = '';
+  document.body.style.margin = '0';
+  document.body.appendChild(sc);
+}
+
+const names = Object.keys(SRC);
+let loaded = 0;
+names.forEach(n => {
+  img[n] = new Image();
+  img[n].onload = () => {
+    if (++loaded < names.length) return;
+    if (location.hash === '#sheet') { buildSheet(); return; }
+    readHash(); refreshUI(); requestAnimationFrame(loop);
+  };
+  img[n].src = SRC[n];
+});
+</script>
+</body>
+</html>

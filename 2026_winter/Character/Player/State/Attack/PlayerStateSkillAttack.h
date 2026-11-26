@@ -14,7 +14,7 @@ class PlayerStateSkillAttack :
     public PlayerStateAttackBase
 {
 public:
-    PlayerStateSkillAttack(std::weak_ptr<Player> player);
+    PlayerStateSkillAttack(std::weak_ptr<Player> player, AttackType type);//type: SkillLightAttack(LB+X) か SkillHeavyAttack(LB+Y)
     virtual ~PlayerStateSkillAttack();
     void Enter() override;
     void Update() override;
@@ -32,6 +32,8 @@ private:
 	void PlayGhostEffect(int comboIndex);//スキル1,2のときモデルを消して分身エフェクトを出す
 	void UpdateGhostEffect();//分身エフェクトをプレイヤーの位置・向きに合わせる
 	void StopGhostEffect();//分身エフェクトを止めてモデルを表示に戻す
+	void PlayLaunchGhost();//スキル0の白い分身(GhostLaunch)を出す
+	void UpdateLaunchGhost();//白い分身の出る位置をプレイヤーに合わせる//出た分身はその場に残る
 	void LandFallSkill();//落下攻撃(スキル3)が着地したとき//着地の分身エフェクトを出して着地硬直(PlayerStateAttackLanding)へ
 	Vector3 GetSkillEffectBasePos();//スキルのエフェクトを出す基準の位置//スキル0,1は打ち上げた敵→攻撃の対象→プレイヤーの順//それ以外はプレイヤー
 	void InitLaunchCamera(int comboIndex);//打ち上げから続くスキル1以外は、カメラの注視点を通常に戻す
@@ -49,8 +51,10 @@ private:
 	void StartKessatsu();//分身を消して血殺に入る
 private:
 
+	AttackType m_attackType;//弱スキルか強スキルか
 	std::shared_ptr<SkillAttackCol> m_skillAttackCol;//地上スキル1用の攻撃判定//地上スキル1以外はnullptr
 	int m_ghostEffectHandle = -1;//再生中の分身エフェクトのハンドル//-1なら再生していない
+	int m_launchGhostHandle = -1;//スキル0の白い分身のハンドル//-1なら再生していない
 	int m_nextComboIndex = -1;//次のスキル攻撃の段数//m_nextAttackTypeがSkillAttackのときだけ使う
 	AttackType m_nextAttackType = AttackType::None;//予約された次の攻撃の種類//SkillAttackなら次の段、弱・強ならPlayerStateAttackへ
 	bool m_isComboInputReserved = false;//コンボ入力を受け付けたかどうかのフラグ

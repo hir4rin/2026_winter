@@ -20,6 +20,8 @@ public:
 	//カーソルが変わったら選択帯のアニメをやり直す
 	void SetCursor(int cursor);
 	void SetDetail(const std::string& header, const std::string& name, const std::string& text);
+	//決定の演出(選んだ項目が白く光って右へ抜ける)を始める
+	void StartDecide();
 
 protected:
 	void DrawBackground();
@@ -29,6 +31,10 @@ protected:
 	void DrawDetailPanel();
 	void DrawGuide();
 	void DrawSelectBar(float x, float y, float w, float h);
+	//選んだ項目の文字の横のずれ(選ぶと飛び出し、外れると戻る)
+	float ItemTextOffsetX(int index) const;
+	//選択帯のY(前の項目から滑ってくる)
+	float SelectBarY() const;
 	//「詳細」のような見出しと右へ伸びる線
 	void DrawHeaderLine(float x1, float y, float x2, const std::string& label);
 	//線が左から右へ薄くなる横線
@@ -56,6 +62,8 @@ protected:
 	int m_cursor = 0;
 	int m_frame = 0;
 	int m_selectFrame = 0;//カーソルが変わってからのフレーム
+	int m_prevCursor = -1;//1つ前のカーソル(まだ動かしていなければ-1)
+	int m_decideFrame = -1;//決定してからのフレーム(決定していなければ-1)
 
 	//出てくる演出用(パネルごとに変えて描く)
 	float m_alpha = 1.0f;

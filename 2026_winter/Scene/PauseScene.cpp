@@ -7,6 +7,11 @@
 #include "StageSelectScene.h"
 #include <iterator>
 
+namespace
+{
+	constexpr int kDecideWaitFrame = 14;//決定の演出(白く光って右へ抜ける)を見せる長さ
+}
+
 bool PauseScene::s_isDebugItemOpen = false;
 
 PauseScene::PauseScene(SceneController& controller, const PauseUI::Record& record) :Scene(controller)
@@ -98,10 +103,14 @@ void PauseScene::NormalUpdate()
 	}
 	ApplyCursor();
 
-	//Aで決定
+	//Aで決定(演出を見せてから実行する)
 	if (input.IsTriggered("A"))
 	{
-		Decide(m_items[m_cursor]);
+		m_decideItem = m_items[m_cursor];
+		m_decideFrame = 0;
+		m_ui.StartDecide();
+		m_updateFunc = static_cast<UpdateFunc_t>(&PauseScene::FadeOutUpdate);
+		m_drawFunc = static_cast<DrawFunc_t>(&PauseScene::FadeOutDraw);
 		return;
 	}
 
@@ -146,6 +155,12 @@ void PauseScene::Decide(MenuItem item)
 
 void PauseScene::FadeOutUpdate()
 {
+	//決定の演出を待つ
+	m_decideFrame++;
+	if (m_decideFrame >= kDecideWaitFrame)
+	{
+		Decide(m_decideItem);
+	}
 }
 
 void PauseScene::Draw()
@@ -165,4 +180,5 @@ void PauseScene::NormalDraw()
 
 void PauseScene::FadeOutDraw()
 {
+	m_ui.Draw();
 }

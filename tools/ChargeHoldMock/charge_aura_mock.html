@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>溜めのオーラ案</title>
+<style>
+:root{--bg:#141218;--fg:#e8e4dc;--sub:#a09aa8;--line:#3a3640;--acc:#c8323c}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Yu Gothic UI","Meiryo",sans-serif;padding:16px}
+.wrap{max-width:1000px;margin:0 auto}
+canvas{width:100%;display:block;border-radius:8px;background:#000}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;align-items:center}
+button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}
+button:hover{border-color:var(--sub)}
+button.on{border-color:var(--acc);background:#2a1418}
+label{font-size:13px;color:var(--sub)}
+input[type=range]{flex:1;min-width:200px}
+#ph{font-size:14px;color:var(--fg);min-height:20px}
+#ph b{color:var(--acc)}
+dl{font-size:13px;line-height:1.75;margin:8px 0}
+dt{color:var(--acc);margin-top:6px}
+dd{margin:0 0 0 1em;color:var(--sub)}
+h1{font-size:18px;font-weight:500;margin:0 0 4px}
+p{font-size:13px;color:var(--sub);margin:0 0 10px;line-height:1.7}
+code{color:var(--fg)}
+#grid{display:none;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+#grid div{font-size:12px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>強攻撃の溜め(Y 長押し)のエフェクト オーラの7案</h1>
+<p>今のゲームと同じく <b>40F で溜め完了</b>(<code>kChargeThreshold</code>)。溜め中(0〜40F)・溜め完了の瞬間・溜まった後(離すまで)の3つの段階が<b>はっきり見分けられること</b>を一番に考えた案。体を包むオーラの形・層・出方を変えた案(前の D 紅の闘気とは別の作り)。<br>
+<code>#O2,44</code> でその案・そのフレームで止まる。<code>#all,40</code> で全部並べる。</p>
+<canvas id="cv" width="960" height="540"></canvas>
+<div id="grid"></div>
+<div class="row" id="plans"></div>
+<div class="row">
+<button id="play">一時停止</button>
+<input type="range" id="seek" min="0" max="219" value="0">
+<label><input type="checkbox" id="slow"> 0.25倍</label>
+<label><input type="checkbox" id="bright"> 明るい背景</label>
+<label><input type="checkbox" id="early"> 溜まる前に離す(30F)</label>
+</div>
+<div id="ph"></div>
+<dl id="desc"></dl>
+</div>
+<script>
+const W=960,H=540,GY=430,DONE=40;
+let REL=180;const TOTAL=220;
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>1-Math.pow(1-t,3);
+const PI=Math.PI;
+function rgba(c,a){return`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${clamp(a)})`}
+function hash(i,k){const x=Math.sin(i*127.1+k*311.7+k*k*.13)*43758.5453;return x-Math.floor(x)}
+function R(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const K=t=>1-clamp((t-REL)/12);
+const P=t=>clamp(t/DONE);
+const RED=[230,36,52],DRED=[120,10,20],WHITE=[255,244,240],INK=[8,6,10];
+
+// ---- 体 ----
+const STAND={f1:[470,430],f2:[420,430],k1:[464,384],k2:[424,386],hip:[443,338],ch:[447,272],hd:[451,232],sh:[448,262],el:[452,300],el2:[440,302],hn:[462,330],ang:.62};
+const CHG={f1:[508,430],f2:[362,430],k1:[494,378],k2:[390,385],hip:[440,342],ch:[462,282],hd:[475,248],sh:[460,272],el:[430,300],el2:[446,306],hn:[404,313],ang:2.66};
+const BL=138;
+function geo(t){const s=ease(clamp(t/10)),G={};for(const k in STAND){if(k=='ang')continue;G[k]=[lerp(STAND[k][0],CHG[k][0],s),lerp(STAND[k][1],CHG[k][1],s)]}
+ G.ang=lerp(STAND.ang,CHG.ang,s);
+ const bob=s>=1?Math.sin(t*.09)*1.6:0;
+ for(const k of['hip','ch','hd','sh','el','el2','hn'])G[k][1]+=bob;for(const k of['k1','k2'])G[k][1]+=bob*.5;
+ G.tip=[G.hn[0]+Math.cos(G.ang)*BL,G.hn[1]+Math.sin(G.ang)*BL];
+ G.eye=[G.hd[0]+9,G.hd[1]-2];G.nk=[lerp(G.ch[0],G.hd[0],.55),lerp(G.ch[1],G.hd[1],.55)];
+ G.ft=[(G.f1[0]+G.f2[0])/2,GY];G.t=t;return G}
+function onBlade(G,u){return[lerp(G.hn[0],G.tip[0],u),lerp(G.hn[1],G.tip[1],u)]}
+const SEGS=[['f1','k1'],['k1','hip'],['f2','k2'],['k2','hip'],['hip','ch'],['ch','hd'],['sh','el'],['el','hn'],['sh','el2'],['el2','hn']];
+function bodyPt(G,i,k){const sg=SEGS[Math.floor(hash(i,k)*SEGS.length)],u=hash(i,k+1);const a=G[sg[0]],b=G[sg[1]];return[lerp(a[0],b[0],u)+(hash(i,k+2)-.5)*14,lerp(a[1],b[1],u)]}
+function drawChar(g,G,o={}){const col=o.col||[11,10,14],al=o.alpha??1,dx=o.dx||0,amp=o.scarf||1;
+ g.save();g.translate(dx,0);g.lineCap='round';g.lineJoin='round';
+ if(o.blur){g.shadowColor=rgba(o.blurCol||RED,1);g.shadowBlur=o.blur}
+ const L=(a,b,w,c)=>{g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(...G[a]);g.lineTo(...G[b]);g.stroke()};
+ const layers=o.col?[[0,rgba(col,al)]]:[[4,rgba([92,84,104],al)],[0,rgba(col,al)]];
+ for(const[ex,c]of layers){
+  // マフラー
+  g.strokeStyle=c;g.beginPath();for(let i=0;i<=7;i++){const x=G.nk[0]-i*15*amp*.9,y=G.nk[1]+i*1.5+Math.sin(G.t*.22*amp-i*.8)*i*1.3*amp;i?g.lineTo(x,y):g.moveTo(x,y)}g.lineWidth=7+ex;g.stroke();
+  L('f2','k2',15+ex,c);L('k2','hip',17+ex,c);L('sh','el2',10+ex,c);L('el2','hn',9+ex,c);
+  L('hip','ch',24+ex,c);L('ch','hd',10+ex,c);
+  g.fillStyle=c;g.beginPath();g.arc(G.hd[0],G.hd[1],15+ex/2,0,7);g.fill();
+  L('f1','k1',15+ex,c);L('k1','hip',17+ex,c);L('sh','el',10+ex,c);L('el','hn',9+ex,c);
+ }
+ if(!o.noBlade){g.shadowBlur=0;
+  g.strokeStyle=rgba(o.col?col:[196,200,210],al);g.lineWidth=3.2;g.beginPath();g.moveTo(...G.hn);g.lineTo(...G.tip);g.stroke();
+  const gx=G.hn[0]+Math.cos(G.ang)*8,gy=G.hn[1]+Math.sin(G.ang)*8;g.strokeStyle=rgba(o.col?col:[40,34,30],al);g.lineWidth=8;g.beginPath();g.moveTo(gx-Math.sin(G.ang)*6,gy+Math.cos(G.ang)*6);g.lineTo(gx+Math.sin(G.ang)*6,gy-Math.cos(G.ang)*6);g.stroke()}
+ g.restore()}
+
+// ---- 描く道具 ----
+function glow(g,x,y,r,c,a){if(a<=0||r<=0)return;const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,rgba(c,a));gr.addColorStop(.4,rgba(c,a*.4));gr.addColorStop(1,rgba(c,0));g.save();g.globalCompositeOperation='lighter';g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);g.restore()}
+function blob(g,x,y,r,c,a){if(a<=0||r<=0)return;const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,rgba(c,a));gr.addColorStop(1,rgba(c,0));g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2)}
+function glowLine(g,x0,y0,x1,y1,c,w,a){if(a<=0)return;g.save();g.globalCompositeOperation='lighter';g.lineCap='round';for(const[k,m,cc]of[[4,.15,c],[2,.4,c],[.8,1,WHITE]]){g.strokeStyle=rgba(cc,a*m);g.lineWidth=w*k;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke()}g.restore()}
+function polyGlow(g,pts,c,w,a){if(a<=0||pts.length<2)return;g.save();g.globalCompositeOperation='lighter';g.lineCap='round';g.lineJoin='round';for(const[k,m,cc]of[[4.5,.15,c],[2,.4,c],[.8,1,WHITE]]){g.strokeStyle=rgba(cc,a*m);g.lineWidth=w*k;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}g.restore()}
+function star4(g,x,y,len,wid,rot,c,a){if(a<=0)return;g.save();g.globalCompositeOperation='lighter';g.translate(x,y);g.rotate(rot);for(const[s,m,cc]of[[1,.5,c],[.6,1,WHITE]]){g.fillStyle=rgba(cc,a*m);for(const r of[0,PI/2]){g.save();g.rotate(r);g.beginPath();g.moveTo(-len*s,0);g.lineTo(0,-wid*s);g.lineTo(len*s,0);g.lineTo(0,wid*s);g.closePath();g.fill();g.restore()}}g.restore();glow(g,x,y,len*.6,c,a*.5)}
+function flash(g,a,c=WHITE){if(a<=0)return;g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,a);g.fillRect(0,0,W,H);g.restore()}
+function each(n,step,start,life,t,fn){for(let i=0;i<n;i++){const b=start+i*step;if(b>=REL)break;const age=t-b;if(age<0||age>=life)continue;fn(i,age,age/life,b)}}
+function bolt(g,x0,y0,x1,y1,seed,jit,c,w,a){if(a<=0)return;const r=R(seed),n=9,pts=[],dx=x1-x0,dy=y1-y0,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;for(let i=0;i<=n;i++){const u=i/n,o=(i==0||i==n)?0:(r()-.5)*jit;pts.push([x0+dx*u+nx*o,y0+dy*u+ny*o])}polyGlow(g,pts,c,w,a)}
+function ringE(g,cx,cy,rx,ry,c,w,a,a0=0,a1=2*PI){if(a<=0||rx<=0)return;g.save();g.globalCompositeOperation='lighter';for(const[k,m,cc]of[[4,.15,c],[1.8,.45,c],[.7,1,WHITE]]){g.strokeStyle=rgba(cc,a*m);g.lineWidth=w*k;g.beginPath();g.ellipse(cx,cy,rx,ry,0,a0,a1);g.stroke()}g.restore()}
+// ---- オーラの案 ----
+const PL={};
+const BC=G=>[G.hip[0]+4,G.hip[1]-10];
+// 体のシルエットをぼかして光らせる(sc: 体の中心からの拡大)
+function silGlow(g,G,sc,col,a,blur){if(a<=0)return;const[cx,cy]=BC(G);g.save();g.globalCompositeOperation='lighter';g.translate(cx,cy);g.scale(sc,sc*1.02);g.translate(-cx,-cy);drawChar(g,G,{col,alpha:a,blur,blurCol:col,noBlade:true});g.restore()}
+// 炎の舌の輪郭(アニメ調)
+function tongues(g,G,rx,ry,n,L,step,col,a,mode){if(a<=0)return;const[cx,cy0]=BC(G),cy=cy0-10;g.save();g.globalCompositeOperation=mode||'lighter';g.fillStyle=rgba(col,a);g.beginPath();
+ for(let j=0;j<n;j++){const av=j/n*2*PI,at=(j+.5)/n*2*PI,top=Math.max(0,-Math.sin(at)),h=hash(j,step);
+  const vx=cx+Math.cos(av)*rx,vy=cy+Math.sin(av)*ry,len=L*(.35+.65*top)*(.55+.45*h),tx=cx+Math.cos(at)*(rx+len*.55)+(hash(j,step+1)-.5)*8,ty=cy+Math.sin(at)*ry-len*(.4+top*.9);
+  j?g.lineTo(vx,vy):g.moveTo(vx,vy);g.quadraticCurveTo((vx+tx)/2+(hash(j,step+2)-.5)*10,(vy+ty)/2,tx,ty)}
+ g.closePath();g.fill();g.restore()}
+
+PL.O1={name:'O1 輪郭の光',d:[
+ ['溜め中(0〜40F)','体の輪郭が暗い赤でうすく光り、だんだん太く・明るくなる。'],
+ ['溜め完了(40F)','輪郭の光が外へ「ボン」と大きく広がって消え、白い芯の光が残る。'],
+ ['溜まった後','明るい赤の輪郭＋白い芯。光がゆっくり呼吸し、上へ細い筋が立つ。'],
+ ['作り','構えのモデルをふくらませて裏面だけ加算で描く(J・K・L で作った「ふちの光」と同じ)。体が隠れず、一番すっきり。']],
+ back(g,t,G){const k=K(t),p=ease(P(t)),ad=t-DONE;
+  if(t<DONE){silGlow(g,G,1.02+.04*p,[150,10,24],.25+.5*p,6+16*p)}
+  else{const br=.85+.15*Math.sin(t*.12);silGlow(g,G,1.06,RED,.8*br*k,22);silGlow(g,G,1.015,WHITE,.35*br*k,6);
+   if(ad<16){const u=ease(ad/16);silGlow(g,G,1.08+u*.45,RED,.9*(1-ad/16),30)}
+   each(40,3,DONE+4,30,t,(i,age,u,b)=>{const q=bodyPt(G,i,130);glowLine(g,q[0],q[1]-age*2.2,q[0],q[1]-age*2.2-16,RED,1,.5*Math.sin(PI*u)*k)})}}};
+
+PL.O2={name:'O2 炎の舌(アニメ調)',d:[
+ ['溜め中(0〜40F)','体のまわりに小さく暗い赤の炎の舌。2Fごとに形が変わる(コマ打ち)。だんだん背が伸びる。'],
+ ['溜め完了(40F)','炎が一気に大きく燃え上がり、中が白く光る。'],
+ ['溜まった後','大きな炎の舌が外側の赤・中の明るい赤・芯の白の3層で、コマ打ちで揺れ続ける。'],
+ ['作り','形の生成ルール(楕円＋上ほど長い舌)は、以前の「サイヤ人のオーラ」の実験と同じ作り方で Effekseer に移せる。形がはっきりして遠くからも分かる。漫画っぽくなるのが気になる点。']],
+ back(g,t,G){const k=K(t),p=ease(P(t)),ad=t-DONE,st=Math.floor(t/2)*3;
+  if(t<DONE){tongues(g,G,48+8*p,96+10*p,16,30+50*p,st,[150,12,24],(.35+.35*p),'lighter');tongues(g,G,40,88,14,18+30*p,st+50,[90,0,12],.4,'source-over')}
+  else{const s=ad<10?1+.5*(1-ad/10):1;
+   tongues(g,G,62*s,112*s,18,120*s,st,[200,16,32],.5*k);tongues(g,G,54*s,104*s,16,85*s,st+30,[255,60,70],.5*k);tongues(g,G,44*s,94*s,14,50*s,st+60,ad<6?WHITE:[255,200,200],(ad<6?.9:.45)*k)}}};
+
+PL.O3={name:'O3 気の筋',d:[
+ ['溜め中(0〜40F)','体のまわりから細い赤の筋が少しずつ立ちのぼる(まばら)。足元にうすい光。'],
+ ['溜め完了(40F)','筋が一気に増えて速くなり、足元から光の輪が上へ抜ける。'],
+ ['溜まった後','筋が多く・速く立ちのぼり続ける。筋の中に白い芯が混じる。'],
+ ['作り','方向ビルボードの細い筋だけなので軽い。体を隠さない。密度と速さの差で段階が分かるが、止まった絵だと差が小さめ。']],
+ layer(g,t,G,front){const k=K(t),ad=t-DONE;
+  each(300,.4,0,30,t,(i,age,u,b)=>{if((hash(i,140)<.45)!==front)return;const ch=b<DONE;if(ch&&hash(i,141)>.4+.4*P(b))return;
+   const sp=ch?3:6,a0=hash(i,142)*2*PI,x=BC(G)[0]+Math.cos(a0)*(40+hash(i,143)*30),y0=GY-hash(i,144)*120,y=y0-age*sp,L=ch?20:40;
+   glowLine(g,x+Math.sin(age*.2+i)*3,y,x,y+L,hash(i,145)<.25&&!ch?WHITE:RED,ch?1:1.4,(ch?.75:.85)*Math.sin(PI*u)*k)});
+  if(!front){glow(g,BC(G)[0],GY,110,RED,t<DONE?.12*P(t):.22*k);if(ad>=0&&ad<16){const u=ease(ad/16);ringE(g,BC(G)[0],GY-u*260,70,14,RED,2,1-ad/16)}}},
+ back(g,t,G){this.layer(g,t,G,false)},front(g,t,G){this.layer(g,t,G,true)}};
+
+PL.O4={name:'O4 黒から赤へ(二層)',d:[
+ ['溜め中(0〜40F)','黒い煙のオーラだけが体を包み、だんだん濃く大きくなる(赤は無し)。'],
+ ['溜め完了(40F)','黒いオーラの内側に赤が「点火」する。赤い光が体の中から広がる。'],
+ ['溜まった後','外が黒い煙、内が赤い炎の二層のまま燃え続ける。'],
+ ['作り','色の切り替え(黒だけ → 黒＋赤)なので完了がはっきり分かる。溜め攻撃の赤黒の斬撃とそのままつながる。黒い煙は明るいステージで濁って見えやすい。']],
+ back(g,t,G){const k=K(t),p=P(t),ad=t-DONE;
+  each(400,.5,0,28,t,(i,age,u,b)=>{const q=bodyPt(geo(b),i,150),sz=(16+hash(i,151)*14)*(b<DONE?.6+.6*P(b):1.3);blob(g,q[0]+Math.sin(age*.2+i)*5,q[1]-age*(1.5+hash(i,152)*1.5),sz*(1-u*.5)*1.3,[96,80,110],(b<DONE?.3+.3*P(b):.4)*(1-u)*k);blob(g,q[0]+Math.sin(age*.2+i)*5,q[1]-age*(1.5+hash(i,152)*1.5),sz*(1-u*.5)*.6,INK,(b<DONE?.25+.3*P(b):.5)*(1-u)*k)});
+  if(t>=DONE){const ig=ad<10?ease(ad/10):1;
+   each(300,.5,DONE,24,t,(i,age,u,b)=>{const q=bodyPt(G,i,153);glow(g,q[0]+Math.sin(age*.3+i)*3,q[1]-age*2.2,(16+hash(i,154)*12)*(1-u*.6),RED,.75*(1-u)*ig*k)});
+   silGlow(g,G,1.04,RED,.75*ig*k,18);if(ad<12)glow(g,...BC(G),200*ease(ad/12)+20,RED,.6*(1-ad/12))}}};
+
+PL.O5={name:'O5 三層の殻',d:[
+ ['溜め中(0〜40F)','体の形の光の殻が、内側から1枚ずつ灯る(13F・26F・40F。3枚目で完了)。殻の数＝溜まり具合。'],
+ ['溜め完了(40F)','3枚目が灯ると同時に、3枚とも外へ弾けて白く光る。'],
+ ['溜まった後','3枚の殻が順番にゆっくり脈打つ(内 → 外へ光が抜けていく)。'],
+ ['作り','O1 の殻を大きさ違いで3枚重ねるだけ。進み具合が数で分かる。重なると線が多くうるさく見えるかも。']],
+ back(g,t,G){const k=K(t),ad=t-DONE,TS=[13,26,40],SC=[1.06,1.14,1.23];
+  for(let j=0;j<3;j++){const lt=t-TS[j];if(lt<0)continue;let a,sc=SC[j];
+   if(t<DONE){a=.55;if(lt<6){a=.55+.45*(1-lt/6);sc+=.05*(1-lt/6)}}
+   else if(ad<12){sc+=.15*ease(ad/12);a=1-ad/24}
+   else a=(.3+.35*Math.max(0,Math.sin(t*.12-j*1.1)))*k;
+   silGlow(g,G,sc,j==2?[255,70,80]:RED,a,10+j*4);if(ad>=0&&ad<6)silGlow(g,G,sc,WHITE,.5*(1-ad/6),6)}}};
+
+PL.O6={name:'O6 足元から噴く柱',d:[
+ ['溜め中(0〜40F)','足元に赤い光がたまり、オーラが下から少しずつせり上がる(高さ＝溜まり具合。40Fで頭の上まで)。'],
+ ['溜め完了(40F)','オーラが柱になって空へ噴き上がり、足元に輪が広がる。'],
+ ['溜まった後','体を包む高さの柱が渦を巻いて揺れ続ける。'],
+ ['作り','「満ちていく水位」なので進み具合が分かる。柱は遠くからも見える。チェックポイント(光の柱)と形が近いので、色・太さで分ける必要あり。']],
+ back(g,t,G){const k=K(t),p=ease(P(t)),ad=t-DONE,cx=BC(G)[0];
+  const top=t<DONE?GY-(GY-200)*p:(ad<14?GY-(GY-200)-ease(ad/14)*300:200)+(ad>=14?0:0),h=GY-top,wid=t<DONE?80:(ad<14?110:90);
+  const ta=ad>=14?Math.max(top,GY-260-20*Math.sin(t*.1)):top;
+  const gr=g.createLinearGradient(0,GY,0,ta);gr.addColorStop(0,rgba(RED,.55*k));gr.addColorStop(.7,rgba(RED,.25*k));gr.addColorStop(1,rgba(RED,0));
+  g.save();g.globalCompositeOperation='lighter';g.fillStyle=gr;g.beginPath();g.ellipse(cx,GY,wid,14,0,0,PI);g.lineTo(cx-wid,ta);g.lineTo(cx+wid,ta);g.closePath();g.fill();g.restore();
+  for(let j=0;j<10;j++){const ph=(t*.05+j/10)%1,x=cx+Math.cos(ph*2*PI)*wid*.85,y0=GY-((t*3+j*40)%Math.max(20,GY-ta));if(Math.sin(ph*2*PI)>0)glowLine(g,x,y0,x,y0-30,RED,1.2,.6*k)}
+  glow(g,cx,GY,130,RED,t<DONE?.15+.25*p:.3*k);if(ad>=0&&ad<20){const u=ease(ad/20);ringE(g,cx,GY+2,40+u*280,(40+u*280)*.16,RED,2.4,1-ad/20)}}};
+
+PL.O7={name:'O7 墨の衣',d:[
+ ['溜め中(0〜40F)','墨の筆の線が体のまわりを渦を巻いて集まり、体にまとわりつく(墨の量が増えていく)。'],
+ ['溜め完了(40F)','墨の線のふちが一気に赤く光り、墨のしぶきが外へはねる。'],
+ ['溜まった後','赤いふちの墨の衣が体のまわりをゆっくり流れ、上へ細く立ちのぼる。'],
+ ['作り','HUD・リザルト・死亡演出の筆の表現と揃う。黒が主なので白い敵の前でも見える。暗いステージでは黒が沈むので赤いふちが大事。']],
+ layer(g,t,G,front){const k=K(t),p=P(t),ad=t-DONE,[cx,cy]=BC(G),n=t<DONE?Math.floor(2+p*3):5;
+  for(let j=0;j<n;j++){const ph=t*.035+j*.8,pts=[];for(let s=0;s<=16;s++){const a=ph+s*.13,r=(t<DONE?(70+(1-p)*90):70)+12*Math.sin(s*.5+j),y=cy+60-j*22-s*7+Math.sin(a*2)*10;pts.push([cx+Math.cos(a)*r*.75,y+Math.sin(a)*r*.25,Math.sin(a)])}
+   g.save();g.lineCap='round';for(let s=1;s<pts.length;s++){const z=pts[s][2];if((z>0)!==front)continue;const w=(3+9*Math.sin(PI*s/16))*(.7+.3*hash(j,s));if(t<DONE){g.globalCompositeOperation="source-over";g.strokeStyle=rgba([88,78,96],.7*k);g.lineWidth=w+2.5;g.beginPath();g.moveTo(pts[s-1][0],pts[s-1][1]);g.lineTo(pts[s][0],pts[s][1]);g.stroke()}
+    if(t>=DONE){g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RED,(ad<10?1-ad/20:.55)*k);g.lineWidth=w+3;g.beginPath();g.moveTo(pts[s-1][0],pts[s-1][1]);g.lineTo(pts[s][0],pts[s][1]);g.stroke()}
+    g.globalCompositeOperation='source-over';g.strokeStyle=rgba(INK,.9*k);g.lineWidth=w;g.beginPath();g.moveTo(pts[s-1][0],pts[s-1][1]);g.lineTo(pts[s][0],pts[s][1]);g.stroke()}g.restore()}
+  if(front&&ad>=0&&ad<26)for(let i=0;i<30;i++){const a=hash(i,160)*2*PI,r=60+ease(ad/26)*(60+hash(i,161)*160);blob(g,cx+Math.cos(a)*r,cy+Math.sin(a)*r*.6+ad*ad*.04,3+hash(i,162)*6,INK,.9*(1-ad/26))}},
+ back(g,t,G){this.layer(g,t,G,false)},front(g,t,G){this.layer(g,t,G,true)}};
+
+const ORDER=['O1','O2','O3','O4','O5','O6','O7'];
+// ---- 背景 ----
+function makeBg(bright){const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d'),r=R(7);
+ const sky=g.createLinearGradient(0,0,0,GY);if(bright){sky.addColorStop(0,'#8f97a4');sky.addColorStop(1,'#c9c4bc')}else{sky.addColorStop(0,'#07070d');sky.addColorStop(1,'#1d1a26')}g.fillStyle=sky;g.fillRect(0,0,W,GY);
+ for(let L=0;L<2;L++){let x=-20;while(x<W){const w=40+r()*90,h=(L?120:200)+r()*(L?140:160);g.fillStyle=bright?(L?'#7d7f86':'#a3a39f'):(L?'#0d0c13':'#15131c');g.fillRect(x,GY-h,w,h);
+  if(!bright)for(let i=0;i<14;i++){if(r()<.5)continue;g.fillStyle=r()<.2?'rgba(200,40,60,.5)':'rgba(120,140,190,.25)';g.fillRect(x+4+r()*(w-10),GY-h+6+r()*(h-20),3,2)}x+=w+4}}
+ const fl=g.createLinearGradient(0,GY,0,H);if(bright){fl.addColorStop(0,'#77746e');fl.addColorStop(1,'#56534e')}else{fl.addColorStop(0,'#1a1820');fl.addColorStop(1,'#09080c')}g.fillStyle=fl;g.fillRect(0,GY,W,H-GY);
+ g.strokeStyle=bright?'rgba(0,0,0,.12)':'rgba(255,255,255,.05)';g.lineWidth=1;for(let i=-20;i<=20;i++){g.beginPath();g.moveTo(W/2+i*30,GY);g.lineTo(W/2+i*120,H);g.stroke()}for(let j=1;j<8;j++){const y=GY+(H-GY)*(j/8)**1.6;g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+ return c}
+const BG={d:makeBg(false),b:makeBg(true)};
+
+// ---- 描画 ----
+function render(g,id,t,bright){const pl=PL[id],G=geo(t);g.save();
+ const sh=pl.shake?pl.shake(t):[0,0];g.translate(sh[0],sh[1]);
+ g.drawImage(bright?BG.b:BG.d,-10,-10,W+20,H+20);
+ g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(G.ft[0],GY+3,90,9,0,0,7);g.fill();
+ if(pl.back)pl.back(g,t,G);
+ if(pl.char)pl.char(g,t,G);else drawChar(g,G,{scarf:t<REL?(pl.scarf?lerp(1,pl.scarf,P(t)):1):1});
+ if(pl.front)pl.front(g,t,G);
+ g.restore();
+ if(pl.post)pl.post(g,t,G)}
+
+const C=document.getElementById('cv'),X=C.getContext('2d'),grid=document.getElementById('grid');
+let mode='O1',t=0,playing=true,last=performance.now(),acc=0;
+const pb=document.getElementById('plans');
+for(const id of[...ORDER,'all']){const b=document.createElement('button');b.textContent=id=='all'?'全部並べる':PL[id].name;b.dataset.id=id;b.onclick=()=>{mode=id;sync()};pb.appendChild(b)}
+const tiles={};for(const id of ORDER){const d=document.createElement('div'),c=document.createElement('canvas');c.width=W;c.height=H;d.appendChild(c);d.appendChild(document.createTextNode(PL[id].name));d.style.cursor='pointer';d.onclick=()=>{mode=id;sync()};grid.appendChild(d);tiles[id]=c.getContext('2d')}
+function sync(){for(const b of pb.children)b.classList.toggle('on',b.dataset.id===mode);const all=mode=='all';C.style.display=all?'none':'block';grid.style.display=all?'grid':'none';
+ document.getElementById('desc').innerHTML=all?'':PL[mode].d.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');draw()}
+function phase(t){return t<10?'構え(ChargeStart)':t<DONE?`溜め中 <b>${Math.round(P(t)*100)}%</b>`:t<DONE+12?'<b>溜め完了(40F)</b>':t<REL?'溜まった後(押している間)':'離した → 溜め攻撃へ'}
+function draw(){const bright=document.getElementById('bright').checked;if(mode=='all')for(const id of ORDER)render(tiles[id],id,t,bright);else render(X,mode,t,bright);
+ document.getElementById('ph').innerHTML=`${t}F / ${phase(t)}`;document.getElementById('seek').value=t}
+function loop(now){const dt=Math.min(100,now-last);last=now;if(playing){acc+=dt*(document.getElementById('slow').checked?.25:1);while(acc>=1000/60){acc-=1000/60;t=(t+1)%TOTAL}draw()}requestAnimationFrame(loop)}
+document.getElementById('play').onclick=e=>{playing=!playing;e.target.textContent=playing?'一時停止':'再生'};
+document.getElementById('seek').oninput=e=>{t=+e.target.value;playing=false;document.getElementById('play').textContent='再生';draw()};
+document.getElementById('bright').onchange=draw;
+document.getElementById('early').onchange=e=>{REL=e.target.checked?30:180;draw()};
+const hs=location.hash.slice(1).split(',');if(hs[0]&&(PL[hs[0]]||hs[0]=='all')){mode=hs[0];if(hs[1]!==undefined){t=+hs[1];playing=false;document.getElementById('play').textContent='再生'}}
+sync();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -77,6 +77,7 @@ namespace
 	//スキルエフェクト確認用
 	constexpr float kDebugSkillEffectScale = 20.0f;//分身モデルは1/20で作っているので20倍して元の大きさに戻す
 	constexpr float kDebugSkillEffectDistance = 300.0f;//プレイヤーの正面のどこを中心にするか
+	constexpr int kChargeHoldLabelFrame = 120;//F11で切り替えた案の名前を出すフレーム
 }
 
 SceneMain::SceneMain(SceneController& controller, StageType stageType, std::optional<RespawnInfo> respawn) :
@@ -382,16 +383,28 @@ void SceneMain::NormalUpdate()
 	{
 		PlayDebugSkillEffect(System::GetInstance().GetHandle(AsyncData::DebugGhostDash3DEffect), kDebugSkillEffectDistance);
 	}
-	//地上弱スキルはプレイヤーの位置から斬り抜けるので足元から出す//押すたびに1→2→3段目
+	//地上弱スキル//押すたびに1→2→3段目
+	//1,2は強スキルと同じく敵の位置(正面)に出す//3はプレイヤーの足元から、ゲームでは逆を向くので180度ずらす
 	if (isF9Pressed && !m_wasF9Pressed)
 	{
 		const auto key = static_cast<AsyncData>(static_cast<int>(AsyncData::DebugGleamLight1Effect) + m_debugGleamStep);
-		PlayDebugSkillEffect(System::GetInstance().GetHandle(key), 0.0f);
+		const bool isStep3 = m_debugGleamStep == 2;
+		PlayDebugSkillEffect(System::GetInstance().GetHandle(key), isStep3 ? 0.0f : kDebugSkillEffectDistance, isStep3 ? DX_PI_F : 0.0f);
 		m_debugGleamStep = (m_debugGleamStep + 1) % 3;
 	}
 	m_wasF5Pressed = isF5Pressed;
 	m_wasF6Pressed = isF6Pressed;
 	m_wasF9Pressed = isF9Pressed;
+
+	//F11で溜め中のエフェクトの案を切り替える(確認用)
+	const bool isF11Pressed = CheckHitKey(KEY_INPUT_F11) != 0;
+	if (isF11Pressed && !m_wasF11Pressed)
+	{
+		System::GetInstance().CycleChargeHoldType();
+		m_chargeHoldLabelFrame = kChargeHoldLabelFrame;
+	}
+	m_wasF11Pressed = isF11Pressed;
+	if (m_chargeHoldLabelFrame > 0) --m_chargeHoldLabelFrame;
 
 	//再生中のエフェクトを、このフレームのタイムスケールに合わせて進める(自分の速さを持つエフェクトの設定し直しもここで行う)
 	EffectManager::GetInstance().Update();
@@ -419,7 +432,7 @@ void SceneMain::NormalUpdate()
 
 }
 
-void SceneMain::PlayDebugSkillEffect(int effectHandle, float forwardDistance)
+void SceneMain::PlayDebugSkillEffect(int effectHandle, float forwardDistance, float rotOffset)
 {
 	const Vector3 playerPos = m_player->GetRigidBody().GetPos();
 	const Vector3 forward = m_player->GetTargetVec();
@@ -428,7 +441,7 @@ void SceneMain::PlayDebugSkillEffect(int effectHandle, float forwardDistance)
 	const int playingHandle = PlayEffekseer3DEffect(effectHandle);
 	SetPosPlayingEffekseer3DEffect(playingHandle, center.x, center.y, center.z);
 	//プレイヤーと同じ向きにする
-	SetRotationPlayingEffekseer3DEffect(playingHandle, 0.0f, atan2f(forward.x, forward.z), 0.0f);
+	SetRotationPlayingEffekseer3DEffect(playingHandle, 0.0f, atan2f(forward.x, forward.z) + rotOffset, 0.0f);
 	SetScalePlayingEffekseer3DEffect(playingHandle, kDebugSkillEffectScale, kDebugSkillEffectScale, kDebugSkillEffectScale);
 }
 
@@ -552,6 +565,12 @@ void SceneMain::NormalDraw()
 
 	
 	m_uiManager->Draw();
+
+	//F11で切り替えた溜め中のエフェクトの案の名前
+	if (m_chargeHoldLabelFrame > 0)
+	{
+		DrawFormatString(20, 200, GetColor(255, 230, 120), "溜めエフェクト[F11]: %s", System::GetInstance().GetChargeHoldName());
+	}
 	FrameProfiler::GetInstance().Mark("Draw:UI");
 	//カクつきの切り分け(F2。Release でも出す)
 	if (imguiApp::GetInstance().IsDebugUIVisible())m_cameraManager->DrawDebugWindow();

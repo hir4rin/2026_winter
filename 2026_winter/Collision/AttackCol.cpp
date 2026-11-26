@@ -17,8 +17,10 @@ namespace
 {
 	constexpr float kAttackColOffset = 50.0f;//攻撃判定を前に出す距離//本来はここも攻撃ごとに変えるべき
 
-	constexpr float kCameraShakePower = 2.5f;//カメラの揺れの強さ
-	constexpr float kCameraShakeTime = 5.0f;//カメラの揺れの時間
+	constexpr float kCameraShakePowerLow = 6.5f;//カメラの揺れの強さ(low)
+	constexpr float kCameraShakeTimeLow = 8.0f;//カメラの揺れの時間(low)
+	constexpr float kCameraShakePowerHigh = 12.0f;//カメラの揺れの強さ(high)
+	constexpr float kCameraShakeTimeHigh = 10.0f;//カメラの揺れの時間(high)
 
 	constexpr float kFovPunchAngle = -15.0f;//FOVパンチの強さ(度)
 	constexpr float kFovPunchTime = 90.0f;//FOVパンチの長さ
@@ -144,7 +146,18 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 				//最初にあたった攻撃だったらカメラを揺らす//必殺技中は揺らさない
 				if (m_hitIds.empty() && GetTag().role != Collider::ColRole::UltAttack)
 				{
-					cameraManager->StartCameraShake(kCameraShakePower, kCameraShakeTime);//カメラを揺らす
+					//CSVのIsCameraShakeがtrueの攻撃だけ揺らす
+					if (m_attackData->isCameraShake)
+					{
+						if (m_attackData->shakePower == CharacterBase::ShakePower::High)
+						{
+							cameraManager->StartCameraShake(kCameraShakePowerHigh, kCameraShakeTimeHigh);
+						}
+						else
+						{
+							cameraManager->StartCameraShake(kCameraShakePowerLow, kCameraShakeTimeLow);
+						}
+					}
 					//空中攻撃の最後の攻撃だったら
 					int comboIndex = m_attackData->comboIndex;
 					bool isAirAttack = comboIndex >= ComboIndex::AirAttack1 && comboIndex <= ComboIndex::AirAttack5;
@@ -384,7 +397,7 @@ void AttackCol::PlayerGaugeUp(Collider& other)
 
 
 	//スキル攻撃・ガードブレイクアタックかどうか
-	const bool isSkillAttack = m_attackData->attackType == AttackType::SkillAttack ||
+	const bool isSkillAttack = m_attackData->attackType == AttackType::SkillHeavyAttack || m_attackData->attackType == AttackType::SkillLightAttack ||
 		m_attackData->attackType == AttackType::GuardBreakAttack;
 
 	//通常攻撃ならスキル攻撃をあげる

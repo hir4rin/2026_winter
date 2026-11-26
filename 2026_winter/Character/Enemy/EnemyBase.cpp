@@ -331,7 +331,7 @@ void EnemyBase::OnDamage(Collider& other, AttackData& data)
 	if(std::dynamic_pointer_cast<EnemyGuard>(m_currentState))
 	{
 		//もし、スキル攻撃や必殺技が当たったらそのままダメージ処理へ進む
-		if (data.attackType == AttackType::SkillAttack || data.attackType == AttackType::UltAttack)
+		if (data.attackType == AttackType::SkillHeavyAttack || data.attackType == AttackType::SkillLightAttack || data.attackType == AttackType::UltAttack)
 		{
 			//そのままダメージ処理
 		}
@@ -735,7 +735,7 @@ void EnemyBase::PlayBloodSplash(Collider& other)
 			comboIndex == ComboIndex::SkillAttack2 || m_attackData.attackType == AttackType::ImpactSkillAttack);
 	if (!isUltimating && !isKessatsuSkill)
 	{
-		const bool isSkill = m_attackData.attackType == AttackType::SkillAttack ||
+		const bool isSkill = m_attackData.attackType == AttackType::SkillHeavyAttack || m_attackData.attackType == AttackType::SkillLightAttack ||
 			m_attackData.attackType == AttackType::ImpactSkillAttack;
 		PlayBlood(isSkill ? AsyncData::SkillHitEffect : AsyncData::HitWindEffect, bloodPos);
 	}

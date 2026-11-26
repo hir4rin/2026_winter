@@ -1311,6 +1311,14 @@
   - **たまる向きを直した**: 11-04 のメモでは「左右反転(ReverseX)で時計回り」とあったが、測ると**反時計回り**だった。ReverseX を FALSE にして上から時計回りにした。
   - Release で一時的に必殺技65にして撮り、時計回りにたまり先の光が端に来ることを確認した(初期値は戻した)。満タンも撮った。
 - Debug・Release(x64)ともビルドは通った。Release の `-bench -stage=3` で撮って、満タンのときと、一時的に初期値を変えたとき(HP22・スキル47・必殺技65)の見た目を確認した(初期値は戻した)。**実際に戦って、減る・たまる・房が揺れる動きの確認はまだ**。
+- (11/26)象嵌の菱形をコードで描くのをやめて画像にした: `hud_markon.png`(HPがある・銀)/ `hud_markoff.png`(減った・暗い灰)。設計座標の4倍(64x80)で、`kMarkScale` 0.25 で描く。作り直しは `MakeHudParts.ps1 -Parts markon` / `markoff`。
+  HPの左端(弧の始まり)が切りっぱなしだったので、`hud_frame.png` の左端に銀の鯉口の金具を付けた(`hud_parts.html` の `koiguchi()`。右端の鐺と対)。最初は縁を四角い端で黒く閉じたが、やめた。Release で撮って確認した。
+  - `MakeHudParts.ps1` を PowerShell ツールから `powershell -File` で呼ぶと止まった。Git Bash から msedge を直接呼んで作った(`--user-data-dir` を別にする)。スクリプトにも `--user-data-dir` を足した(止まらなくなったかは未確認)。
+- (11/26)**必殺技ゲージの画像が荒かった**: 943px などの大きい画像を GPU で約1/6に縮めて描いていたため(バイリニアは縮める前に平均しないので、縄の模様・「殺」の縁がギザギザになる)。
+  画像を前もって描く大きさにきれいに縮め(`tools/HudGen/ShrinkUltParts.ps1`。GDI+ の HighQualityBicubic)、ゲームでは等倍で描く(`kUltRingScale` など全部 1.0)。
+  - 元の大きい画像は `tools/HudGen/ult_src/`(UltGaugeBase / UltGauge / UltGaugeColor / UltGauge_circle / hud_ultglow / hud_spark)。`MakeHudParts.ps1` の ultglow / spark は ult_src に書くようにしたので、作り直したら `ShrinkUltParts.ps1` を流す。
+  - 画面が 1280x720 固定(`Game::GetScale()` が1)なのが前提。解像度を上げるなら、縮める倍率を2倍にしてスケールを0.5にする(2倍で試したら「殺」の縁がまだ少し荒かった)。
+  - Release の `-bench -stage=3` で撮って、輪と「殺」の縁がなめらかになったのを確認した。たまる途中(DrawCircleGauge)の見た目は画面ではまだ見ていない。
 
 ### 2026-11-04 NG4風のメニューUI(MenuUI)・ステージセレクトに使用
 - **詳しくは `../進捗/note_メニューUI.md`**(図あり)。
@@ -1608,6 +1616,12 @@
   - もやは本編より暗く (22,12,32)。明かりは描いた後に空のリストを渡して、タイトルのキャラに残さない。
 - `TitleBackUI` は塗りつぶしをやめて周辺減光だけ(街の後に掛ける)。シーンの描画順: 街 → 周辺減光 → プレイヤー → UI。
 - 確認: Debug x64 でビルドして撮影。ぼけた夜の街に窓の光の玉が並ぶ。画面の左端(y=350 付近)に細い黒い線が少し見える(背景用カメラの近くの何か)。背景は揺れ(カメラシェイク)では動かない。読み込みの時間は測っていない。
+
+### 2026-11-26 タイトルに右から左へ流れる火の粉(TitleEmberUI)
+- `UI/Title/TitleEmberUI.h/.cpp`(vcxproj/filters に登録)。2D で70個、加算で 外の光(円を4枚重ねて外ほど薄く)→ 尾(2段で先ほど細く薄く)→ 芯。値は .cpp 先頭。
+- 奥ほど小さく遅い(`depth` の2乗で奥を多め)、上下にゆらぎ・ちらつき、寿命の出始め・終わりでフェード。画面の外に出たら右端から出し直す。
+- シーンで `TitleInit` の直後に Add(ロゴ・白い光・PRESS より奥、プレイヤーより手前)。斬った瞬間(`kImpactFrame`)に `Gust()` で一瞬速くなる。
+- Debug x64 でビルドして撮影で確認。斬った瞬間の突風は画面では見ていない。
 
 ### 2026-11-20 タイトルのプレイヤーを IdaFaber の Mv1LikeUnity(Unity と同じ描き方)で描く
 - 髪がまばら(地肌が見える)だった。調べたこと: 風を切っても同じ → 描き方の問題。髪の板の裏面が消えていた(裏面も描くとかなり直った)。CSV の髪の切り抜きを 0.31→0.08 に下げると半透明が白く浮いて悪化。髪を減らす前のモデル(`data/Player03_TitleHair.mv1`、git の 7312d9d の版)も試した。
@@ -2802,3 +2816,107 @@
 - ユーザーの希望。必殺技の溜め(UltBloodAbsorb)の `Swirl`(三日月の帯＋加算の帯)を `BloodWingActivate.efkefc` の `Vortex` の子(InMist の次)に足した。血しぶきの塊はそのまま。
 - 少しだけなので 8本(2.5Fおき、2F目から)。羽は14倍・溜めは20倍で再生するので、半径・位置は溜めの版の約1.43倍(外 12.9→2・内 9→1)。画像は `Skill/Texture/UBA_LiquidArc_a.png`(Blood/Texture から写した)。
 - 書き出しは今まで通り DummyBody を消して export → 開き直し。確認: 一時コードでデモステージで撮った(`../EffectTools/BloodWing/wing_activate_swirl.png`。一時コードは消した)。Release(x64)のビルドは通った。
+
+### 2026-11-26 必殺技の溜めの血の吸い込みを「暗い血を引きはがして吸い込み、縮んで光ってはじける」形に作り直した(UltBloodAbsorb v2)
+- ユーザーの依頼「もっと印象強く・液体の血を吸い取っていくように・NG4 の必殺技のエフェクトを勉強して」。NG4 の血の翼の発動(`Videos/画面録画/画面録画 2026-07-02 145333.mp4` の 12.2〜13.0 秒)を1コマずつ見た。分析は `../EffectTools/BloodExec/液体の血の勉強.md` の追記。要点: **吸い込む間の血は暗く光らない → 集まりきった瞬間だけ赤く光ってはじける**、線ではなく大きな液体の面、縮んでから解放。
+- 2案(A 控えめ・B 大胆)から **B を選んだ**。控え: 三日月の帯の版は `../EffectTools/BloodExec/UltBloodAbsorb_swirl/`(efkefc と efk を写せば戻る)。
+- 作り方: `../EffectTools/BloodExec/edit_absorb_v2.ps1`(EfkXml で今の xml を書き換え。羽の発動演出 `BloodWingActivate` の閃光・爆発を 0.7倍で持ってくる)のあと、エディタで時間・大きさを直した。**今の efkefc のほうが新しい**(スクリプトをもう一度流すと直しが消える)。
+- 中身(エフェクトのフレーム。ゲームでは Enter から数えて、刀が伸び始めるのが約41F):
+  - `Vortex` の子: `Pool`(床の血だまり 8個、広がってから中心へ寄って縮む)、`Peel`(床に寝た状態(X=90)から Rotation の Easing で起き上がりながら縮む帯 22本、4F〜)、`AirSheet`(空中の帯 14本、10F〜)、`Shard`(40個)、`AbsorbFine`、`InkMist`(暗いもや 18個)。帯の色は暗い深紅でふちが黒い(普通の合成、加算の帯 SwirlGlow は消した)。縮みは StartSlowly3 で最後に一気に吸い込む。
+  - `CoreBlob`(6〜40F で大きくなる)→ `Squeeze`(39F、一度縮む)→ 42F〜 `Core`(赤い光、明るさを最初に)・`BurstGlow`・`BurstHalo`(大きく薄い赤)・`BurstFlashH/V`(白い線)・`BurstSpike`(とげ 36本、放射状)・`BurstChunk`・`BurstMist`・`FloorFlash`(床の赤い光)・`AfterPulse`(46F〜 脈打つ)。
+  - 画像(`data/Effect/Blood/Texture/`): `UBA_InkSheet_a / UBA_InkSheet2_a`(ふちが黒い煙に崩れる液体の面)・`UBA_Pool_a`・`UBA_Spike_a`(`../EffectTools/BloodExec/gen_ink_sheet.ps1` で作る)、`BWA_SlashStreak`・`ImpactGlow`(Skill/Texture から写した)。使わなくなった `UBA_LiquidArc_a / 2_a` は控えの版が使うので残している。
+- 最初は帯の半径が 13(20倍で260)で、溜めのカメラ(距離230〜300)より外から来て画面の手前を巨大な赤い形が横切ったので、Peel 8.5・AirSheet 7 に縮めた。
+- 確認: 一時コード(`-ulttest`、デモステージで200F目に PlayerStateUlt に入れて3Fおきに撮る)で前と今を撮った(`../EffectTools/BloodExec/compare_ult_absorb_v2.png` 上=前・下=今、今のコマは `game_v2/`。撮り始めのタイミングが前と今で少しずれている)。一時コードは消した。Debug(x64)のビルドは通った(Release はゲームが起動中で上書きできなかったので未ビルド)。
+- **この形に決定(ユーザー OK)**。まだ: 実際に LT を2回押しての確認・暗いステージ・Kingmech のトドメ(同じエフェクト)での見え方・重さの測定。床の血だまりは今のカメラでは低くてほとんど見えない。帯は太くつやがあるので、見え方によっては「赤い牙・角」に見えるかもしれない。
+- (追記 v3)ユーザーから「YouTube `9eDsgRaA3FY`(NINJA GAIDEN 4 絶技集)の35秒ぐらいの液体で」と言われて作り直した。v2 は `../EffectTools/BloodExec/UltBloodAbsorb_v2/` に控えた。
+  - 動画の 34.85〜35.2 秒の血: 暗い深紅で光らない、**細い筋がたくさん束になって流れるしぶきの面**、ふちは細い糸にほつれてくっきり(ぼけた煙ではない)、飛ぶ滴は頭が丸く尾が細く伸びて少し曲がる。v2 の「つやの強い太い管＋黒い煙のふち」は違っていた。
+  - 画像 `UBA_StreakSheet_a / 2_a`(Ring 用。90本の細い筋＋離れた滴、U が流れる向き)・`UBA_Strand_a`(2x2、1コマ 128x512、上が頭)。`../EffectTools/BloodExec/gen_streak_sheet.ps1` で作る。
+  - `AirBand`・`PeelSheet` を StreakSheet に(色 ふち(95,4,12)・中(165〜175,12〜14,28〜30)、アルファは全部255で画像のアルファに任せる)。`Shard` と `BurstSpike` を Strand に(移動方向ビルボード、UV アニメ 2x2)。`InkMist` は薄く(A 80)。時間・流れは v2 のまま。
+  - 確認: 一時コードでデモステージで撮った(`../EffectTools/BloodExec/compare_ult_absorb_v3.png` 上=v2・下=v3、コマは `game_v3/`)。一時コードは消した。Debug(x64)のビルドは通った。`UBA_InkSheet*`・`UBA_Spike_a` は v2 の控えが使うので残している。
+
+### 2026-11-26 LT の羽の発動演出の吸い込みも必殺技の溜め(v3)の液体にした
+- ユーザーの依頼「羽を出すときもその感じで」。控え: `../EffectTools/BloodWing/BloodWingActivate_swirl/`(三日月の帯＋血の塊の版)。
+- `../EffectTools/BloodWing/edit_bwa_v3.ps1` で `BloodWingActivate.efkefc` の `Vortex` から `Swirl`・`BloodClot`・`FloorClot` を消し、`UltBloodAbsorb` の `Pool`・`Peel`・`AirSheet`・`Shard`(→ `Strand`)・`BurstSpike` を 20/14 倍(1.43)で持ってきた。床の高さは y=-9.75。`InMist`・`ChargeCore` を暗く(光らせない)、`ChargePulse` を 28→34F に。閃光・爆発・斬撃・羽はそのまま。
+- 画像 `UBA_StreakSheet_a / 2_a`・`UBA_Strand_a`・`UBA_Pool_a` を `Skill/Texture/` に写した。
+- 書き出しは今まで通り DummyBody を消して export → 戻す(efkefc は DummyBody 入りで保存)。
+- 確認: 一時コード(200F目に `m_isUltimating = true` と `StartBloodWingActivate()`)でデモステージで前と今を撮った(`../EffectTools/BloodWing/compare_wing_activate_v3.png` 上=前・下=今、コマは `game_v3/`)。一時コードは消した。Debug(x64)のビルドは通った。**実際に LT を押しての確認はまだ**。
+- (追記)ユーザーの依頼「ステージ1の最後の演出の最初の血を集めるやつも変えて」。Kingmech のトドメの構え(`KingmechFinisher` の Phase::Stance、70F)は `UltBloodAbsorb` をそのまま使っているので、**v3 にした時点で変わっていた**。42F のはじけも構えの中に収まる。一時コード(デモステージでプレイヤーの前800に Kingmech を出して `StartFinisher`)で前と今を撮った(`../EffectTools/BloodExec/compare_kingmech_finisher_absorb_v3.png` 上=前・下=今、拡大 `kingmech_finisher_absorb_v3_zoom.png`、コマ `game_finisher_v3/`)。カメラがプレイヤーの後ろ380なので、血はプレイヤーのまわりに小さめに見える。一時コードは消した。本当の闘技場での見え方はまだ。
+
+### 2026-11-26 強攻撃の溜め中のエフェクトの案を8つ作った(F11 で切り替え)
+- **詳しくは `../EffectTools/ChargeHold/README.md`**。案のモックは `../tools/ChargeHoldMock/charge_hold_mock.html`。ユーザーが見て決める(まだ決めていない)。
+- 作った案: C 風を呑む / D 紅の闘気 / E 赤い雷 / F 重圧・地割れ / H 鬼の眼光 / J 残像が重なる / K 動画の型(青→赤の2段) / L 白銀→紅。A は今の `Charge.efk`。データは `data/Effect/ChargeHold/`。
+- **F11 で A → C → … → L と切り替える**(左上に名前が2秒)。`System::CycleChargeHoldType / GetChargeHoldEffectKey`、`AsyncData::ChargeHoldCEffect`〜`ChargeHoldLEffect`(連続した値)、`SceneMain::m_wasF11Pressed / m_chargeHoldLabelFrame`。`PlayerStateCharge::Enter` で今の案を再生。F の案だけ15Fで画面を揺らす(`m_isShaken`)。
+- J・K・L は**プレイヤーの溜めの構えを焼いたモデル**(`../tools/PlayerAnim/posemodel.cpp`)を使う。止まったポーズなので、構えはじめと体の上下でふちの光が少しずれる。頂点17万の重いモデル。
+- 確認: Debug・Release(x64)のビルドは通った。一時コードでステージ1で Y を自動で長押しして9案とも撮った(`../EffectTools/ChargeHold/game_sheet_0/1.png`・`game_JKL_culling.png`。一時コードは消した)。**実際に操作しての確認・重さの測定はまだ**。
+- (追記)**D を作り直した(v2)**: ユーザーが D 寄りで、溜め中と溜まりきったときを分けたいと言った。溜め中は赤い火の粉が体へ吸い込まれて足元が低く暗く燃えるだけ、15Fで燃え上がり・床の赤い輪・切先の光、そのあとは全身に明るい炎＋橙の芯＋刃が赤く光り続ける。詳しくは `../EffectTools/ChargeHold/README.md`。前の版は `../EffectTools/ChargeHold/old/`。一時コードでステージ1で撮って確認した(`game_D_v2.png`。一時コードは消した)。Debug・Release のビルドは通った。
+- (追記)**D の別パターン D2〜D5 を足した**(D v2 が微妙と言われたため)。D2 黒い炎→赤黒 / D3 だんだん大きく / D4 刀から燃え移る(溜まった後は炎の刀) / D5 鼓動(輪が縮む → 溜まった後は脈打つ)。`AsyncData::ChargeHoldD2Effect`〜`D5Effect`(D と E の間)、`kChargeHoldTypeNum` 13。F11 の順は A, C, D, D2, D3, D4, D5, E, F, H, J, K, L。比べた画像は `../EffectTools/ChargeHold/game_D_variants.png`(一時コードで撮った。消した)。Debug・Release のビルドは通った。
+- (追記)**A の方向で A2〜A5 を作った**(ユーザー: A の方向で、チャージとチャージ完了をわかりやすく)。共通で 完了の合図を強く(切先の大きな十字・刀全体の赤い光・瘴気が弾ける)、赤は完了後だけ。溜め中は A2 吸い込む / A3 刃が黒く染まる / A4 灰色の煙 / A5 A2＋A3。`AsyncData::ChargeHoldA2Effect`〜`A5Effect`(一覧の先頭、`kChargeHoldTypeNum` 17)。F11 の順は A, A2, A3, A4, A5, C, D, D2〜D5, E, F, H, J, K, L。比べた画像は `../EffectTools/ChargeHold/game_A_variants.png`。Debug・Release のビルドは通った。
+
+### 2026-11-26 ガードブレイクの演出の案のモックアップ(打ち上げを普段のコンボに移したあと)
+- `tools/GuardBreakMock/guardbreak_mock.html`。強で割る → 崩れた瞬間 → チャンス(スロー0.2・×とY) → Y で山場の一撃、を棒人間で並べた。
+- 崩れた瞬間: 今のまま / ① 武器を弾く(刀が回って飛び、地面に刺さる) / ② 筆の「崩」の字 / ①＋②。
+- 山場の一撃: A 兜割り(Boss_LeapSlash で叩きつけ → Knock_Down) / B 胸を貫く(StabChest → 蹴り) / C 斬り抜け・納刀(遅れて割れる) / D 居合の一閃(白黒反転＋横一文字) / E 乱舞 / F 部位を斬る(ボス) / 比較: 今の打ち上げ。
+- おすすめ(会話で出した): 雑魚は ①＋A、ボスは F。**まだ決めていない**。`#A,140,1` で止まる、`#all,140,1` で全部並べる(`sheet_all_140.png`)。
+
+### 2026-11-26 溜め中のエフェクトをゲームのフレームで段階ごとに出す(A2 を3つに分けた)
+- ミサイルの予告円と同じ形。A2 を `A2_Charging`(吸い込み、続ける) / `A2_Done`(完了の瞬間に1回) / `A2_Charged`(溜まった後、続ける)に分けた。詳しくは `../EffectTools/ChargeHold/README.md`。
+- `PlayerStateCharge`: `Phase`(Charging / Charged)。Enter で Charging を再生、`m_frame >= kChargeThreshold` で `ChangePhase(Charged)` → Charging を `StopRoot`(煙は自然に消える)・Done を1回・Charged を再生。両方を足元へついていかせ、Exit で両方止める。向きは Enter で決めた `m_effectRotY`。
+- `AsyncData::ChargeChargingEffect / ChargeDoneEffect / ChargeChargedEffect`(System で読み込み・解放)。溜め中は F11 の案を使わなくなった。F の案の揺れは外した。
+- Debug(x64)のビルドは通った。一時コードでデモで Y を120F押して撮り、吸い込み → 40F で十字の光 → 赤黒の瘴気 → 離すと溜め攻撃で消える、を確認した(`game_A2_phase.png`、一時コードは消した)。
+
+### 2026-11-26 タイトルのロゴの血の垂れ(試したが元に戻した)
+- 垂れが伸び切った後もずっと垂れ続けるように、`TitleLogoPS.hlsl` で滴を落とす形をいくつか試した(楕円の滴・ねばる滴・筋で落ちる・伸び続ける・ちぎれて短いふくらみから落ちる)。案のモックは `../tools/TitleDripMock/title_drip_mock.html`。
+- どれもしっくりこなかったので、**`TitleLogoPS.hlsl` と `TitleLogoUI.h/.cpp` は git の版に戻した**(垂れは伸び切ったら止まる、最初のまま)。
+- 分かったこと: 長い垂れが止まって残ると「つらら」に見える。尾を引く筋もつららに見える。白い点のつや・小さな丸い粒は水っぽく見える。
+
+### 2026-11-26 スキル0(打ち上げ)に白い分身(Effekseer の GhostLaunch)
+- 最初はコードで姿勢を写す版(PlayerAfterImage・AfterImagePS.hlsl)を作ったが、ユーザーの希望で**全部 Effekseer にして、コード版は消した**。
+- `data/Effect/Skill/GhostLaunch.efk`(`AsyncData::GhostLaunchEffect`)。モデルは `data/Effect/Skill/Model/Ghost_AttackUp_01/04/07/10/14.efkmodel`、テクスチャは GhostDash と同じ `Texture/GhostNoise.png`。作業ファイルは `../EffectTools/GhostLaunch/GhostLaunch_v1/`。
+  - 見た目はスキル1の分身(GhostDash の Ghost ノード)と同じ設定(ノイズで溶けて消える・青いふち)。
+  - ノード `Ghost01〜14` はそれぞれ1体だけ出す。出るフレーム(GenerationTimeOffset)は 1/5/9/12/17、寿命22F。位置・回転は「生成時のみ」なので、出た場所に残る。
+  - モデルは `tools/PlayerAnim/posemodel.exe` で `Attack_Up_01` の 1/4/7/10/14 コマを刀ごと 1/20 で書き出したもの(スキル0はアニメを0.8倍で流すので、出るフレーム ≒ コマ ÷ 0.8)。1つ約11MB。
+- `PlayerStateSkillAttack`: SkillAttack0 の Enter で `PlayLaunchGhost`(20倍)、Update で毎フレーム `UpdateLaunchGhost`(プレイヤーの足元・`m_rotAngleY`。**180度ずらさない**。posemodel のモデルは GhostDash と違ってプレイヤーと同じ向き)。止めないので、ステートを抜けても出た分身は消えるまで残る。
+- MCP の注意: `node_xml_set` でパスを相対(`Model/〜`)で入れると**保存で落ちる**(UriFormatException。エディタが閉じた)。パスは `param_set` に絶対パスで渡す。
+- Debug x64 でビルドし、一時コードでステージ1のスタートでスキル0を出して撮影した(一時コードは消した)。踏み込みの後ろに分身が並び、溶けて消えるのを確認。**実際の操作で敵に当てたときの見え方はまだ**。早めにキャンセルすると、残りの分身は最後の位置に出る。
+
+### 2026-11-26 地上弱スキル(LB+X)の入口と3段のつなぎ
+- `AttackType::SkillAttack` → `SkillHeavyAttack`(2、地上強 LB+Y・空中スキル)、`SkillLightAttack`(7、地上弱 LB+X)を追加。敵がガードしない・ゲージが増えない・赤黒の風は両方スキル扱い。着地の衝撃(`ImpactSkillAttack`)は強だけ。
+- `ComboChain01.csv` の 22〜24(地上弱スキル1〜3、attackType 7)、`ComboIndex::SkillLightAttack1〜3`。数値は仮(アニメ `Dodge_Combat_F`、入力の受付・キャンセルは -1)。
+- `PlayerStateSkillAttack(player, AttackType)`。入口(Idle/Move/FastRun/Jump/Fall/PlayerStateAttack)は「LB を押しながら X → 弱、Y → 強」。空中の LB+X は `AirSkillAttack1`。次の段は弱なら LB+X、強なら LB+Y(`AttackInputCheck`)。`IsSkillComboIndex` に 22〜24。分身は GleamLight1〜3(`PlayGhostEffect`、20倍ではなく `kGhostDashScale` 30)。
+- ゲージが足りずに LB+X/Y が通らないときは、そのまま下の普通の弱・強攻撃の判定に進む(Locomotion の5か所)。
+- ビルド・リンクは通った(出力先を scratchpad にして確認)。**ゲームでの確認はまだ**(エフェクトがプレイヤーに追従して二重に進んで見えないか、段のつながるタイミング)。
+
+### 2026-11-26 溜めのエフェクトを O4「黒から赤へ」にした
+- 新しい案のモック: `../tools/ChargeHoldMock/charge_hold_mock2.html`(N1〜N10)と `charge_aura_mock.html`(オーラ O1〜O7)。ユーザーが O4 を選んだ。
+- `EffectTools/ChargeHold/O4_Charging / O4_Done / O4_Charged.efkefc` を作り、`data/Effect/ChargeHold/O4_*.efk` に書き出した。`System.cpp` の `kCharge〜EffectPath` を A2 → O4 に変えただけ(コードの流れは同じ。A2 の .efk は残してある)。
+- 溜め中は黒い煙だけ(16F・28F で濃くなる)、40F で赤が点火、溜まった後は黒＋赤の二層。詳しくは `../EffectTools/ChargeHold/README.md`。
+- 一時コードで Y を自動で押して撮って確認した(`game_O4_phase.png`。一時コードは消した)。Debug x64 のビルドは通った。**実際に遊んでの確認はまだ**(明るい・暗いステージでの黒の見え方、赤で体が隠れすぎないか)。
+- Git Bash の `timeout` を付けてゲームを起動すると exit 127 で起動しないことがあった(付けなければ動く)。
+- (追記)溜まった後に赤い炎でプレイヤーが見えなかったので、煙と炎を体の左右だけに出すようにした(カメラ側に出さない)。体の輪郭の赤い光を強めた。撮り直して、どの段階でも体の真ん中が見えることを確認した。
+
+### 2026-11-26 ステージセレクト・ポーズの選んでいる項目に動きをつけた(MenuUI)
+- 案はモック `../tools/MenuSelectMock/menu_select_mock.html` で比べ、★おすすめ(1 文字が飛び出す＋3 バーが滑る＋6 光の帯、決定は 10a 白く光って抜ける)に決めた。`MenuUI` に入れたので、ステージセレクトとポーズの両方に効く。値は `MenuUI.cpp` 先頭。
+  - バーが滑る: `SelectBarY()`。前の項目の位置から7Fで今の項目へ(`m_prevCursor`。まだ動かしていなければ-1で滑らない)。前の「10Fで左から伸びる・最初の4Fちらつく」はやめた。
+  - 文字が飛び出す: `ItemTextOffsetX()`。選んだ項目は 10F のイーズアウトバックで +8px、外れた項目は 8F で元へ戻る。
+  - 光の帯: バーの上を斜めの帯(`glow.png` を平行四辺形で加算)が 90F ごとに 24F で横切る。`SetDrawArea` でバーの中だけに描く。
+  - 決定: `StartDecide()`。白く光って(4F)右へ 260 抜ける(5F〜14F)、ほかの項目は暗くなる。パネルの外へ出た分は描かない。
+- ステージセレクトは A で `StartDecide` してから今まで通りフェードアウト(30F の間に演出が終わる)。ポーズは A で演出を 14F 見せてから `Decide`(`FadeOutUpdate` を待ちに使う)。Start・B でゲームに戻るときは演出なしですぐ。
+- Release で一時コードでステージセレクトを撮り、滑る・飛び出す・光の帯・決定の動きがモックと同じに出ることを確認した(一時コードは消した)。Debug x64 のビルドは通った。**ポーズの画面での確認・実際に操作しての確認はまだ**。
+- (11/26 追記)**弱スキルの分身が前へ大きく進んでプレイヤーから離れる件**: プレイヤーを分身に合わせて動かす案は入れたが、ユーザーの判断で消した。進む距離は CSV(22〜24 行の moveSpeedXZ など)で決め、エフェクトの中の前へ進む分をなくした(GleamLight1_v4 / 2_v2 / 3_v2、詳しくは `../EffectTools/GleamLight/README.md`)。エフェクトは今まで通りプレイヤーについていく(30倍、向きは180度回す)。ゲームでの確認はまだ。
+- (追記)O4 をやめて **S1「足元の煙の渦」**にした(案は `../tools/ChargeHoldMock/charge_smoke_mock.html`)。`System.cpp` のパスを `S1_Charging/Done/Charged.efk` にした。溜め中は足元から煙が渦を描いて腰まで昇り、40F で煙の輪が地面を外へ広がり、溜まった後はくるぶしの高さの低い渦＋火の粉＋刀の赤い光。ゲームで撮って確認した(`../EffectTools/ChargeHold/game_S1_phase.png`)。実際に遊んでの確認はまだ。
+- (11/26 追記)弱1・弱2の連鎖の数を減らした(弱1 4回・3Fおき、弱2 5回・2Fおき。GleamLight1_v5 / 2_v3)。`ComboChain01.csv` の当たるフレームは Excel で開かれていて直せていない(合わせるなら 22 行 `9;12;15;18` / `10;13;16;19`、23 行 `9;11;13;15;17` / `10;12;14;16;18`)。
+- (11/26 追記)弱1・弱2の連鎖を**案A(立体的に斬る)**にした(GleamLight1_v6 / 2_v4。上向き・下向きの線を交互、少し曲げる)。モックは `../tools/SkillMock/skill_weak_chain_mock.html`。ゲームでの確認はまだ。
+- (追記)S1 もやめて **W1「寄る波紋 → 弾ける」**にした(案は `../tools/ChargeHoldMock/charge_wave_mock.html`)。`System.cpp` のパスを `W1_Charging/Done/Charged.efk` にした。溜め中は地面の赤い輪が外から足元へ縮んで(後半は間隔が詰まる)足元が灯り、40F で赤と白の輪が外へ弾け、溜まった後は小さな輪がゆっくり外へ広がり続ける＋刀の赤い光。ゲームで撮って確認した(`../EffectTools/ChargeHold/game_W1_phase.png`)。実際に遊んでの確認はまだ。
+- (11/26 追記)**弱1〜3のテンポを強スキルに寄せた**(全体をゆっくりに。弱1・弱2 ×2、弱3 ×1.5。GleamLight1_v7 / 2_v5 / 3_v3)。`ComboChain01.csv` の当たるフレームは Excel で開かれていて直せていない。合わせるなら 22行 `22;28;34;40` / `24;30;36;42`、23行 `22;28;34;40;46` / `24;30;36;42;48`、24行 `26;32` / `29;36`。エフェクトが長くなった(弱1・弱2 約90F)ので、endFrame・キャンセルのフレームも見直しが要る。ゲームでの確認はまだ。
+
+### 2026-11-26 攻撃ごとにヒット時のカメラの揺れを決める(IsCameraShake / ShakePower)
+- `ComboChain01.csv` の最後(slashEnd の後)に `IsCameraShake`(true/false)・`ShakePower`(low/high)を追加。今は全部 false・low。列が無い・空欄なら揺らさない。
+- `ComboNode::isCameraShake / shakePower` → `CreateAttackCol`(通常・チャージ)で `AttackData` へ。`CharacterBase::ShakePower`(Low / High)。`ComboNodeType::IsCameraShake`(33) / `ShakePowerCol`(34)。
+- `AttackCol`: 最初に当たったとき(必殺技以外)、true の攻撃だけ揺らす。low = 2.5 / 5F(前と同じ)、high = 6.0 / 10F(仮、.cpp 先頭)。**前は全部の攻撃で揺れていたので、今は CSV で true にしない限り揺れない**。ドロップ攻撃の着地の判定も揺れない。
+- Debug(x64)でビルドは通った。ゲームでの確認はまだ。
+- (11/26 追記)**弱1・弱2のエフェクトを作り直した**: 強スキルの `GhostDash3D` をもとに、原作の動き(弱1=斬り上げながら抜ける、弱2=向こうから袈裟に斬り返す)で分身の向きを決めた(GleamLight1_v8 / 2_v6。弱3は v3 のまま)。
+  置き方も強スキルと同じ(`GetSkillEffectBasePos` に弱1・2を足して敵の位置、180°回すのは弱3だけ)。F9 の確認も弱1・2は正面300に出す。
+  `ComboChain01.csv` の当たるフレームの目安: 22行 `4;10;16` / `6;12;18`、23行 `4;10;16;22` / `6;12;18;24`(まだ入れていない)。Debug x64 のビルドは通った。ゲームでの確認はまだ。
+- (11/26 追記)弱1・弱2を**強スキルとほぼ同じ回りながら斬る形**にした(GleamLight1_v9: 逆回り・4体・上下±15°、2_v7: 144°の星形・5体・上下±25°)。当たるフレームの目安は 22行 `4;10;16;22` / `6;12;18;24`、23行 `4;10;16;22;28` / `6;12;18;24;30`(まだ入れていない)。ゲームでの確認はまだ。
+- (11/26 追記)弱3は元のテンポの GleamLight3_v2 に戻して書き出した(v3 の1.5倍にゆっくりした版はやめた)。
+- (11/26 追記)弱1・弱2の分身が上がって見えたので、弱1は水平・腰の高さ、弱2は斬り下ろしだけにした(GleamLight1_v10 / 2_v8)。ゲームでの確認はまだ。

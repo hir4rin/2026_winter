@@ -10,6 +10,7 @@
 #include "UI/Title/TitleLogoUI.h"
 #include "UI/Title/TitleFlashUI.h"
 #include "UI/Title/TitlePressUI.h"
+#include "UI/Title/TitleEmberUI.h"
 #include "Character/Player/TitlePlayer.h"
 #include "Stage/TitleCity.h"
 
@@ -50,6 +51,9 @@ TitleScene::TitleScene(SceneController& controller) :Scene(controller)
 
 	m_uiManager = std::make_unique<UIManager>();
 	m_uiManager->TitleInit();
+	//火の粉(ロゴより奥)
+	m_ember = std::make_shared<TitleEmberUI>();
+	m_uiManager->Add(m_ember);
 	//ロゴ「忍」と斬った瞬間の閃光のエフェクト
 	m_logo = std::make_shared<TitleLogoUI>();
 	m_uiManager->Add(m_logo);
@@ -85,6 +89,7 @@ void TitleScene::UpdateDirection()
 		m_cameraManager->StartCameraShake(kShakePower, kShakeTime);
 		m_flash->Start();
 		m_player->OnImpact();
+		m_ember->Gust();
 	}
 	if (m_frame == kPressFrame)m_press->Show();
 }

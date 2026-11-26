@@ -8,6 +8,7 @@ class UIManager;
 class TitleLogoUI;
 class TitleFlashUI;
 class TitlePressUI;
+class TitleEmberUI;
 class TitlePlayer;
 class TitleCity;
 
@@ -44,6 +45,7 @@ private:
 	std::shared_ptr<TitleLogoUI> m_logo;
 	std::shared_ptr<TitleFlashUI> m_flash;
 	std::shared_ptr<TitlePressUI> m_press;
+	std::shared_ptr<TitleEmberUI> m_ember;
 	std::unique_ptr<TitlePlayer> m_player;//右の後ろ姿
 	std::unique_ptr<TitleCity> m_city;//背景の街(ステージ1)
 

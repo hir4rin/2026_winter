@@ -1065,6 +1065,20 @@ void Player::InitializeComboChain()
 				node.slashWindows.push_back({ starts[i], ends[i] });
 			}
 		}
+		//ヒット時のカメラの揺れ//列が無い・空欄なら揺らさない
+		{
+			auto readText = [&tokens](int col)
+				{
+					if (col >= static_cast<int>(tokens.size())) return std::string();
+					std::string text = tokens[col];
+					if (!text.empty() && text.back() == '\r') text.pop_back();
+					return text;
+				};
+			const std::string shake = readText(ComboNodeType::IsCameraShake);
+			node.isCameraShake = shake == "true" || shake == "TRUE" || shake == "1";
+			const std::string power = readText(ComboNodeType::ShakePowerCol);
+			node.shakePower = (power == "high" || power == "HIGH") ? ShakePower::High : ShakePower::Low;
+		}
 		m_comboChain.push_back(node);
 	}
 
