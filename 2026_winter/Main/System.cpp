@@ -45,6 +45,8 @@ namespace
 	const std::string kCyberStageColModelPath = "data/Stage/CyberStage/CyberStageCol.mv1";
 	const std::string kTutorialStageModelPath = "data/Stage/TutorialStage/TutorialStage.mv1";
 	const std::string kTutorialStageColModelPath = "data/Stage/TutorialStage/TutorialStageCol.mv1";
+	const std::string kTrainingRoomModelPath = "data/Stage/TrainingRoom/TrainingRoom.mv1";
+	const std::string kTrainingRoomColModelPath = "data/Stage/TrainingRoom/TrainingRoomCol.mv1";
 
 	//スキルエフェクト確認用
 	const std::string kDebugGhostDashEffectPath = "data/Effect/Skill/GhostDash.efk";
@@ -226,6 +228,15 @@ void System::LoadStage(StageType type)
 		LoadStageModel(AsyncData::TutorialStageModel, kTutorialStageModelPath);
 		LoadStageModel(AsyncData::TutorialStageColModel, kTutorialStageColModelPath);
 		break;
+	case StageType::Training:
+		LoadStageModel(AsyncData::TrainingRoomModel, kTrainingRoomModelPath);
+		LoadStageModel(AsyncData::TrainingRoomColModel, kTrainingRoomColModelPath);
+		//設定メニューでどの敵でも出せるように全部読む
+		for (int i = 0; i <= static_cast<int>(EnemyType::BossEnemyKingmech); ++i)
+		{
+			LoadEnemy(static_cast<EnemyType>(i));
+		}
+		break;
 	default:
 		break;
 	}
@@ -377,6 +388,8 @@ void System::Terminate()
 	MV1DeleteModel(m_asyncHandles[AsyncData::CyberStageColModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::TutorialStageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::TutorialStageColModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TrainingRoomModel]);
+	MV1DeleteModel(m_asyncHandles[AsyncData::TrainingRoomColModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModel]);
 	MV1DeleteModel(m_asyncHandles[AsyncData::StageModelCollider]);
 	DeleteEffekseerEffect(m_asyncHandles[AsyncData::AreaWallEffect]);

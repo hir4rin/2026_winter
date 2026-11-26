@@ -200,6 +200,19 @@ void EnemyManager::DebugClearEnemies()
 	//TODO 飛んでいるミサイルも消す(m_missiles.clear())
 }
 
+std::shared_ptr<EnemyBase> EnemyManager::SpawnFromData(const EnemySpawnData& data)
+{
+	auto enemy = CreateEnemy(data);
+	if (!enemy)return nullptr;
+	m_enemies.push_back(enemy);
+	//ボスの腕など//親の後ろに並べて、親の後に更新する
+	for (auto& child : enemy->CreateChildEnemies())
+	{
+		m_enemies.push_back(child);
+	}
+	return enemy;
+}
+
 bool EnemyManager::IsPhaseEnemiesAllDead() const
 {
 	//消えた敵は倒されたものとして扱う

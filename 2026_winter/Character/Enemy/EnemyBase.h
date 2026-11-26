@@ -355,6 +355,18 @@ public:
 	//デバッグ用//trueの間はIdleのままにする//被弾のStateには遷移するが、IdleからChaseなどには遷移しない
 	void SetDebugIdle(bool isDebugIdle);
 
+	//トレーニングの敵の動き(TrainingManager が設定する)
+	enum class TrainingAi
+	{
+		Normal,//ステージと同じ
+		Stand,//立っているだけ(Idleから動かない)
+		Guard,//ガードし続ける
+		Attack,//その場から動かず、間をあけてランダムな技を出す
+	};
+	void SetTraining(TrainingAi ai, bool isLockHp);
+	//トレーニングの動きを進める(EnemyManager::Update の後に毎フレーム)
+	void UpdateTraining();
+
 	//デバッグ用のImGuiウィンドウ(攻撃を選んで出す・ステータスを見る)//HasDebugWindowがtrueの敵だけEnemyManagerが呼ぶ
 	virtual bool HasDebugWindow()const { return false; }
 	void DrawDebugWindow();
@@ -518,6 +530,11 @@ protected:
 	int m_debugSelectedAttack = 0;//ウィンドウで選んでいる攻撃のindex
 	float m_debugLoopInterval = 60.0f;//繰り返すまでの間隔(実フレーム)
 	float m_debugLoopTimer = 0.0f;//Idleに戻ってからの時間
+
+	//トレーニング
+	TrainingAi m_trainingAi = TrainingAi::Normal;
+	bool m_isTrainingLockHp = false;//trueなら毎フレームHPを最大に戻す
+	int m_trainingAttackTimer = 0;//Idleに戻ってからのフレーム(攻撃してくるとき)
 
 
 

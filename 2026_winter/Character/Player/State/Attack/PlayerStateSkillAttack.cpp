@@ -419,6 +419,7 @@ void PlayerStateSkillAttack::PlayGhostEffect(int comboIndex)
 
 	//分身エフェクトが出ている間はモデルを描画しない
 	player->m_isSkillInvisible = true;
+	m_ghostComboIndex = comboIndex;
 	m_ghostEffectHandle = PlayEffekseer3DEffect(System::GetInstance().GetHandle(effectKey));
 	SetScalePlayingEffekseer3DEffect(m_ghostEffectHandle, kGhostDashScale, kGhostDashScale, kGhostDashScale);
 	UpdateGhostEffect();//最初の座標と向きを合わせる
@@ -516,6 +517,13 @@ void PlayerStateSkillAttack::StopGhostEffect()
 	if (player)player->m_isSkillInvisible = false;//モデルを表示に戻す
 
 	if (m_ghostEffectHandle == -1)return;
+	//弱スキル1〜3は止めない//次の段へ移っても出した分身は最後まで斬り抜けて消える//弱3は着地の余韻を最後まで残す
+	if (m_ghostComboIndex == ComboIndex::SkillLightAttack1 || m_ghostComboIndex == ComboIndex::SkillLightAttack2
+		|| m_ghostComboIndex == ComboIndex::SkillLightAttack3)
+	{
+		m_ghostEffectHandle = -1;
+		return;
+	}
 	if (player && player->m_comboInfo.currentComboIndex == ComboIndex::SkillAttack3)
 	{
 		//スキル3は落下中の分身だけ消して、出し終えた残像はその場で消えるまで残す

@@ -2920,3 +2920,49 @@
 - (11/26 追記)弱1・弱2を**強スキルとほぼ同じ回りながら斬る形**にした(GleamLight1_v9: 逆回り・4体・上下±15°、2_v7: 144°の星形・5体・上下±25°)。当たるフレームの目安は 22行 `4;10;16;22` / `6;12;18;24`、23行 `4;10;16;22;28` / `6;12;18;24;30`(まだ入れていない)。ゲームでの確認はまだ。
 - (11/26 追記)弱3は元のテンポの GleamLight3_v2 に戻して書き出した(v3 の1.5倍にゆっくりした版はやめた)。
 - (11/26 追記)弱1・弱2の分身が上がって見えたので、弱1は水平・腰の高さ、弱2は斬り下ろしだけにした(GleamLight1_v10 / 2_v8)。ゲームでの確認はまだ。
+
+### 2026-11-26 地上弱スキル1・2を空中スキルのテンポに合わせた
+- ユーザーの指示: 地上弱スキル1・2のエフェクトを空中技(空中スキル・GhostDash)ぐらいのテンポで。弱3は今のまま。
+- エフェクトのテンポ(6Fおきに1体が敵を斬り抜ける・1体40F残る)は弱1 v10・弱2 v8 で空中スキルと同じになっていた。ゲームでテンポが崩れていた原因を直した:
+  - **ステートを抜けると分身をすぐ消していた**(`StopEffekseer3DEffect`)。弱1→弱2へ移る20Fで、弱1の4体目が斬り抜ける途中で消えていた。`PlayerStateSkillAttack::StopGhostEffect` で、弱スキル1・2の分身は止めずに手放す(出した分身は最後まで斬り抜けて消える)。Exit の時点では `currentComboIndex` が次の段になっているので、出したときの番号を `m_ghostComboIndex` に覚えておく。
+  - `ComboChain01.csv` 22・23行: 当たるフレームを2Fおき → 分身が敵を抜けるフレーム(22行 `4;10;16;22` / `6;12;18;24`、23行 `4;10;16;22;28;34` / `6;12;18;24;30;36`)。endFrame 40、cancelFrame・actionCancelFrame は最後の分身が抜けた後(22行 24、23行 36)。
+- 弱2のエフェクトを6体(空中スキルと同じ数)にした: `GleamLight2_v9`(1体ごとに150°・斬り下ろし -10〜-20°交互)。`data/Effect/Skill/GleamLight2.efk` に書き出した。弱1は v10(4体)のまま。
+- 確認: Release(x64、出力は一時フォルダ)でビルド。一時コードでステージ1のプレイヤーの前に敵を出し、LB+X を3回自動で押して毎フレーム撮った(一時コードは消した)。弱1 25F → 弱2 37F → 弱3。分身が6Fおきに敵を抜けてヒットが同じ間隔で出ること、段が移っても前の段の分身が消えずに抜け切ることを確認(`../EffectTools/GleamLight/GleamLight2_v9/captures/game_weak12_sheet.png`・`game_weak123.mp4`)。**実際に操作しての確認はまだ**(手で押したときのつながり、血殺に入ったときに分身が残る見え方)。
+- (追記)弱1・弱2が上すぎたので、分身の高さを少し下げた(エフェクトの Y 2.5 → 1.5、ゲームで30低い。GleamLight1_v11 / 2_v10、`data/Effect/Skill/GleamLight1・2.efk`)。一時コードで撮って、敵の腰あたりを抜けること・弱2の斬り下ろしが床に潜らないことを見た(一時コードは消した)。
+- (追記)**弱3の着地の余韻を伸ばした**: エフェクトを GleamLight3_v4 にした(着地の白い残像 30F → 60F、地面の輪 18F → 30F、破片 35〜50F で長く浮く、放射の筋 16〜22F。詳しくは `../EffectTools/GleamLight/README.md`)。ゲームでは弱3のステートが終わる40Fでエフェクトを止めていて余韻が切れていたので、`StopGhostEffect` で弱3も止めないようにした。一時コードで撮って、プレイヤーのモデルが戻った後も着地から約45F残像・破片が残ることを見た(一時コードは消した)。
+
+
+### 2026-11-26 血殺が始まったら斬ったときの風を消す
+- `EnemyBase::PlayBloodSplash` の風(HitWind / SkillHit)の再生ハンドルを `EffectManager::AddHitWind` で覚える(終わった分は `Update` で外す)。
+- `BattleManager::SetUltStart`(.h の中身を .cpp へ移した)で `EffectManager::StopHitWinds()`。必殺技・スキル血殺・Kingmech のトドメで、出ている風がその場で消える。血は消さない。
+- Debug(x64)でビルドは通った。**ゲームでの確認はまだ**。
+
+### 2026-11-27 トレーニングルーム(StageType::Training)
+- ステージセレクトの6番目「トレーニング」。四角い部屋(40×40m)で、西の壁が壁走り、北東の縦穴を壁キックで登ると10mの足場、真ん中が広場。案は `../tools/TrainingMock/training_mock.html`。
+- 部屋は Unity の `ninja_motion/Assets/Editor/TrainingRoomTool.cs` で作る(`BuildShotsExport` をバッチモードで。シーンは `TrainingRoomScene.unity`)。書き出しは `data/Stage/TrainingRoom/TrainingRoom(Col).mv1` と番号 007 の `WallZones` / `Lights` / `PhaseAreas`(空)。
+- `AsyncData::TrainingRoomModel / TrainingRoomColModel`、`System::LoadStage` で読む・`ReleaseStage` で消す。StageInfo は壁ゾーン・敵の番号 7、夜のフォグ・空なし(屋内)。
+- 敵の配置(Enemies007.csv)・フェーズの遷移表は無い。敵は設定メニューで出す(下の「トレーニングの設定メニュー」)。
+- Release(x64)でビルドは通った。`-bench=600 -stage=5` で入って、部屋・明かり・HUD が出て、敵が攻撃してくるのを画面で確認した。**壁走り・壁キック・足場からの落下攻撃の確認はまだ**。
+- (追記)**タイトルから直接入ると全体が暗い紫になっていた**: タイトルの街(`TitleCity`)が描き終わりにフォグを切るとき `SetFogStartEnd(1e8, 1e8)`(始まりと終わりが同じ)にしていたため、自作の頂点シェーダーで割り算が0になってタイトルのもやの色(22,12,32)が全面にかかったまま残っていた。
+  ステージ1・列車は自分でフォグを設定し直すので治るが、フォグを使わないトレーニングには残った。`TitleCity` の切るときの終わりを `kFogOffEnd`(2e8)にした。
+  - 一時コード(ベンチの前にタイトルと同じフォグの状態を作る)で、直す前は暗い紫・直した後は普通になるのを撮って確かめた(一時コードは消した)。タイトル → ステージセレクト → トレーニングの順で入っても直っているのをユーザーが確認した。
+  - (明かりの置き方・区画の色を変えたのはこれとは関係なかったので元に戻した)
+
+### 2026-11-27 トレーニングの設定メニュー
+- 決めたことはリポジトリ直下の CLAUDE.md の TrainingMock の行(モックは `../tools/TrainingMock/training_mock.html`)。
+- **Start でポーズの代わりに `Scene/TrainingMenuScene` を積む**(`SceneMain` の `m_training` があるとき)。開いている間はゲームが止まる。↑↓ 選ぶ、←→ / A で値を変える、A で実行、B・Start で閉じる。
+  変えた設定は**閉じたときに反映して敵を出し直す**(右上に「● 閉じたときに反映して敵を出し直す」)。「敵を出し直す」「スタートに戻る」もその場で反映する。「トレーニング終了」でステージセレクトへ。
+  - 項目: 敵の種類(刀/銃/バズーカ/混ぜる/ボス)・敵の数(1/3/5体)・敵の動き(立つだけ/ガード/攻撃する/ふつう)・倒したら(出し直す/そのまま)・敵のHP・自分のHP・ゲージ(無限/ふつう)。**値は項目名と重ならないように4文字まで**。
+- 画面 `UI/Menu/TrainingMenuUI`(`PauseUI` を継承。項目の右に値、右上に説明)。そのため `PauseUI` の private を protected にし、`DrawDescription` / `DrawRecord` / `DrawPauseGuide` を virtual にした(ポーズの見た目は変わらない)。
+- `Battle/TrainingManager`(SceneMain が持つ): 設定(`Settings`)から配置データを作り `EnemyManager::SpawnFromData`(新規)で出す。フェーズは使わない。
+  - 場所: 広場の円の中心 (0,0,-200) のまわり。1体=中心、3体=プレイヤー側に開いた弧、5体=半径300の円、ボス=中心に Kingmech 1体。向きはプレイヤー側(180度)、Idle で出す。値は .cpp 先頭。
+  - プレイヤーのスタートは (0,0,-1700) で北向き(`ReturnPlayerToStart`。入ったときもここ)。
+  - 倒れたら(`GetIsLifeZero`)60F後に同じ場所に同じ種類を出し直す。暗殺・確殺の途中は待つ。
+  - 自分のHP無限は毎フレーム `Player::RestoreHp`(倒れた後は戻さない。1発で最大HPを超えるダメージなら倒れる)、ゲージ無限は `MaxSkillGauge` / `MaxUltGauge`(どちらも Player に足した)。
+- 敵の動き: `EnemyBase::SetTraining(TrainingAi, isLockHp)` / `UpdateTraining()`(`Character/Enemy/EnemyBaseTraining.cpp`。TrainingManager が毎フレーム呼ぶ)。
+  ふつう以外は `m_isDebugStopAI` を立てて Idle から動かない(Enemy Debug の Stop AI と同じ)。ガードは Idle に戻ったら `EnemyGuard` に入れ直す。攻撃するは Idle に戻って90Fたったら、attackRange>0 の技からランダムに `DebugExecuteAttack`。敵のHP無限は毎フレーム HP を最大に戻す。
+  - 前からある Enemy Debug の Lock HP・Loop はデバッグウィンドウを描いている間しか効かないので使っていない。
+- `System::LoadStage(Training)` で全部の敵の種類を読む(`LoadEnemy` を全種類)。
+- Release(x64)でビルドは通った。一時コード(コマンドラインで設定を入れる・メニューを開く。消した)で撮って、メニューの表示、刀3体・立つだけ、混ぜる5体・攻撃する、ボス・ガード が出ることを確かめた。
+  **実際にパッドで操作しての確認(値の変更・閉じたときの反映・出し直し・スタートに戻る・終了・倒したときの出し直し・Kingmech を倒したときのトドメのムービー)はまだ**。
+- 気になる所: 説明の折り返しで行の頭に「。」が来ることがある(`MenuUI::DrawWrapText` に禁則が無い)。

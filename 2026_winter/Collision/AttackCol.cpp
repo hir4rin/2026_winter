@@ -230,6 +230,7 @@ void AttackCol::PlayerAttackOnCollision(Collider& other)
 			const bool isUltTriggerSkill = comboIndex == ComboIndex::SkillAttack1 ||
 				comboIndex == ComboIndex::AirSkillAttack1 ||
 				comboIndex == ComboIndex::SkillAttack2 ||
+				comboIndex == ComboIndex::SkillLightAttack1 ||
 				m_attackData->attackType == AttackType::ImpactSkillAttack;
 
 			bool isUltimating = player->GetIsUltimating() && m_attackData->isLastHit && isUltTriggerSkill;

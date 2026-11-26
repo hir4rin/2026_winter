@@ -32,6 +32,9 @@ public:
 	/// </summary>
 	void SetOwnSpeed(int playingHandle, float speed);
 
+	void AddHitWind(int playingHandle);//斬ったときの風を覚える
+	void StopHitWinds();//覚えている風を全部消す//血殺の始まりで呼ぶ
+
 	//毎フレーム1回呼ぶ//自分の速さを持つエフェクトの速さを設定し直してから、全エフェクトをタイムスケールに合わせて進める
 	void Update();
 
@@ -43,4 +46,5 @@ private:
 		float speed = 1.0f;
 	};
 	std::vector<OwnSpeedEffect> m_ownSpeedEffects;
+	std::vector<int> m_hitWindHandles;//再生中の斬ったときの風
 };

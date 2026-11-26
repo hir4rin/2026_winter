@@ -35,6 +35,7 @@ namespace
 	constexpr float kFogStart = 3000.0f;
 	constexpr float kFogEnd = 14000.0f;
 	constexpr float kFogOff = 1.0e8f;
+	constexpr float kFogOffEnd = 2.0e8f;//始まりと同じにすると0で割ってフォグが全面にかかり、フォグを使わないステージ(トレーニング)に残る
 
 	//街の光(DxLib の標準ライト)
 	const COLOR_F kLightColor = { 0.25f, 0.25f, 0.35f, 1.0f };
@@ -78,7 +79,7 @@ TitleCity::~TitleCity()
 	DeleteGraph(m_bloom);
 	DeleteGraph(m_glowGraph);
 	//明かりをタイトルのキャラに残さない
-	ModelShaderManager::GetInstance().SetStageLights({}, kFogOff, kFogOff, 0.0f);
+	ModelShaderManager::GetInstance().SetStageLights({}, kFogOff, kFogOffEnd, 0.0f);
 }
 
 void TitleCity::Init()
@@ -255,10 +256,10 @@ void TitleCity::DrawCity(const VECTOR& target)
 	m_lights.Update(Vector3(target.x, target.y, target.z));
 	ModelShaderManager::GetInstance().DrawModel(m_modelHandle);
 	//明かりをタイトルのキャラに残さない
-	ModelShaderManager::GetInstance().SetStageLights({}, kFogOff, kFogOff, 0.0f);
+	ModelShaderManager::GetInstance().SetStageLights({}, kFogOff, kFogOffEnd, 0.0f);
 
 	//自作の頂点シェーダーはフォグを切っても距離の値を読むので、遠くへ送ってから切る(Stage::Draw と同じ)
-	SetFogStartEnd(kFogOff, kFogOff);
+	SetFogStartEnd(kFogOff, kFogOffEnd);
 	SetFogEnable(FALSE);
 
 	DrawGlows();

@@ -247,6 +247,9 @@ public:
 	int GetMaxHp()const;//最大HP
 	//血殺(必殺技ゲージ)を最大にする//ラストヒットイベント演出用
 	void MaxUltGauge() { m_comboInfo.UltGauge = kMaxGaugeValue; }
+	//トレーニングの無限用//倒れた後は戻さない
+	void MaxSkillGauge() { m_comboInfo.SkillGauge = kMaxGaugeValue; }
+	void RestoreHp() { if (m_hp > 0) m_hp = GetMaxHp(); }
 
 
 	//カメラが注視するプレイヤーの座標//打ち上げ(スキル0)が当たってからスキル1が終わるまでは、Yだけ打ち上げた敵の高さになる

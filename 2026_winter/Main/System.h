@@ -70,6 +70,8 @@ enum class AsyncData : int
 	CyberStageColModel,//ステージ1の当たり判定(箱だけの軽いモデル)
 	TutorialStageModel,//チュートリアルのステージの見た目(UnityのTutorialStageToolで生成)
 	TutorialStageColModel,//チュートリアルのステージの当たり判定
+	TrainingRoomModel,//トレーニングルームの見た目(UnityのTrainingRoomToolで生成)
+	TrainingRoomColModel,//トレーニングルームの当たり判定
 	AreaWallEffect,
 	WallBreakEffect,
 	//デバッグ

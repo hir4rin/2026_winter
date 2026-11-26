@@ -14,13 +14,12 @@ namespace
 	constexpr float kAttackColRadius = 400.0f;//攻撃判定の半径
 
 	constexpr float kPlayerCenter = 100.0f;//プレイヤーの当たり判定の中心点までのy軸の距離
-
-
 }
 
 PlayerStateChargeAttack::PlayerStateChargeAttack(std::weak_ptr<Player> player) :
 	PlayerStateAttackBase(player)
 {
+
 }
 
 PlayerStateChargeAttack::~PlayerStateChargeAttack()

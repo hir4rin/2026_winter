@@ -737,7 +737,8 @@ void EnemyBase::PlayBloodSplash(Collider& other)
 	{
 		const bool isSkill = m_attackData.attackType == AttackType::SkillHeavyAttack || m_attackData.attackType == AttackType::SkillLightAttack ||
 			m_attackData.attackType == AttackType::ImpactSkillAttack;
-		PlayBlood(isSkill ? AsyncData::SkillHitEffect : AsyncData::HitWindEffect, bloodPos);
+		const int windHandle = PlayBlood(isSkill ? AsyncData::SkillHitEffect : AsyncData::HitWindEffect, bloodPos);
+		EffectManager::GetInstance().AddHitWind(windHandle);//血殺が始まったら消す
 	}
 
 	//必殺技中の血は、タイムスケールに関係なくkBloodSplashUltSpeedの速さで飛ばす

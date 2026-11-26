@@ -36,6 +36,8 @@ public:
 	//Group内の敵がすべて死んだかどうか
 	bool IsGroupAllDead(const std::string& groupId)const;
 	void DebugClearEnemies();//デバッグ用//敵と死体を全部消す
+	//配置データ1つ分の敵を出す(トレーニング用。フェーズの全滅判定には入れない)
+	std::shared_ptr<EnemyBase> SpawnFromData(const EnemySpawnData& data);
 private:
 	void SpawnEnemy();
 	void UpdateCorpses();//死体の数が上限を超えたら、古い順に消す

@@ -22,11 +22,12 @@ public:
 
 	void SetRecord(const Record& record) { m_record = record; }
 
-private:
+protected:
 	void DrawShade();
-	void DrawDescription();
-	void DrawRecord();
-	void DrawPauseGuide();
+	//一覧の下(ポーズは説明)・右上(ポーズは任務の記録)・下のボタン説明//トレーニングの設定メニューが上書きする
+	virtual void DrawDescription();
+	virtual void DrawRecord();
+	virtual void DrawPauseGuide();
 	//開いてから delay フレーム後に横から出てくる(dir: 1で左から、-1で右から、0でその場)
 	void ApplyOpen(int delay, float dir);
 

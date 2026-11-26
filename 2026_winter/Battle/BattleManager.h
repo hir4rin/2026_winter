@@ -41,7 +41,7 @@ public:
 	void Update();
 
 	//burstPos:白い爆発を出すワールド座標
-	void SetUltStart(int frames, const Vector3& burstPos) { m_ultCount = frames; m_isUltimating = true; m_ultBurstPos = burstPos; };
+	void SetUltStart(int frames, const Vector3& burstPos);
 	const Vector3& GetUltBurstPos()const { return m_ultBurstPos; }
 	bool GetIsUltimating() { return m_isUltimating; };
 	void SetUltEnd() { m_ultCount = -1; m_isUltimating = false; };

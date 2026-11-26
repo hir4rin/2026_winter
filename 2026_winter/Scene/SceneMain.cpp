@@ -29,6 +29,8 @@
 #include "Main/imguiApp.h"
 #include "Main/FrameProfiler.h"
 #include "Scene/PauseScene.h"
+#include "Scene/TrainingMenuScene.h"
+#include "Battle/TrainingManager.h"
 #include "Scene/ResultScene.h"
 #include "Scene/TutorialScene.h"
 #include "Scene/GameOverScene.h"
@@ -187,6 +189,12 @@ void SceneMain::Init()
 		m_phaseManager->Init(m_enemyManager, m_player, startPhase, m_respawn ? m_respawn->killCount : 0);
 		if (m_respawn) m_stage->SnapGates(m_phaseManager->GetCurrentPhase());
 	}
+	else if (m_stageType == StageType::Training)
+	{
+		//トレーニングは設定メニューの値で敵を出す
+		m_training = std::make_shared<TrainingManager>();
+		m_training->Init(m_enemyManager, m_player);
+	}
 	else
 	{
 		//配置データが無いステージは、今まで通りテスト用の敵を1体出す
@@ -265,6 +273,13 @@ void SceneMain::NormalUpdate()
 	//(名前の入力中にPキーでポーズが開いたり、矢印キーでカメラが動いたりしないように)
 	const bool isImGuiTyping = battleMgr->GetStageEditMode() && ImGui::GetIO().WantCaptureKeyboard;
 
+	//トレーニングはStartで設定メニューを積む(ポーズの代わり)
+	if (m_training && input.IsTriggered("Start") && !isImGuiTyping)
+	{
+		m_controller.PushScene(std::make_shared<TrainingMenuScene>(m_controller, m_training));
+		return;
+	}
+
 	//Startでポーズシーンを積む
 	if (input.IsTriggered("Start") && !isImGuiTyping)
 	{
@@ -329,6 +344,7 @@ void SceneMain::NormalUpdate()
 	m_player->Update(*m_camera);
 	FrameProfiler::GetInstance().Mark("Upd:Player");
 	m_enemyManager->Update();
+	if (m_training) m_training->Update();
 	m_phaseManager->Update();
 	m_checkpointManager->Update();
 	m_stage->UpdateGates(m_phaseManager->GetCurrentPhase());//押し戻しの前に開け閉めする	FrameProfiler::GetInstance().Mark("Upd:Enemy");

@@ -54,6 +54,7 @@ private:
 	AttackType m_attackType;//弱スキルか強スキルか
 	std::shared_ptr<SkillAttackCol> m_skillAttackCol;//地上スキル1用の攻撃判定//地上スキル1以外はnullptr
 	int m_ghostEffectHandle = -1;//再生中の分身エフェクトのハンドル//-1なら再生していない
+	int m_ghostComboIndex = -1;//分身を出したコンボ番号//Exitの時点では次の段の番号になっていることがあるので覚えておく
 	int m_launchGhostHandle = -1;//スキル0の白い分身のハンドル//-1なら再生していない
 	int m_nextComboIndex = -1;//次のスキル攻撃の段数//m_nextAttackTypeがSkillAttackのときだけ使う
 	AttackType m_nextAttackType = AttackType::None;//予約された次の攻撃の種類//SkillAttackなら次の段、弱・強ならPlayerStateAttackへ

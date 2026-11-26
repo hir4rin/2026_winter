@@ -25,6 +25,7 @@ class CheckpointEditor;
 class UIManager;
 class TunnelEnding;
 class TutorialFinale;
+class TrainingManager;
 
 class SceneMain : public Scene
 {
@@ -91,6 +92,7 @@ private:
 	TempTopLight m_tempTopLight;//[TempTopLight]暗くて見づらいので真上から照らす(一時的)
 	std::unique_ptr<TunnelEnding> m_ending;//列車ステージのエンディング(始まったら作る)
 	std::unique_ptr<TutorialFinale> m_tutorialFinale;//チュートリアルの最後(長い縦穴を自動で登ってリザルトへ)
+	std::shared_ptr<TrainingManager> m_training;//トレーニングの敵の出し方・設定(トレーニングのときだけ)
 
 	bool m_requestScreenshot = false;//次のDrawの最後でスクリーンショットを保存するか
 	bool m_wasF4Pressed = false;//前フレームにF4キーが押されていたか(ボスの手前へ飛ぶ)

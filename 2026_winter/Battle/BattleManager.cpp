@@ -3,6 +3,7 @@
 #include "AttackTokenManager.h"
 #include "Render/BloodDecalManager.h"
 #include "ResultRecorder.h"
+#include "Render/EffectManager.h"
 
 BattleManager::BattleManager()
 {
@@ -17,6 +18,14 @@ void BattleManager::Init()
 	m_attackTokenMgr = std::make_shared<AttackTokenManager>();
 	m_bloodDecalMgr = std::make_shared<BloodDecalManager>();
 	m_resultRecorder = std::make_shared<ResultRecorder>();
+}
+
+void BattleManager::SetUltStart(int frames, const Vector3& burstPos)
+{
+	m_ultCount = frames;
+	m_isUltimating = true;
+	m_ultBurstPos = burstPos;
+	EffectManager::GetInstance().StopHitWinds();//血殺中は風を消す
 }
 
 void BattleManager::Update()

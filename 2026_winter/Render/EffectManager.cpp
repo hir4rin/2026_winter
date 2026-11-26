@@ -21,6 +21,21 @@ void EffectManager::SetOwnSpeed(int playingHandle, float speed)
 	m_ownSpeedEffects.push_back({ playingHandle, speed });
 }
 
+void EffectManager::AddHitWind(int playingHandle)
+{
+	if (playingHandle < 0)return;
+	m_hitWindHandles.push_back(playingHandle);
+}
+
+void EffectManager::StopHitWinds()
+{
+	for (int handle : m_hitWindHandles)
+	{
+		StopEffekseer3DEffect(handle);
+	}
+	m_hitWindHandles.clear();
+}
+
 void EffectManager::Update()
 {
 	const float timeScale = System::GetInstance().GetTimeScale();
@@ -29,6 +44,11 @@ void EffectManager::Update()
 	std::erase_if(m_ownSpeedEffects, [](const OwnSpeedEffect& effect)
 		{
 			return IsEffekseer3DEffectPlaying(effect.playingHandle) != 0;
+		});
+	//終わった風も外す
+	std::erase_if(m_hitWindHandles, [](int handle)
+		{
+			return IsEffekseer3DEffectPlaying(handle) != 0;
 		});
 
 	//全体はタイムスケールの速さで進むので、タイムスケールで割って自分の速さにする

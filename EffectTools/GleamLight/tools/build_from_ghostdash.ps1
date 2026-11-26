@@ -23,18 +23,18 @@ function Set-Keys($axis, $list) {
 
 if ($Step -eq 1) {
   # 1段目: 強スキルと同じく敵の周りを回りながら斬る。回る向きを逆にして1体ごとに-150°(4体)
-  # 地上の技なので傾けない(水平)。腰の高さを通る
+  # 地上の技なので傾けない(水平)。腰より少し下(1.5)を通る
   Set-Keys 'X' @(@(0, 0), @(28, 0))
   Set-Keys 'Y' @(@(0, 0), @(120, -3000))
-  Set-V $spinner 'LocationValues.Fixed.Location.Y' 2.5
+  Set-V $spinner 'LocationValues.Fixed.Location.Y' 1.5
   Set-V $ghost 'CommonValues.MaxGeneration.Value' 4
 }
 else {
-  # 2段目: 1体ごとに144°回る星形(5体)。上から下へ斬り下ろす向きだけにする(-10〜-20°)
-  # 始まり y≒5〜7、抜けた先は床の少し上
-  Set-Keys 'X' @(@(0, -20), @(5, -20), @(6, -10), @(11, -10), @(12, -20), @(17, -20), @(18, -10), @(23, -10), @(24, -20), @(30, -20))
-  Set-Keys 'Y' @(@(0, 0), @(120, 2880))
-  Set-V $spinner 'LocationValues.Fixed.Location.Y' 2.5
-  Set-V $ghost 'CommonValues.MaxGeneration.Value' 5
+  # 2段目: 空中スキルと同じ6体。1体ごとに150°回る(6方向がばらける)。上から下へ斬り下ろす向きだけにする(-10〜-20°)
+  # 高さ1.5(2.5だと高く見えた)。抜けた先は床の少し上
+  Set-Keys 'X' @(@(0, -20), @(5, -20), @(6, -10), @(11, -10), @(12, -20), @(17, -20), @(18, -10), @(23, -10), @(24, -20), @(29, -20), @(30, -10), @(36, -10))
+  Set-Keys 'Y' @(@(0, 0), @(120, 3000))
+  Set-V $spinner 'LocationValues.Fixed.Location.Y' 1.5
+  Set-V $ghost 'CommonValues.MaxGeneration.Value' 6
 }
 Save-X $doc $Out

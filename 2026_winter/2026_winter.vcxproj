@@ -318,6 +318,10 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Scene\PauseScene.cpp" />
+    <ClCompile Include="Scene\TrainingMenuScene.cpp" />
+    <ClCompile Include="Battle\TrainingManager.cpp" />
+    <ClCompile Include="UI\Menu\TrainingMenuUI.cpp" />
+    <ClCompile Include="Character\Enemy\EnemyBaseTraining.cpp" />
     <ClCompile Include="Scene\GameOverScene.cpp" />
     <ClCompile Include="Scene\TutorialScene.cpp" />
     <ClCompile Include="Scene\StageSelectScene.cpp" />
@@ -542,6 +546,9 @@
     <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Scene\PauseScene.h" />
+    <ClInclude Include="Scene\TrainingMenuScene.h" />
+    <ClInclude Include="Battle\TrainingManager.h" />
+    <ClInclude Include="UI\Menu\TrainingMenuUI.h" />
     <ClInclude Include="Scene\GameOverScene.h" />
     <ClInclude Include="Scene\TutorialScene.h" />
     <ClInclude Include="Scene\StageSelectScene.h" />
