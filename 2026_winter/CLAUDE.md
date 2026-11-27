@@ -2858,6 +2858,17 @@
 - 山場の一撃: A 兜割り(Boss_LeapSlash で叩きつけ → Knock_Down) / B 胸を貫く(StabChest → 蹴り) / C 斬り抜け・納刀(遅れて割れる) / D 居合の一閃(白黒反転＋横一文字) / E 乱舞 / F 部位を斬る(ボス) / 比較: 今の打ち上げ。
 - おすすめ(会話で出した): 雑魚は ①＋A、ボスは F。**まだ決めていない**。`#A,140,1` で止まる、`#all,140,1` で全部並べる(`sheet_all_140.png`)。
 
+### 2026-11-28 ガードブレイク: 敵の武器を奪って血殺(方向の変更とモックアップ)
+- 会話で決めた方向: 山場の一撃は確殺につながない(普通の確殺はよく出るので差がつかない)。**血殺**で決める。ボスと同じく雑魚も**跳び上がって**空から決める。**敵の武器を奪って使う**。銃の敵は外す予定なので、武器は剣とバズーカの2つ。
+  - バズーカ: 空中で担いで何発か同時に撃つ → 血殺(決定)。剣: 投げるか斬撃を飛ばすか(まだ決めていない)。
+- `tools/GuardBreakMock/guardbreak_steal_mock.html`: 割ると敵の武器が宙に舞う(チャンスのスローの間も回る) → Y で跳んで掴む → 奪った武器で決める → 血殺(赤い背景・黒い敵・白い爆発・「血」「殺」の画像はゲームの bloodUI)。剣 T / W / S1 / S2 / S3、バズーカ M。まわりの敵を巻き込むかを切り替えられる。
+- (追記)**剣は「W 斬撃を飛ばす」に決定**(手間を減らすため)。
+- (追記)**空中でバズーカを撃つアニメを作った**: `Player03.mv1` の99番 `Air_BazookaFire`(40F、30fps)、アニメCSVの key `AirBazookaFire`。掴む 3F / 担ぐ 4〜10F / **撃つ 14F** / 反動の一番 16F / 狙いに戻る 26F。左手だけで左肩に担ぎ、右手は刀のまま。作り方・バズーカの付け方(肩の上→手の上の向き)は `../tools/PlayerAnim/README.md`。
+  - Unity の `PlayerAnimTool.cs` に `MakeBazooka` を足し、`ExportAll` に入れて100本で書き出し直した。今までの99本の差は最大0.013(`animcmp`)、三角形・マテリアルは同じ。前のモデルは scratchpad にだけ控え(`baz_conv/Player03_before.mv1`)。
+  - (直した)最初の版は足が壊れていた: 元にした `Jump_Combat_Loop_0` を FBX 版から読んでいて、足の IK で両足が腰に寄っていた。ゲームと同じ Humanoid の `.anim` 版から読み、ジャンプの体のひねり(Y23°・Z14°)は取って前傾10°にした。作り直して入れ直した(99本の差は最大0.013のまま)。
+  - 確認は `tools/PlayerAnim/bazshot.exe` の画像(`preview/baz_game.png`)と animplay だけ。**ゲームのコードからはまだ使っていない**(ステート・バズーカを手に付ける処理・撃つ処理はこれから)。
+- 実装の見通し(会話で調べた): バズーカは `EnemyBazookaWeapon` が別モデル・`EnemyBazookaMissile` は撃つ側を `CharacterBase` で受けるので、当たり判定の陣営(`EnemyBazookaMissile.cpp` の `Faction::Enemy` 2か所と `EnemyBazookaMissileCol::OnCollision` のプレイヤー固定)を外から渡せばよい。剣は Swordman に武器のクラスが無く `Enemy.mv1` の一部らしい(別メッシュかは未確認)。投げは `KingmechGatling` / `PlayerStateBossPartThrow` を流用できる。
+
 ### 2026-11-26 溜め中のエフェクトをゲームのフレームで段階ごとに出す(A2 を3つに分けた)
 - ミサイルの予告円と同じ形。A2 を `A2_Charging`(吸い込み、続ける) / `A2_Done`(完了の瞬間に1回) / `A2_Charged`(溜まった後、続ける)に分けた。詳しくは `../EffectTools/ChargeHold/README.md`。
 - `PlayerStateCharge`: `Phase`(Charging / Charged)。Enter で Charging を再生、`m_frame >= kChargeThreshold` で `ChangePhase(Charged)` → Charging を `StopRoot`(煙は自然に消える)・Done を1回・Charged を再生。両方を足元へついていかせ、Exit で両方止める。向きは Enter で決めた `m_effectRotY`。

@@ -1,9 +1,11 @@
 // アニメのmv1を、プレイヤーに刀を持たせてループ再生して見る(横・前・斜めの3つ)
 // animplay.exe Player03.mv1 アニメのmv1 刀のmv1 [ウィンドウのX Y]
+// 環境変数 ANIMPLAY_BAZ=RPG7.mv1 で、名前に Bazooka が入ったアニメは左手にバズーカ。ANIMPLAY_ANIM=最初のアニメの番号
 // ←→: アニメを切り替え / Space: 止める / ,.: 止めて1コマ送り / ↑↓: 速さ / Esc: 終わる
 #include "DxLib.h"
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 
 static MATRIX WeaponMat(int model, int hand)
 {
@@ -11,6 +13,23 @@ static MATRIX WeaponMat(int model, int hand)
 	rot = MMult(rot, MGetRotY(90.0f * DX_PI_F / 180.0f + DX_PI_F / 2));
 	rot = MMult(rot, MGetRotZ(0.0f - DX_PI_F / 2));
 	return MMult(MMult(MGetScale(VGet(0.6f, 0.6f, 0.6f)), rot), MV1GetFrameLocalWorldMatrix(model, hand));
+}
+
+// バズーカ: 肩の上から手の上への向き、原点(引き金)は左手(bazshot と同じ)
+static MATRIX BazookaMat(int model, int hand, int upperArm, int spine, int neck)
+{
+	const VECTOR up0 = VNorm(VSub(MV1GetFramePosition(model, neck), MV1GetFramePosition(model, spine)));
+	const VECTOR grip = MV1GetFramePosition(model, hand);
+	const VECTOR back = VAdd(MV1GetFramePosition(model, upperArm), VScale(up0, 9.0f));
+	const VECTOR z = VNorm(VSub(VAdd(grip, VScale(up0, 9.0f)), back));
+	const VECTOR x = VNorm(VCross(up0, z));
+	const VECTOR y = VCross(z, x);
+	MATRIX m = MGetIdent();
+	m.m[0][0] = x.x; m.m[0][1] = x.y; m.m[0][2] = x.z;
+	m.m[1][0] = y.x; m.m[1][1] = y.y; m.m[1][2] = y.z;
+	m.m[2][0] = z.x; m.m[2][1] = z.y; m.m[2][2] = z.z;
+	m.m[3][0] = grip.x; m.m[3][1] = grip.y; m.m[3][2] = grip.z;
+	return m;
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -29,7 +48,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	const int hand = MV1SearchFrame(player, "hand_r");
 	const int pelvis = MV1SearchFrame(player, "pelvis");
 	const int animNum = MV1GetAnimNum(src);
-	int anim = 0, at = MV1AttachAnim(player, 0, src, FALSE);
+	//環境変数 ANIMPLAY_BAZ = RPG7.mv1 なら、名前に Bazooka が入ったアニメで左手にバズーカ。ANIMPLAY_ANIM = 最初のアニメの番号
+	const int baz = getenv("ANIMPLAY_BAZ") ? MV1LoadModel(getenv("ANIMPLAY_BAZ")) : -1;
+	const int handL = MV1SearchFrame(player, "hand_l"), upperL = MV1SearchFrame(player, "upperarm_l");
+	const int spine = MV1SearchFrame(player, "spine_03"), neck = MV1SearchFrame(player, "neck_01");
+	int anim = getenv("ANIMPLAY_ANIM") ? atoi(getenv("ANIMPLAY_ANIM")) % animNum : 0;
+	int at = MV1AttachAnim(player, anim, src, FALSE);
 	float t = 0.0f, speed = 1.0f; int wait = 0; bool pause = false;
 	int prevKey[256] = {}; char key[256];
 	SetUseZBuffer3D(TRUE); SetWriteZBuffer3D(TRUE);
@@ -83,6 +107,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			MV1DrawModel(player);
 			MV1SetMatrix(sword, WeaponMat(player, hand));
 			MV1DrawModel(sword);
+			if (baz >= 0 && strstr(MV1GetAnimName(src, anim), "Bazooka"))
+			{
+				MV1SetMatrix(baz, BazookaMat(player, handL, upperL, spine, neck));
+				MV1DrawModel(baz);
+			}
 			DrawLine(x0, 0, x0, SH, GetColor(30, 30, 40));
 			DrawString(x0 + 8, SH - 24, names[v], GetColor(200, 200, 200));
 		}

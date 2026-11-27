@@ -38,6 +38,10 @@
 | `Kick_Up` | `KickUp` | 蹴り上げ(サマーソルト。NG4 の録画 `ref_kickup/` をまねた)。全32F。`Ninja_Acrobatic_Backflip` のしゃがみ〜宙返り(2→26F を 0→22F に詰める)に、右脚を真上へ振り上げる筋肉の値を足す(`Right Upper Leg Front-Back` は**負が前**。-1.3 で 9F に足が腰の 0.84m 上=当たる所)。右腕・指は切り上げ(`Attack_Up_Floor_To_Air_02`)の空中の姿勢で固定(宙返りは素手のため)。**着地しない**: 18〜25F で切り上げの最後の空中の構え(膝を畳んで刀を立てる)へ混ぜて終わる。空中は立った高さ |
 | `Spin_RiseSlash` | `SpinRiseSlash` | X→X→Y の回転斬り上げ(`ref/README.md`)。全34F。0〜4F `Attack_Up_01` の低い構えへ沈む → 4〜7F 刃を下げる → 7〜18F 体を横に2回転(だんだん遅く)しながら `Attack_Up_Floor_To_Air_02` の斬り上げを進める → 18F〜 振り抜いたまま止まる。回転は体(RootQ)に掛けるので書き出し後も残る。回る向きは .cs の `kSpinDir` |
 
+| `Air_BazookaFire` | `AirBazookaFire` | ガードブレイクで奪ったバズーカを空中で撃つ(11/28)。全40F。0〜3F 左手を上へ伸ばして宙の武器を掴む → 4〜10F 左肩に担ぐ → 10〜12F 前のめりに狙う(18°) → **14F 撃つ** → 16F 反動でのけぞる(-14°、脚が前へ振れる) → 26F 狙いに戻る → 40F まで構えたまま。体は `Jump_Combat_Loop_0` の0F、右手は刀のまま、左手だけで担ぐ。左手の位置は .cs の `SolveLeftArm` で筋肉を少しずつ動かして肩からの目標(`kBazReach` / `kBazCarry` / `kBazRecoil`)に合わせている。空中は立った高さ |
+
+- 動かして見る(バズーカ): 環境変数 `ANIMPLAY_BAZ=RPG7.mv1` を付けて animplay を起動すると、名前に `Bazooka` が入ったアニメで左手にバズーカが付く。`ANIMPLAY_ANIM=99` で最初からそのアニメ
+- バズーカを持たせて見る: `bazshot.exe 出力.png Player03.mv1 アニメのmv1 刀のmv1 RPG7.mv1 枚数 [アニメ番号]`(`Air_BazookaFire` は Player03.mv1 の99番)。**バズーカの付け方**は「肩の上(`upperarm_l` ＋上へ9)から手の上(`hand_l` ＋上へ9)への向きを筒の前(+Z)、原点(引き金)を `hand_l`、上は `spine_03`→`neck_01`」(`BazookaMat`)。ゲームでも同じ計算で付ける。作るのは `PlayerAnimTool.MakeAndExportBazooka`(`Library/PlayerAnimExport/BazookaOnly.fbx`)
 - 作る: `PlayerAnimTool.MakeAndExportKickSpin`(上の2本を作って `Library/PlayerAnimExport/KickSpinOnly.fbx` に)。`ExportAll` は3本とも入れる
 - 動かして見る: `animplay.exe Player03.mv1 アニメのmv1 刀のmv1 [X Y]`(左のモニターにウィンドウ。横・前・斜め上でループ再生、←→で切り替え・Space で止める・`,` `.` でコマ送り・↑↓で速さ。ビルドは `build.bat` の cl の行のファイル名を変えて)。確認用の画像は `preview/`
 - 作る: `PlayerAnimTool.MakeAndExportLeap`(クリップ `Assets/PlayerAnim/Boss_LeapSlash.anim` を作り、それだけを `Library/PlayerAnimExport/LeapOnly.fbx` に書き出す。確認用)。つなぐフレームは .cs 先頭の `kExecToStart0` など
