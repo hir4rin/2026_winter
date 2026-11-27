@@ -22,6 +22,7 @@ public:
 		int enemyAi = 0;//立っているだけ / ガードし続ける / 攻撃してくる / ふつう
 		int respawn = 0;//すぐ出し直す / 出し直さない
 		int enemyHp = 0;//ふつう / 無限
+		int partBreak = 0;//ふつう(確率) / 必ず / しない
 		int playerHp = 0;//無限 / ふつう
 		int gauge = 0;//無限 / ふつう
 		bool operator==(const Settings&)const = default;
@@ -29,12 +30,10 @@ public:
 	enum class EnemyTypeItem { Swordman, Gunner, Bazooka, Mix, Boss, Num };
 	enum class EnemyCountItem { One, Three, Five, Num };
 
-	void Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player);
+	void Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player, const Settings& settings);
 	void Update();
 
 	const Settings& GetSettings()const { return m_settings; }
-	//設定を変えて敵を出し直す
-	void Apply(const Settings& settings);
 	//今の設定で敵を全部消して出し直す
 	void Respawn();
 	//プレイヤーをスタートに戻す

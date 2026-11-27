@@ -82,15 +82,23 @@ namespace
 	constexpr int kChargeHoldLabelFrame = 120;//F11で切り替えた案の名前を出すフレーム
 }
 
-SceneMain::SceneMain(SceneController& controller, StageType stageType, std::optional<RespawnInfo> respawn) :
+SceneMain::SceneMain(SceneController& controller, StageType stageType, std::optional<RespawnInfo> respawn,
+	std::optional<TrainingManager::Settings> trainingSettings) :
 	Scene(controller),
 	m_frameCount(0),
 	m_fadeFrame(0),
 	m_stageType(stageType),
-	m_respawn(respawn)
+	m_respawn(respawn),
+	m_trainingSettings(trainingSettings)
 {	m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::NormalUpdate);
 	m_drawFunc = static_cast<DrawFunc_t>(&SceneMain::NormalDraw);
 	Init();
+	//トレーニングを作り直したときは暗いところから明ける
+	if (m_trainingSettings)
+	{
+		m_updateFunc = static_cast<UpdateFunc_t>(&SceneMain::FadeInUpdate);
+		m_drawFunc = static_cast<DrawFunc_t>(&SceneMain::FadeInDraw);
+	}
 }
 
 SceneMain::~SceneMain()
@@ -193,7 +201,7 @@ void SceneMain::Init()
 	{
 		//トレーニングは設定メニューの値で敵を出す
 		m_training = std::make_shared<TrainingManager>();
-		m_training->Init(m_enemyManager, m_player);
+		m_training->Init(m_enemyManager, m_player, m_trainingSettings.value_or(TrainingManager::Settings{}));
 	}
 	else
 	{

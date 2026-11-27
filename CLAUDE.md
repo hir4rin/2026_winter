@@ -35,6 +35,8 @@
 - `EffectTools/GhostLaunch/`: スキル0(打ち上げ)の白い分身のエフェクトの元データ(`GhostLaunch_v1/`)。書き出しは `data/Effect/Skill/GhostLaunch.efk`。分身のモデルは `tools/PlayerAnim/posemodel.exe` で打ち上げのアニメのポーズを書き出したもの(`README.md`)
 - `EffectTools/Checkpoint/`: チェックポイント(リスポーン地点＋次の目的地の目印)のエフェクトの元データ(`Checkpoint_v1/CheckpointIdle.efkefc`・`CheckpointActivate.efkefc`)とテクスチャを作るスクリプト(`gen_checkpoint_tex.ps1`)。書き出しは `data/Effect/Checkpoint/`
 - `EffectTools/StartLand/`: 登場演出の着地エフェクト(`data/Effect/StartMovie/StartLand.efk`)の地面のひびの画像を作るスクリプト(`gen_crack.ps1`)とゲームで撮った確認の画像
+- `tools/AudiostockSearch/`: オーディオストック(audiostock.jp)の素材をすぐ探せるページ(`audiostock_search.html` をブラウザで開く)。効果音・SE と BGM のタブで、ゲームの場面ごとの検索ワードのボタンを押すと新しいタブで検索結果が開く(Shift+クリックで入力欄に足す)。並び・長さ(秒)・WAVありで絞れる。自分で足したワードと最近の検索はブラウザに残る
+- `tools/SlashSeGen/`: 刀で敵を斬ったときの SE を合成するスクリプト(`MakeSlashSe.ps1`。NG4 のトレーニングの録画(ユーザーの `Videos\画面録画\画面録画 2026-11-27 153324.mp4`)を帯域ごとに測った形に合わせた自作の音。測った形: 当たった瞬間は 3.5k〜14kHz が +15〜20dB で鋭く(低音はほぼ無い)・低音は 30〜60ms 遅れて 50〜80ms・大きいヒットは約0.2秒後に 1.5k〜14kHz の荒い血しぶきが最初より大きく 0.2秒以上。層は 斬った頭・チッ(下がる高音)・高域の擦れ・肉・遅れて来る低音・血しぶき。出力は `out/slash_hit_01〜03・light・heavy.wav`。jsx・ps1 と同じく BOM 付きで保存)。スライダーで調整して WAV を保存できるページは `slash_se_tool.html`(同じ合成を JS に移したもの。下の欄の設定を ps1 の New-Se に貼れる)
 - `tools/FrameCheck/`: 画面に実際に出た更新を測るツール(`dupmon.exe`。同じ絵が2回出た=カクついた回数が分かる。ゲームの中の記録は CPU 側の時間なので見えない)
 - `.claude/skills/sakurai/`: 「桜井政博のゲーム作るには」の原則をまとめたスキル(kociden/sakurai-skill から取り込み)。「桜井さんならどうする」「手応えをレビューして」などで読み込まれる
 - ステージ・敵配置の Unity(`ninja_motion`、家PCは `Desktop\programm\ninja_motion`)は別の非公開リポジトリ `hir4rin/WinterGame2026_ForStageAndModel`。買ったアセットは入れていない(このリポジトリは公開なので入れない)。別のPCでの開き方・アセットの一覧はそのリポジトリの `README_アセット.md`

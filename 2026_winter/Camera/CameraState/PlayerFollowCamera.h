@@ -34,7 +34,6 @@ private:
 private:
 	static constexpr float kBlendDuration = 20.0f;//ブレンドにかけるフレーム数
 
-	XINPUT_STATE  xi;
 	Vector3 m_rayVec = Vector3(0, 0, 0);//カメラの前方向のベクトル//カメラの注視点を決めるために使う
 
 	Vector3 m_prevGoalTarget = Vector3(0, 0, 0);//前フレームの注視点

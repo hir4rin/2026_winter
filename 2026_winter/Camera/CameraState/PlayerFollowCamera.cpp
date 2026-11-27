@@ -251,60 +251,25 @@ void PlayerFollowCamera::CameraSetting()
 
 void PlayerFollowCamera::InputRightStick()
 {
-	if (GetJoypadXInputState(DX_INPUT_PAD1, &xi) == 0)//右スティックの入力を取得できたら
-	{
-		//右スティックの範囲は-32768~35767
-		short rx = xi.ThumbRX;
-		short ry = xi.ThumbRY;
-		//デッドゾーンの設定
-		const int DeadZone = 8000;//スティックの傾きがこの値以下の場合は、傾いていないとみなす
-		if (abs(rx) < DeadZone)
-		{
-			rx = 0;
-		}
-		if (abs(ry) < DeadZone)
-		{
-			ry = 0;
-		}
-		//スティックの傾きに応じてカメラを回転させる
-		if (rx > 0)//右に傾いている
-		{
-			m_angleH += kCameraAngleSpeed;
-			if (m_angleH > kAngleFullTurn)
-			{
-				m_angleH -= kAngleFullTurn;
-			}
-		}
-		else if (rx < 0)//左に傾いている
-		{
-			m_angleH -= kCameraAngleSpeed;
-			if (m_angleH < -kAngleFullTurn)
-			{
-				m_angleH += kAngleFullTurn;
-			}
-		}
-		if (ry < 0)//下に傾いている
-		{
-			m_angleV += kCameraAngleSpeed * 1 / kVerticalAngleSpeedDivisor;
-			// ある一定角度以上にはならないようにする
-			if (m_angleV > DX_PI_F * kAngleVUpperMultiplier - kAngleVLimitOffset)
-			{
-				m_angleV = DX_PI_F * kAngleVUpperMultiplier - kAngleVLimitOffset;
-			}
+	//デッドゾーンはInput側で処理済み
+	auto stick = Input::GetInstance().GetRightStickInput();
+	const auto& option = System::GetInstance().GetCameraOption();
+	const float speed = kCameraAngleSpeed * option.GetSpeedRate();
 
-		}
-		else if (ry > 0)//上に傾いている
-		{
-			m_angleV -= kCameraAngleSpeed * 1 / kVerticalAngleSpeedDivisor;
-			// ある一定角度以下にはならないようにする
-			if (m_angleV < -DX_PI_F * kAngleVLowerMultiplier + kAngleVLimitOffset)
-			{
-				m_angleV = -DX_PI_F * kAngleVLowerMultiplier + kAngleVLimitOffset;
-			}
+	//傾けた量に関係なく一定の速さで回す。反転は向きの符号だけ変える
+	const float dirX = (stick.x > 0.0f ? 1.0f : (stick.x < 0.0f ? -1.0f : 0.0f)) * option.GetSignX();
+	const float dirY = (stick.y > 0.0f ? 1.0f : (stick.y < 0.0f ? -1.0f : 0.0f)) * option.GetSignY();
 
-		}
+	m_angleH += speed * dirX;
+	if (m_angleH > kAngleFullTurn) m_angleH -= kAngleFullTurn;
+	if (m_angleH < -kAngleFullTurn) m_angleH += kAngleFullTurn;
 
-	}
+	//上に倒すと角度が減る。倒している間だけ範囲に収める
+	if (dirY == 0.0f) return;
+	m_angleV -= speed / kVerticalAngleSpeedDivisor * dirY;
+	m_angleV = std::clamp(m_angleV,
+		-DX_PI_F * kAngleVLowerMultiplier + kAngleVLimitOffset,
+		DX_PI_F * kAngleVUpperMultiplier - kAngleVLimitOffset);
 }
 
 void PlayerFollowCamera::DragCameraByPlayerMove()

@@ -1,8 +1,5 @@
 ﻿#pragma once
 #include "Character/CharacterBase.h"
-enum class AsyncData : int;
-enum class BloodAmount : int;
-class EnemyBazookaMissile;
 #include "Character/Enemy/State/Locomotion/EnemyIdle.h"
 #include "Character/Enemy/State/Locomotion/EnemyChase.h"
 #include "Character/Enemy/State/Defence/EnemyGuard.h"
@@ -33,6 +30,9 @@ class EnemyBazookaMissile;
 
 class Player;
 class EnemyStateBase;
+enum class AsyncData : int;
+enum class BloodAmount : int;
+class EnemyBazookaMissile;
 
 /// <summary>
 /// 敵の攻撃1つ分のデータ//EnemySwordmanAttack.csvの1行
@@ -363,7 +363,14 @@ public:
 		Guard,//ガードし続ける
 		Attack,//その場から動かず、間をあけてランダムな技を出す
 	};
-	void SetTraining(TrainingAi ai, bool isLockHp);
+	//トレーニングの部位破壊
+	enum class TrainingPartBreak
+	{
+		Normal,//ステージと同じ(確率)
+		Always,//ダメージが通れば必ず
+		Never,//しない
+	};
+	void SetTraining(TrainingAi ai, bool isLockHp, TrainingPartBreak partBreak);
 	//トレーニングの動きを進める(EnemyManager::Update の後に毎フレーム)
 	void UpdateTraining();
 
@@ -534,6 +541,7 @@ protected:
 	//トレーニング
 	TrainingAi m_trainingAi = TrainingAi::Normal;
 	bool m_isTrainingLockHp = false;//trueなら毎フレームHPを最大に戻す
+	TrainingPartBreak m_trainingPartBreak = TrainingPartBreak::Normal;
 	int m_trainingAttackTimer = 0;//Idleに戻ってからのフレーム(攻撃してくるとき)
 
 

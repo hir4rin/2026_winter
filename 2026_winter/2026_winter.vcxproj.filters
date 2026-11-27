@@ -54,6 +54,12 @@
     <ClCompile Include="Scene\PauseScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\CameraOptionScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\CameraOption.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Scene\TrainingMenuScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -61,9 +67,6 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="UI\Menu\TrainingMenuUI.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Character\Enemy\EnemyBaseTraining.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Scene\GameOverScene.cpp">
@@ -393,6 +396,9 @@
     <ClCompile Include="Camera\LockOnManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Sound\SoundManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="Main\System.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -714,6 +720,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Scene\PauseScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\CameraOptionScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\CameraOption.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Scene\TrainingMenuScene.h">
@@ -1086,6 +1098,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Camera\LockOnManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound\SoundManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Main\System.h">

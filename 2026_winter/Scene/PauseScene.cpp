@@ -5,6 +5,7 @@
 #include "Main/System.h"
 #include "Battle/BattleManager.h"
 #include "StageSelectScene.h"
+#include "CameraOptionScene.h"
 #include <iterator>
 
 namespace
@@ -32,7 +33,7 @@ PauseScene::~PauseScene()
 
 void PauseScene::RebuildItems()
 {
-	const char* const names[] = { "ゲームに戻る", "フォトモード", "ステージ編集", "ステージセレクトへ" };
+	const char* const names[] = { "ゲームに戻る", "カメラ設定", "フォトモード", "ステージ編集", "ステージセレクトへ" };
 	static_assert(std::size(names) == static_cast<size_t>(MenuItem::Num), "項目名の数をMenuItemと合わせる");
 
 	const MenuItem current = m_items.empty() ? MenuItem::ReturnGame : m_items[m_cursor];
@@ -56,6 +57,7 @@ void PauseScene::ApplyCursor()
 	const char* const texts[] =
 	{
 		"任務に戻る。Start・B ボタンでもすぐに戻れる。",
+		"カメラの感度と、左右・上下の反転を変える。",
 		"カメラを自由に動かして撮影する。(開発用・カメラデバッグ)",
 		"壁キック・壁走りのゾーンを置き直す。(開発用)",
 		"任務を中断してステージセレクトに戻る。ここまでの進み具合は残らない。",
@@ -80,6 +82,7 @@ void PauseScene::NormalUpdate()
 	//下のSceneMainはUpdateされないので、ここで入力を更新する
 	auto& input = Input::GetInstance();
 	input.Update();
+	m_isChildOpen = false;//ここが呼ばれたらカメラ設定は閉じている
 
 	//裏コマンド: L3+R3の同時押しで開発用の項目を出す
 	const bool isDebugCommand = input.IsPressed("L3") && input.IsPressed("R3") &&
@@ -106,6 +109,13 @@ void PauseScene::NormalUpdate()
 	//Aで決定(演出を見せてから実行する)
 	if (input.IsTriggered("A"))
 	{
+		//カメラ設定はポーズを残したまま上に積む(決定の演出は無し)
+		if (m_items[m_cursor] == MenuItem::CameraOption)
+		{
+			m_isChildOpen = true;
+			m_controller.PushScene(std::make_shared<CameraOptionScene>(m_controller));
+			return;
+		}
 		m_decideItem = m_items[m_cursor];
 		m_decideFrame = 0;
 		m_ui.StartDecide();
@@ -175,6 +185,7 @@ void PauseScene::FadeInDraw()
 void PauseScene::NormalDraw()
 {
 	//下に積まれたSceneMainはSceneController::Drawで先に描画される
+	if (m_isChildOpen)return;
 	m_ui.Draw();
 }
 

@@ -4,6 +4,7 @@
 #include <optional>
 #include "Scene/Scene.h"
 #include "Battle/RespawnInfo.h"
+#include "Battle/TrainingManager.h"
 #include "Stage/StageInfo.h"
 #include "Camera/CameraState/PlayerStartMovieCamera/PlayerStartMovieFrame.h"
 #include "Render/StageColorGrade.h"
@@ -31,7 +32,9 @@ class SceneMain : public Scene
 {
 public:
 	//respawnがあれば、死ぬ前の続き(チェックポイント・フェーズ・記録)から始める
-	SceneMain(SceneController& controller, StageType stageType, std::optional<RespawnInfo> respawn = std::nullopt);
+	//trainingSettingsがあれば、トレーニングをその設定で始める(設定を変えて作り直したとき)
+	SceneMain(SceneController& controller, StageType stageType, std::optional<RespawnInfo> respawn = std::nullopt,
+		std::optional<TrainingManager::Settings> trainingSettings = std::nullopt);
 	~SceneMain();
 
 	void Update() override;
@@ -75,6 +78,7 @@ private:
 
 	StageType m_stageType;//遊ぶステージ(StageSelectSceneで選んだもの)
 	std::optional<RespawnInfo> m_respawn;//リスポーンで作り直したときの引き継ぎ
+	std::optional<TrainingManager::Settings> m_trainingSettings;//トレーニングを作り直したときの設定
 	std::shared_ptr<Player> m_player;
 	std::shared_ptr<EnemyManager> m_enemyManager;
 	std::shared_ptr<PhaseManager> m_phaseManager;//フェーズ進行

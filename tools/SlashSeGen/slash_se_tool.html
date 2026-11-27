@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>斬撃SEの調整</title>
+<style>
+  :root { --bg:#151316; --panel:#211d22; --line:#3a3238; --text:#eee6e8; --sub:#a8999e; --accent:#c8323c; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 "Yu Gothic UI","Meiryo",sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .note { color:var(--sub); font-size:12px; margin:0 0 12px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+  button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:8px 14px; font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.main { background:var(--accent); border-color:var(--accent); font-weight:bold; font-size:16px; padding:10px 28px; }
+  button.on { border-color:var(--accent); color:#fff; box-shadow:inset 0 0 0 1px var(--accent); }
+  label.chk { display:flex; gap:4px; align-items:center; color:var(--sub); }
+  canvas { width:100%; height:120px; background:#0c0b0d; border:1px solid var(--line); border-radius:6px; display:block; margin-bottom:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; }
+  .grp { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+  .grp h2 { font-size:14px; margin:0 0 6px; color:#f0b8bc; }
+  .row { display:grid; grid-template-columns:96px 1fr 50px; gap:6px; align-items:center; margin:4px 0; }
+  .row span { font-size:12px; color:var(--sub); }
+  .row output { font-variant-numeric:tabular-nums; text-align:right; font-size:12px; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  textarea { width:100%; height:64px; background:#0c0b0d; color:var(--text); border:1px solid var(--line); border-radius:6px; font:12px Consolas,monospace; padding:6px; margin-top:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>斬撃SEの調整</h1>
+  <p class="note">NG4 の録画を測った形(高く鋭い頭 → 少し遅れて低音 → ブシャッと血しぶき)に合わせた版。スライダーを離すと鳴ります。下の欄の設定は MakeSlashSe.ps1 の New-Se に貼れます(乱数の作り方が違うので、粒の並びまでは同じになりません)。</p>
+
+  <div class="bar">
+    <button class="main" id="play">▶ 鳴らす (Space)</button>
+    <button id="reseed">粒を変える</button>
+    <button id="save">WAVを保存</button>
+    <span style="width:12px"></span>
+    <button data-preset="normal">ふつう</button>
+    <button data-preset="light">軽い</button>
+    <button data-preset="heavy">重い</button>
+    <label class="chk"><input type="checkbox" id="auto" checked>動かしたら鳴らす</label>
+  </div>
+
+  <canvas id="wave" width="1100" height="120"></canvas>
+  <div class="grid" id="grid"></div>
+  <textarea id="out" readonly></textarea>
+</div>
+
+<script>
+const SR = 44100;
+
+// [キー, 名前, 最小, 最大, 刻み, グループ]
+const DEFS = [
+  ['Crack','頭の強さ',0,2,0.05,'斬った頭'],
+  ['CrackDecay','頭の長さ',0.002,0.05,0.001,'斬った頭'],
+  ['CrackLowCut','頭の低い側を切る',200,6000,50,'斬った頭'],
+  ['Chirp','チッの強さ',0,1.5,0.05,'チッ'],
+  ['ChirpFrom','チッの始まり',2000,16000,100,'チッ'],
+  ['ChirpTo','チッの終わり',200,6000,50,'チッ'],
+  ['ChirpTime','チッの長さ',0.003,0.05,0.001,'チッ'],
+  ['Hiss','擦れの強さ',0,1.5,0.05,'高域の擦れ'],
+  ['HissDecay','擦れの長さ',0.01,0.2,0.005,'高域の擦れ'],
+  ['Flesh','肉の強さ',0,2,0.05,'肉'],
+  ['FleshDecay','肉の長さ',0.005,0.1,0.001,'肉'],
+  ['Body','低音の強さ',0,2.5,0.05,'遅れて来る低音'],
+  ['BodyHz','低音の高さ',35,160,1,'遅れて来る低音'],
+  ['BodyDelay','低音の遅れ',0,0.08,0.001,'遅れて来る低音'],
+  ['BodyDecay','低音の長さ',0.01,0.2,0.005,'遅れて来る低音'],
+  ['Spray','血の強さ',0,2,0.05,'血しぶき'],
+  ['SprayDelay','血の遅れ',0,0.3,0.005,'血しぶき'],
+  ['SprayLen','血の長さ',0.03,0.5,0.01,'血しぶき'],
+  ['SprayGrain','血の粒の荒さ',0,1,0.05,'血しぶき'],
+  ['SprayLowCut','血の低い側を切る',200,6000,50,'血しぶき'],
+  ['Drive','歪み',1,5,0.1,'全体'],
+  ['Length','全体の長さ',0.1,1.0,0.01,'全体'],
+  ['Volume','音量',0.1,1,0.05,'全体'],
+];
+
+const BASE = { Seed:11, Pre:0.01, Crack:1.0, CrackDecay:0.012, CrackLowCut:1500,
+  Chirp:0.5, ChirpFrom:9000, ChirpTo:1200, ChirpTime:0.012, Hiss:0.45, HissDecay:0.05,
+  Flesh:0.5, FleshDecay:0.03, Body:0.9, BodyHz:75, BodyDelay:0.025, BodyDecay:0.04,
+  Spray:0.8, SprayDelay:0.06, SprayLen:0.16, SprayGrain:0.6, SprayLowCut:1500,
+  Drive:1.6, Length:0.4, Volume:0.8 };
+const PRESETS = {
+  normal: {},
+  light: { Seed:5, Spray:0.35, SprayDelay:0.04, SprayLen:0.08, Body:0.6, BodyDecay:0.035, Length:0.25 },
+  heavy: { Seed:71, Crack:1.1, Body:1.2, BodyHz:62, BodyDecay:0.055, Spray:1.1, SprayDelay:0.18, SprayLen:0.25, Length:0.6 },
+};
+let P = { ...BASE };
+
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+function svf() {
+  const s = { lo:0, bp:0, Lp:0, Bp:0, Hp:0 };
+  s.run = (x, fc, q) => {
+    const f = 2 * Math.sin(Math.PI * Math.min(fc, SR * 0.24) / SR);
+    s.Hp = x - s.lo - s.bp / q; s.bp += f * s.Hp; s.lo += f * s.bp; s.Lp = s.lo; s.Bp = s.bp;
+  };
+  return s;
+}
+
+function make(p) {
+  const n = Math.floor(p.Length * SR), o = new Float64Array(n), lo = new Float64Array(n), r = rng(p.Seed);
+  const hit = Math.floor(p.Pre * SR), nz = () => r() * 2 - 1;
+
+  // 斬った頭
+  const cf = svf();
+  for (let i = hit; i < n; i++) {
+    const t = (i - hit) / SR; if (t > p.CrackDecay * 8) break;
+    const x = nz(); cf.run(x, p.CrackLowCut, 0.7);
+    o[i] += (cf.Hp + x * 0.15) * Math.min(t / 0.0003, 1) * Math.exp(-t / p.CrackDecay) * p.Crack * 1.6;
+  }
+
+  // チッ
+  let ph = 0;
+  for (let i = hit; i < n; i++) {
+    const t = (i - hit) / SR; if (t > p.ChirpTime * 6) break;
+    const k = Math.min(t / p.ChirpTime, 1);
+    ph += 2 * Math.PI * p.ChirpFrom * Math.pow(p.ChirpTo / p.ChirpFrom, k) / SR;
+    o[i] += Math.sin(ph) * Math.exp(-t / (p.ChirpTime * 0.8)) * p.Chirp * 0.6;
+  }
+
+  // 高域の擦れ
+  const hf = svf();
+  for (let i = hit; i < n; i++) {
+    const t = (i - hit) / SR; hf.run(nz(), 6000, 0.7);
+    o[i] += hf.Hp * Math.min(t / 0.001, 1) * Math.exp(-t / p.HissDecay) * p.Hiss * 0.5;
+  }
+
+  // 肉
+  const ff = svf();
+  for (let i = hit; i < n; i++) {
+    const t = (i - hit) / SR; ff.run(nz(), 450, 1.0);
+    o[i] += ff.Bp * Math.min(t / 0.002, 1) * Math.exp(-t / p.FleshDecay) * p.Flesh * 1.2;
+  }
+
+  // 遅れて来る低音
+  const bf = svf(); let bp2 = 0; const b0 = hit + Math.floor(p.BodyDelay * SR);
+  for (let i = b0; i < n; i++) {
+    const t = (i - b0) / SR;
+    bp2 += 2 * Math.PI * p.BodyHz * (1 + 0.5 * Math.exp(-t * 40)) / SR;
+    bf.run(nz(), 200, 0.7);
+    lo[i] += (Math.sin(bp2) + bf.Lp * 0.6) * Math.min(t / 0.004, 1) * Math.exp(-t / p.BodyDecay) * p.Body;
+  }
+
+  // 血しぶき
+  const sf = svf(), sb = svf(); let grain = 0;
+  const s0 = hit + Math.floor(p.SprayDelay * SR), hold = p.SprayLen * 0.5;
+  for (let i = s0; i < n; i++) {
+    const t = (i - s0) / SR;
+    const env = Math.min(t / 0.015, 1) * (t < hold ? 1 : Math.exp(-(t - hold) / (p.SprayLen * 0.25)));
+    grain += 0.008 * (r() - grain);
+    const g = (1 - p.SprayGrain) + p.SprayGrain * Math.abs(grain - 0.5) * 4;
+    const x = nz(); sf.run(x, p.SprayLowCut, 0.7); sb.run(x, 4000, 1.5);
+    o[i] += (sf.Hp * 0.8 + sb.Bp * 0.6) * env * g * p.Spray;
+  }
+
+  let peak = 1e-9;
+  for (let i = 0; i < n; i++) { o[i] = Math.tanh(o[i] * p.Drive) + lo[i] * 0.35; peak = Math.max(peak, Math.abs(o[i])); }
+  const res = new Float32Array(n), fade = Math.floor(0.03 * SR), k = Math.tanh(1.1);
+  for (let i = 0; i < n; i++) res[i] = Math.tanh(o[i] / peak * 1.1) / k * 0.89 * (i > n - fade ? (n - i) / fade : 1);
+  return res;
+}
+
+let ctx = null, cur = null;
+function render() { cur = make(P); draw(); writeOut(); }
+function play() {
+  if (!ctx) ctx = new AudioContext({ sampleRate: SR });
+  const buf = ctx.createBuffer(1, cur.length, SR); buf.copyToChannel(cur, 0);
+  const src = ctx.createBufferSource(), g = ctx.createGain();
+  g.gain.value = P.Volume; src.buffer = buf; src.connect(g).connect(ctx.destination); src.start();
+}
+
+function draw() {
+  const c = document.getElementById('wave'), g = c.getContext('2d');
+  c.width = c.clientWidth * devicePixelRatio; c.height = c.clientHeight * devicePixelRatio;
+  const W = c.width, H = c.height, total = 1.0 * SR;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = '#2a2328';
+  for (let s = 0.1; s < 1; s += 0.1) g.fillRect(s * W, 0, 1, H);
+  g.fillStyle = '#c8323c';
+  for (let x = 0; x < W; x++) {
+    const a = Math.floor(x / W * total), b = Math.floor((x + 1) / W * total);
+    let m = 0; for (let i = a; i < b && i < cur.length; i++) m = Math.max(m, Math.abs(cur[i]));
+    g.fillRect(x, H / 2 - m * H / 2, 1, m * H || 1);
+  }
+  g.fillStyle = '#a8999e'; g.font = `${11 * devicePixelRatio}px sans-serif`;
+  g.fillText('1秒の幅で表示(線は0.1秒ごと)', 6, 14 * devicePixelRatio);
+}
+
+function writeOut() {
+  const keys = ['Seed', ...DEFS.map(d => d[0]).filter(k => k !== 'Volume')];
+  document.getElementById('out').value = 'New-Se "slash_hit_custom" @{ ' + keys.map(k => `${k} = ${+(+P[k]).toFixed(4)}`).join('; ') + ' }';
+}
+
+function saveWav() {
+  const n = cur.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const str = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVEfmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, SR, true); v.setUint32(28, SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  str(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, cur[i] * P.Volume)) * 32767, true);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.download = 'slash_hit_custom.wav'; a.click();
+}
+
+const inputs = {};
+function build() {
+  const grid = document.getElementById('grid'), groups = {};
+  for (const [k, name, min, max, step, grp] of DEFS) {
+    if (!groups[grp]) { const d = document.createElement('div'); d.className = 'grp'; d.innerHTML = `<h2>${grp}</h2>`; grid.appendChild(d); groups[grp] = d; }
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<span>${name}</span><input type="range" min="${min}" max="${max}" step="${step}"><output></output>`;
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    inp.oninput = () => { P[k] = +inp.value; out.textContent = inp.value; render(); };
+    inp.onchange = () => { if (document.getElementById('auto').checked) play(); };
+    inputs[k] = [inp, out]; groups[grp].appendChild(row);
+  }
+}
+function sync() { for (const k in inputs) { inputs[k][0].value = P[k]; inputs[k][1].textContent = P[k]; } render(); }
+
+build();
+document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => {
+  P = { ...BASE, ...PRESETS[b.dataset.preset], Volume: P.Volume };
+  document.querySelectorAll('[data-preset]').forEach(x => x.classList.toggle('on', x === b));
+  sync(); play();
+});
+document.getElementById('play').onclick = play;
+document.getElementById('reseed').onclick = () => { P.Seed = Math.floor(Math.random() * 100000); render(); play(); };
+document.getElementById('save').onclick = saveWav;
+addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); play(); } });
+addEventListener('resize', draw);
+document.querySelector('[data-preset=normal]').classList.add('on');
+sync();
+</script>
+</body>
+</html>

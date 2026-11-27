@@ -1,7 +1,10 @@
 ﻿#include "TrainingMenuScene.h"
 #include "SceneController.h"
 #include "StageSelectScene.h"
+#include "SceneMain.h"
 #include "Main/Input.h"
+#include "Main/Game.h"
+#include <cstring>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -9,22 +12,27 @@
 namespace
 {
 	constexpr int kDecideWaitFrame = 14;//決定の演出(白く光って右へ抜ける)を見せる長さ(PauseSceneと同じ)
+	constexpr int kResetFadeFrame = 30;//作り直す前に暗くする長さ(SceneMainのフェードと同じ)
+	//長押しで繰り返す
+	constexpr int kRepeatDelay = 20;
+	constexpr int kRepeatInterval = 6;
 
 	const char* const kItemNames[] =
 	{
-		"敵の種類", "敵の数", "敵の動き", "倒したら", "敵のHP", "自分のHP", "ゲージ",
-		"敵を出し直す", "スタートに戻る", "トレーニング終了",
+		"敵の種類", "敵の数", "敵の動き", "倒したら", "敵のHP", "敵の欠損", "自分のHP", "ゲージ",
+		"トレーニング終了",
 	};
 	//選択肢(TrainingManager::Settings の番号の順)//項目名と重ならないように4文字まで
 	const std::vector<std::vector<const char*>> kChoices =
 	{
 		{ "刀", "銃", "バズーカ", "混ぜる", "ボス" },
 		{ "1体", "3体", "5体" },
-		{ "立つだけ", "ガード", "攻撃する", "ふつう" },
+		{ "立つだけ", "ガード", "攻撃する", "通常" },
 		{ "出し直す", "そのまま" },
-		{ "ふつう", "無限" },
-		{ "無限", "ふつう" },
-		{ "無限", "ふつう" },
+		{ "通常", "無限" },
+		{ "通常", "必ず欠損", "欠損なし" },
+		{ "無限", "通常" },
+		{ "無限", "通常" },
 	};
 	const char* const kHelps[] =
 	{
@@ -33,10 +41,9 @@ namespace
 		"",//敵の動きは選んでいる値ごとに変える(kAiHelps)
 		"出し直すなら、倒した敵を1秒後に同じ場所へ同じ種類で出す。",
 		"無限にすると倒れないので、長いコンボを試せる。",
+		"通常は技ごとの確率で腕が取れる。必ず欠損は攻撃が通るとすぐ取れる(確殺の練習)。ボスは対象外。",
 		"無限なら敵の攻撃を受けても減らない。",
 		"無限ならスキルと必殺技がいつでも使える。",
-		"今の設定で、敵を全部消して出し直す。",
-		"自分をスタートに戻す。",
 		"トレーニングをやめて、ステージセレクトに戻る。",
 	};
 	const char* const kAiHelps[] =
@@ -44,7 +51,7 @@ namespace
 		"立つだけ: その場に立って動かない。",
 		"ガード: ガードし続ける。当て続けると崩れる(ガードブレイクの練習)。",
 		"攻撃する: その場から動かず、間をあけてランダムな技を出す。寄ってこないので、近づいて受ける(回避の練習)。",
-		"ふつう: ステージと同じ動き。",
+		"通常: ステージと同じ動き。",
 	};
 }
 
@@ -60,6 +67,16 @@ TrainingMenuScene::TrainingMenuScene(SceneController& controller, std::shared_pt
 	if (m_training) m_settings = m_training->GetSettings();
 	m_ui.Init();
 	m_ui.SetTitle("トレーニング");
+	//値の枠は全部の選択肢でいちばん長い文字に合わせる
+	std::string widest;
+	for (const auto& choices : kChoices)
+	{
+		for (const char* choice : choices)
+		{
+			if (strlen(choice) > widest.size()) widest = choice;
+		}
+	}
+	m_ui.SetValueSlot(widest);
 	m_ui.SetListHeader("設定");
 	m_ui.SetItems(std::vector<std::string>(std::begin(kItemNames), std::end(kItemNames)));
 	ApplyToUI();
@@ -69,19 +86,38 @@ TrainingMenuScene::~TrainingMenuScene()
 {
 }
 
-int* TrainingMenuScene::ValueOf(MenuItem item)
+int* TrainingMenuScene::ValueOf(TrainingManager::Settings& settings, MenuItem item)
 {
 	switch (item)
 	{
-	case MenuItem::EnemyType: return &m_settings.enemyType;
-	case MenuItem::EnemyCount: return &m_settings.enemyCount;
-	case MenuItem::EnemyAi: return &m_settings.enemyAi;
-	case MenuItem::Respawn: return &m_settings.respawn;
-	case MenuItem::EnemyHp: return &m_settings.enemyHp;
-	case MenuItem::PlayerHp: return &m_settings.playerHp;
-	case MenuItem::Gauge: return &m_settings.gauge;
+	case MenuItem::EnemyType: return &settings.enemyType;
+	case MenuItem::EnemyCount: return &settings.enemyCount;
+	case MenuItem::EnemyAi: return &settings.enemyAi;
+	case MenuItem::Respawn: return &settings.respawn;
+	case MenuItem::EnemyHp: return &settings.enemyHp;
+	case MenuItem::PartBreak: return &settings.partBreak;
+	case MenuItem::PlayerHp: return &settings.playerHp;
+	case MenuItem::Gauge: return &settings.gauge;
 	default: return nullptr;
 	}
+}
+
+bool TrainingMenuScene::IsRepeat(const char* name, int& holdFrame, bool& isFirst)
+{
+	auto& input = Input::GetInstance();
+	isFirst = input.IsTriggered(name);
+	if (isFirst)
+	{
+		holdFrame = 0;
+		return true;
+	}
+	if (!input.IsPressed(name))
+	{
+		holdFrame = 0;
+		return false;
+	}
+	holdFrame++;
+	return holdFrame >= kRepeatDelay && (holdFrame - kRepeatDelay) % kRepeatInterval == 0;
 }
 
 int TrainingMenuScene::ChoiceNum(MenuItem item)
@@ -94,19 +130,30 @@ int TrainingMenuScene::ChoiceNum(MenuItem item)
 void TrainingMenuScene::ChangeValue(int d)
 {
 	const MenuItem item = static_cast<MenuItem>(m_cursor);
-	int* value = ValueOf(item);
+	int* value = ValueOf(m_settings, item);
 	if (!value)return;
 	const int num = ChoiceNum(item);
+	m_ui.StartValueChange(m_cursor, d);
 	*value = (*value + d + num) % num;
 }
 
 void TrainingMenuScene::ApplyToUI()
 {
-	std::vector<std::string> values;
+	TrainingManager::Settings applied = m_training ? m_training->GetSettings() : m_settings;
+	std::vector<TrainingMenuUI::ValueRow> values;
 	for (int i = 0; i < static_cast<int>(MenuItem::Num); ++i)
 	{
-		const int* value = ValueOf(static_cast<MenuItem>(i));
-		values.push_back(value ? kChoices[i][*value] : "");
+		const MenuItem item = static_cast<MenuItem>(i);
+		TrainingMenuUI::ValueRow row;
+		const int* value = ValueOf(m_settings, item);
+		if (value)
+		{
+			row.text = kChoices[i][*value];
+			row.index = *value;
+			row.num = ChoiceNum(item);
+			row.isChanged = (*value != *ValueOf(applied, item));
+		}
+		values.push_back(row);
 	}
 	m_ui.SetValues(values);
 	m_ui.SetCursor(m_cursor);
@@ -131,17 +178,27 @@ void TrainingMenuScene::NormalUpdate()
 	auto& input = Input::GetInstance();
 	input.Update();
 
+	//↑↓は長押しで進む。端で回るのは押した瞬間だけ(長押しは端で止まる)
 	const int itemNum = static_cast<int>(MenuItem::Num);
-	if (input.IsTriggered("Up")) m_cursor = (m_cursor + itemNum - 1) % itemNum;
-	if (input.IsTriggered("Down")) m_cursor = (m_cursor + 1) % itemNum;
-	if (input.IsTriggered("Left")) ChangeValue(-1);
-	if (input.IsTriggered("Right")) ChangeValue(1);
+	bool isFirst = false;
+	if (IsRepeat("Up", m_holdUp, isFirst))
+	{
+		if (m_cursor > 0) m_cursor--;
+		else if (isFirst) m_cursor = itemNum - 1;
+	}
+	if (IsRepeat("Down", m_holdDown, isFirst))
+	{
+		if (m_cursor < itemNum - 1) m_cursor++;
+		else if (isFirst) m_cursor = 0;
+	}
+	if (IsRepeat("Left", m_holdLeft, isFirst)) ChangeValue(-1);
+	if (IsRepeat("Right", m_holdRight, isFirst)) ChangeValue(1);
 
 	//A: 設定の項目は値を進める、実行する項目は演出を見せてから実行する
 	if (input.IsTriggered("A"))
 	{
 		const MenuItem item = static_cast<MenuItem>(m_cursor);
-		if (ValueOf(item))
+		if (ValueOf(m_settings, item))
 		{
 			ChangeValue(1);
 		}
@@ -168,24 +225,41 @@ void TrainingMenuScene::NormalUpdate()
 
 void TrainingMenuScene::Close()
 {
-	if (m_training && !(m_settings == m_training->GetSettings())) m_training->Apply(m_settings);
+	//変わっていたら暗くして作り直す
+	if (m_training && !(m_settings == m_training->GetSettings()))
+	{
+		m_resetFrame = 0;
+		m_updateFunc = static_cast<UpdateFunc_t>(&TrainingMenuScene::ResetUpdate);
+		m_drawFunc = static_cast<DrawFunc_t>(&TrainingMenuScene::ResetDraw);
+		return;
+	}
 	m_controller.PopScene();
+}
+
+void TrainingMenuScene::ResetUpdate()
+{
+	m_resetFrame++;
+	if (m_resetFrame >= kResetFadeFrame)
+	{
+		//下のSceneMainごと破棄して作り直す(このシーンも破棄されるので、呼んだ後は何もしない)
+		const TrainingManager::Settings settings = m_settings;
+		m_controller.ResetScene<SceneMain>(StageType::Training, std::nullopt, settings);
+	}
+}
+
+void TrainingMenuScene::ResetDraw()
+{
+	//メニューは消して、止まったゲームの画面を暗くしていく
+	const float rate = static_cast<float>(m_resetFrame) / static_cast<float>(kResetFadeFrame);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(255 * rate));
+	DrawBox(0, 0, Game::kScreenWidth, Game::kScreenHeight, 0x000000, true);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 
 void TrainingMenuScene::Decide(MenuItem item)
 {
 	switch (item)
 	{
-	case MenuItem::RespawnNow:
-		if (m_training) m_training->Apply(m_settings);
-		break;
-	case MenuItem::ReturnStart:
-		if (m_training)
-		{
-			if (!(m_settings == m_training->GetSettings())) m_training->Apply(m_settings);
-			m_training->ReturnPlayerToStart();
-		}
-		break;
 	case MenuItem::Quit:
 		//下のSceneMainごと破棄してステージセレクトに戻る(このシーンも破棄されるので、呼んだ後は何もしない)
 		m_controller.ResetScene<StageSelectScene>();

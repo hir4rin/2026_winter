@@ -28,6 +28,7 @@ private:
 	enum class MenuItem
 	{
 		ReturnGame,//ゲームに戻る
+		CameraOption,//カメラ設定
 		PhotoMode,//フォトモード(カメラデバッグ)
 		StageEdit,//ステージ編集(壁ゾーン)
 		StageSelect,//ステージセレクトへ戻る
@@ -40,6 +41,7 @@ private:
 	PauseUI m_ui;
 	MenuItem m_decideItem = MenuItem::ReturnGame;//決定の演出が終わったら実行する項目
 	int m_decideFrame = 0;
+	bool m_isChildOpen = false;//カメラ設定を上に積んでいる間は描かない
 
 	//選択した項目を実行する
 	void Decide(MenuItem item);

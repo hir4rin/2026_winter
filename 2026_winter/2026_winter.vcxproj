@@ -318,10 +318,11 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Scene\PauseScene.cpp" />
+    <ClCompile Include="Scene\CameraOptionScene.cpp" />
+    <ClCompile Include="Camera\CameraOption.cpp" />
     <ClCompile Include="Scene\TrainingMenuScene.cpp" />
     <ClCompile Include="Battle\TrainingManager.cpp" />
     <ClCompile Include="UI\Menu\TrainingMenuUI.cpp" />
-    <ClCompile Include="Character\Enemy\EnemyBaseTraining.cpp" />
     <ClCompile Include="Scene\GameOverScene.cpp" />
     <ClCompile Include="Scene\TutorialScene.cpp" />
     <ClCompile Include="Scene\StageSelectScene.cpp" />
@@ -348,6 +349,7 @@
     <ClCompile Include="Stage\Phase\PhaseAreaEditor.cpp" />
     <ClCompile Include="Stage\Phase\CheckpointEditor.cpp" />
     <ClCompile Include="Main\System.cpp" />
+    <ClCompile Include="Sound\SoundManager.cpp" />
     <ClCompile Include="UI\FontManager.cpp" />
     <ClCompile Include="UI\UIBase.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
@@ -546,6 +548,8 @@
     <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Scene\PauseScene.h" />
+    <ClInclude Include="Scene\CameraOptionScene.h" />
+    <ClInclude Include="Camera\CameraOption.h" />
     <ClInclude Include="Scene\TrainingMenuScene.h" />
     <ClInclude Include="Battle\TrainingManager.h" />
     <ClInclude Include="UI\Menu\TrainingMenuUI.h" />
@@ -583,6 +587,7 @@
     <ClInclude Include="Stage\StageInfo.h" />
     <ClInclude Include="Stage\WallZone\WallZoneEditor.h" />
     <ClInclude Include="Main\System.h" />
+    <ClInclude Include="Sound\SoundManager.h" />
     <ClInclude Include="UI\FontManager.h" />
     <ClInclude Include="UI\UIBase.h" />
     <ClInclude Include="UI\UIManager.h" />

@@ -24,17 +24,12 @@ namespace
 	const EnemyType kMixTypes[] = { EnemyType::Swordman, EnemyType::Gunner, EnemyType::Bazooka };
 }
 
-void TrainingManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player)
+void TrainingManager::Init(std::weak_ptr<EnemyManager> enemyManager, std::weak_ptr<Player> player, const Settings& settings)
 {
 	m_enemyManager = enemyManager;
 	m_player = player;
-	ReturnPlayerToStart();
-	Respawn();
-}
-
-void TrainingManager::Apply(const Settings& settings)
-{
 	m_settings = settings;
+	ReturnPlayerToStart();
 	Respawn();
 }
 
@@ -92,7 +87,11 @@ void TrainingManager::ApplyAi(EnemyBase& enemy)const
 	{
 		EnemyBase::TrainingAi::Stand, EnemyBase::TrainingAi::Guard, EnemyBase::TrainingAi::Attack, EnemyBase::TrainingAi::Normal,
 	};
-	enemy.SetTraining(ais[m_settings.enemyAi], m_settings.enemyHp == 1);
+	const EnemyBase::TrainingPartBreak partBreaks[] =
+	{
+		EnemyBase::TrainingPartBreak::Normal, EnemyBase::TrainingPartBreak::Always, EnemyBase::TrainingPartBreak::Never,
+	};
+	enemy.SetTraining(ais[m_settings.enemyAi], m_settings.enemyHp == 1, partBreaks[m_settings.partBreak]);
 }
 
 void TrainingManager::ReturnPlayerToStart()

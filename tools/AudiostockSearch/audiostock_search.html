@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audiostock 検索</title>
+<style>
+:root{--bg:#141012;--panel:#1e181b;--line:#3a2c31;--text:#eee6e8;--sub:#9d8b91;--acc:#c0283a;--acc2:#e9c46a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Yu Gothic UI","Meiryo",sans-serif;font-size:14px}
+header{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 16px}
+h1{margin:0 0 10px;font-size:18px;letter-spacing:.05em}
+h1 span{color:var(--sub);font-size:12px;font-weight:normal;margin-left:8px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--panel);color:var(--sub);padding:6px 18px;border-radius:4px;cursor:pointer;font-size:14px}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#q{flex:1;min-width:220px;padding:8px 10px;background:#0c0a0b;border:1px solid var(--line);color:var(--text);border-radius:4px;font-size:15px}
+button.go{background:var(--acc);color:#fff;border:0;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:14px}
+label{color:var(--sub);font-size:12px;display:flex;gap:4px;align-items:center}
+select,input[type=number]{background:#0c0a0b;color:var(--text);border:1px solid var(--line);border-radius:3px;padding:3px}
+input[type=number]{width:52px}
+main{padding:12px 16px 40px;max-width:1200px}
+section{margin-bottom:14px}
+h2{font-size:13px;color:var(--acc2);margin:0 0 6px;font-weight:normal;border-left:3px solid var(--acc);padding-left:6px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:4px 10px;border-radius:14px;cursor:pointer;font-size:13px}
+.chip:hover{border-color:var(--acc);background:#2a1d22}
+.chip.add{color:var(--sub)}
+.chip .x{color:var(--sub);margin-left:6px}
+.hint{color:var(--sub);font-size:12px;margin-top:6px}
+.hist .chip{font-size:12px;padding:2px 8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Audiostock 検索<span>ボタンを押すと新しいタブで検索結果が開く ／ Shift+クリックで入力欄に足す</span></h1>
+  <div class="tabs">
+    <button class="tab on" data-kind="se">効果音・SE</button>
+    <button class="tab" data-kind="bgm">BGM</button>
+  </div>
+  <div class="row">
+    <input id="q" placeholder="キーワード(スペース区切りで AND)" autocomplete="off">
+    <button class="go" id="go">検索</button>
+    <label>並び <select id="order"><option value="score DESC">おすすめ</option><option value="id DESC">新着</option></select></label>
+    <label>長さ(秒) <input type="number" id="lmin" min="0"> 〜 <input type="number" id="lmax" min="0"></label>
+    <label><input type="checkbox" id="wav"> WAVあり</label>
+  </div>
+  <div class="hint hist" id="histWrap"></div>
+</header>
+<main id="list"></main>
+
+<script>
+const DATA = {
+  se: [
+    ["刀を振る", ["刀 振る","刀 素振り","風切り","剣 振る","居合","一閃","刀 連続","大剣 振る","スイング シュッ"]],
+    ["斬撃が当たる・血", ["刀 斬る","斬撃","斬撃 リアル","切り裂く","刺す","突き刺す","肉 斬る","血しぶき","血 滴る","クリティカル","ゴア"]],
+    ["弾き・ガード", ["刀 打ち合う","剣 弾く","金属 弾く","パリィ","ガード","カキーン","火花","ガードブレイク"]],
+    ["刀の所作", ["抜刀","納刀","刀 構える","鍔鳴り","チャキ","鞘"]],
+    ["溜め・必殺・スキル", ["溜め","チャージ","パワーチャージ","オーラ","必殺技","必殺技 発動","スローモーション","瞬間移動","高速移動","分身","かまいたち","手裏剣","衝撃波"]],
+    ["蹴り・打撃", ["キック","パンチ","打撃","打撃 重い","打ち上げ","吹き飛ぶ"]],
+    ["移動・体の動き", ["ジャンプ","着地","ダッシュ","回避","踏み込み","壁走り","壁キック","衣擦れ","マント","足音 走る","足音 金属","倒れる"]],
+    ["敵", ["銃 発砲","拳銃","マシンガン","跳弾","銃 構える","敵 倒れる","うめき声","断末魔","レーザー"]],
+    ["ボス(メカ)", ["ロボット 殴る","金属 衝撃","ロボット 足音","巨大ロボット","ロボット 起動","機械 駆動","変形","ガトリング","ビーム チャージ","ビーム","爆発","大爆発","機械 倒れる"]],
+    ["和の演出", ["和太鼓","時代劇","拍子木","小鼓","尺八","琴","鈴","鐘","ほら貝","和 決め","和風 衝撃"]],
+    ["死亡・低HP", ["心臓 鼓動","心音","絶望","不協和音","重低音","死亡","ゲームオーバー"]],
+    ["回復・チェックポイント", ["回復","回復 魔法","ゲージ 回復","ゲージ 満タン","パワーアップ","ワープ","セーブ","神秘的"]],
+    ["扉・ステージ", ["鉄の扉","シャッター","石 扉","自動ドア","工場 環境音","風 吹く","サイバー 環境音","警報","サイレン"]],
+    ["列車", ["電車 走行","電車 通過","電車 ブレーキ","圧搾空気","電車 警笛","トンネル"]],
+    ["UI(メニュー・ポーズ)", ["カーソル","決定","キャンセル","メニュー 開く","ポーズ","ビープ","サイバー UI","和風 UI","ページめくり","スコア"]],
+    ["タイトル・リザルト", ["タイトル","文字 衝撃","ロゴ 表示","シャキーン","金属 タイトル","ランク 表示","リザルト","ドラムロール","トレーラー インパクト","ブラーム"]],
+  ],
+  bgm: [
+    ["ステージ(戦闘)", ["和風 バトル","和風 ロック","和風 EDM","サイバー 和風","サイバーパンク","忍者","侍","疾走感","ダーク バトル","インダストリアル","ドラムンベース","トレーラー"]],
+    ["ボス", ["ボス戦","ボス 和風","ボス メタル","ボス オーケストラ","緊迫","重厚","エピック"]],
+    ["列車ステージ", ["スピード感","疾走 ロック","アクション 疾走","カーチェイス"]],
+    ["タイトル・メニュー", ["和風 静か","和風 アンビエント","尺八","琴","三味線","ダーク アンビエント","オープニング"]],
+    ["リザルト・クリア", ["勝利","クリア ジングル","和風 ジングル","ファンファーレ 和風","リザルト"]],
+    ["死亡・ゲームオーバー", ["ゲームオーバー","悲しい 和風","絶望","ジングル 暗い"]],
+    ["演出・ムービー", ["シネマティック","緊張感","ホラー","不穏","ムービー 和風","エンディング"]],
+    ["トレーニング", ["ループ 和風","ローファイ 和風","落ち着いた","チル"]],
+  ],
+};
+
+const $ = s => document.querySelector(s);
+let kind = "se";
+
+function load(k, d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }
+
+function buildUrl(word){
+  const p = new URLSearchParams();
+  p.set("audio_search[keywords]", word);
+  p.set("display_order", $("#order").value);
+  if ($("#lmin").value) p.set("audio_search[audio_length_min]", $("#lmin").value);
+  if ($("#lmax").value) p.set("audio_search[audio_length_max]", $("#lmax").value);
+  if ($("#wav").checked) p.set("audio_search[file_type]", "wav");
+  return `https://audiostock.jp/${kind}?${p}`;
+}
+
+function search(word){
+  word = word.trim();
+  if (!word) return;
+  window.open(buildUrl(word), "_blank");
+  const h = load("as_hist_" + kind, []).filter(w => w !== word);
+  h.unshift(word);
+  save("as_hist_" + kind, h.slice(0, 20));
+  renderHist();
+}
+
+function chip(word, onDel){
+  const b = document.createElement("button");
+  b.className = "chip";
+  b.textContent = word;
+  b.title = buildUrl(word);
+  b.onclick = e => {
+    if (e.shiftKey){ $("#q").value = ($("#q").value + " " + word).trim(); $("#q").focus(); return; }
+    search(word);
+  };
+  if (onDel){
+    const x = document.createElement("span");
+    x.className = "x"; x.textContent = "×";
+    x.onclick = e => { e.stopPropagation(); onDel(); };
+    b.append(x);
+  }
+  return b;
+}
+
+function render(){
+  const list = $("#list");
+  list.innerHTML = "";
+  const mine = load("as_mine_" + kind, []);
+  const groups = [["自分で追加", mine, true], ...DATA[kind]];
+  for (const [title, words, isMine] of groups){
+    const sec = document.createElement("section");
+    sec.innerHTML = `<h2>${title}</h2>`;
+    const c = document.createElement("div");
+    c.className = "chips";
+    for (const w of words){
+      c.append(chip(w, isMine ? () => { save("as_mine_" + kind, mine.filter(m => m !== w)); render(); } : null));
+    }
+    if (isMine){
+      const add = document.createElement("button");
+      add.className = "chip add";
+      add.textContent = "＋ 入力欄の言葉を登録";
+      add.onclick = () => {
+        const w = $("#q").value.trim();
+        if (!w || mine.includes(w)) return;
+        mine.push(w); save("as_mine_" + kind, mine); render();
+      };
+      c.append(add);
+    }
+    sec.append(c);
+    list.append(sec);
+  }
+  renderHist();
+}
+
+function renderHist(){
+  const wrap = $("#histWrap");
+  const h = load("as_hist_" + kind, []);
+  wrap.innerHTML = h.length ? "最近: " : "";
+  const c = document.createElement("span");
+  c.className = "chips"; c.style.display = "inline-flex";
+  h.forEach(w => c.append(chip(w)));
+  wrap.append(c);
+}
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  kind = t.dataset.kind;
+  save("as_kind", kind);
+  render();
+});
+$("#go").onclick = () => search($("#q").value);
+$("#q").addEventListener("keydown", e => { if (e.key === "Enter") search($("#q").value); });
+
+kind = load("as_kind", "se");
+document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x.dataset.kind === kind));
+render();
+$("#q").focus();
+</script>
+</body>
+</html>

@@ -125,6 +125,8 @@ bool Application::Init()
 	//タイトルのプレイヤー(Unity と同じ描き方)のシェーダー。カメラを設定する前に1回
 	Mv1LikeUnity::ShaderDir() = kMv1LikeUnityShaderDir;
 	Mv1LikeUnity::InitLoadShaders();
+	//サウンドの読み込み
+	System::GetInstance().GetSoundManager().Init();
 
 	return true;
 }

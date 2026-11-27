@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <unordered_map>
-//#include "Sound/SoundManager.h"
+#include "Sound/SoundManager.h"
+#include "Camera/CameraOption.h"
 #include <memory>
 #include <source_location>
 #include <string>
@@ -187,7 +188,10 @@ public:
 	bool HasBattleMgr()const { return !m_battleMgr.expired(); }
 	std::shared_ptr<BattleManager> GetBattleMgr();
 
-	//SoundManager& GetSoundManager() { return m_soundManager; }
+	SoundManager& GetSoundManager() { return m_soundManager; }
+
+	//カメラ設定(ポーズで変える)
+	CameraOption& GetCameraOption() { return m_cameraOption; }
 
 private:
 	//時間の管理
@@ -211,6 +215,7 @@ private:
 	std::vector<AsyncData> m_stageEffects;
 	int m_loadedStage = -1;//読み込んであるステージ(StageType)。-1は無し
 
-	//SoundManager m_soundManager;//サウンドマネージャー//GetSoundManager()経由でPlayBgm等を呼ぶ
+	SoundManager m_soundManager;//サウンドマネージャー//GetSoundManager()経由でPlayBgm等を呼ぶ
+	CameraOption m_cameraOption;//ゲームを閉じるまで覚えておく
 };
 
