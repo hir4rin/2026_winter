@@ -41,3 +41,5 @@ ChargeStart,Power_Attack_Start
 ChargeLoop,Power_Attack_Loop
 ChargeAttack1,Combo_Attack_04_03
 ChargeAttack2,Combo_Attack_04_04
+KickUp,Kick_Up
+SpinRiseSlash,Spin_RiseSlash
