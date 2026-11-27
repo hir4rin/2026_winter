@@ -76,7 +76,7 @@ void PlayerStateAttackLanding::Update()
 	if (CanActionCancel())
 	{
 		//確殺
-		if (input.IsTriggered("Y") && player->CanPartBrokenFinish())
+		if (!input.IsTriggered("LB") && input.IsTriggered("Y") && player->CanPartBrokenFinish())
 		{
 			player->ChangeState(std::make_shared<PlayerStatePartBrokenKill>(m_owner));
 			return;

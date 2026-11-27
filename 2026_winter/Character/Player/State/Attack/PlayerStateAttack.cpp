@@ -29,6 +29,7 @@ namespace
 	//アニメーションの上昇(ルートモーション)を見た目から消す攻撃//ComboChain.csvのindex(切り上げ攻撃)
 	//ComboIndex::upAttackはCSVとずれているので、CSVの値を直接使う
 	constexpr int kRootMotionCancelComboIndexUp = 7;
+	constexpr int kRootMotionCancelComboIndexUp2 = 27;//切り上げ攻撃2
 	//アニメーションの下降を見た目から消すときは、SetRootMotionEnable(RootMotionCancel::Down)を使う
 	constexpr int kRootMotionCancelComboIndexDown = 12;
 
@@ -64,7 +65,7 @@ void PlayerStateAttack::Enter()
 	player->m_anim.ChangeAnimWithModelHandle(player->m_modelHandle, node.animName, false, node.animTimeScale, node.endFrame, 0.0f, node.blendFrame);
 	//切り上げ攻撃は、上昇をプログラム(moveSpeedY)で行うので、アニメーションの上昇を見た目から消す
 	//アニメーションが切り替わってブレンドが終わると、Animation側で自動的に解除される
-	if (node.index == kRootMotionCancelComboIndexUp)
+	if (node.index == kRootMotionCancelComboIndexUp || node.index == kRootMotionCancelComboIndexUp2)
 	{
 		player->m_anim.SetRootMotionEnable(RootMotionCancel::Up);
 	}
@@ -114,7 +115,7 @@ void PlayerStateAttack::Update()
 	if (nowFrame >= actionCancelFrame && player->IsFloor())
 	{
 		//確殺
-		if (input.IsTriggered("Y") && player->CanPartBrokenFinish())
+		if (!input.IsTriggered("LB") && input.IsTriggered("Y") && player->CanPartBrokenFinish())
 		{
 			player->ChangeState(std::make_shared<PlayerStatePartBrokenKill>(m_owner));
 			return;
